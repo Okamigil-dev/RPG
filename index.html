@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>World Tabletop VTT</title>
-    
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
-
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -20,229 +18,73 @@
         <div class="nav-left">
             <div class="brand-logo">WORLD VTT</div>
             <div id="main-nav-tabs" class="nav-tabs hide-default">
-                <button type="button" onclick="openTab('tab-character')" class="tab-btn"><i class="fa-regular fa-id-card fa-fw"></i> Character</button>
-                <button type="button" onclick="openTab('tab-backpack')" class="tab-btn"><i class="ph ph-briefcase"></i> Backpack</button>
-                <button type="button" onclick="openTab('tab-skills')" class="tab-btn"><i class="fa-solid fa-khanda fa-fw"></i> Skills</button>
-                <button type="button" onclick="openTab('tab-control-panel')" id="nav-control-panel" class="tab-btn hide-default"><i class="fa-solid fa-gear fa-fw"></i> Master</button>
+                <button onclick="openTab('tab-character')" class="tab-btn">Character</button>
+                <button onclick="openTab('tab-backpack')" class="tab-btn">Backpack</button>
+                <button onclick="openTab('tab-skills')" class="tab-btn">Skills</button>
+                <button onclick="openTab('tab-control-panel')" id="nav-control-panel" class="tab-btn hide-default">Master</button>
             </div>
         </div>
-
         <div id="user-header" class="user-header">
-            <div class="user-info">
-                <div id="user-display-name" class="user-name">Guest</div>
-                <div id="user-role-label" class="user-role">Offline</div>
-            </div>
-            <div id="nav-user-portrait" class="nav-portrait"></div>
-            <button type="button" onclick="logoutUser()" id="logout-btn" class="btn-danger hide-default" title="Logout">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </button>
+            <div id="user-display-name" class="user-name">Guest</div>
+            <button onclick="logoutUser()" id="logout-btn" class="btn-danger hide-default">Logout</button>
         </div>
     </div>
 
     <div class="app-body">
         <div id="sidebar" class="sidebar">
-            
             <div id="active-char-hud" class="active-char-hud hide-default">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-                    <div id="hud-portrait" class="portrait-circle-small" onclick="document.getElementById('portrait-input').click()"></div>
-                    <div>
-                        <h3 id="hud-name" class="hud-name" style="margin: 0;">Unnamed</h3>
-                        <span id="hud-meta" style="font-size: 0.7em; color: #00ff88; text-transform: uppercase;">Lv. 1 Adventurer</span>
-                    </div>
-                </div>
-                <input type="file" id="portrait-input" accept="image/*" class="hide-default" onchange="handlePortraitUpload(event)">
-                
-                <div class="hud-resource">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.7em; margin-bottom: 2px;">
-                        <span style="color: #ef4444; font-weight: bold;">HP</span>
-                        <span id="hud-hp-text">0 / 0</span>
-                    </div>
-                    <div class="hp-bar-bg"><div id="hud-hp-fill" class="hp-bar-fill"></div></div>
-                </div>
-            
-                <div class="hud-resource" style="margin-top: 10px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.7em; margin-bottom: 2px;">
-                        <span style="color: #3b82f6; font-weight: bold;">MP</span>
-                        <span id="hud-mp-text">0 / 0</span>
-                    </div>
-                    <div class="hp-bar-bg" style="background: #1e1e21;"><div id="hud-mp-fill" class="hp-bar-fill" style="background: #3b82f6;"></div></div>
-                </div>
-            
+                <div id="hud-portrait" class="portrait-circle-small"></div>
+                <h3 id="hud-name">Unnamed</h3>
+                <div class="hp-bar-bg"><div id="hud-hp-fill" class="hp-bar-fill"></div></div>
+                <div id="hud-hp-text" class="hp-text">0 / 0</div>
                 <div class="hud-stats-row">
-                    <div class="hud-stat-box"><span class="hud-stat-label">BODY</span><span id="hud-mod-body" class="hud-stat-value">+0</span></div>
-                    <div class="hud-stat-box"><span class="hud-stat-label">MIND</span><span id="hud-mod-mind" class="hud-stat-value">+0</span></div>
-                    <div class="hud-stat-box"><span class="hud-stat-label">SPIRIT</span><span id="hud-mod-spirit" class="hud-stat-value">+0</span></div>
+                    <div class="hud-stat-box"><span class="hud-stat-label">B</span><span id="hud-mod-body">+0</span></div>
+                    <div class="hud-stat-box"><span class="hud-stat-label">M</span><span id="hud-mod-mind">+0</span></div>
+                    <div class="hud-stat-box"><span class="hud-stat-label">S</span><span id="hud-mod-spirit">+0</span></div>
                 </div>
             </div>
 
-            <div id="game-ui" class="game-ui hide-default">
-                <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
-                <div id="time-display" class="time-text">00:00:00</div>
-            </div>
-            
             <div class="dice-tray">
                 <div id="dice-result" class="dice-result">Roll!</div>
                 <div class="dice-grid">
-                    <button type="button" onclick="rollDice(4)" title="d4"><i class="ph ph-triangle"></i></button>
-                    <button type="button" onclick="rollDice(6)" title="d6"><i class="ph ph-square"></i></button>
-                    <button type="button" onclick="rollDice(8)" title="d8"><i class="ph ph-diamond"></i></button>
-                    <button type="button" onclick="rollDice(10)" title="d10"><i class="ph ph-pentagon"></i></button>
-                    <button type="button" onclick="rollDice(12)" title="d12"><i class="ph ph-hexagon"></i></button>
-                    <button type="button" onclick="rollDice(20)" title="d20" class="d20-btn"><i class="ph ph-circle"></i></button>
+                    <button onclick="rollDice(6)"><i class="fa-solid fa-dice-six"></i><span>d6</span></button>
+                    <button onclick="rollDice(20)" class="d20-btn"><i class="fa-solid fa-dice-d20"></i><span>d20</span></button>
                 </div>
             </div>
         </div>
 
         <div id="main-content" class="main-content">
-            
             <div id="tab-login" class="tab-content">
-                <h2>Log In or Register</h2>
-                <div class="login-box">
-                    <input type="email" id="email-input" class="form-input" placeholder="Email">
-                    <input type="password" id="password-input" class="form-input" placeholder="Password">
-                    <button id="login-btn" onclick="loginUser()" class="btn-primary btn-full"><i class="fa-solid fa-right-to-bracket"></i> Log In</button>
-                    <button id="register-btn" onclick="registerUser()" class="btn-secondary btn-full"><i class="fa-solid fa-user-plus"></i> Register</button>
-                </div>
+                <h2>Login</h2>
+                <input type="email" id="email-input" class="form-input" placeholder="Email">
+                <input type="password" id="password-input" class="form-input" placeholder="Password">
+                <button onclick="loginUser()" class="btn-primary btn-full">Log In</button>
             </div>
-            
+
             <div id="tab-character" class="tab-content hide-default">
                 <div id="char-selection-view">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #06b6d4; padding-bottom: 10px; margin-bottom: 20px;">
-                        <h2 class="tab-title" style="border: none; margin: 0;">Select Character</h2>
-                        <button onclick="createNewCharacter()" class="btn-success"><i class="ph ph-plus"></i> New Character</button>
+                    <div class="flex-row">
+                        <h2>Characters</h2>
+                        <button onclick="createNewCharacter()" class="btn-success">New Character</button>
                     </div>
                     <div id="char-list-grid" class="char-list-grid"></div>
                 </div>
-            
+
                 <div id="char-sheet-view" class="hide-default">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #06b6d4; padding-bottom: 10px; margin-bottom: 20px;">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <button onclick="goBackToSelection()" class="btn-secondary btn-small"><i class="ph ph-arrow-left"></i> Back</button>
-                            <h2 class="tab-title" style="border: none; margin: 0;">Character Sheet</h2>
+                    <button onclick="goBackToSelection()" class="btn-secondary">Back</button>
+                    <div class="panel-card">
+                        <label>Name</label>
+                        <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
+                        <div class="flex-row">
+                            <div><label>Body</label><input type="number" id="char-body" onchange="saveCharacter()" class="attr-input"></div>
+                            <div><label>Mind</label><input type="number" id="char-mind" onchange="saveCharacter()" class="attr-input"></div>
+                            <div><label>Spirit</label><input type="number" id="char-spirit" onchange="saveCharacter()" class="attr-input"></div>
                         </div>
-                    </div>
-                
-                    <div class="char-sheet-grid">
-                        <div class="panel-card">
-                            <h3 class="panel-title">Core Stats</h3>
-                            <div class="attr-list">
-                                <div class="attr-row">
-                                    <span class="attr-label text-str">BODY</span>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <span id="mod-body" class="stat-mod">+0</span>
-                                        <input type="number" id="char-body" class="attr-input" onchange="saveCharacter()" value="10">
-                                    </div>
-                                </div>
-                                <div class="attr-row">
-                                    <span class="attr-label text-int">MIND</span>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <span id="mod-mind" class="stat-mod">+0</span>
-                                        <input type="number" id="char-mind" class="attr-input" onchange="saveCharacter()" value="10">
-                                    </div>
-                                </div>
-                                <div class="attr-row">
-                                    <span class="attr-label text-wis">SPIRIT</span>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <span id="mod-spirit" class="stat-mod">+0</span>
-                                        <input type="number" id="char-spirit" class="attr-input" onchange="saveCharacter()" value="10">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                
-                        <div class="char-main-col">
-                            <div class="panel-card flex-row" style="flex-wrap: wrap;">
-                                <div style="flex: 2; min-width: 150px;">
-                                    <label class="input-label">Name</label>
-                                    <input type="text" id="char-name" class="form-input" onchange="saveCharacter()">
-                                </div>
-                                <div style="flex: 1; min-width: 80px;">
-                                    <label class="input-label">Race</label>
-                                    <input type="text" id="char-race" class="form-input" onchange="saveCharacter()">
-                                </div>
-                                <div style="flex: 1; min-width: 80px;">
-                                    <label class="input-label">Class</label>
-                                    <input type="text" id="char-class" class="form-input" onchange="saveCharacter()">
-                                </div>
-                                <div style="width: 60px;">
-                                    <label class="input-label">Lv</label>
-                                    <input type="number" id="char-level" class="form-input text-center" onchange="saveCharacter()">
-                                </div>
-                            </div>
-                
-                            <div class="panel-card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                                <div class="text-center">
-                                    <h4 class="hp-title">HP</h4>
-                                    <div class="hp-inputs">
-                                        <input type="number" id="char-hp-current" class="hp-input" onchange="saveCharacter()">
-                                        <span>/</span>
-                                        <input type="number" id="char-hp-max" class="hp-input" onchange="saveCharacter()">
-                                    </div>
-                                </div>
-                                <div class="text-center">
-                                    <h4 class="hp-title" style="color: #3b82f6;">MP</h4>
-                                    <div class="hp-inputs">
-                                        <input type="number" id="char-mp-current" class="hp-input" onchange="saveCharacter()">
-                                        <span>/</span>
-                                        <input type="number" id="char-mp-max" class="hp-input" onchange="saveCharacter()">
-                                    </div>
-                                </div>
-                            </div>
-                
-                            <div class="combat-stats-grid">
-                                <div class="panel-card text-center"><label class="input-label">AC</label><input type="number" id="char-ac" class="combat-input" onchange="saveCharacter()"></div>
-                                <div class="panel-card text-center"><label class="input-label">INIT</label><input type="number" id="char-init" class="combat-input" onchange="saveCharacter()"></div>
-                                <div class="panel-card text-center"><label class="input-label">SPEED</label><input type="number" id="char-speed" class="combat-input" onchange="saveCharacter()"></div>
-                            </div>
-                        </div>
-                    </div>
-                
-                    <div class="panel-card" style="margin-top: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3f3f46; padding-bottom: 10px; margin-bottom: 15px;">
-                            <h3 class="panel-title" style="border: none; margin: 0;">Gallery</h3>
-                            <button onclick="document.getElementById('portrait-input').click()" class="btn-primary btn-small">Upload</button>
-                        </div>
-                        <div id="gallery-container" class="gallery-grid"></div>
                     </div>
                 </div>
             </div>
-
-            <div id="tab-backpack" class="tab-content hide-default">
-                <h2 class="tab-title">Backpack</h2>
-                <div class="panel-card">Inventory features coming soon...</div>
-            </div>
-
-            <div id="tab-skills" class="tab-content hide-default">
-                <h2 class="tab-title">Skills & Abilities</h2>
-                <div class="panel-card">Skill management coming soon...</div>
-            </div>
-
-            <div id="tab-control-panel" class="tab-content hide-default">
-                <h2 class="tab-title master-title">Master Control Panel</h2>
-                
-                <div id="master-panel" class="panel-card master-panel">
-                    <h3 class="master-title-small">Live Game Controls</h3>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <button onclick="toggleTime()" id="play-btn" class="btn-success"><i class="fa-solid fa-play"></i> Start Time</button>
-                        <span class="speed-label-text">Speed: <span id="speed-label">1x</span></span>
-                        <button onclick="setSpeed(1)" class="btn-small">1x</button>
-                        <button onclick="setSpeed(10)" class="btn-small">10x</button>
-                        <button onclick="setSpeed(100)" class="btn-small">100x</button>
-                    </div>
-                </div>
-
-                <div id="admin-panel" class="panel-card admin-panel" style="margin-top: 20px;">
-                    <h3 class="admin-title-small">World Physics & Rules</h3>
-                    <div style="display: flex; gap: 20px;">
-                        <label>Min/Hour: <input type="number" id="min-per-hour" class="physics-input" value="60" onchange="updateRules()"></label>
-                        <label class="physics-label">Hours/Day: <input type="number" id="hours-per-day" class="physics-input" value="24" onchange="updateRules()"></label>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
