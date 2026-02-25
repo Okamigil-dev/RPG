@@ -206,14 +206,20 @@ function selectCharacter(id) {
         if (doc.exists) {
             const d = doc.data();
             
-            // Map Firestore data to your HTML Input IDs
+            // Identity & Level
             document.getElementById('char-name').value = d.name || "";
+            document.getElementById('char-race').value = d.race || ""; // Added
+            document.getElementById('char-class').value = d.class || ""; // Added
             document.getElementById('char-level').value = d.level || 1;
+            
+            // EXP Fields
+            document.getElementById('char-exp-current').value = d.expCurrent || 0; // Added
+            document.getElementById('char-exp-max').value = d.expMax || 1000; // Added
+
+            // Stats & Resources
             document.getElementById('char-body').value = d.body || 10;
             document.getElementById('char-mind').value = d.mind || 10;
             document.getElementById('char-spirit').value = d.spirit || 10;
-            
-            // Stats mapping
             document.getElementById('char-hp-current').value = d.hpCurrent || 0;
             document.getElementById('char-hp-max').value = d.hpMax || 0;
             document.getElementById('char-mp-current').value = d.mpCurrent || 0;
@@ -223,11 +229,8 @@ function selectCharacter(id) {
             document.getElementById('char-selection-view').classList.add('hide-default');
             document.getElementById('char-sheet-view').classList.remove('hide-default');
             
-            // Visual Updates
             updateHUD(d);
             if (d.gallery) renderGallery(d.gallery, d.portrait);
-            
-            // Persistence
             firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
         }
     });
@@ -238,7 +241,11 @@ function saveCharacter() {
     
     const data = {
         name: document.getElementById('char-name').value,
+        race: document.getElementById('char-race').value,   // Added
+        class: document.getElementById('char-class').value, // Added
         level: parseInt(document.getElementById('char-level').value) || 1,
+        expCurrent: parseInt(document.getElementById('char-exp-current').value) || 0, // Added
+        expMax: parseInt(document.getElementById('char-exp-max').value) || 1000,    // Added
         body: parseInt(document.getElementById('char-body').value) || 10,
         mind: parseInt(document.getElementById('char-mind').value) || 10,
         spirit: parseInt(document.getElementById('char-spirit').value) || 10,
@@ -269,7 +276,6 @@ function loadUserCharacters() {
             const card = document.createElement('div');
             card.className = 'char-card';
             card.onclick = () => selectCharacter(doc.id);
-            // Added the portrait div to match the sidebar style
             card.innerHTML = `
                 <div class="portrait-circle-small" style="background-image: url(${d.portrait || ''}); margin: 0 auto 10px;"></div>
                 <strong>${d.name}</strong>
@@ -281,19 +287,24 @@ function loadUserCharacters() {
 
 
 
-// ==========================================
-// --- 10. HUD HANDLING ---
-// ==========================================
-
+/* ==========================================
+   --- 10. HUD HANDLING ---
+   ========================================== */
 function updateHUD(char) {
-    document.getElementById('active-char-hud').classList.remove('hide-default');
+    const hud = document.getElementById('active-char-hud');
+    if (!hud) return;
+    hud.classList.remove('hide-default');
     
-    // Names and Status
+    // 1. Names and Metadata (Race & Class)
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
+    const raceClassText = `Lv. ${char.level || 1} ${char.race || ''} ${char.class || 'Adventurer'}`;
+    document.getElementById('hud-meta').innerText = raceClassText;
+    
+    // 2. Text Resources
     document.getElementById('hud-hp-text').innerText = `${char.hpCurrent || 0}/${char.hpMax || 0}`;
     document.getElementById('hud-mp-text').innerText = `${char.mpCurrent || 0}/${char.mpMax || 0}`;
     
-    // Modifier Calculation Formula: Math.floor((stat - 10) / 2)
+    // 3. Modifier Calculation
     const getMod = (val) => {
         const mod = Math.floor(((val || 10) - 10) / 2);
         return mod >= 0 ? `+${mod}` : mod;
@@ -303,10 +314,21 @@ function updateHUD(char) {
     document.getElementById('hud-mod-mind').innerText = getMod(char.mind);
     document.getElementById('hud-mod-spirit').innerText = getMod(char.spirit);
 
-    // Progress Bars
-    document.getElementById('hud-hp-fill').style.width = ((char.hpCurrent / (char.hpMax || 1)) * 100) + "%";
-    document.getElementById('hud-mp-fill').style.width = ((char.mpCurrent / (char.mpMax || 1)) * 100) + "%";
+    // 4. Progress Bars (HP, MP, and EXP)
+    // We use .style.width here because the percentage is dynamic data
+    const hpPerc = Math.min((char.hpCurrent / (char.hpMax || 1)) * 100, 100);
+    const mpPerc = Math.min((char.mpCurrent / (char.mpMax || 1)) * 100, 100);
+    const expPerc = Math.min((char.expCurrent / (char.expMax || 1000)) * 100, 100);
 
+    document.getElementById('hud-hp-fill').style.width = hpPerc + "%";
+    document.getElementById('hud-mp-fill').style.width = mpPerc + "%";
+    
+    const expFill = document.getElementById('hud-exp-fill');
+    if (expFill) {
+        expFill.style.width = expPerc + "%";
+    }
+
+    // 5. Portrait
     if (char.portrait) {
         document.getElementById('hud-portrait').style.backgroundImage = `url(${char.portrait})`;
     }
