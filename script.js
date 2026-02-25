@@ -12,6 +12,21 @@ let hoursPerDay = 24;
 let daysPerMonth = 30;
 let monthsPerYear = 12;
 
+// --- FIREBASE SETUP ---
+const firebaseConfig = {
+    apiKey: "AIzaSyCdwo2sWiMzLfnZ8o3oYkDYL45FuLiV4OI",
+    authDomain: "virtual-tabletop-6cdab.firebaseapp.com",
+    databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+    projectId: "virtual-tabletop-6cdab",
+    storageBucket: "virtual-tabletop-6cdab.firebasestorage.app",
+    messagingSenderId: "360507498207",
+    appId: "1:360507498207:web:a2924052c05aba488b536a"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
 // --- ENGINE ---
 function tick() {
     let now = Date.now();
