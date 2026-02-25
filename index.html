@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Timer</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="timer-container">
+      <h2>Control Panel</h2>
+
+      <div class="display" id="clock-display">05:00.0</div>
+      
+      <div class="controls">
+        <button onclick="startTimer()" class="btn-start">Start</button>
+        <button onclick="stopTimer()" class="btn-stop">Stop / Pause</button>
+        <button onclick="resetTimer()" class="btn-reset">Reset</button>
+      </div>
+
+      <div class="speed-controls">
+        <span>Speed: <span id="speed-label">1x</span></span>
+        <button onclick="setSpeed(0.5)">0.5x (Slow)</button>
+        <button onclick="setSpeed(1)">1x (Normal)</button>
+        <button onclick="setSpeed(2)">2x (Fast)</button>
+        <button onclick="setSpeed(10)">10x (Ultra)</button>
+      </div>
+    </div>
+    
+    <script src="script.js"></script>
+  
+  </body>
+</html>
