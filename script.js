@@ -338,56 +338,43 @@ function loadCharacterData(char) {
 function handlePortraitUpload(event) {
     const file = event.target.files[0];
     if (!file || !currentCharacterId) return;
+    
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            const size = 150;
-            canvas.width = size; canvas.height = size;
-            canvas.getContext('2d').drawImage(img, 0, 0, size, size);
-            const base64 = canvas.toDataURL('image/jpeg', 0.7);
+            
+            // 1. Calculate the new size while keeping the original aspect ratio
+            let width = img.width;
+            let height = img.height;
+            const maxSize = 500; // Increased from 150 for much better quality
+
+            if (width > height) {
+                if (width > maxSize) {
+                    height *= maxSize / width;
+                    width = maxSize;
+                }
+            } else {
+                if (height > maxSize) {
+                    width *= maxSize / height;
+                    height = maxSize;
+                }
+            }
+
+            // 2. Draw the high-res, properly scaled image
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            
+            // 3. Save it with much higher JPEG quality (0.9 instead of 0.7)
+            const base64 = canvas.toDataURL('image/jpeg', 0.9);
             updatePortraitUI(base64);
             saveCharacter(); 
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
-}
-
-function updatePortraitUI(base64) {
-    const preview = document.getElementById('portrait-preview');
-    const placeholder = document.getElementById('portrait-placeholder');
-    if (base64) {
-        preview.style.backgroundImage = `url('${base64}')`;
-        placeholder.style.display = 'none';
-    } else {
-        preview.style.backgroundImage = '';
-        placeholder.style.display = 'block';
-    }
-}
-
-function updateHUD(char) {
-    const hud = document.getElementById('active-char-hud');
-    const navPortrait = document.getElementById('nav-user-portrait'); // Top right portrait
-
-    if (!char) {
-        if(hud) hud.style.display = 'none';
-        if(navPortrait) navPortrait.style.backgroundImage = '';
-        return;
-    }
-    
-    if(hud) hud.style.display = 'block';
-    
-    document.getElementById('hud-name').innerText = char.name || "Unnamed";
-    const hpPercent = (char.hpCurrent / char.hpMax) * 100;
-    document.getElementById('hud-hp-fill').style.width = (hpPercent || 0) + "%";
-    document.getElementById('hud-hp-text').innerText = `${char.hpCurrent || 0} / ${char.hpMax || 0}`;
-    
-    // Updates the tiny circle in the top nav bar
-    if (navPortrait) {
-        navPortrait.style.backgroundImage = char.portrait ? `url('${char.portrait}')` : '';
-    }
 }
 
 
