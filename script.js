@@ -1,7 +1,7 @@
 // ==========================================
 // --- 1. STATE VARIABLES & DEFAULTS ---
 // ==========================================
-let totalCustomSeconds = 0; // The master clock. 0 = Year 1, Month 1, Day 1, 00:00:00
+let totalCustomSeconds = 0; 
 let speedMultiplier = 1;
 let isRunning = false;
 let lastRealTime = Date.now();
@@ -11,7 +11,8 @@ let hoursPerDay = 24;
 let daysPerMonth = 30;
 let monthsPerYear = 12;
 
-let currentCampaignId = "global"; // The default room everyone joins for now
+let currentCampaignId = "global"; 
+let currentCharacterId = null; // Tracks which specific character is open
 
 
 // ==========================================
@@ -27,11 +28,10 @@ const firebaseConfig = {
     appId: "1:360507498207:web:a2924052c05aba488b536a"
 };
 
-// Initialize Firebase services
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const rtdb = firebase.database();       // For the fast game clock
-const firestore = firebase.firestore(); // For user roles and character sheets
+const rtdb = firebase.database();       
+const firestore = firebase.firestore(); 
 
 
 // ==========================================
@@ -51,14 +51,11 @@ function saveTimeState() {
     rtdb.ref(`campaigns/${currentCampaignId}/clock`).set(timeData);
 }
 
-// Listen for updates from the DM or other players
 rtdb.ref(`campaigns/${currentCampaignId}/clock`).on('value', (snapshot) => {
     const data = snapshot.val();
-    
     if (data) {
         speedMultiplier = data.speedMultiplier;
         isRunning = data.isRunning;
-        
         minPerHour = data.minPerHour || 60;
         hoursPerDay = data.hoursPerDay || 24;
         daysPerMonth = data.daysPerMonth || 30;
@@ -71,25 +68,21 @@ rtdb.ref(`campaigns/${currentCampaignId}/clock`).on('value', (snapshot) => {
         } else {
             totalCustomSeconds = data.totalCustomSeconds;
         }
-        
         lastRealTime = now;
 
-        // Update HTML Inputs
-        document.getElementById('min-per-hour').value = minPerHour;
-        document.getElementById('hours-per-day').value = hoursPerDay;
-        document.getElementById('days-per-month').value = daysPerMonth;
-        document.getElementById('months-per-year').value = monthsPerYear;
-        document.getElementById('speed-label').innerText = speedMultiplier + "x";
+        // Update Admin Panel Inputs if they exist
+        if(document.getElementById('min-per-hour')) document.getElementById('min-per-hour').value = minPerHour;
+        if(document.getElementById('hours-per-day')) document.getElementById('hours-per-day').value = hoursPerDay;
+        if(document.getElementById('speed-label')) document.getElementById('speed-label').innerText = speedMultiplier + "x";
         
         let btn = document.getElementById('play-btn');
-        if (isRunning) {
-            btn.innerText = "Pause Time";
-            btn.className = "btn-stop";
-        } else {
-            btn.innerText = "Start Time";
-            btn.className = "btn-start";
+        if (btn) {
+            if (isRunning) {
+                btn.innerText = "Pause Time";
+            } else {
+                btn.innerText = "Start Time";
+            }
         }
-
         updateDisplay();
     }
 });
@@ -102,7 +95,6 @@ function tick() {
     let now = Date.now();
     let deltaRealSeconds = (now - lastRealTime) / 1000;
     lastRealTime = now;
-
     if (isRunning) {
         totalCustomSeconds += (deltaRealSeconds * speedMultiplier);
         updateDisplay();
@@ -111,7 +103,6 @@ function tick() {
 
 function updateDisplay() {
     let secPerMin = 60;
-    
     let currentSec = Math.floor(totalCustomSeconds % secPerMin);
     let totalMinutes = Math.floor(totalCustomSeconds / secPerMin);
     let currentMin = Math.floor(totalMinutes % minPerHour);
@@ -123,15 +114,13 @@ function updateDisplay() {
     let currentMonth = Math.floor(totalMonths % monthsPerYear) + 1; 
     let currentYear = Math.floor(totalMonths / monthsPerYear) + 1; 
 
-    let h = String(currentHour).padStart(2, '0');
-    let m = String(currentMin).padStart(2, '0');
-    let s = String(currentSec).padStart(2, '0');
-
-    document.getElementById('time-display').innerText = `${h}:${m}:${s}`;
-    document.getElementById('date-display').innerText = `Year ${currentYear}, Month ${currentMonth}, Day ${currentDay}`;
+    if(document.getElementById('time-display')) {
+        document.getElementById('time-display').innerText = `${String(currentHour).padStart(2, '0')}:${String(currentMin).padStart(2, '0')}:${String(currentSec).padStart(2, '0')}`;
+    }
+    if(document.getElementById('date-display')) {
+        document.getElementById('date-display').innerText = `Year ${currentYear}, Month ${currentMonth}, Day ${currentDay}`;
+    }
 }
-
-// Start the local engine loop (runs 20 times a second)
 setInterval(tick, 50);
 
 
@@ -152,9 +141,6 @@ function setSpeed(newSpeed) {
 function updateRules() {
     minPerHour = parseInt(document.getElementById('min-per-hour').value) || 60;
     hoursPerDay = parseInt(document.getElementById('hours-per-day').value) || 24;
-    daysPerMonth = parseInt(document.getElementById('days-per-month').value) || 30;
-    monthsPerYear = parseInt(document.getElementById('months-per-year').value) || 12;
-    
     updateDisplay(); 
     saveTimeState(); 
 }
@@ -166,17 +152,10 @@ function updateRules() {
 function registerUser() {
     const email = document.getElementById('email-input').value;
     const pass = document.getElementById('password-input').value;
-
-    auth.createUserWithEmailAndPassword(email, pass)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            firestore.collection('users').doc(user.uid).set({
-                email: email,
-                role: 'Player' 
-            });
-            alert("Account created!");
-        })
-        .catch((error) => alert(error.message));
+    auth.createUserWithEmailAndPassword(email, pass).then((userCredential) => {
+        firestore.collection('users').doc(userCredential.user.uid).set({ email: email, role: 'Player' });
+        alert("Account created!");
+    }).catch((error) => alert(error.message));
 }
 
 function loginUser() {
@@ -185,123 +164,104 @@ function loginUser() {
     auth.signInWithEmailAndPassword(email, pass).catch((error) => alert(error.message));
 }
 
-function logoutUser() {
-    auth.signOut();
-}
+function logoutUser() { auth.signOut(); }
+
 
 // ==========================================
 // --- 7. USER AUTHENTICATION ---
 // ==========================================
-// Reacts instantly when a user logs in or out
 auth.onAuthStateChanged((user) => {
-    // Grab all our UI pieces
     const gameUI = document.getElementById('game-ui');
-    const controlPanelTabBtn = document.getElementById('nav-control-panel'); // The sidebar button
-    const masterPanel = document.getElementById('master-panel');             // Level 2 content
-    const adminPanel = document.getElementById('admin-panel');               // Level 3 content
-    
-    // Login Screen Inputs
+    const controlPanelTabBtn = document.getElementById('nav-control-panel');
+    const masterPanel = document.getElementById('master-panel');
+    const adminPanel = document.getElementById('admin-panel');
     const loginTab = document.getElementById('tab-login');
-    const emailInput = document.getElementById('email-input');
-    const passInput = document.getElementById('password-input');
-    const loginBtn = document.getElementById('login-btn');
-    const registerBtn = document.getElementById('register-btn');
 
     if (user) {
-        // Fetch profile from Firestore
         firestore.collection('users').doc(user.uid).get().then((doc) => {
              if (doc.exists) {
-                const userData = doc.data();
-                const role = userData.role;
-                        
-                // FILL IN THE SHEET!
-                loadCharacter(userData);
-                
-                // Show who is logged in
+                const role = doc.data().role;
                 document.getElementById('user-status').innerText = `User: ${user.email} (${role})`;
                 document.getElementById('logout-btn').style.display = "inline-block";
                 
-                // Hide the login screen elements entirely
-                if (emailInput) emailInput.style.display = "none";
-                if (passInput) passInput.style.display = "none";
-                if (loginBtn) loginBtn.style.display = "none";
-                if (registerBtn) registerBtn.style.display = "none";
-                
-                // Automatically switch them to the Character Sheet tab on login
+                // Fetch Character List for the Dropdown
+                loadUserCharacters();
                 openTab('tab-character');
-                
-                // ==========================================
-                // --- THE HIERARCHY SECURITY CHECK ---
-                // ==========================================
-                
-                // LEVEL 1: Player (Can see the clock)
-                if (gameUI) gameUI.style.display = 'block';
 
-                // LEVEL 2: Master (Can see the Control Panel Tab, and the Master Panel inside it)
+                if (gameUI) gameUI.style.display = 'block';
                 if (role === 'Master' || role === 'Admin') {
                     if (controlPanelTabBtn) controlPanelTabBtn.style.display = 'block';
                     if (masterPanel) masterPanel.style.display = 'block';
-                } else {
-                    if (controlPanelTabBtn) controlPanelTabBtn.style.display = 'none';
-                    if (masterPanel) masterPanel.style.display = 'none';
                 }
-
-                // LEVEL 3: Admin (Can see the Admin Panel inside the Control Panel tab)
-                if (role === 'Admin') {
-                    if (adminPanel) adminPanel.style.display = 'block';
-                } else {
-                    if (adminPanel) adminPanel.style.display = 'none';
-                }
+                if (role === 'Admin' && adminPanel) adminPanel.style.display = 'block';
             }
         });
     } else {
-        // User is logged out
         document.getElementById('user-status').innerText = "Not logged in";
         document.getElementById('logout-btn').style.display = "none";
-        
-        // Show the login screen inputs
-        if (emailInput) emailInput.style.display = "block";
-        if (passInput) passInput.style.display = "block";
-        if (loginBtn) loginBtn.style.display = "inline-block";
-        if (registerBtn) registerBtn.style.display = "inline-block";
-        
-        // Force the screen back to the Login tab
+        document.getElementById('active-char-hud').style.display = "none";
         openTab('tab-login');
-        
-        // Hide game UI and restricted panels
         if (gameUI) gameUI.style.display = 'none';
         if (controlPanelTabBtn) controlPanelTabBtn.style.display = 'none';
-        if (masterPanel) masterPanel.style.display = 'none';
-        if (adminPanel) adminPanel.style.display = 'none';
     }
 });
-
 
 
 // ==========================================
 // --- 8. UI NAVIGATION (TAB SWITCHER) ---
 // ==========================================
 function openTab(tabId) {
-    // 1. Hide every single tab in the main content area
     const allTabs = document.querySelectorAll('.tab-content');
     allTabs.forEach(tab => tab.style.display = 'none');
-    
-    // 2. Unhide exactly the one we asked for
-    document.getElementById(tabId).style.display = 'block';
+    const target = document.getElementById(tabId);
+    if (target) target.style.display = 'block';
 }
-
 
 
 // ==========================================
 // --- 9. CHARACTER SHEET LOGIC ---
 // ==========================================
 
-// This runs automatically every time a player types a number and clicks away
-function saveCharacter() {
+function createNewCharacter() {
     const user = auth.currentUser;
-    if (!user) return; // Stop if they aren't logged in
+    if (!user) return;
+    const newRef = firestore.collection('users').doc(user.uid).collection('characters').doc();
+    const initData = { name: "New Hero", level: 1, hpCurrent: 10, hpMax: 10, str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10, portrait: "" };
+    newRef.set(initData).then(() => {
+        currentCharacterId = newRef.id;
+        loadUserCharacters();
+    });
+}
 
-    // 1. Gather all the data from the HTML inputs
+function loadUserCharacters() {
+    const user = auth.currentUser;
+    if (!user) return;
+    firestore.collection('users').doc(user.uid).collection('characters').get().then(snap => {
+        const select = document.getElementById('character-select');
+        select.innerHTML = '<option value="">-- Choose Character --</option>';
+        snap.forEach(doc => {
+            let opt = document.createElement('option');
+            opt.value = doc.id;
+            opt.innerText = `Lv. ${doc.data().level} | ${doc.data().name}`;
+            if (doc.id === currentCharacterId) opt.selected = true;
+            select.appendChild(opt);
+        });
+    });
+}
+
+function switchCharacter() {
+    currentCharacterId = document.getElementById('character-select').value;
+    if (!currentCharacterId) {
+        document.getElementById('active-char-hud').style.display = "none";
+        return;
+    }
+    firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get().then(doc => {
+        if (doc.exists) loadCharacterData(doc.data());
+    });
+}
+
+function saveCharacter() {
+    if (!currentCharacterId || !auth.currentUser) return;
     const charData = {
         name: document.getElementById('char-name').value,
         level: document.getElementById('char-level').value,
@@ -315,33 +275,77 @@ function saveCharacter() {
         con: document.getElementById('char-con').value,
         int: document.getElementById('char-int').value,
         wis: document.getElementById('char-wis').value,
-        cha: document.getElementById('char-cha').value
+        cha: document.getElementById('char-cha').value,
+        portrait: document.getElementById('portrait-preview').style.backgroundImage.slice(5, -2).replace(/"/g, "")
     };
-
-    // 2. Save it to Firestore inside a "character" object
-    firestore.collection('users').doc(user.uid).set({
-        character: charData
-    }, { merge: true }).then(() => {
-        console.log("Auto-saved character data to Firestore!");
-    }).catch(error => console.error("Error saving character:", error));
+    firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).set(charData, { merge: true })
+        .then(() => {
+            updateHUD(charData);
+            loadUserCharacters(); 
+        });
 }
 
-// This function fills in the boxes when the user first logs in
-function loadCharacter(userData) {
-    if (userData && userData.character) {
-        const char = userData.character;
-        document.getElementById('char-name').value = char.name || "";
-        document.getElementById('char-level').value = char.level || 1;
-        document.getElementById('char-hp-current').value = char.hpCurrent || "";
-        document.getElementById('char-hp-max').value = char.hpMax || "";
-        document.getElementById('char-ac').value = char.ac || 10;
-        document.getElementById('char-init').value = char.init || 0;
-        document.getElementById('char-speed').value = char.speed || 30;
-        document.getElementById('char-str').value = char.str || 10;
-        document.getElementById('char-dex').value = char.dex || 10;
-        document.getElementById('char-con').value = char.con || 10;
-        document.getElementById('char-int').value = char.int || 10;
-        document.getElementById('char-wis').value = char.wis || 10;
-        document.getElementById('char-cha').value = char.cha || 10;
+function loadCharacterData(char) {
+    document.getElementById('char-name').value = char.name || "";
+    document.getElementById('char-level').value = char.level || 1;
+    document.getElementById('char-hp-current').value = char.hpCurrent || 0;
+    document.getElementById('char-hp-max').value = char.hpMax || 0;
+    document.getElementById('char-ac').value = char.ac || 10;
+    document.getElementById('char-init').value = char.init || 0;
+    document.getElementById('char-speed').value = char.speed || 30;
+    document.getElementById('char-str').value = char.str || 10;
+    document.getElementById('char-dex').value = char.dex || 10;
+    document.getElementById('char-con').value = char.con || 10;
+    document.getElementById('char-int').value = char.int || 10;
+    document.getElementById('char-wis').value = char.wis || 10;
+    document.getElementById('char-cha').value = char.cha || 10;
+    updatePortraitUI(char.portrait);
+    updateHUD(char);
+}
+
+
+// ==========================================
+// --- 10. IMAGE & HUD HANDLING ---
+// ==========================================
+
+function handlePortraitUpload(event) {
+    const file = event.target.files[0];
+    if (!file || !currentCharacterId) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const size = 150;
+            canvas.width = size; canvas.height = size;
+            canvas.getContext('2d').drawImage(img, 0, 0, size, size);
+            const base64 = canvas.toDataURL('image/jpeg', 0.7);
+            updatePortraitUI(base64);
+            saveCharacter(); 
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function updatePortraitUI(base64) {
+    const preview = document.getElementById('portrait-preview');
+    const placeholder = document.getElementById('portrait-placeholder');
+    if (base64) {
+        preview.style.backgroundImage = `url('${base64}')`;
+        placeholder.style.display = 'none';
+    } else {
+        preview.style.backgroundImage = '';
+        placeholder.style.display = 'block';
     }
+}
+
+function updateHUD(char) {
+    const hud = document.getElementById('active-char-hud');
+    if (!char) return hud.style.display = 'none';
+    hud.style.display = 'block';
+    document.getElementById('hud-name').innerText = char.name || "Unnamed";
+    const hpPercent = (char.hpCurrent / char.hpMax) * 100;
+    document.getElementById('hud-hp-fill').style.width = (hpPercent || 0) + "%";
+    document.getElementById('hud-hp-text').innerText = `${char.hpCurrent || 0} / ${char.hpMax || 0}`;
 }
