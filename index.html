@@ -120,6 +120,17 @@
                                 <div class="text-center flex-grow"><h4>HP</h4><input type="number" id="char-hp-current" onchange="saveCharacter()" class="hp-input"> / <input type="number" id="char-hp-max" onchange="saveCharacter()" class="hp-input"></div>
                                 <div class="text-center flex-grow"><h4>MP</h4><input type="number" id="char-mp-current" onchange="saveCharacter()" class="hp-input"> / <input type="number" id="char-mp-max" onchange="saveCharacter()" class="hp-input"></div>
                             </div>
+                            <div class="panel-card">
+                                <h3>Character Gallery</h3>
+                                <div class="gallery-controls" style="margin-bottom: 15px;">
+                                    <input type="file" id="image-upload" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
+                                    <button onclick="document.getElementById('image-upload').click()" class="btn-secondary btn-full">
+                                        <i class="fa-solid fa-upload"></i> Upload Image
+                                    </button>
+                                </div>
+                                <div id="char-gallery-grid" class="gallery-grid">
+                                    </div>
+                            </div>
                         </div>
                     </div>
                 </div>
