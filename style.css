@@ -197,34 +197,22 @@ body {
 .gallery-item:hover .delete-img-btn { opacity: 1; }
 
 /* ==========================================
-   --- 12. FORM ELEMENTS ---
+   --- 12. FORM ELEMENTS & ALIGNMENT ---
    ========================================== */
-.panel-card { background: #18181b; padding: 20px; border-radius: 8px; border: 1px solid #27272a; margin-bottom: 20px; }
 
-/* Custom Spacing & Widths (Replacing inline styles) */
-.header-spacing { margin-bottom: 20px; }
-.field-spacing { margin-bottom: 15px; }
-.input-w-md { width: 120px; }
-.input-w-sm { width: 80px; }
-.exp-input-field { width: 100px; }
-.divider { padding: 0 5px; color: #3f3f46; font-weight: bold; }
-.resource-group { text-align: center; flex-grow: 1; }
-.centered-content { justify-content: center; }
-
-.identity-grid {
+/* --- Layout Containers --- */
+.stats-resources-wrapper {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr; /* Name gets more space, Race/Class equal */
+    grid-template-columns: 1fr 2fr;
     gap: 20px;
     margin-bottom: 20px;
 }
 
-/* Standard Inputs */
-.attr-input, .hp-input, .form-input { 
-    background: #09090b !important; 
-    color: white !important; 
-    border: 1px solid #3f3f46; 
-    padding: 8px; 
-    border-radius: 4px; 
+.identity-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
 }
 
 .level-exp-grid {
@@ -236,31 +224,45 @@ body {
 .resources-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 40px;
-    text-align: center;
+    gap: 20px;
 }
 
-/* Field Styling */
+/* --- Field & Group Styling --- */
 .field-group {
     display: flex;
     flex-direction: column;
     gap: 5px;
 }
 
-.exp-input-wrapper, .resource-inputs {
+.resource-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.resource-inputs, 
+.exp-input-wrapper {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    width: 100%;
     justify-content: center;
 }
 
-.divider {
-    color: #3f3f46;
-    font-weight: bold;
-    font-size: 1.2rem;
+/* --- Attribute List Styling --- */
+.attr-list-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-/* Input Specifics */
+.attr-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* --- Input & Element Styling --- */
 .form-input {
     width: 100%;
     background: #09090b !important;
@@ -271,7 +273,8 @@ body {
     box-sizing: border-box;
 }
 
-.hp-input {
+.hp-input, 
+.attr-input {
     width: 80px;
     text-align: center;
     background: #09090b !important;
@@ -279,16 +282,21 @@ body {
     border: 1px solid #27272a;
     padding: 10px;
     border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.divider {
+    color: #3f3f46;
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin: 0 5px;
 }
 
 .panel-card h3 {
     margin-top: 0;
     margin-bottom: 20px;
     color: #a1a1aa;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
-
-.btn-primary { background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; }
-.btn-secondary { background: #27272a; color: white; border: 1px solid #3f3f46; padding: 10px; border-radius: 4px; cursor: pointer; }
