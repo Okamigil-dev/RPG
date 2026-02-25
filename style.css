@@ -1,17 +1,20 @@
-/* --- GLOBAL RESET --- */
+/* --- 1. GLOBAL RESET & BASE --- */
 body {
     margin: 0;
     background-color: #09090b;
     color: white;
     font-family: 'Inter', sans-serif;
-    overflow: hidden;
+    overflow: hidden; /* Prevents double scrollbars with the app-body */
 }
 
-/* --- UTILITY CLASSES --- */
+/* --- 2. UTILITY CLASSES --- */
 .hide-default { display: none !important; }
-.flex-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+.flex-row { display: flex; align-items: center; gap: 15px; }
+.flex-grow { flex-grow: 1; }
+.text-center { text-align: center; }
+.btn-full { width: 100%; }
 
-/* --- NAVIGATION --- */
+/* --- 3. TOP NAVIGATION --- */
 .top-nav { 
     background: #111; 
     padding: 10px 20px; 
@@ -21,31 +24,59 @@ body {
     justify-content: space-between; 
     align-items: center; 
     box-sizing: border-box; 
+    z-index: 100;
 }
+.nav-left { display: flex; align-items: center; gap: 20px; }
+.brand-logo { font-weight: bold; color: #00ff88; letter-spacing: 1px; }
 .nav-tabs { display: flex; gap: 5px; }
+
 .tab-btn { 
     background: transparent; 
     color: #a1a1aa; 
     border: none; 
     cursor: pointer; 
-    padding: 10px; 
+    padding: 8px 12px; 
     font-weight: 600; 
     text-transform: uppercase; 
     font-size: 11px; 
+    transition: 0.2s;
 }
 .tab-btn:hover { color: #00ff88; }
+.tab-btn i { margin-right: 5px; }
 
-/* --- SIDEBAR & HUD --- */
+/* --- 4. USER HEADER (TOP RIGHT) --- */
+.user-header { display: flex; align-items: center; gap: 15px; }
+.user-info { text-align: right; line-height: 1.2; }
+.user-name { font-weight: bold; font-size: 0.9em; }
+.user-role { font-size: 0.7em; color: #00ff88; text-transform: uppercase; }
+
+/* --- 5. APP LAYOUT (CRITICAL) --- */
+.app-body {
+    display: flex; /* Restores the horizontal layout for Sidebar + Main */
+    width: 100%;
+    height: calc(100vh - 60px);
+}
+
 .sidebar { 
     width: 260px; 
+    min-width: 260px;
     background: #18181b; 
     padding: 20px; 
     border-right: 1px solid #27272a; 
-    height: calc(100vh - 60px); 
     display: flex; 
     flex-direction: column; 
     box-sizing: border-box; 
+    overflow-y: auto;
 }
+
+.main-content {
+    flex-grow: 1;
+    padding: 30px;
+    overflow-y: auto;
+    background-color: #09090b;
+}
+
+/* --- 6. SIDEBAR HUD --- */
 .active-char-hud { 
     padding: 15px; 
     background: #111; 
@@ -53,15 +84,21 @@ body {
     border: 1px solid #27272a; 
     margin-bottom: 20px; 
 }
+.hud-header { display: flex; gap: 12px; align-items: center; margin-bottom: 15px; }
 .portrait-circle-small {
     width: 45px;
     height: 45px;
     border-radius: 8px;
     border: 2px solid #00ff88;
-    background-color: #09090b;
+    background-color: #020617;
     background-size: cover;
     background-position: center;
 }
+.hud-name { margin: 0; font-size: 1em; color: white; }
+.hud-meta { font-size: 0.7em; color: #00ff88; text-transform: uppercase; }
+
+.hud-resource { margin-bottom: 10px; }
+.bar-label { display: flex; justify-content: space-between; font-size: 0.7em; font-weight: bold; margin-bottom: 2px; }
 .hp-bar-bg { 
     width: 100%; 
     height: 8px; 
@@ -69,40 +106,27 @@ body {
     border-radius: 4px; 
     overflow: hidden; 
 }
-.hp-bar-fill { 
-    height: 100%; 
-    background: #ef4444; 
-    transition: width 0.3s; 
-}
+.hp-bar-fill { height: 100%; background: #ef4444; transition: width 0.3s; }
 
-/* --- TAB LOGIC --- */
-.tab-content { 
-    display: none; 
-}
-
-/* Ensure that when the 'hide-default' class is removed by JS, the tab becomes visible */
-.tab-content:not(.hide-default) { 
-    display: block !important; 
-}
-
-/* --- DICE GRID --- */
-.dice-tray { 
-    margin-top: auto; 
-    padding-top: 20px; 
-    border-top: 1px solid #27272a; 
-}
-.dice-result { 
-    font-size: 1.4rem; 
+.hud-stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-top: 15px; }
+.hud-stat-box { 
+    background: #09090b; 
+    padding: 5px; 
     text-align: center; 
-    color: #00ff88; 
-    margin-bottom: 12px; 
-    height: 30px; 
+    border-radius: 4px; 
+    border: 1px solid #27272a; 
+    font-size: 0.75em; 
 }
-.dice-grid { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 10px; 
-}
+
+/* --- 7. WORLD CLOCK --- */
+.game-ui { text-align: center; padding: 15px 0; border-top: 1px solid #27272a; margin-top: 10px; }
+.date-text { font-size: 0.75em; color: #a1a1aa; }
+.time-text { font-size: 1.2em; color: #06b6d4; font-weight: bold; margin-top: 5px; font-variant-numeric: tabular-nums; }
+
+/* --- 8. DICE TRAY --- */
+.dice-tray { margin-top: auto; padding-top: 20px; border-top: 1px solid #27272a; }
+.dice-result { font-size: 1.4rem; text-align: center; color: #00ff88; margin-bottom: 12px; height: 30px; font-weight: bold; }
+.dice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .dice-grid button { 
     aspect-ratio: 1/1; 
     background: #27272a; 
@@ -114,56 +138,52 @@ body {
     flex-direction: column; 
     align-items: center; 
     justify-content: center; 
+    transition: 0.2s;
 }
-.dice-grid button i { font-size: 1.8rem; }
+.dice-grid button:hover { border-color: #00ff88; color: #00ff88; background: #1c1c1e; }
+.dice-grid button i { font-size: 1.6rem; margin-bottom: 4px; }
+.d20-btn { border-color: #3b82f6 !important; }
 
-/* --- FORM ELEMENTS --- */
+/* --- 9. TAB LOGIC --- */
+.tab-content { display: none; }
+.tab-content:not(.hide-default) { display: block !important; }
+
+/* --- 10. CHARACTER SHEET & PANELS --- */
+.char-sheet-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+.panel-card { background: #18181b; padding: 20px; border-radius: 8px; border: 1px solid #27272a; margin-bottom: 20px; }
+.panel-title, h3 { margin-top: 0; color: #a1a1aa; font-size: 1.1em; border-bottom: 1px solid #27272a; padding-bottom: 10px; margin-bottom: 15px; }
+
+.attr-list { display: flex; flex-direction: column; gap: 10px; }
+.attr-row { display: flex; justify-content: space-between; align-items: center; background: #27272a; padding: 10px; border-radius: 6px; }
+.attr-input, .hp-input { 
+    width: 60px; 
+    background: #09090b; 
+    border: 1px solid #3f3f46; 
+    color: white; 
+    padding: 8px; 
+    text-align: center; 
+    border-radius: 4px; 
+}
 .form-input { 
     width: 100%; 
     padding: 10px; 
     background: #09090b; 
-    border: 1px solid #27272a; 
+    border: 1px solid #3f3f46; 
     color: white; 
     border-radius: 4px; 
-    margin-bottom: 10px; 
     box-sizing: border-box; 
 }
-.attr-input {
-    width: 50px;
-    text-align: center;
-    background: #18181b;
-    border: 1px solid #27272a;
-    color: white;
-    padding: 5px;
-    border-radius: 4px;
-}
-.btn-primary { 
-    background: #3b82f6; 
-    color: white; 
-    border: none; 
-    padding: 12px; 
-    border-radius: 4px; 
-    cursor: pointer; 
-}
-.btn-secondary { 
-    background: #27272a; 
-    color: white; 
-    border: 1px solid #3f3f46; 
-    padding: 12px; 
-    border-radius: 4px; 
-    cursor: pointer; 
-}
-.btn-full { width: 100%; }
+label { font-size: 0.75em; color: #a1a1aa; text-transform: uppercase; margin-bottom: 5px; display: block; }
 
-/* --- APP LAYOUT --- */
-.app-body {
-    display: flex;
-    width: 100%;
-    height: calc(100vh - 60px);
-}
-.main-content {
-    flex-grow: 1;
-    padding: 30px;
-    overflow-y: auto;
-    background-color: #09090b;
-}
+/* --- 11. BUTTONS --- */
+button { transition: 0.2s; cursor: pointer; font-weight: bold; border-radius: 4px; border: none; }
+button:hover { opacity: 0.8; }
+.btn-primary { background: #3b82f6; color: white; padding: 12px; }
+.btn-secondary { background: #3f3f46; color: white; padding: 10px; }
+.btn-success { background: #10b981; color: white; padding: 10px; }
+.btn-danger { background: #ef4444; color: white; padding: 6px 12px; font-size: 0.8em; }
+
+/* --- 12. CHARACTER SELECTION --- */
+.char-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+.char-card { background: #18181b; border: 1px solid #27272a; padding: 20px; text-align: center; cursor: pointer; border-radius: 8px; }
+.char-card:hover { border-color: #00ff88; transform: translateY(-3px); }
