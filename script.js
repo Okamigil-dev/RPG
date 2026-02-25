@@ -206,17 +206,26 @@ function selectCharacter(id) {
         if (doc.exists) {
             const d = doc.data();
             
-            // Identity & Level
-            document.getElementById('char-name').value = d.name || "";
-            document.getElementById('char-race').value = d.race || ""; // Added
-            document.getElementById('char-class').value = d.class || ""; // Added
-            document.getElementById('char-level').value = d.level || 1;
-            
-            // EXP Fields
-            document.getElementById('char-exp-current').value = d.expCurrent || 0; // Added
-            document.getElementById('char-exp-max').value = d.expMax || 1000; // Added
+            // 1. Define Elements
+            const raceEl = document.getElementById('char-race');
+            const classEl = document.getElementById('char-class');
 
-            // Stats & Resources
+            // 2. Set Values
+            document.getElementById('char-name').value = d.name || "";
+            document.getElementById('char-level').value = d.level || 1;
+            raceEl.value = d.race || "";
+            classEl.value = d.class || "";
+            
+            // 3. Locking Logic (Master/Admin Bypass)
+            const isMaster = (window.currentUserRole === 'master' || window.currentUserRole === 'admin');
+            raceEl.disabled = (d.race && !isMaster);
+            classEl.disabled = (d.class && !isMaster);
+            
+            // 4. EXP Fields
+            document.getElementById('char-exp-current').value = d.expCurrent || 0;
+            document.getElementById('char-exp-max').value = d.expMax || 1000;
+
+            // 5. Stats & Resources
             document.getElementById('char-body').value = d.body || 10;
             document.getElementById('char-mind').value = d.mind || 10;
             document.getElementById('char-spirit').value = d.spirit || 10;
@@ -225,12 +234,14 @@ function selectCharacter(id) {
             document.getElementById('char-mp-current').value = d.mpCurrent || 0;
             document.getElementById('char-mp-max').value = d.mpMax || 0;
 
-            // Navigation
+            // 6. Navigation & UI Updates
             document.getElementById('char-selection-view').classList.add('hide-default');
             document.getElementById('char-sheet-view').classList.remove('hide-default');
             
             updateHUD(d);
             if (d.gallery) renderGallery(d.gallery, d.portrait);
+            
+            // 7. Persistence
             firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
         }
     });
