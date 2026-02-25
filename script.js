@@ -173,7 +173,11 @@ function openTab(tabId) {
         target.style.display = 'block';
         target.classList.remove('hide-default');
     }
+    if (tabId === 'tab-control-panel') {
+        openMasterPanel();
+    }
 }
+
 
 
 
@@ -569,4 +573,32 @@ function setSpeed(multiplier) {
     // --- YOUR EXISTING CLOCK LOGIC HERE ---
     // Example: updateGlobalClockSpeed(multiplier);
     console.log(`System: Clock speed set to ${multiplier}x by ${role}`);
+}
+
+function openMasterPanel() {
+    const role = window.currentUserRole;
+
+    // 1. Security check - if somehow a Player gets here, kick them out
+    if (role !== 'Master' && role !== 'Admin') {
+        alert("Access Denied: Specialized clearance required.");
+        openTab('tab-character'); // Redirect back to character sheet
+        return;
+    }
+
+    // 2. Handle Admin-Only visibility for Account Management
+    const accountBtn = document.querySelector('[onclick*="sub-accounts"]');
+    if (accountBtn) {
+        if (role === 'Admin') {
+            accountBtn.style.display = 'block';
+        } else {
+            accountBtn.style.display = 'none';
+            
+            // If a Master opens the panel, they can't start on the 'Account' tab
+            // We force them over to the 'Group' tab instead
+            const groupsBtn = document.querySelector('[onclick*="sub-groups"]');
+            if (groupsBtn) {
+                groupsBtn.click(); 
+            }
+        }
+    }
 }
