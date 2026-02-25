@@ -175,6 +175,45 @@ body {
 }
 label { font-size: 0.75em; color: #a1a1aa; text-transform: uppercase; margin-bottom: 5px; display: block; }
 
+/* Gallery Layout */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.gallery-item {
+    aspect-ratio: 1/1;
+    border: 2px solid #27272a;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gallery-item:hover {
+    border-color: #00ff88;
+}
+
+.gallery-item.active-img {
+    border-color: #00ff88;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+/* Ensure character cards in selection use the same portrait style */
+.char-card .portrait-circle-small {
+    display: block;
+    pointer-events: none; /* Let the click pass to the card */
+}
+
+
 /* --- 11. BUTTONS --- */
 button { transition: 0.2s; cursor: pointer; font-weight: bold; border-radius: 4px; border: none; }
 button:hover { opacity: 0.8; }
