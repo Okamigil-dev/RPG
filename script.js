@@ -190,16 +190,21 @@ function logoutUser() {
 }
 
 // Reacts instantly when a user logs in or out
+// Reacts instantly when a user logs in or out
 auth.onAuthStateChanged((user) => {
-    const controlsDiv = document.querySelector('.controls');
-    const settingsDiv = document.querySelector('.settings');
+    // Grab the UI elements
+    const gameUI = document.getElementById('game-ui');
+    const controlsDiv = document.getElementById('time-controls');
+    const settingsDiv = document.getElementById('time-settings');
 
     if (user) {
+        // Fetch their profile from FIRESTORE
         firestore.collection('users').doc(user.uid).get().then((doc) => {
             if (doc.exists) {
                 const userData = doc.data();
                 const role = userData.role;
                 
+                // Update Login Panel UI
                 document.getElementById('user-status').innerText = `Logged in as: ${user.email} (Role: ${role})`;
                 document.getElementById('logout-btn').style.display = "inline-block";
                 document.getElementById('auth-title').style.display = "none";
@@ -208,7 +213,11 @@ auth.onAuthStateChanged((user) => {
                 document.querySelector('button[onclick="loginUser()"]').style.display = "none";
                 document.querySelector('button[onclick="registerUser()"]').style.display = "none";
                 
-                // Hide or show controls based on role
+                // --- SECURITY CHECK ---
+                // 1. Show the main clock to ALL logged-in players
+                if (gameUI) gameUI.style.display = 'block';
+
+                // 2. Only show the control buttons if they are an Admin
                 if (role === 'Admin') {
                     if (controlsDiv) controlsDiv.style.display = 'block';
                     if (settingsDiv) settingsDiv.style.display = 'block';
@@ -219,15 +228,18 @@ auth.onAuthStateChanged((user) => {
             }
         });
     } else {
+        // User is logged out
         document.getElementById('user-status').innerText = "Not logged in";
         document.getElementById('logout-btn').style.display = "none";
+        
+        // Reset Login Panel UI
         document.getElementById('auth-title').style.display = "block";
         document.getElementById('email-input').style.display = "inline-block";
         document.getElementById('password-input').style.display = "inline-block";
         document.querySelector('button[onclick="loginUser()"]').style.display = "inline-block";
         document.querySelector('button[onclick="registerUser()"]').style.display = "inline-block";
         
-        if (controlsDiv) controlsDiv.style.display = 'none';
-        if (settingsDiv) settingsDiv.style.display = 'none';
+        // Hide absolutely everything on the right side from guests!
+        if (gameUI) gameUI.style.display = 'none';
     }
 });
