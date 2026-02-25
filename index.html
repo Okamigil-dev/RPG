@@ -7,10 +7,24 @@
         
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    
 </head>
 <body>
 
+    <div id="auth-container" style="background: #18181b; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; width: 400px; border: 1px solid #27272a;">
+        <h2 id="auth-title">Log In or Register</h2>
+        <input type="email" id="email-input" placeholder="Email" style="width: 90%; padding: 8px; margin-bottom: 10px; background: #09090b; color: white; border: 1px solid #3f3f46;">
+        <input type="password" id="password-input" placeholder="Password" style="width: 90%; padding: 8px; margin-bottom: 10px; background: #09090b; color: white; border: 1px solid #3f3f46;">
+        
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button onclick="loginUser()">Log In</button>
+            <button onclick="registerUser()">Register</button>
+            <button onclick="logoutUser()" id="logout-btn" style="display: none; background: #ef4444;">Log Out</button>
+        </div>
+            <div id="user-status" style="margin-top: 10px; color: #a1a1aa; font-size: 14px;">Not logged in</div>
+    </div>
+    
     <div class="clock-container">
         <h2>World Time</h2>
         
