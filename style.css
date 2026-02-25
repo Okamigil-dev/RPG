@@ -298,6 +298,15 @@ body {
     letter-spacing: 1px;
 }
 
+/* Styling for locked/disabled dropdowns */
+.form-input:disabled {
+    background: #111 !important;
+    color: #52525b !important;
+    cursor: not-allowed;
+    border-color: #27272a;
+    opacity: 0.8;
+}
+
 /* --- Buttons --- */
 .btn-primary { background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; }
 .btn-secondary { background: #27272a; color: white; border: 1px solid #3f3f46; padding: 10px; border-radius: 4px; cursor: pointer; }
