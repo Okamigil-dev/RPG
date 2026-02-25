@@ -109,50 +109,16 @@
                     </div>
                     
                     <div class="char-sheet-grid">
-                        <div class="char-side-col">
+                        <div class="stats-resources-wrapper">
                             <div class="panel-card">
                                 <h3>Core Stats</h3>
-                                <div class="attr-list">
+                                <div class="attr-list-grid">
                                     <div class="attr-row"><span>BODY</span><input type="number" id="char-body" onchange="saveCharacter()" class="attr-input"></div>
                                     <div class="attr-row"><span>MIND</span><input type="number" id="char-mind" onchange="saveCharacter()" class="attr-input"></div>
                                     <div class="attr-row"><span>SPIRIT</span><input type="number" id="char-spirit" onchange="saveCharacter()" class="attr-input"></div>
                                 </div>
                             </div>
-                        </div>
-            
-                        <div class="char-main-col">
-                            <div class="panel-card">
-                                <div class="identity-grid">
-                                    <div class="field-group">
-                                        <label>Name</label>
-                                        <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
-                                    </div>
-                                    <div class="field-group">
-                                        <label>Race</label>
-                                        <input type="text" id="char-race" onchange="saveCharacter()" class="form-input">
-                                    </div>
-                                    <div class="field-group">
-                                        <label>Class</label>
-                                        <input type="text" id="char-class" onchange="saveCharacter()" class="form-input">
-                                    </div>
-                                </div>
-                                
-                                <div class="level-exp-grid">
-                                    <div class="field-group">
-                                        <label>Lv</label>
-                                        <input type="number" id="char-level" onchange="saveCharacter()" class="form-input">
-                                    </div>
-                                    <div class="field-group">
-                                        <label>Experience (EXP)</label>
-                                        <div class="exp-input-wrapper">
-                                            <input type="number" id="char-exp-current" onchange="saveCharacter()" class="form-input">
-                                            <span class="divider">/</span>
-                                            <input type="number" id="char-exp-max" onchange="saveCharacter()" class="form-input">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        
+                    
                             <div class="panel-card">
                                 <h3>Resources</h3>
                                 <div class="resources-grid">
@@ -175,13 +141,44 @@
                                 </div>
                             </div>
                         </div>
-
+                    
+                        <div class="panel-card">
+                            <div class="identity-grid">
+                                <div class="field-group">
+                                    <label>Name</label>
+                                    <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
+                                </div>
+                                <div class="field-group">
+                                    <label>Race</label>
+                                    <input type="text" id="char-race" onchange="saveCharacter()" class="form-input">
+                                </div>
+                                <div class="field-group">
+                                    <label>Class</label>
+                                    <input type="text" id="char-class" onchange="saveCharacter()" class="form-input">
+                                </div>
+                            </div>
+                            
+                            <div class="level-exp-grid">
+                                <div class="field-group">
+                                    <label>Lv</label>
+                                    <input type="number" id="char-level" onchange="saveCharacter()" class="form-input">
+                                </div>
+                                <div class="field-group">
+                                    <label>Experience (EXP)</label>
+                                    <div class="exp-input-wrapper">
+                                        <input type="number" id="char-exp-current" onchange="saveCharacter()" class="form-input">
+                                        <span class="divider">/</span>
+                                        <input type="number" id="char-exp-max" onchange="saveCharacter()" class="form-input">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    
                         <div class="panel-card">
                             <h3>Gallery (Max 10 Slots)</h3>
                             <input type="file" id="slot-upload" accept="image/*" class="hide-default" onchange="handleSlotUpload(this)">
                             <div id="char-gallery-grid" class="gallery-grid"></div>
                         </div>
-                        
                     </div>
                 </div>
             </div>
