@@ -1,6 +1,7 @@
 // ==========================================
 // --- 1. STATE VARIABLES & DEFAULTS ---
 // ==========================================
+
 let totalCustomSeconds = 0; 
 let speedMultiplier = 1;
 let isRunning = false;
@@ -9,9 +10,12 @@ let lastRealTime = Date.now();
 let currentCampaignId = "global"; 
 let currentCharacterId = null; 
 
+
+
 // ==========================================
 // --- 2. FIREBASE SETUP & INITIALIZATION ---
 // ==========================================
+
 const firebaseConfig = {
     apiKey: "AIzaSyCdwo2sWiMzLfnZ8o3oYkDYL45FuLiV4OI",
     authDomain: "virtual-tabletop-6cdab.firebaseapp.com",
@@ -27,9 +31,12 @@ const auth = firebase.auth();
 const rtdb = firebase.database();       
 const firestore = firebase.firestore(); 
 
+
+
 // ==========================================
 // --- 3. DATABASE SYNC (RTDB) ---
 // ==========================================
+
 function saveTimeState() {
     const timeData = {
         totalCustomSeconds: totalCustomSeconds,
@@ -59,9 +66,12 @@ rtdb.ref(`campaigns/${currentCampaignId}/clock`).on('value', (snapshot) => {
     }
 });
 
+
+
 // ==========================================
 // --- 4. CLOCK ENGINE & DISPLAY ---
 // ==========================================
+
 function tick() {
     let now = Date.now();
     let deltaRealSeconds = (now - lastRealTime) / 1000;
@@ -82,11 +92,16 @@ function updateDisplay() {
 }
 setInterval(tick, 100);
 
+
+
 // ==========================================
 // --- 5. CLOCK CONTROLS (ADMIN ONLY) ---
 // ==========================================
+
 function toggleTime() { isRunning = !isRunning; saveTimeState(); }
 function setSpeed(s) { speedMultiplier = s; saveTimeState(); }
+
+
 
 // ==========================================
 // --- 6. AUTHENTICATION & ROLES ---
@@ -105,9 +120,12 @@ function loginUser() {
 }
 function logoutUser() { auth.signOut().then(() => location.reload()); }
 
+
+
 // ==========================================
 // --- 7. USER AUTHENTICATION ---
 // ==========================================
+
 auth.onAuthStateChanged((user) => {
     if (user) {
         document.getElementById('main-nav-tabs').classList.remove('hide-default');
@@ -132,9 +150,12 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
+
+
 // ==========================================
 // --- 8. UI NAVIGATION (TAB SWITCHER) ---
 // ==========================================
+
 function openTab(tabId) {
     const allTabs = document.querySelectorAll('.tab-content');
     allTabs.forEach(tab => {
@@ -149,9 +170,12 @@ function openTab(tabId) {
     }
 }
 
+
+
 // ==========================================
 // --- 9. CHARACTER SHEET LOGIC ---
 // ==========================================
+
 function createNewCharacter() {
     const user = auth.currentUser;
     const data = { name: "New Hero", body: 10, mind: 10, spirit: 10, hpCurrent: 10, hpMax: 10 };
@@ -190,11 +214,25 @@ function selectCharacter(id) {
 
 function saveCharacter() {
     if (!currentCharacterId) return;
+    
+    // Collecting ALL values from the sheet
     const data = {
         name: document.getElementById('char-name').value,
-        body: parseInt(document.getElementById('char-body').value) || 10
+        level: parseInt(document.getElementById('char-level').value) || 1,
+        body: parseInt(document.getElementById('char-body').value) || 10,
+        mind: parseInt(document.getElementById('char-mind').value) || 10,
+        spirit: parseInt(document.getElementById('char-spirit').value) || 10,
+        hpCurrent: parseInt(document.getElementById('char-hp-current').value) || 0,
+        hpMax: parseInt(document.getElementById('char-hp-max').value) || 0,
+        mpCurrent: parseInt(document.getElementById('char-mp-current').value) || 0,
+        mpMax: parseInt(document.getElementById('char-mp-max').value) || 0
     };
-    firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).update(data).then(() => updateHUD(data));
+
+    firestore.collection('users').doc(auth.currentUser.uid)
+        .collection('characters').doc(currentCharacterId)
+        .update(data).then(() => {
+            updateHUD(data); // Immediately refresh the sidebar
+        });
 }
 
 function goBackToSelection() {
@@ -223,17 +261,43 @@ function loadUserCharacters() {
     });
 }
 
+
+
 // ==========================================
 // --- 10. HUD HANDLING ---
 // ==========================================
+
 function updateHUD(char) {
     document.getElementById('active-char-hud').classList.remove('hide-default');
-    document.getElementById('hud-name').innerText = char.name;
-    document.getElementById('hud-portrait').style.backgroundImage = `url(${char.portrait || ''})`;
-    document.getElementById('hud-hp-fill').style.width = (char.hpCurrent / char.hpMax * 100) + "%";
     
-    if (char.gallery) renderGallery(char.gallery, char.portrait);
+    // Update Sidebar Text
+    document.getElementById('hud-name').innerText = char.name || "Unnamed";
+    document.getElementById('hud-hp-text').innerText = `${char.hpCurrent || 0}/${char.hpMax || 0}`;
+    document.getElementById('hud-mp-text').innerText = `${char.mpCurrent || 0}/${char.mpMax || 0}`;
+    
+    // Update Sidebar Modifiers (Formula: (Stat - 10) / 2)
+    const calcMod = (val) => {
+        const mod = Math.floor(((val || 10) - 10) / 2);
+        return mod >= 0 ? `+${mod}` : mod;
+    };
+    document.getElementById('hud-mod-body').innerText = calcMod(char.body);
+    document.getElementById('hud-mod-mind').innerText = calcMod(char.mind);
+    document.getElementById('hud-mod-spirit').innerText = calcMod(char.spirit);
+
+    // Update Bars
+    const hpPerc = (char.hpCurrent / (char.hpMax || 1)) * 100;
+    const mpPerc = (char.mpCurrent / (char.mpMax || 1)) * 100;
+    document.getElementById('hud-hp-fill').style.width = hpPerc + "%";
+    document.getElementById('hud-mp-fill').style.width = mpPerc + "%";
+
+    // Update Portrait
+    if (char.portrait) {
+        document.getElementById('hud-portrait').style.backgroundImage = `url(${char.portrait})`;
+    }
 }
+
+
+
 // ==========================================
 // --- 11. DICE ROLLER ---
 // ==========================================
@@ -258,12 +322,22 @@ function rollDice(sides) {
 // Convert file to Base64 string
 function handleImageUpload(input) {
     const file = input.files[0];
-    if (!file) return;
+    if (!file || !currentCharacterId) return;
 
     const reader = new FileReader();
     reader.onload = function(e) {
         const base64String = e.target.result;
-        saveImageToGallery(base64String);
+        const user = auth.currentUser;
+        const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
+
+        charRef.get().then(doc => {
+            let gallery = doc.data().gallery || [];
+            gallery.push(base64String);
+            const updateData = { gallery: gallery };
+            if (!doc.data().portrait) updateData.portrait = base64String;
+            
+            charRef.update(updateData).then(() => renderGallery(gallery, doc.data().portrait || base64String));
+        });
     };
     reader.readAsDataURL(file);
 }
@@ -285,11 +359,18 @@ function saveImageToGallery(base64Data) {
 
 function renderGallery(gallery, activePortrait) {
     const container = document.getElementById('char-gallery-grid');
+    if (!container) return; // Prevent crash if HTML element is missing
     container.innerHTML = "";
+    
     gallery.forEach((img) => {
         const wrapper = document.createElement('div');
         wrapper.className = `gallery-item ${img === activePortrait ? 'active-img' : ''}`;
-        wrapper.innerHTML = `<img src="${img}" onclick="setActivePortrait('${img}')">`;
+        wrapper.onclick = () => setActivePortrait(img);
+        
+        wrapper.innerHTML = `
+            <img src="${img}">
+            <button class="delete-img-btn" onclick="deleteImage(event, '${img}')">×</button>
+        `;
         container.appendChild(wrapper);
     });
 }
