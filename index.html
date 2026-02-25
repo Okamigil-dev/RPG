@@ -240,40 +240,64 @@
                 <h2 class="tab-title">Master Control</h2>
             
                 <div class="sub-nav-tabs">
-                    <button class="sub-nav-btn active" onclick="openControlSubTab(event, 'sub-time')">Time Management</button>
-                    <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-players')">Player Management</button>
-                    <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-rules')">Core Rules</button>
+                    <button class="sub-nav-btn active" onclick="openControlSubTab(event, 'sub-accounts')">Account Management</button>
+                    <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-groups')">Group Management</button>
+                    <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-characters')">Character Management</button>
+                    <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-items')">Item Management</button>
+                    <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-skills')">Skill Management</button>
                 </div>
             
                 <div class="sub-tab-container">
-                    <div id="sub-time" class="control-sub-content">
+                    
+                    <div id="sub-accounts" class="control-sub-content">
                         <div class="panel-card">
-                            <h3>Time Control</h3>
-                            <button onclick="toggleTime()" id="play-btn" class="btn-success">Start Time</button>
-                            <span id="speed-label">1x</span>
-                            <div class="mt-m">
-                                <button onclick="setSpeed(1)" class="btn-small">1x</button>
-                                <button onclick="setSpeed(10)" class="btn-small">10x</button>
-                                <button onclick="setSpeed(100)" class="btn-small">100x</button>
+                            <h3>Account Management</h3>
+                            <p style="color: #71717a;">Admin tools for user roles and permissions will be here.</p>
+                        </div>
+                    </div>
+            
+                    <div id="sub-groups" class="control-sub-content hide-default">
+                        <div class="panel-card">
+                            <h3>Group Management & World Clock</h3>
+                            
+                            <div class="field-group">
+                                <button onclick="toggleTime()" id="play-btn" class="btn-success">Start Time</button>
+                                <span id="speed-label">1x</span>
+                                <div class="mt-m">
+                                    <button onclick="setSpeed(1)" class="btn-small">1x</button>
+                                    <button onclick="setSpeed(10)" class="btn-small">10x</button>
+                                    <button onclick="setSpeed(100)" class="btn-small">100x</button>
+                                </div>
                             </div>
                         </div>
                     </div>
             
-                    <div id="sub-players" class="control-sub-content hide-default">
+                    <div id="sub-characters" class="control-sub-content hide-default">
                         <div class="panel-card">
-                            <h3>Player List</h3>
-                            <p>Player management tools will go here.</p>
+                            <h3>Character Management</h3>
+                            <p style="color: #71717a;">Tools to oversee and edit player sheets will be here.</p>
+                        </div>
+                    </div>
+
+                    <div id="sub-items" class="control-sub-content hide-default">
+                        <div class="panel-card">
+                            <h3>Item Management</h3>
+                            <p style="color: #71717a;">Master item list and loot generators will be here.</p>
+                        </div>
+                    </div>
+
+                    <div id="sub-skills" class="control-sub-content hide-default">
+                        <div class="panel-card">
+                            <h3>Skill Management</h3>
+                            <p style="color: #71717a;">Ability editors and class skill trees will be here.</p>
                         </div>
                     </div>
             
-                    <div id="sub-rules" class="control-sub-content hide-default">
-                        <div class="panel-card">
-                            <h3>System Settings</h3>
-                            <p>EXP caps and global rules will go here.</p>
-                        </div>
-                    </div>
                 </div>
             </div>
+
+
+            
         </div>
     </div>
     <script src="script.js"></script>
