@@ -587,18 +587,56 @@ function openMasterPanel() {
 
     // 2. Handle Admin-Only visibility for Account Management
     const accountBtn = document.querySelector('[onclick*="sub-accounts"]');
+    
     if (accountBtn) {
         if (role === 'Admin') {
             accountBtn.style.display = 'block';
+            loadUserList(); // Only Admins fetch the user database
         } else {
             accountBtn.style.display = 'none';
             
-            // If a Master opens the panel, they can't start on the 'Account' tab
-            // We force them over to the 'Group' tab instead
+            // If a Master opens the panel, move them to the first tab they ARE allowed to see
             const groupsBtn = document.querySelector('[onclick*="sub-groups"]');
             if (groupsBtn) {
                 groupsBtn.click(); 
             }
         }
+    }
+}
+
+/**
+ * Fetches all users from Firestore and displays them in the Admin panel
+ */
+async function loadUserList() {
+    const listContainer = document.getElementById('admin-user-list');
+    listContainer.innerHTML = '<p style="padding: 20px; text-align: center;">Fetching database...</p>';
+
+    try {
+        const snapshot = await firestore.collection('users').get();
+        listContainer.innerHTML = ""; // Clear loader
+
+        snapshot.forEach(doc => {
+            const user = doc.data();
+            const row = document.createElement('div');
+            
+            // Basic styling for the row
+            row.style.display = 'grid';
+            row.style.gridTemplateColumns = '2fr 1fr 1fr';
+            row.style.padding = '12px 10px';
+            row.style.borderBottom = '1px solid #18181b';
+            row.style.alignItems = 'center';
+
+            row.innerHTML = `
+                <span style="font-size: 0.85rem; color: #e4e4e7;">${user.email || 'Anonymous'}</span>
+                <span class="role-badge" style="color: ${user.role === 'Admin' ? '#00ff88' : '#3b82f6'}; font-size: 0.7rem; font-weight: bold;">${user.role || 'Player'}</span>
+                <div style="text-align: right;">
+                    <button onclick="changeUserRole('${doc.id}', '${user.role}')" class="btn-small">Edit</button>
+                </div>
+            `;
+            listContainer.appendChild(row);
+        });
+    } catch (error) {
+        console.error("Error loading user list:", error);
+        listContainer.innerHTML = '<p style="color: #ef4444;">Error: Check Firestore Permissions</p>';
     }
 }
