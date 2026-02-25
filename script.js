@@ -136,6 +136,9 @@ auth.onAuthStateChanged((user) => {
         firestore.collection('users').doc(user.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
+
+                window.currentUserRole = data.role || 'Player';
+                
                 document.getElementById('user-role-label').innerText = data.role;
                 if (data.role === 'Master' || data.role === 'Admin') {
                     document.getElementById('nav-control-panel').classList.remove('hide-default');
@@ -146,8 +149,10 @@ auth.onAuthStateChanged((user) => {
         loadUserCharacters();
         openTab('tab-character');
     } else {
-        openTab('tab-login');
-    }
+    // Clear the role to prevent state bleed
+    window.currentUserRole = null; 
+    openTab('tab-login');
+}
 });
 
 
@@ -217,7 +222,7 @@ function selectCharacter(id) {
             classEl.value = d.class || "";
             
             // 3. Locking Logic (Master/Admin Bypass)
-            const isMaster = (window.currentUserRole === 'master' || window.currentUserRole === 'admin');
+            const isMaster = (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin');
             raceEl.disabled = (d.race && !isMaster);
             classEl.disabled = (d.class && !isMaster);
             
