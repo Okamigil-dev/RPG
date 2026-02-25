@@ -158,7 +158,7 @@ body {
 
 /* --- DICE ROLLER --- */
 .dice-tray {
-    margin-top: auto; /* Push to bottom of sidebar */
+    margin-top: auto;
     padding-top: 20px;
     border-top: 1px solid #27272a;
     text-align: center;
@@ -172,17 +172,16 @@ body {
     text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
 }
 
-/* Fixed Dice Grid Layout */
 .dice-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Two equal columns for d6 and d20 */
+    grid-template-columns: 1fr 1fr;
     gap: 15px;
 }
 .dice-grid button {
     background: #27272a;
     border: 1px solid #3f3f46;
     color: white;
-    aspect-ratio: 1 / 1; /* Force square shape */
+    aspect-ratio: 1 / 1;
     width: 100%;
     font-size: 1.6rem;
     border-radius: 12px;
@@ -200,12 +199,13 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 .d20-btn {
-    /* No longer spanning 3, kept as a single square button */
     background: linear-gradient(145deg, #1e1e21, #27272a) !important;
 }
 
 /* --- PANELS & TABS --- */
-.tab-content { display: none; }
+/* Reliance strictly on .hide-default class for visibility */
+.tab-content { width: 100%; }
+
 .panel-card { background: #18181b; padding: 20px; border-radius: 12px; border: 1px solid #27272a; margin-bottom: 20px; }
 .panel-title { margin-top: 0; font-size: 1rem; color: #a1a1aa; border-bottom: 1px solid #27272a; padding-bottom: 10px; margin-bottom: 15px; }
 .tab-title { color: #06b6d4; margin-top: 0; }
