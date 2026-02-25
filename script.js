@@ -245,11 +245,18 @@ function openTab(tabId) {
 function createNewCharacter() {
     const user = auth.currentUser;
     if (!user) return;
+    
+    // 1. Create the blank character profile
     const newRef = firestore.collection('users').doc(user.uid).collection('characters').doc();
     const initData = { name: "New Hero", level: 1, hpCurrent: 10, hpMax: 10, str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10, portrait: "" };
+    
+    // 2. Save it to the database
     newRef.set(initData).then(() => {
         currentCharacterId = newRef.id;
-        loadUserCharacters();
+        loadUserCharacters(); 
+        
+        // 3. THIS IS THE MISSING LINE: Force the screen to load the new blank stats!
+        loadCharacterData(initData);
     });
 }
 
