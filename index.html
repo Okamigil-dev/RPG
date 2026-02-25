@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>World Tabletop VTT</title>
+    
     <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -17,11 +20,11 @@
         
         <div class="nav-left">
             <div class="brand-logo">WORLD VTT</div>
-            <div class="nav-tabs">
-                <button onclick="openTab('tab-character')" class="tab-btn">📝 Character</button>
-                <button onclick="openTab('tab-backpack')" class="tab-btn">🎒 Backpack</button>
-                <button onclick="openTab('tab-skills')" class="tab-btn">⚔️ Skills</button>
-                <button onclick="openTab('tab-control-panel')" id="nav-control-panel" class="tab-btn hide-default">⚙️ Master</button>
+            <div id="main-nav-tabs" class="nav-tabs hide-default">
+                <button onclick="openTab('tab-character')" class="tab-btn"><i class="fa-regular fa-id-card fa-fw"></i> Character</button>
+                <button onclick="openTab('tab-backpack')" class="tab-btn"><i class="fa-solid fa-backpack fa-fw"></i> Backpack</button>
+                <button onclick="openTab('tab-skills')" class="tab-btn"><i class="fa-solid fa-khanda fa-fw"></i> Skills</button>
+                <button onclick="openTab('tab-control-panel')" id="nav-control-panel" class="tab-btn hide-default"><i class="fa-solid fa-gear fa-fw"></i> Master</button>
             </div>
         </div>
 
@@ -31,7 +34,7 @@
                 <div id="user-role-label" class="user-role">Offline</div>
             </div>
             <div id="nav-user-portrait" class="nav-portrait"></div>
-            <button onclick="logoutUser()" id="logout-btn" class="btn-danger hide-default">Logout</button>
+            <button onclick="logoutUser()" id="logout-btn" class="btn-danger hide-default"><i class="fa-solid fa-right-from-bracket"></i></button>
         </div>
     </div>
 
@@ -41,7 +44,7 @@
             
             <div id="active-char-hud" class="active-char-hud hide-default">
                 <div id="portrait-preview" class="portrait-circle" onclick="document.getElementById('portrait-input').click()">
-                    <span id="portrait-placeholder" class="portrait-placeholder">👤</span>
+                    <span id="portrait-placeholder" class="portrait-placeholder"><i class="fa-solid fa-user"></i></span>
                 </div>
                 <input type="file" id="portrait-input" accept="image/*" class="hide-default" onchange="handlePortraitUpload(event)">
                 
@@ -56,7 +59,7 @@
                 <select id="character-select" class="char-select" onchange="switchCharacter()">
                     <option value="">-- Switch Character --</option>
                 </select>
-                <button onclick="createNewCharacter()" class="btn-success btn-full">+ New Character</button>
+                <button onclick="createNewCharacter()" class="btn-success btn-full"><i class="fa-solid fa-plus"></i> New Character</button>
             </div>
         </div>
 
@@ -68,8 +71,8 @@
                     <input type="email" id="email-input" class="form-input" placeholder="Email">
                     <input type="password" id="password-input" class="form-input" placeholder="Password">
                     
-                    <button id="login-btn" onclick="loginUser()" class="btn-primary btn-full">Log In</button>
-                    <button id="register-btn" onclick="registerUser()" class="btn-secondary btn-full">Register</button>
+                    <button id="login-btn" onclick="loginUser()" class="btn-primary btn-full"><i class="fa-solid fa-right-to-bracket"></i> Log In</button>
+                    <button id="register-btn" onclick="registerUser()" class="btn-secondary btn-full"><i class="fa-solid fa-user-plus"></i> Register</button>
                 </div>
             </div>
             
@@ -159,7 +162,7 @@
                 
                 <div id="master-panel" class="panel-card master-panel hide-default">
                     <h3 class="master-title-small">Live Game Controls</h3>
-                    <button onclick="toggleTime()" id="play-btn" class="btn-success">Start Time</button>
+                    <button onclick="toggleTime()" id="play-btn" class="btn-success"><i class="fa-solid fa-play"></i> Start Time</button>
                     <span class="speed-label-text">Speed: <span id="speed-label">1x</span></span>
                     <button onclick="setSpeed(1)" class="btn-small">1x</button>
                     <button onclick="setSpeed(10)" class="btn-small">10x</button>
