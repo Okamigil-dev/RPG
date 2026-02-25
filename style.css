@@ -310,3 +310,59 @@ body {
 /* --- Buttons --- */
 .btn-primary { background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; }
 .btn-secondary { background: #27272a; color: white; border: 1px solid #3f3f46; padding: 10px; border-radius: 4px; cursor: pointer; }
+
+
+
+/* ============================================
+   ---- 13. MASTER CONTROL SUB-TABS ----
+   ============================================ */
+
+.sub-nav-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #27272a;
+    padding-bottom: 10px;
+}
+
+.sub-nav-btn {
+    background: #18181b;
+    border: 1px solid #27272a;
+    color: #a1a1aa;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.sub-nav-btn:hover {
+    background: #27272a;
+    color: #ffffff;
+}
+
+.sub-nav-btn.active {
+    background: #3b82f6; /* A distinct blue for the active sub-tab */
+    color: white;
+    border-color: #3b82f6;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.sub-tab-container {
+    padding-top: 10px;
+    min-height: 200px;
+}
+
+/* Speed Label Styling */
+#speed-label {
+    margin-left: 15px;
+    font-weight: bold;
+    color: #3b82f6;
+    font-family: monospace;
+    background: #1e1e1e;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #333;
+}
+
+
