@@ -90,105 +90,57 @@
                 </div>
             </div>
             
+            
+            
+            <!-- 1. CHARACTER TAB -->
+            
             <div id="tab-character" class="tab-content hide-default">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #06b6d4; padding-bottom: 10px; margin-bottom: 20px;">
-                    <h2 class="tab-title" style="border: none; padding: 0; margin: 0;">Character Management</h2>
-                    <button onclick="createNewCharacter()" class="btn-success"><i class="ph ph-plus"></i> New Character</button>
-                </div>
-            
-                <div class="char-sheet-grid">
-                    <div class="panel-card">
-                        <h3 class="panel-title">Core Stats</h3>
-                        <div class="attr-list">
-                            <div class="attr-row">
-                                <span class="attr-label text-str">BODY</span>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span id="mod-body" class="stat-mod">+0</span>
-                                    <input type="number" id="char-body" class="attr-input" onchange="saveCharacter()" value="10">
-                                </div>
-                            </div>
-                            <div class="attr-row">
-                                <span class="attr-label text-int">MIND</span>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span id="mod-mind" class="stat-mod">+0</span>
-                                    <input type="number" id="char-mind" class="attr-input" onchange="saveCharacter()" value="10">
-                                </div>
-                            </div>
-                            <div class="attr-row">
-                                <span class="attr-label text-wis">SPIRIT</span>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span id="mod-spirit" class="stat-mod">+0</span>
-                                    <input type="number" id="char-spirit" class="attr-input" onchange="saveCharacter()" value="10">
-                                </div>
-                            </div>
-                        </div>
-                        <p style="font-size: 0.7em; color: #a1a1aa; margin-top: 15px; text-align: center;">Roll: d20 + Modifier vs Target</p>
-                    </div>
-            
-                    <div class="char-main-col">
-                        <div class="panel-card flex-row" style="flex-wrap: wrap;">
-                            <div style="flex: 2; min-width: 150px;">
-                                <label class="input-label">Character Name</label>
-                                <input type="text" id="char-name" class="form-input" onchange="saveCharacter()">
-                            </div>
-                            <div style="flex: 1; min-width: 80px;">
-                                <label class="input-label">Race</label>
-                                <input type="text" id="char-race" class="form-input" onchange="saveCharacter()" placeholder="Human">
-                            </div>
-                            <div style="flex: 1; min-width: 80px;">
-                                <label class="input-label">Class</label>
-                                <input type="text" id="char-class" class="form-input" onchange="saveCharacter()" placeholder="Cleric">
-                            </div>
-                            <div style="width: 60px;">
-                                <label class="input-label">Level</label>
-                                <input type="number" id="char-level" class="form-input text-center" onchange="saveCharacter()" value="1">
-                            </div>
-                        </div>
-            
-                        <div class="panel-card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <div class="text-center">
-                                <h4 class="hp-title">Hit Points (HP)</h4>
-                                <div class="hp-inputs">
-                                    <input type="number" id="char-hp-current" class="hp-input" onchange="saveCharacter()">
-                                    <span class="hp-divider">/</span>
-                                    <input type="number" id="char-hp-max" class="hp-input" onchange="saveCharacter()">
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                <h4 class="hp-title" style="color: #3b82f6;">Mana Points (MP)</h4>
-                                <div class="hp-inputs">
-                                    <input type="number" id="char-mp-current" class="hp-input" onchange="saveCharacter()">
-                                    <span class="hp-divider">/</span>
-                                    <input type="number" id="char-mp-max" class="hp-input" onchange="saveCharacter()">
-                                </div>
-                            </div>
-                        </div>
-            
-                        <div class="combat-stats-grid">
-                            <div class="panel-card text-center"><label class="input-label">AC</label><input type="number" id="char-ac" class="combat-input" onchange="saveCharacter()" value="10"></div>
-                            <div class="panel-card text-center"><label class="input-label">INIT</label><input type="number" id="char-init" class="combat-input" onchange="saveCharacter()" value="0"></div>
-                            <div class="panel-card text-center"><label class="input-label">SPEED</label><input type="number" id="char-speed" class="combat-input" onchange="saveCharacter()" value="30"></div>
-                        </div>
-                    </div>
-                </div>
                 
-                <div class="panel-card" style="margin-top: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3f3f46; padding-bottom: 10px; margin-bottom: 15px;">
-                        <h3 class="panel-title" style="border: none; margin: 0; padding: 0;">Portrait Gallery</h3>
-                        <button onclick="document.getElementById('portrait-input').click()" class="btn-primary btn-small"><i class="ph ph-upload-simple"></i> Upload Image</button>
+                <div id="char-selection-view">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #06b6d4; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h2 class="tab-title" style="border: none; margin: 0;">Select Character</h2>
+                        <button onclick="createNewCharacter()" class="btn-success"><i class="ph ph-plus"></i> New Character</button>
                     </div>
-                    <div id="gallery-container" class="gallery-grid"></div>
+                    
+                    <div id="char-list-grid" class="char-list-grid">
+                        </div>
+                </div>
+            
+                <div id="char-sheet-view" class="hide-default">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #06b6d4; padding-bottom: 10px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <button onclick="goBackToSelection()" class="btn-secondary btn-small"><i class="ph ph-arrow-left"></i> Back</button>
+                            <h2 class="tab-title" style="border: none; margin: 0;">Character Sheet</h2>
+                        </div>
+                        <div id="sheet-header-info" style="color: #a1a1aa; font-size: 0.9em;"></div>
+                    </div>
+            
+                    <div class="char-sheet-grid">
+                        </div>
+                    
+                    <div class="panel-card" style="margin-top: 20px;">
+                         </div>
                 </div>
             </div>
 
+            
+
+            <!-- 2. BACKPACK TAB -->
+            
             <div id="tab-backpack" class="tab-content hide-default">
                 <h2>Backpack</h2>
             </div>
 
+
+
+            <!-- 3. SKILLS TAB -->
             <div id="tab-skills" class="tab-content hide-default">
                 <h2>Skills & Abilities</h2>
             </div>
 
+
+
+            <!-- 0. CONTROL PANEL TAB -->
             <div id="tab-control-panel" class="tab-content hide-default">
                 <h2 class="tab-title master-title">Master Control Panel</h2>
                 
