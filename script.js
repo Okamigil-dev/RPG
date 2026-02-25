@@ -189,46 +189,60 @@ function logoutUser() {
     auth.signOut();
 }
 
-// Reacts instantly when a user logs in or out
-// Reacts instantly when a user logs in or out
+// ==========================================
+// --- 7. USER AUTHENTICATION ---
+// ==========================================
 // Reacts instantly when a user logs in or out
 auth.onAuthStateChanged((user) => {
-    // Grab the UI elements
+    // Grab all our UI pieces
     const gameUI = document.getElementById('game-ui');
-    const masterPanel = document.getElementById('master-panel'); // The Level 2 box
-    const adminPanel = document.getElementById('admin-panel');   // The Level 3 box
+    const controlPanelTabBtn = document.getElementById('nav-control-panel'); // The sidebar button
+    const masterPanel = document.getElementById('master-panel');             // Level 2 content
+    const adminPanel = document.getElementById('admin-panel');               // Level 3 content
+    
+    // Login Screen Inputs
+    const loginTab = document.getElementById('tab-login');
+    const emailInput = document.getElementById('email-input');
+    const passInput = document.getElementById('password-input');
+    const loginBtn = document.getElementById('login-btn');
+    const registerBtn = document.getElementById('register-btn');
 
     if (user) {
-        // Fetch their profile from FIRESTORE
+        // Fetch profile from Firestore
         firestore.collection('users').doc(user.uid).get().then((doc) => {
             if (doc.exists) {
-                const userData = doc.data();
-                const role = userData.role;
+                const role = doc.data().role;
                 
-                // Update Login Panel UI
-                document.getElementById('user-status').innerText = `Logged in as: ${user.email} (Role: ${role})`;
+                // Show who is logged in
+                document.getElementById('user-status').innerText = `User: ${user.email} (${role})`;
                 document.getElementById('logout-btn').style.display = "inline-block";
-                document.getElementById('auth-title').style.display = "none";
-                document.getElementById('email-input').style.display = "none";
-                document.getElementById('password-input').style.display = "none";
-                document.querySelector('button[onclick="loginUser()"]').style.display = "none";
-                document.querySelector('button[onclick="registerUser()"]').style.display = "none";
+                
+                // Hide the login screen elements entirely
+                if (emailInput) emailInput.style.display = "none";
+                if (passInput) passInput.style.display = "none";
+                if (loginBtn) loginBtn.style.display = "none";
+                if (registerBtn) registerBtn.style.display = "none";
+                
+                // Automatically switch them to the Character Sheet tab on login
+                openTab('tab-character');
                 
                 // ==========================================
                 // --- THE HIERARCHY SECURITY CHECK ---
                 // ==========================================
                 
-                // LEVEL 1: Player (Everyone logged in gets to see the clock)
+                // LEVEL 1: Player (Can see the clock)
                 if (gameUI) gameUI.style.display = 'block';
 
-                // LEVEL 2: Master (Admins and Masters get the Game Controls)
+                // LEVEL 2: Master (Can see the Control Panel Tab, and the Master Panel inside it)
                 if (role === 'Master' || role === 'Admin') {
+                    if (controlPanelTabBtn) controlPanelTabBtn.style.display = 'block';
                     if (masterPanel) masterPanel.style.display = 'block';
                 } else {
+                    if (controlPanelTabBtn) controlPanelTabBtn.style.display = 'none';
                     if (masterPanel) masterPanel.style.display = 'none';
                 }
 
-                // LEVEL 3: Admin (Only Admins get to change the literal laws of time)
+                // LEVEL 3: Admin (Can see the Admin Panel inside the Control Panel tab)
                 if (role === 'Admin') {
                     if (adminPanel) adminPanel.style.display = 'block';
                 } else {
@@ -241,16 +255,31 @@ auth.onAuthStateChanged((user) => {
         document.getElementById('user-status').innerText = "Not logged in";
         document.getElementById('logout-btn').style.display = "none";
         
-        // Reset Login Panel UI
-        document.getElementById('auth-title').style.display = "block";
-        document.getElementById('email-input').style.display = "inline-block";
-        document.getElementById('password-input').style.display = "inline-block";
-        document.querySelector('button[onclick="loginUser()"]').style.display = "inline-block";
-        document.querySelector('button[onclick="registerUser()"]').style.display = "inline-block";
+        // Show the login screen inputs
+        if (emailInput) emailInput.style.display = "block";
+        if (passInput) passInput.style.display = "block";
+        if (loginBtn) loginBtn.style.display = "inline-block";
+        if (registerBtn) registerBtn.style.display = "inline-block";
         
-        // Hide the game world and ALL panels from guests
+        // Force the screen back to the Login tab
+        openTab('tab-login');
+        
+        // Hide game UI and restricted panels
         if (gameUI) gameUI.style.display = 'none';
+        if (controlPanelTabBtn) controlPanelTabBtn.style.display = 'none';
         if (masterPanel) masterPanel.style.display = 'none';
         if (adminPanel) adminPanel.style.display = 'none';
     }
 });
+
+// ==========================================
+// --- 8. UI NAVIGATION (TAB SWITCHER) ---
+// ==========================================
+function openTab(tabId) {
+    // 1. Hide every single tab in the main content area
+    const allTabs = document.querySelectorAll('.tab-content');
+    allTabs.forEach(tab => tab.style.display = 'none');
+    
+    // 2. Unhide exactly the one we asked for
+    document.getElementById(tabId).style.display = 'block';
+}
