@@ -200,14 +200,35 @@ function loadUserCharacters() {
 
 function selectCharacter(id) {
     currentCharacterId = id;
-    firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(id).get().then(doc => {
+    const user = auth.currentUser;
+    
+    firestore.collection('users').doc(user.uid).collection('characters').doc(id).get().then(doc => {
         if (doc.exists) {
             const d = doc.data();
-            document.getElementById('char-name').value = d.name;
+            
+            // Map Firestore data to your HTML Input IDs
+            document.getElementById('char-name').value = d.name || "";
+            document.getElementById('char-level').value = d.level || 1;
+            document.getElementById('char-body').value = d.body || 10;
+            document.getElementById('char-mind').value = d.mind || 10;
+            document.getElementById('char-spirit').value = d.spirit || 10;
+            
+            // Stats mapping
+            document.getElementById('char-hp-current').value = d.hpCurrent || 0;
+            document.getElementById('char-hp-max').value = d.hpMax || 0;
+            document.getElementById('char-mp-current').value = d.mpCurrent || 0;
+            document.getElementById('char-mp-max').value = d.mpMax || 0;
+
+            // Navigation
             document.getElementById('char-selection-view').classList.add('hide-default');
             document.getElementById('char-sheet-view').classList.remove('hide-default');
+            
+            // Visual Updates
             updateHUD(d);
-            firestore.collection('users').doc(auth.currentUser.uid).update({ lastActiveCharacter: id });
+            if (d.gallery) renderGallery(d.gallery, d.portrait);
+            
+            // Persistence
+            firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
         }
     });
 }
@@ -215,7 +236,6 @@ function selectCharacter(id) {
 function saveCharacter() {
     if (!currentCharacterId) return;
     
-    // Collecting ALL values from the sheet
     const data = {
         name: document.getElementById('char-name').value,
         level: parseInt(document.getElementById('char-level').value) || 1,
@@ -230,9 +250,7 @@ function saveCharacter() {
 
     firestore.collection('users').doc(auth.currentUser.uid)
         .collection('characters').doc(currentCharacterId)
-        .update(data).then(() => {
-            updateHUD(data); // Immediately refresh the sidebar
-        });
+        .update(data).then(() => updateHUD(data));
 }
 
 function goBackToSelection() {
@@ -270,27 +288,25 @@ function loadUserCharacters() {
 function updateHUD(char) {
     document.getElementById('active-char-hud').classList.remove('hide-default');
     
-    // Update Sidebar Text
+    // Names and Status
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
     document.getElementById('hud-hp-text').innerText = `${char.hpCurrent || 0}/${char.hpMax || 0}`;
     document.getElementById('hud-mp-text').innerText = `${char.mpCurrent || 0}/${char.mpMax || 0}`;
     
-    // Update Sidebar Modifiers (Formula: (Stat - 10) / 2)
-    const calcMod = (val) => {
+    // Modifier Calculation Formula: Math.floor((stat - 10) / 2)
+    const getMod = (val) => {
         const mod = Math.floor(((val || 10) - 10) / 2);
         return mod >= 0 ? `+${mod}` : mod;
     };
-    document.getElementById('hud-mod-body').innerText = calcMod(char.body);
-    document.getElementById('hud-mod-mind').innerText = calcMod(char.mind);
-    document.getElementById('hud-mod-spirit').innerText = calcMod(char.spirit);
+    
+    document.getElementById('hud-mod-body').innerText = getMod(char.body);
+    document.getElementById('hud-mod-mind').innerText = getMod(char.mind);
+    document.getElementById('hud-mod-spirit').innerText = getMod(char.spirit);
 
-    // Update Bars
-    const hpPerc = (char.hpCurrent / (char.hpMax || 1)) * 100;
-    const mpPerc = (char.mpCurrent / (char.mpMax || 1)) * 100;
-    document.getElementById('hud-hp-fill').style.width = hpPerc + "%";
-    document.getElementById('hud-mp-fill').style.width = mpPerc + "%";
+    // Progress Bars
+    document.getElementById('hud-hp-fill').style.width = ((char.hpCurrent / (char.hpMax || 1)) * 100) + "%";
+    document.getElementById('hud-mp-fill').style.width = ((char.mpCurrent / (char.mpMax || 1)) * 100) + "%";
 
-    // Update Portrait
     if (char.portrait) {
         document.getElementById('hud-portrait').style.backgroundImage = `url(${char.portrait})`;
     }
@@ -397,24 +413,15 @@ function handleSlotUpload(input) {
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-            // Canvas Resizing to 800px
+            // Resize to 800px max for Firestore Free Tier safety
             const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-            const max = 800;
-
-            if (width > height) {
-                if (width > max) { height *= max / width; width = max; }
-            } else {
-                if (height > max) { width *= max / height; height = max; }
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            let w = img.width, h = img.height, max = 800;
+            if (w > h) { if (w > max) { h *= max / w; w = max; } } 
+            else { if (h > max) { w *= max / h; h = max; } }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
             
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-            saveImageToNextSlot(compressedBase64);
+            saveImageToNextSlot(canvas.toDataURL('image/jpeg', 0.7));
         };
         img.src = e.target.result;
     };
@@ -427,10 +434,7 @@ function saveImageToNextSlot(base64Data) {
 
     charRef.get().then(doc => {
         let gallery = doc.data().gallery || [];
-        if (gallery.length >= MAX_SLOTS) {
-            alert("Gallery is full! Delete an image to add more.");
-            return;
-        }
+        if (gallery.length >= 10) return alert("Gallery Full!");
         gallery.push(base64Data);
         
         const updateData = { gallery: gallery };
