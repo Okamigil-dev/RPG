@@ -202,6 +202,59 @@ function goBackToSelection() {
     document.getElementById('char-sheet-view').classList.add('hide-default');
 }
 
+// Update loadUserCharacters to show the image in the selection grid
+function loadUserCharacters() {
+    const user = auth.currentUser;
+    firestore.collection('users').doc(user.uid).collection('characters').get().then(snap => {
+        const grid = document.getElementById('char-list-grid');
+        grid.innerHTML = "";
+        snap.forEach(doc => {
+            const d = doc.data();
+            const card = document.createElement('div');
+            card.className = 'char-card';
+            card.onclick = () => selectCharacter(doc.id);
+            // Added the portrait div to match the sidebar style
+            card.innerHTML = `
+                <div class="portrait-circle-small" style="background-image: url(${d.portrait || ''}); margin: 0 auto 10px;"></div>
+                <strong>${d.name}</strong>
+            `;
+            grid.appendChild(card);
+        });
+    });
+}
+
+// ==========================================
+// --- 10. HUD HANDLING ---
+// ==========================================
+function updateHUD(char) {
+    document.getElementById('active-char-hud').classList.remove('hide-default');
+    document.getElementById('hud-name').innerText = char.name;
+    document.getElementById('hud-portrait').style.backgroundImage = `url(${char.portrait || ''})`;
+    document.getElementById('hud-hp-fill').style.width = (char.hpCurrent / char.hpMax * 100) + "%";
+    
+    if (char.gallery) renderGallery(char.gallery, char.portrait);
+}
+// ==========================================
+// --- 11. DICE ROLLER ---
+// ==========================================
+function rollDice(sides) {
+    const res = document.getElementById('dice-result');
+    let c = 0;
+    const i = setInterval(() => {
+        res.innerText = Math.floor(Math.random() * sides) + 1;
+        if (++c > 10) {
+            clearInterval(i);
+            res.innerText = `d${sides}: ${Math.floor(Math.random() * sides) + 1}`;
+        }
+    }, 50);
+}
+
+
+
+// ==========================================
+// --- 12. GALLERY MANAGEMENT ---
+// ==========================================
+
 // Convert file to Base64 string
 function handleImageUpload(input) {
     const file = input.files[0];
@@ -250,49 +303,48 @@ function setActivePortrait(imgData) {
         });
 }
 
-// Update loadUserCharacters to show the image in the selection grid
-function loadUserCharacters() {
+function deleteImage(event, imgData) {
+    event.stopPropagation(); // Prevents setting the image as active while trying to delete it
+    if (!confirm("Are you sure you want to delete this image?")) return;
+
     const user = auth.currentUser;
-    firestore.collection('users').doc(user.uid).collection('characters').get().then(snap => {
-        const grid = document.getElementById('char-list-grid');
-        grid.innerHTML = "";
-        snap.forEach(doc => {
-            const d = doc.data();
-            const card = document.createElement('div');
-            card.className = 'char-card';
-            card.onclick = () => selectCharacter(doc.id);
-            // Added the portrait div to match the sidebar style
-            card.innerHTML = `
-                <div class="portrait-circle-small" style="background-image: url(${d.portrait || ''}); margin: 0 auto 10px;"></div>
-                <strong>${d.name}</strong>
-            `;
-            grid.appendChild(card);
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
+
+    charRef.get().then(doc => {
+        const data = doc.data();
+        let gallery = data.gallery || [];
+        let portrait = data.portrait;
+
+        // Filter out the image
+        gallery = gallery.filter(img => img !== imgData);
+
+        // If we deleted the active portrait, pick the first available image or set to null
+        const updateData = { gallery: gallery };
+        if (portrait === imgData) {
+            updateData.portrait = gallery.length > 0 ? gallery[0] : "";
+        }
+
+        charRef.update(updateData).then(() => {
+            renderGallery(gallery, updateData.portrait || portrait);
+            document.getElementById('hud-portrait').style.backgroundImage = `url(${updateData.portrait || ''})`;
         });
     });
 }
 
-// ==========================================
-// --- 10. HUD HANDLING ---
-// ==========================================
-function updateHUD(char) {
-    document.getElementById('active-char-hud').classList.remove('hide-default');
-    document.getElementById('hud-name').innerText = char.name;
-    document.getElementById('hud-portrait').style.backgroundImage = `url(${char.portrait || ''})`;
-    document.getElementById('hud-hp-fill').style.width = (char.hpCurrent / char.hpMax * 100) + "%";
-    
-    if (char.gallery) renderGallery(char.gallery, char.portrait);
-}
-// ==========================================
-// --- 11. DICE ROLLER ---
-// ==========================================
-function rollDice(sides) {
-    const res = document.getElementById('dice-result');
-    let c = 0;
-    const i = setInterval(() => {
-        res.innerText = Math.floor(Math.random() * sides) + 1;
-        if (++c > 10) {
-            clearInterval(i);
-            res.innerText = `d${sides}: ${Math.floor(Math.random() * sides) + 1}`;
-        }
-    }, 50);
+// UPDATE: Modify the renderGallery function in your script to include the delete button
+function renderGallery(gallery, activePortrait) {
+    const container = document.getElementById('char-gallery-grid');
+    if (!container) return;
+    container.innerHTML = "";
+    gallery.forEach((img) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = `gallery-item ${img === activePortrait ? 'active-img' : ''}`;
+        wrapper.onclick = () => setActivePortrait(img);
+        
+        wrapper.innerHTML = `
+            <img src="${img}">
+            <button class="delete-img-btn" onclick="deleteImage(event, '${img}')">×</button>
+        `;
+        container.appendChild(wrapper);
+    });
 }
