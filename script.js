@@ -185,18 +185,22 @@ auth.onAuthStateChanged((user) => {
                 const userData = doc.data();
                 const role = userData.role;
                 
-                // NEW: Grab the saved character ID from the user's profile
-                currentCharacterId = userData.lastActiveCharacter || null;
-                
                 if(document.getElementById('user-display-name')) document.getElementById('user-display-name').innerText = user.email.split('@')[0];
                 if(document.getElementById('user-role-label')) document.getElementById('user-role-label').innerText = role;
                 document.getElementById('logout-btn').classList.remove('hide-default');
                 if(mainNavTabs) mainNavTabs.classList.remove('hide-default');
-                
-                loadUserCharacters(); 
-                openTab('tab-character');
-
                 if (gameUI) gameUI.classList.remove('hide-default');
+
+                // NEW: Handle Dashboard vs Sheet View on login
+                if (userData.lastActiveCharacter) {
+                    selectCharacter(userData.lastActiveCharacter);
+                } else {
+                    loadUserCharacters(); 
+                    openTab('tab-character');
+                    document.getElementById('char-selection-view').classList.remove('hide-default');
+                    document.getElementById('char-sheet-view').classList.add('hide-default');
+                }
+
                 if (role === 'Master' || role === 'Admin') {
                     if (controlPanelTabBtn) controlPanelTabBtn.classList.remove('hide-default');
                     if (masterPanel) masterPanel.classList.remove('hide-default');
@@ -204,22 +208,7 @@ auth.onAuthStateChanged((user) => {
                 if (role === 'Admin' && adminPanel) adminPanel.classList.remove('hide-default');
             }
         });
-    } else {
-        if(document.getElementById('user-display-name')) document.getElementById('user-display-name').innerText = "Guest";
-        if(document.getElementById('user-role-label')) document.getElementById('user-role-label').innerText = "Offline";
-        if(document.getElementById('nav-user-portrait')) document.getElementById('nav-user-portrait').style.backgroundImage = "";
-        
-        document.getElementById('logout-btn').classList.add('hide-default');
-        if(mainNavTabs) mainNavTabs.classList.add('hide-default');
-        const hud = document.getElementById('active-char-hud');
-        if(hud) hud.classList.add('hide-default');
-        
-        openTab('tab-login');
-        if (gameUI) gameUI.classList.add('hide-default');
-        if (controlPanelTabBtn) controlPanelTabBtn.classList.add('hide-default');
-        currentCharacterId = null;
     }
-});
 
 
 // ==========================================
@@ -264,53 +253,52 @@ function createNewCharacter() {
 function loadUserCharacters() {
     if (!auth.currentUser) return;
     firestore.collection('users').doc(auth.currentUser.uid).collection('characters').get().then(snap => {
-        const select = document.getElementById('character-select');
-        select.innerHTML = '<option value="">-- Switch Character --</option>';
-        
-        let firstCharId = null;
-        let foundSavedChar = false;
+        const listGrid = document.getElementById('char-list-grid');
+        listGrid.innerHTML = ""; 
 
         snap.forEach(doc => {
-            if (!firstCharId) firstCharId = doc.id;
-            let opt = document.createElement('option');
-            opt.value = doc.id; 
-            opt.innerText = `Lv. ${doc.data().level} | ${doc.data().name}`;
+            const data = doc.data();
+            const card = document.createElement('div');
+            card.className = 'char-card';
+            card.onclick = () => selectCharacter(doc.id);
             
-            // Check if this is the character you had open
-            if (doc.id === currentCharacterId) {
-                opt.selected = true;
-                foundSavedChar = true;
-            }
-            select.appendChild(opt);
+            card.innerHTML = `
+                <div class="char-card-portrait" style="background-image: url('${data.portrait || ''}')">
+                    ${!data.portrait ? '<i class="ph ph-user" style="font-size: 2em; line-height: 80px; color: #3f3f46;"></i>' : ''}
+                </div>
+                <span class="char-card-name">${data.name || 'Unnamed'}</span>
+                <div class="char-card-meta">Lv. ${data.level || 1} ${data.class || ''}</div>
+            `;
+            listGrid.appendChild(card);
         });
+    });
+}
 
-        // If no saved character is found, lock onto the first one in the list
-        if (!foundSavedChar && firstCharId) {
-            currentCharacterId = firstCharId;
-            select.value = firstCharId;
-        }
+function selectCharacter(id) {
+    currentCharacterId = id;
+    firestore.collection('users').doc(auth.currentUser.uid).set({
+        lastActiveCharacter: id
+    }, { merge: true });
 
-        // THIS IS THE FIX: Force the sidebar HUD to appear instantly
-        if (currentCharacterId) {
-            switchCharacter();
+    firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(id).get().then(doc => {
+        if (doc.exists) {
+            loadCharacterData(doc.data());
+            document.getElementById('char-selection-view').classList.add('hide-default');
+            document.getElementById('char-sheet-view').classList.remove('hide-default');
         }
     });
 }
 
+function goBackToSelection() {
+    currentCharacterId = null;
+    document.getElementById('char-selection-view').classList.remove('hide-default');
+    document.getElementById('char-sheet-view').classList.add('hide-default');
+    document.getElementById('active-char-hud').classList.add('hide-default');
+}
+
 function switchCharacter() {
-    currentCharacterId = document.getElementById('character-select').value;
-    
-    if (!currentCharacterId) {
-        document.getElementById('active-char-hud').classList.add('hide-default');
-        return;
-    }
-
-    // NEW: Save the active character choice to the user's main profile tag
-    firestore.collection('users').doc(auth.currentUser.uid).set({
-        lastActiveCharacter: currentCharacterId
-    }, { merge: true });
-
-    // Load the character data
+    // This is now used primarily for internal reloads (like after image uploads)
+    if (!currentCharacterId) return;
     firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get().then(doc => {
         if (doc.exists) loadCharacterData(doc.data());
     });
@@ -324,7 +312,7 @@ function calculateModifier(val) {
 function saveCharacter() {
     if (!currentCharacterId || !auth.currentUser) return;
     
-    // Auto-update the visual modifiers before saving
+    // Update visual modifiers immediately
     document.getElementById('mod-body').innerText = calculateModifier(document.getElementById('char-body').value);
     document.getElementById('mod-mind').innerText = calculateModifier(document.getElementById('char-mind').value);
     document.getElementById('mod-spirit').innerText = calculateModifier(document.getElementById('char-spirit').value);
@@ -334,13 +322,13 @@ function saveCharacter() {
         race: document.getElementById('char-race').value,
         class: document.getElementById('char-class').value,
         level: document.getElementById('char-level').value,
-        hpCurrent: document.getElementById('char-hp-current').value,
-        hpMax: document.getElementById('char-hp-max').value,
-        mpCurrent: document.getElementById('char-mp-current').value,
-        mpMax: document.getElementById('char-mp-max').value,
-        body: document.getElementById('char-body').value,
-        mind: document.getElementById('char-mind').value,
-        spirit: document.getElementById('char-spirit').value,
+        hpCurrent: parseInt(document.getElementById('char-hp-current').value) || 0,
+        hpMax: parseInt(document.getElementById('char-hp-max').value) || 0,
+        mpCurrent: parseInt(document.getElementById('char-mp-current').value) || 0,
+        mpMax: parseInt(document.getElementById('char-mp-max').value) || 0,
+        body: parseInt(document.getElementById('char-body').value) || 10,
+        mind: parseInt(document.getElementById('char-mind').value) || 10,
+        spirit: parseInt(document.getElementById('char-spirit').value) || 10,
         ac: document.getElementById('char-ac').value,
         init: document.getElementById('char-init').value,
         speed: document.getElementById('char-speed').value,
@@ -367,7 +355,6 @@ function loadCharacterData(char) {
     document.getElementById('char-init').value = char.init || 0;
     document.getElementById('char-speed').value = char.speed || 30;
 
-    // Update modifiers on screen
     document.getElementById('mod-body').innerText = calculateModifier(char.body || 10);
     document.getElementById('mod-mind').innerText = calculateModifier(char.mind || 10);
     document.getElementById('mod-spirit').innerText = calculateModifier(char.spirit || 10);
@@ -454,22 +441,39 @@ function updatePortraitUI(url) {
 
 function updateHUD(char) {
     const hud = document.getElementById('active-char-hud');
-    const navPortrait = document.getElementById('nav-user-portrait'); 
+    if (!char || !hud) return;
+
+    hud.classList.remove('hide-default');
     
-    if (!char) {
-        if(hud) hud.classList.add('hide-default');
-        if(navPortrait) navPortrait.style.backgroundImage = '';
-        return;
-    }
-    
-    if(hud) hud.classList.remove('hide-default');
+    // Identity
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
+    const hudMeta = document.getElementById('hud-meta');
+    if(hudMeta) hudMeta.innerText = `Lv. ${char.level || 1} ${char.race || ''} ${char.class || ''}`;
     
-    const hpPercent = (char.hpMax > 0) ? (char.hpCurrent / char.hpMax) * 100 : 0;
-    document.getElementById('hud-hp-fill').style.width = hpPercent + "%";
-    document.getElementById('hud-hp-text').innerText = `${char.hpCurrent || 0} / ${char.hpMax || 0}`;
+    // Portrait
+    const port = document.getElementById('hud-portrait') || document.getElementById('portrait-preview');
+    if (char.portrait) port.style.backgroundImage = `url('${char.portrait}')`;
+    else port.style.backgroundImage = '';
+
+    // Bars
+    const hpPct = (char.hpMax > 0) ? (char.hpCurrent / char.hpMax) * 100 : 0;
+    document.getElementById('hud-hp-fill').style.width = hpPct + "%";
+    document.getElementById('hud-hp-text').innerText = `${char.hpCurrent} / ${char.hpMax}`;
+
+    const mpPct = (char.mpMax > 0) ? (char.mpCurrent / char.mpMax) * 100 : 0;
+    const mpFill = document.getElementById('hud-mp-fill');
+    const mpText = document.getElementById('hud-mp-text');
+    if(mpFill) mpFill.style.width = mpPct + "%";
+    if(mpText) mpText.innerText = `${char.mpCurrent} / ${char.mpMax}`;
+
+    // Sidebar Stats (The +0 modifiers)
+    const hBody = document.getElementById('hud-mod-body');
+    const hMind = document.getElementById('hud-mod-mind');
+    const hSpirit = document.getElementById('hud-mod-spirit');
     
-    if (navPortrait) navPortrait.style.backgroundImage = char.portrait ? `url('${char.portrait}')` : '';
+    if(hBody) hBody.innerText = calculateModifier(char.body || 10);
+    if(hMind) hMind.innerText = calculateModifier(char.mind || 10);
+    if(hSpirit) hSpirit.innerText = calculateModifier(char.spirit || 10);
 }
 
 
