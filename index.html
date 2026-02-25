@@ -59,7 +59,6 @@
                 <select id="character-select" class="char-select" onchange="switchCharacter()">
                     <option value="">-- Switch Character --</option>
                 </select>
-                <button onclick="createNewCharacter()" class="btn-success btn-full"><i class="fa-solid fa-plus"></i> New Character</button>
             </div>
         </div>
 
@@ -77,7 +76,10 @@
             </div>
             
             <div id="tab-character" class="tab-content hide-default">
-                <h2 class="tab-title">Character Management</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #06b6d4; padding-bottom: 10px; margin-bottom: 20px;">
+                    <h2 class="tab-title" style="border: none; padding: 0; margin: 0;">Character Management</h2>
+                    <button onclick="createNewCharacter()" class="btn-success"><i class="ph ph-plus"></i> New Character</button>
+                </div>
 
                 <div class="char-sheet-grid">
                     <div class="panel-card">
