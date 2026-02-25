@@ -5,7 +5,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
 }
 
@@ -47,8 +47,8 @@ button {
 }
 
 button:hover { background: #3f3f46; }
-.btn-start { background: rgba(0, 255, 136, 0.1); color: #00ff88; border-color: #00ff88; }
-.btn-stop { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: #ef4444; }
+.btn-start { background: rgba(0, 255, 136, 0.1); color: #00ff88; border-color: #00ff88; width: 100%; margin-bottom: 15px; padding: 12px; font-size: 16px;}
+.btn-stop { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: #ef4444; width: 100%; margin-bottom: 15px; padding: 12px; font-size: 16px;}
 
 .speed-controls { margin-bottom: 20px; }
 .speed-controls span { display: block; margin-bottom: 10px; font-size: 14px; color: #a1a1aa; }
