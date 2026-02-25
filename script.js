@@ -276,7 +276,7 @@ function loadUserCharacters() {
             opt.value = doc.id; 
             opt.innerText = `Lv. ${doc.data().level} | ${doc.data().name}`;
             
-            // Check if this is the character the user had open last time
+            // Check if this is the character you had open
             if (doc.id === currentCharacterId) {
                 opt.selected = true;
                 foundSavedChar = true;
@@ -284,13 +284,13 @@ function loadUserCharacters() {
             select.appendChild(opt);
         });
 
-        // If no saved character exists, default to the first one in the list
+        // If no saved character is found, lock onto the first one in the list
         if (!foundSavedChar && firstCharId) {
             currentCharacterId = firstCharId;
             select.value = firstCharId;
         }
 
-        // Trigger the screen update
+        // THIS IS THE FIX: Force the sidebar HUD to appear instantly
         if (currentCharacterId) {
             switchCharacter();
         }
