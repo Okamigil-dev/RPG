@@ -177,25 +177,26 @@ auth.onAuthStateChanged((user) => {
     const controlPanelTabBtn = document.getElementById('nav-control-panel');
     const masterPanel = document.getElementById('master-panel');
     const adminPanel = document.getElementById('admin-panel');
-    const mainNavTabs = document.getElementById('main-nav-tabs'); // The nav buttons
+    const mainNavTabs = document.getElementById('main-nav-tabs'); 
 
     if (user) {
         firestore.collection('users').doc(user.uid).get().then((doc) => {
              if (doc.exists) {
-                const role = doc.data().role;
+                const userData = doc.data();
+                const role = userData.role;
+                
+                // NEW: Grab the saved character ID from the user's profile
+                currentCharacterId = userData.lastActiveCharacter || null;
                 
                 if(document.getElementById('user-display-name')) document.getElementById('user-display-name').innerText = user.email.split('@')[0];
                 if(document.getElementById('user-role-label')) document.getElementById('user-role-label').innerText = role;
-                
-                document.getElementById('logout-btn').style.display = "inline-block";
-                
-                // UNLOCK: Show the navigation buttons now that they are logged in
+                document.getElementById('logout-btn').classList.remove('hide-default');
                 if(mainNavTabs) mainNavTabs.classList.remove('hide-default');
                 
-                loadUserCharacters();
+                loadUserCharacters(); 
                 openTab('tab-character');
 
-                if (gameUI) gameUI.style.display = 'block';
+                if (gameUI) gameUI.classList.remove('hide-default');
                 if (role === 'Master' || role === 'Admin') {
                     if (controlPanelTabBtn) controlPanelTabBtn.classList.remove('hide-default');
                     if (masterPanel) masterPanel.classList.remove('hide-default');
@@ -208,17 +209,15 @@ auth.onAuthStateChanged((user) => {
         if(document.getElementById('user-role-label')) document.getElementById('user-role-label').innerText = "Offline";
         if(document.getElementById('nav-user-portrait')) document.getElementById('nav-user-portrait').style.backgroundImage = "";
         
-        document.getElementById('logout-btn').style.display = "none";
-        
-        // LOCK: Hide the navigation buttons from guests
+        document.getElementById('logout-btn').classList.add('hide-default');
         if(mainNavTabs) mainNavTabs.classList.add('hide-default');
-        
         const hud = document.getElementById('active-char-hud');
         if(hud) hud.classList.add('hide-default');
         
         openTab('tab-login');
-        if (gameUI) gameUI.style.display = 'none';
+        if (gameUI) gameUI.classList.add('hide-default');
         if (controlPanelTabBtn) controlPanelTabBtn.classList.add('hide-default');
+        currentCharacterId = null;
     }
 });
 
@@ -263,27 +262,55 @@ function createNewCharacter() {
 }
 
 function loadUserCharacters() {
-    const user = auth.currentUser;
-    if (!user) return;
-    firestore.collection('users').doc(user.uid).collection('characters').get().then(snap => {
+    if (!auth.currentUser) return;
+    firestore.collection('users').doc(auth.currentUser.uid).collection('characters').get().then(snap => {
         const select = document.getElementById('character-select');
-        select.innerHTML = '<option value="">-- Choose Character --</option>';
+        select.innerHTML = '<option value="">-- Switch Character --</option>';
+        
+        let firstCharId = null;
+        let foundSavedChar = false;
+
         snap.forEach(doc => {
+            if (!firstCharId) firstCharId = doc.id;
             let opt = document.createElement('option');
-            opt.value = doc.id;
+            opt.value = doc.id; 
             opt.innerText = `Lv. ${doc.data().level} | ${doc.data().name}`;
-            if (doc.id === currentCharacterId) opt.selected = true;
+            
+            // Check if this is the character the user had open last time
+            if (doc.id === currentCharacterId) {
+                opt.selected = true;
+                foundSavedChar = true;
+            }
             select.appendChild(opt);
         });
+
+        // If no saved character exists, default to the first one in the list
+        if (!foundSavedChar && firstCharId) {
+            currentCharacterId = firstCharId;
+            select.value = firstCharId;
+        }
+
+        // Trigger the screen update
+        if (currentCharacterId) {
+            switchCharacter();
+        }
     });
 }
 
 function switchCharacter() {
     currentCharacterId = document.getElementById('character-select').value;
+    
     if (!currentCharacterId) {
-        document.getElementById('active-char-hud').style.display = "none";
+        document.getElementById('active-char-hud').classList.add('hide-default');
         return;
     }
+
+    // NEW: Save the active character choice to the user's main profile tag
+    firestore.collection('users').doc(auth.currentUser.uid).set({
+        lastActiveCharacter: currentCharacterId
+    }, { merge: true });
+
+    // Load the character data
     firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get().then(doc => {
         if (doc.exists) loadCharacterData(doc.data());
     });
