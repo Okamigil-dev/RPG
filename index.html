@@ -148,14 +148,29 @@
                                     <label>Name</label>
                                     <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
                                 </div>
+                                
                                 <div class="field-group">
                                     <label>Race</label>
-                                    <input type="text" id="char-race" onchange="saveCharacter()" class="form-input">
+                                    <select id="char-race" onchange="saveCharacter()" class="form-input">
+                                        <option value="">Select Race</option>
+                                        <option value="Human">Human</option>
+                                        <option value="Elf">Elf</option>
+                                        <option value="Dwarf">Dwarf</option>
+                                        <option value="Orc">Orc</option>
+                                    </select>
                                 </div>
+                                
                                 <div class="field-group">
                                     <label>Class</label>
-                                    <input type="text" id="char-class" onchange="saveCharacter()" class="form-input">
+                                    <select id="char-class" onchange="saveCharacter()" class="form-input">
+                                        <option value="">Select Class</option>
+                                        <option value="Warrior">Warrior</option>
+                                        <option value="Mage">Mage</option>
+                                        <option value="Rogue">Rogue</option>
+                                        <option value="Cleric">Cleric</option>
+                                    </select>
                                 </div>
+                                
                             </div>
                             
                             <div class="level-exp-grid">
