@@ -175,34 +175,48 @@ auth.onAuthStateChanged((user) => {
     const controlPanelTabBtn = document.getElementById('nav-control-panel');
     const masterPanel = document.getElementById('master-panel');
     const adminPanel = document.getElementById('admin-panel');
-    const loginTab = document.getElementById('tab-login');
+    const mainNavTabs = document.getElementById('main-nav-tabs'); // The nav buttons
 
     if (user) {
         firestore.collection('users').doc(user.uid).get().then((doc) => {
              if (doc.exists) {
                 const role = doc.data().role;
-                document.getElementById('user-status').innerText = `User: ${user.email} (${role})`;
+                
+                if(document.getElementById('user-display-name')) document.getElementById('user-display-name').innerText = user.email.split('@')[0];
+                if(document.getElementById('user-role-label')) document.getElementById('user-role-label').innerText = role;
+                
                 document.getElementById('logout-btn').style.display = "inline-block";
                 
-                // Fetch Character List for the Dropdown
+                // UNLOCK: Show the navigation buttons now that they are logged in
+                if(mainNavTabs) mainNavTabs.classList.remove('hide-default');
+                
                 loadUserCharacters();
                 openTab('tab-character');
 
                 if (gameUI) gameUI.style.display = 'block';
                 if (role === 'Master' || role === 'Admin') {
-                    if (controlPanelTabBtn) controlPanelTabBtn.style.display = 'block';
-                    if (masterPanel) masterPanel.style.display = 'block';
+                    if (controlPanelTabBtn) controlPanelTabBtn.classList.remove('hide-default');
+                    if (masterPanel) masterPanel.classList.remove('hide-default');
                 }
-                if (role === 'Admin' && adminPanel) adminPanel.style.display = 'block';
+                if (role === 'Admin' && adminPanel) adminPanel.classList.remove('hide-default');
             }
         });
     } else {
-        document.getElementById('user-status').innerText = "Not logged in";
+        if(document.getElementById('user-display-name')) document.getElementById('user-display-name').innerText = "Guest";
+        if(document.getElementById('user-role-label')) document.getElementById('user-role-label').innerText = "Offline";
+        if(document.getElementById('nav-user-portrait')) document.getElementById('nav-user-portrait').style.backgroundImage = "";
+        
         document.getElementById('logout-btn').style.display = "none";
-        document.getElementById('active-char-hud').style.display = "none";
+        
+        // LOCK: Hide the navigation buttons from guests
+        if(mainNavTabs) mainNavTabs.classList.add('hide-default');
+        
+        const hud = document.getElementById('active-char-hud');
+        if(hud) hud.classList.add('hide-default');
+        
         openTab('tab-login');
         if (gameUI) gameUI.style.display = 'none';
-        if (controlPanelTabBtn) controlPanelTabBtn.style.display = 'none';
+        if (controlPanelTabBtn) controlPanelTabBtn.classList.add('hide-default');
     }
 });
 
@@ -211,6 +225,12 @@ auth.onAuthStateChanged((user) => {
 // --- 8. UI NAVIGATION (TAB SWITCHER) ---
 // ==========================================
 function openTab(tabId) {
+    // HARD LOCK: If there is no user logged in, refuse to open any tab except the login screen
+    if (!auth.currentUser && tabId !== 'tab-login') {
+        console.warn("Access denied: You must log in first.");
+        return; 
+    }
+
     const allTabs = document.querySelectorAll('.tab-content');
     allTabs.forEach(tab => tab.style.display = 'none');
     const target = document.getElementById(tabId);
@@ -342,10 +362,29 @@ function updatePortraitUI(base64) {
 
 function updateHUD(char) {
     const hud = document.getElementById('active-char-hud');
-    if (!char) return hud.style.display = 'none';
-    hud.style.display = 'block';
+    const navPortrait = document.getElementById('nav-user-portrait'); // Top right portrait
+
+    if (!char) {
+        if(hud) hud.style.display = 'none';
+        if(navPortrait) navPortrait.style.backgroundImage = '';
+        return;
+    }
+    
+    if(hud) hud.style.display = 'block';
+    
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
     const hpPercent = (char.hpCurrent / char.hpMax) * 100;
     document.getElementById('hud-hp-fill').style.width = (hpPercent || 0) + "%";
     document.getElementById('hud-hp-text').innerText = `${char.hpCurrent || 0} / ${char.hpMax || 0}`;
+    
+    // Updates the tiny circle in the top nav bar
+    if (navPortrait) {
+        navPortrait.style.backgroundImage = char.portrait ? `url('${char.portrait}')` : '';
+    }
 }
+
+
+
+// ==========================================
+// --- 11. ---
+// ==========================================
