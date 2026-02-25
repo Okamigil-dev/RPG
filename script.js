@@ -357,21 +357,86 @@ function saveImageToGallery(base64Data) {
     });
 }
 
-function renderGallery(gallery, activePortrait) {
+const MAX_SLOTS = 10;
+
+function renderGallery(galleryArray, activePortrait) {
     const container = document.getElementById('char-gallery-grid');
-    if (!container) return; // Prevent crash if HTML element is missing
+    if (!container) return;
     container.innerHTML = "";
-    
-    gallery.forEach((img) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = `gallery-item ${img === activePortrait ? 'active-img' : ''}`;
-        wrapper.onclick = () => setActivePortrait(img);
+
+    const images = galleryArray || [];
+
+    for (let i = 0; i < MAX_SLOTS; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'gallery-item';
+
+        if (images[i]) {
+            // Occupied Slot
+            const isActive = images[i] === activePortrait;
+            if (isActive) slot.classList.add('active-img');
+            
+            slot.innerHTML = `
+                <img src="${images[i]}" onclick="setActivePortrait('${images[i]}')">
+                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
+            `;
+        } else {
+            // Empty Slot
+            slot.className = 'gallery-item empty-slot';
+            slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
+            slot.onclick = () => document.getElementById('slot-upload').click();
+        }
+        container.appendChild(slot);
+    }
+}
+
+function handleSlotUpload(input) {
+    const file = input.files[0];
+    if (!file || !currentCharacterId) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            // Canvas Resizing to 800px
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const max = 800;
+
+            if (width > height) {
+                if (width > max) { height *= max / width; width = max; }
+            } else {
+                if (height > max) { width *= max / height; height = max; }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            saveImageToNextSlot(compressedBase64);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveImageToNextSlot(base64Data) {
+    const user = auth.currentUser;
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
+
+    charRef.get().then(doc => {
+        let gallery = doc.data().gallery || [];
+        if (gallery.length >= MAX_SLOTS) {
+            alert("Gallery is full! Delete an image to add more.");
+            return;
+        }
+        gallery.push(base64Data);
         
-        wrapper.innerHTML = `
-            <img src="${img}">
-            <button class="delete-img-btn" onclick="deleteImage(event, '${img}')">×</button>
-        `;
-        container.appendChild(wrapper);
+        const updateData = { gallery: gallery };
+        if (!doc.data().portrait) updateData.portrait = base64Data;
+        
+        charRef.update(updateData).then(() => renderGallery(gallery, doc.data().portrait || base64Data));
     });
 }
 
@@ -384,48 +449,23 @@ function setActivePortrait(imgData) {
         });
 }
 
-function deleteImage(event, imgData) {
-    event.stopPropagation(); // Prevents setting the image as active while trying to delete it
-    if (!confirm("Are you sure you want to delete this image?")) return;
+function deleteImage(event, index) {
+    event.stopPropagation();
+    if (!confirm("Delete this image?")) return;
 
     const user = auth.currentUser;
     const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
 
     charRef.get().then(doc => {
-        const data = doc.data();
-        let gallery = data.gallery || [];
-        let portrait = data.portrait;
+        let gallery = doc.data().gallery || [];
+        const deletedImg = gallery[index];
+        gallery.splice(index, 1);
 
-        // Filter out the image
-        gallery = gallery.filter(img => img !== imgData);
-
-        // If we deleted the active portrait, pick the first available image or set to null
         const updateData = { gallery: gallery };
-        if (portrait === imgData) {
+        if (doc.data().portrait === deletedImg) {
             updateData.portrait = gallery.length > 0 ? gallery[0] : "";
         }
 
-        charRef.update(updateData).then(() => {
-            renderGallery(gallery, updateData.portrait || portrait);
-            document.getElementById('hud-portrait').style.backgroundImage = `url(${updateData.portrait || ''})`;
-        });
-    });
-}
-
-// UPDATE: Modify the renderGallery function in your script to include the delete button
-function renderGallery(gallery, activePortrait) {
-    const container = document.getElementById('char-gallery-grid');
-    if (!container) return;
-    container.innerHTML = "";
-    gallery.forEach((img) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = `gallery-item ${img === activePortrait ? 'active-img' : ''}`;
-        wrapper.onclick = () => setActivePortrait(img);
-        
-        wrapper.innerHTML = `
-            <img src="${img}">
-            <button class="delete-img-btn" onclick="deleteImage(event, '${img}')">×</button>
-        `;
-        container.appendChild(wrapper);
+        charRef.update(updateData).then(() => renderGallery(gallery, updateData.portrait));
     });
 }
