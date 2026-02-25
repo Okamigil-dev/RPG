@@ -47,7 +47,81 @@
                 <button onclick="registerUser()" id="register-btn" style="padding: 8px 16px; cursor: pointer;">Register</button>
             </div>
     
-            <div id="tab-character" class="tab-content" style="display: none;"><h2>Character Sheet</h2><p>Stats go here.</p></div>
+            <div id="tab-character" class="tab-content" style="display: none;">
+                <h2 style="color: #06b6d4; border-bottom: 2px solid #06b6d4; padding-bottom: 10px; margin-top: 0;">Character Sheet</h2>
+            
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-top: 20px;">
+                    
+                    <div style="background: #18181b; padding: 20px; border-radius: 8px; border: 1px solid #27272a;">
+                        <h3 style="margin-top: 0; color: #a1a1aa; text-align: center; border-bottom: 1px solid #3f3f46; padding-bottom: 10px;">Attributes</h3>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #27272a; padding: 10px; border-radius: 6px;">
+                                <span style="font-weight: bold; color: #ef4444;">STR</span>
+                                <input type="number" id="char-str" onchange="saveCharacter()" value="10" style="width: 50px; background: #09090b; color: white; border: 1px solid #3f3f46; text-align: center; font-size: 1.2em; border-radius: 4px;">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #27272a; padding: 10px; border-radius: 6px;">
+                                <span style="font-weight: bold; color: #10b981;">DEX</span>
+                                <input type="number" id="char-dex" onchange="saveCharacter()" value="10" style="width: 50px; background: #09090b; color: white; border: 1px solid #3f3f46; text-align: center; font-size: 1.2em; border-radius: 4px;">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #27272a; padding: 10px; border-radius: 6px;">
+                                <span style="font-weight: bold; color: #f59e0b;">CON</span>
+                                <input type="number" id="char-con" onchange="saveCharacter()" value="10" style="width: 50px; background: #09090b; color: white; border: 1px solid #3f3f46; text-align: center; font-size: 1.2em; border-radius: 4px;">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #27272a; padding: 10px; border-radius: 6px;">
+                                <span style="font-weight: bold; color: #3b82f6;">INT</span>
+                                <input type="number" id="char-int" onchange="saveCharacter()" value="10" style="width: 50px; background: #09090b; color: white; border: 1px solid #3f3f46; text-align: center; font-size: 1.2em; border-radius: 4px;">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #27272a; padding: 10px; border-radius: 6px;">
+                                <span style="font-weight: bold; color: #8b5cf6;">WIS</span>
+                                <input type="number" id="char-wis" onchange="saveCharacter()" value="10" style="width: 50px; background: #09090b; color: white; border: 1px solid #3f3f46; text-align: center; font-size: 1.2em; border-radius: 4px;">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #27272a; padding: 10px; border-radius: 6px;">
+                                <span style="font-weight: bold; color: #ec4899;">CHA</span>
+                                <input type="number" id="char-cha" onchange="saveCharacter()" value="10" style="width: 50px; background: #09090b; color: white; border: 1px solid #3f3f46; text-align: center; font-size: 1.2em; border-radius: 4px;">
+                            </div>
+                        </div>
+                    </div>
+            
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div style="background: #18181b; padding: 20px; border-radius: 8px; border: 1px solid #27272a; display: flex; gap: 15px;">
+                            <div style="flex-grow: 1;">
+                                <label style="color: #a1a1aa; font-size: 0.8em; text-transform: uppercase;">Character Name</label>
+                                <input type="text" id="char-name" onchange="saveCharacter()" placeholder="Enter name..." style="width: 100%; background: #27272a; color: white; border: 1px solid #3f3f46; padding: 10px; margin-top: 5px; border-radius: 4px; font-size: 1.1em;">
+                            </div>
+                            <div style="width: 80px;">
+                                <label style="color: #a1a1aa; font-size: 0.8em; text-transform: uppercase;">Level</label>
+                                <input type="number" id="char-level" onchange="saveCharacter()" value="1" style="width: 100%; background: #27272a; color: white; border: 1px solid #3f3f46; padding: 10px; margin-top: 5px; border-radius: 4px; font-size: 1.1em; text-align: center;">
+                            </div>
+                        </div>
+            
+                         <div style="background: #18181b; padding: 20px; border-radius: 8px; border: 1px solid #27272a; text-align: center;">
+                            <h4 style="margin: 0 0 10px 0; color: #10b981; font-size: 1.2em;">Hit Points</h4>
+                            <div style="display: flex; justify-content: center; align-items: center; gap: 15px;">
+                                <input type="number" id="char-hp-current" onchange="saveCharacter()" placeholder="Current" style="width: 100px; background: #09090b; color: white; border: 2px solid #10b981; padding: 15px; font-size: 1.8em; text-align: center; border-radius: 8px;">
+                                <span style="font-size: 2em; color: #3f3f46;">/</span>
+                                <input type="number" id="char-hp-max" onchange="saveCharacter()" placeholder="Max" style="width: 100px; background: #27272a; color: white; border: 1px solid #3f3f46; padding: 15px; font-size: 1.8em; text-align: center; border-radius: 8px;">
+                            </div>
+                        </div>
+            
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                            <div style="background: #18181b; padding: 15px; border-radius: 8px; border: 1px solid #27272a; text-align: center;">
+                                <label style="color: #a1a1aa; font-size: 0.8em; text-transform: uppercase;">Armor Class</label>
+                                <input type="number" id="char-ac" onchange="saveCharacter()" value="10" style="width: 100%; background: #27272a; color: white; border: 1px solid #3f3f46; padding: 10px; font-size: 1.5em; margin-top: 10px; text-align: center; border-radius: 6px;">
+                            </div>
+                            <div style="background: #18181b; padding: 15px; border-radius: 8px; border: 1px solid #27272a; text-align: center;">
+                                <label style="color: #a1a1aa; font-size: 0.8em; text-transform: uppercase;">Initiative</label>
+                                <input type="number" id="char-init" onchange="saveCharacter()" value="0" style="width: 100%; background: #27272a; color: white; border: 1px solid #3f3f46; padding: 10px; font-size: 1.5em; margin-top: 10px; text-align: center; border-radius: 6px;">
+                            </div>
+                            <div style="background: #18181b; padding: 15px; border-radius: 8px; border: 1px solid #27272a; text-align: center;">
+                                <label style="color: #a1a1aa; font-size: 0.8em; text-transform: uppercase;">Speed</label>
+                                <input type="number" id="char-speed" onchange="saveCharacter()" value="30" style="width: 100%; background: #27272a; color: white; border: 1px solid #3f3f46; padding: 10px; font-size: 1.5em; margin-top: 10px; text-align: center; border-radius: 6px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                        
             <div id="tab-backpack" class="tab-content" style="display: none;"><h2>Backpack</h2><p>Items go here.</p></div>
             <div id="tab-skills" class="tab-content" style="display: none;"><h2>Skills</h2><p>Abilities go here.</p></div>
     
