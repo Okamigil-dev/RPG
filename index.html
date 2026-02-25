@@ -18,14 +18,17 @@
         <div class="nav-left">
             <div class="brand-logo">WORLD VTT</div>
             <div id="main-nav-tabs" class="nav-tabs hide-default">
-                <button onclick="openTab('tab-character')" class="tab-btn">Character</button>
-                <button onclick="openTab('tab-backpack')" class="tab-btn">Backpack</button>
-                <button onclick="openTab('tab-skills')" class="tab-btn">Skills</button>
-                <button onclick="openTab('tab-control-panel')" id="nav-control-panel" class="tab-btn hide-default">Master</button>
+                <button onclick="openTab('tab-character')" class="tab-btn"><i class="fa-regular fa-id-card"></i> Character</button>
+                <button onclick="openTab('tab-backpack')" class="tab-btn"><i class="ph ph-briefcase"></i> Backpack</button>
+                <button onclick="openTab('tab-skills')" class="tab-btn"><i class="fa-solid fa-khanda"></i> Skills</button>
+                <button onclick="openTab('tab-control-panel')" id="nav-control-panel" class="tab-btn hide-default"><i class="fa-solid fa-gear"></i> Master</button>
             </div>
         </div>
         <div id="user-header" class="user-header">
-            <div id="user-display-name" class="user-name">Guest</div>
+            <div class="user-info">
+                <div id="user-display-name" class="user-name">Guest</div>
+                <div id="user-role-label" class="user-role">Offline</div>
+            </div>
             <button onclick="logoutUser()" id="logout-btn" class="btn-danger hide-default">Logout</button>
         </div>
     </div>
@@ -33,15 +36,34 @@
     <div class="app-body">
         <div id="sidebar" class="sidebar">
             <div id="active-char-hud" class="active-char-hud hide-default">
-                <div id="hud-portrait" class="portrait-circle-small"></div>
-                <h3 id="hud-name">Unnamed</h3>
-                <div class="hp-bar-bg"><div id="hud-hp-fill" class="hp-bar-fill"></div></div>
-                <div id="hud-hp-text" class="hp-text">0 / 0</div>
-                <div class="hud-stats-row">
-                    <div class="hud-stat-box"><span class="hud-stat-label">B</span><span id="hud-mod-body">+0</span></div>
-                    <div class="hud-stat-box"><span class="hud-stat-label">M</span><span id="hud-mod-mind">+0</span></div>
-                    <div class="hud-stat-box"><span class="hud-stat-label">S</span><span id="hud-mod-spirit">+0</span></div>
+                <div class="hud-header">
+                    <div id="hud-portrait" class="portrait-circle-small"></div>
+                    <div>
+                        <h3 id="hud-name" class="hud-name">Unnamed</h3>
+                        <span id="hud-meta" class="hud-meta">Lv. 1 Adventurer</span>
+                    </div>
                 </div>
+                
+                <div class="hud-resource">
+                    <div class="bar-label"><span>HP</span><span id="hud-hp-text">0/0</span></div>
+                    <div class="hp-bar-bg"><div id="hud-hp-fill" class="hp-bar-fill"></div></div>
+                </div>
+
+                <div class="hud-resource">
+                    <div class="bar-label"><span>MP</span><span id="hud-mp-text">0/0</span></div>
+                    <div class="hp-bar-bg" style="background:#1e1e21;"><div id="hud-mp-fill" class="hp-bar-fill" style="background:#3b82f6;"></div></div>
+                </div>
+
+                <div class="hud-stats-row">
+                    <div class="hud-stat-box"><span>BODY</span><span id="hud-mod-body">+0</span></div>
+                    <div class="hud-stat-box"><span>MIND</span><span id="hud-mod-mind">+0</span></div>
+                    <div class="hud-stat-box"><span>SPIRIT</span><span id="hud-mod-spirit">+0</span></div>
+                </div>
+            </div>
+
+            <div id="game-ui" class="game-ui hide-default">
+                <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
+                <div id="time-display" class="time-text">00:00:00</div>
             </div>
 
             <div class="dice-tray">
@@ -55,32 +77,63 @@
 
         <div id="main-content" class="main-content">
             <div id="tab-login" class="tab-content">
-                <h2>Login</h2>
-                <input type="email" id="email-input" class="form-input" placeholder="Email">
-                <input type="password" id="password-input" class="form-input" placeholder="Password">
-                <button onclick="loginUser()" class="btn-primary btn-full">Log In</button>
+                <h2>Log In or Register</h2>
+                <div class="login-box">
+                    <input type="email" id="email-input" class="form-input" placeholder="Email">
+                    <input type="password" id="password-input" class="form-input" placeholder="Password">
+                    <button onclick="loginUser()" class="btn-primary btn-full">Log In</button>
+                    <button onclick="registerUser()" class="btn-secondary btn-full">Register</button>
+                </div>
             </div>
 
             <div id="tab-character" class="tab-content hide-default">
                 <div id="char-selection-view">
                     <div class="flex-row">
-                        <h2>Characters</h2>
+                        <h2 class="tab-title">Select Character</h2>
                         <button onclick="createNewCharacter()" class="btn-success">New Character</button>
                     </div>
                     <div id="char-list-grid" class="char-list-grid"></div>
                 </div>
 
                 <div id="char-sheet-view" class="hide-default">
-                    <button onclick="goBackToSelection()" class="btn-secondary">Back</button>
-                    <div class="panel-card">
-                        <label>Name</label>
-                        <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
-                        <div class="flex-row">
-                            <div><label>Body</label><input type="number" id="char-body" onchange="saveCharacter()" class="attr-input"></div>
-                            <div><label>Mind</label><input type="number" id="char-mind" onchange="saveCharacter()" class="attr-input"></div>
-                            <div><label>Spirit</label><input type="number" id="char-spirit" onchange="saveCharacter()" class="attr-input"></div>
+                    <div class="flex-row">
+                        <button onclick="goBackToSelection()" class="btn-secondary">Back</button>
+                        <h2 class="tab-title">Character Sheet</h2>
+                    </div>
+                    
+                    <div class="char-sheet-grid">
+                        <div class="panel-card">
+                            <h3>Core Stats</h3>
+                            <div class="attr-list">
+                                <div class="attr-row"><span>BODY</span><input type="number" id="char-body" onchange="saveCharacter()" class="attr-input"></div>
+                                <div class="attr-row"><span>MIND</span><input type="number" id="char-mind" onchange="saveCharacter()" class="attr-input"></div>
+                                <div class="attr-row"><span>SPIRIT</span><input type="number" id="char-spirit" onchange="saveCharacter()" class="attr-input"></div>
+                            </div>
+                        </div>
+
+                        <div class="char-main-col">
+                            <div class="panel-card flex-row">
+                                <div class="flex-grow"><label>Name</label><input type="text" id="char-name" onchange="saveCharacter()" class="form-input"></div>
+                                <div style="width:60px;"><label>Lv</label><input type="number" id="char-level" onchange="saveCharacter()" class="form-input"></div>
+                            </div>
+                            <div class="panel-card flex-row">
+                                <div class="text-center flex-grow"><h4>HP</h4><input type="number" id="char-hp-current" onchange="saveCharacter()" class="hp-input"> / <input type="number" id="char-hp-max" onchange="saveCharacter()" class="hp-input"></div>
+                                <div class="text-center flex-grow"><h4>MP</h4><input type="number" id="char-mp-current" onchange="saveCharacter()" class="hp-input"> / <input type="number" id="char-mp-max" onchange="saveCharacter()" class="hp-input"></div>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div id="tab-control-panel" class="tab-content hide-default">
+                <h2 class="tab-title">Master Control</h2>
+                <div class="panel-card">
+                    <h3>Time Control</h3>
+                    <button onclick="toggleTime()" id="play-btn" class="btn-success">Start Time</button>
+                    <span id="speed-label">1x</span>
+                    <button onclick="setSpeed(1)" class="btn-small">1x</button>
+                    <button onclick="setSpeed(10)" class="btn-small">10x</button>
+                    <button onclick="setSpeed(100)" class="btn-small">100x</button>
                 </div>
             </div>
         </div>
