@@ -9,22 +9,29 @@ body {
     margin: 0;
 }
 
-.timer-container {
+.clock-container {
     background: #18181b;
     padding: 30px;
     border-radius: 12px;
     border: 1px solid #27272a;
     text-align: center;
-    width: 350px;
+    width: 400px;
 }
 
-.display {
+.date-display {
+    font-size: 1.2rem;
+    color: #a1a1aa;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.time-display {
     font-size: 3.5rem;
     font-family: monospace;
     font-weight: bold;
-    color: #00ff88;
-    margin: 20px 0;
-    text-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+    color: #22d3ee; /* Changed to cyan */
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.2);
 }
 
 button {
@@ -43,13 +50,28 @@ button:hover { background: #3f3f46; }
 .btn-start { background: rgba(0, 255, 136, 0.1); color: #00ff88; border-color: #00ff88; }
 .btn-stop { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: #ef4444; }
 
-.speed-controls {
-    margin-top: 20px;
-    padding-top: 20px;
+.speed-controls { margin-bottom: 20px; }
+.speed-controls span { display: block; margin-bottom: 10px; font-size: 14px; color: #a1a1aa; }
+
+.settings {
     border-top: 1px solid #27272a;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 5px;
+    padding-top: 15px;
+    text-align: left;
 }
-.speed-controls span { width: 100%; margin-bottom: 10px; font-size: 14px; color: #a1a1aa; }
+.settings h3 { font-size: 14px; color: #a1a1aa; margin-top: 0; }
+.rule-group label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 8px;
+    align-items: center;
+}
+.rule-group input {
+    width: 60px;
+    background: #09090b;
+    border: 1px solid #3f3f46;
+    color: #fff;
+    padding: 4px;
+    border-radius: 4px;
+    text-align: center;
+}
