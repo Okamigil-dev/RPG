@@ -118,57 +118,70 @@
                                     <div class="attr-row"><span>SPIRIT</span><input type="number" id="char-spirit" onchange="saveCharacter()" class="attr-input"></div>
                                 </div>
                             </div>
-            
-                            <div class="panel-card">
-                                <h3>Gallery (Max 10 Slots)</h3>
-                                <input type="file" id="slot-upload" accept="image/*" class="hide-default" onchange="handleSlotUpload(this)">
-                                <div id="char-gallery-grid" class="gallery-grid"></div>
-                            </div>
                         </div>
             
                         <div class="char-main-col">
                             <div class="panel-card">
-                                <div class="flex-row field-spacing">
-                                    <div class="flex-grow"><label>Name</label><input type="text" id="char-name" onchange="saveCharacter()" class="form-input"></div>
-                                    <div class="input-w-md"><label>Race</label><input type="text" id="char-race" onchange="saveCharacter()" class="form-input"></div>
-                                    <div class="input-w-md"><label>Class</label><input type="text" id="char-class" onchange="saveCharacter()" class="form-input"></div>
+                                <div class="identity-grid">
+                                    <div class="field-group">
+                                        <label>Name</label>
+                                        <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
+                                    </div>
+                                    <div class="field-group">
+                                        <label>Race</label>
+                                        <input type="text" id="char-race" onchange="saveCharacter()" class="form-input">
+                                    </div>
+                                    <div class="field-group">
+                                        <label>Class</label>
+                                        <input type="text" id="char-class" onchange="saveCharacter()" class="form-input">
+                                    </div>
                                 </div>
                                 
-                                <div class="flex-row">
-                                    <div class="input-w-sm"><label>Lv</label><input type="number" id="char-level" onchange="saveCharacter()" class="form-input"></div>
-                                    <div class="flex-grow">
+                                <div class="level-exp-grid">
+                                    <div class="field-group">
+                                        <label>Lv</label>
+                                        <input type="number" id="char-level" onchange="saveCharacter()" class="form-input">
+                                    </div>
+                                    <div class="field-group">
                                         <label>Experience (EXP)</label>
-                                        <div class="flex-row">
-                                            <input type="number" id="char-exp-current" onchange="saveCharacter()" class="form-input exp-input-field">
+                                        <div class="exp-input-wrapper">
+                                            <input type="number" id="char-exp-current" onchange="saveCharacter()" class="form-input">
                                             <span class="divider">/</span>
-                                            <input type="number" id="char-exp-max" onchange="saveCharacter()" class="form-input exp-input-field">
+                                            <input type="number" id="char-exp-max" onchange="saveCharacter()" class="form-input">
                                         </div>
                                     </div>
                                 </div>
                             </div>
-            
+                        
                             <div class="panel-card">
                                 <h3>Resources</h3>
-                                <div class="flex-row">
+                                <div class="resources-grid">
                                     <div class="resource-group">
                                         <label>HP Current / Max</label>
-                                        <div class="flex-row centered-content">
+                                        <div class="resource-inputs">
                                             <input type="number" id="char-hp-current" onchange="saveCharacter()" class="hp-input">
-                                            <span>/</span>
+                                            <span class="divider">/</span>
                                             <input type="number" id="char-hp-max" onchange="saveCharacter()" class="hp-input">
                                         </div>
                                     </div>
                                     <div class="resource-group">
                                         <label>MP Current / Max</label>
-                                        <div class="flex-row centered-content">
+                                        <div class="resource-inputs">
                                             <input type="number" id="char-mp-current" onchange="saveCharacter()" class="hp-input">
-                                            <span>/</span>
+                                            <span class="divider">/</span>
                                             <input type="number" id="char-mp-max" onchange="saveCharacter()" class="hp-input">
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <div class="panel-card">
+                            <h3>Gallery (Max 10 Slots)</h3>
+                            <input type="file" id="slot-upload" accept="image/*" class="hide-default" onchange="handleSlotUpload(this)">
+                            <div id="char-gallery-grid" class="gallery-grid"></div>
+                        </div>
+                        
                     </div>
                 </div>
             </div>
