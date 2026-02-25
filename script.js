@@ -1,78 +1,94 @@
 // --- STATE VARIABLES ---
-let defaultTimeMs = 5 * 60 * 1000; // 5 minutes in milliseconds
-let remainingMs = defaultTimeMs;
+let totalCustomSeconds = 0; // The master clock. 0 = Year 1, Month 1, Day 1, 00:00:00
 let speedMultiplier = 1;
 let isRunning = false;
-let lastTickTime = 0;
-let timerInterval = null;
+let lastRealTime = Date.now();
 
-// --- CORE LOGIC ---
+// --- THE LAWS OF TIME (Defaults) ---
+// Note: We leave seconds-per-minute hardcoded to 60 here for simplicity, 
+// but you can make it dynamic too!
+let minPerHour = 60;
+let hoursPerDay = 24;
+let daysPerMonth = 30;
+let monthsPerYear = 12;
+
+// --- ENGINE ---
 function tick() {
-    if (!isRunning) return;
+    let now = Date.now();
+    
+    // Calculate how many real seconds passed since the last frame
+    let deltaRealSeconds = (now - lastRealTime) / 1000;
+    lastRealTime = now;
 
-    // 1. Calculate how much real time passed since the last tick
-    const now = Date.now();
-    const deltaTime = now - lastTickTime;
-    lastTickTime = now;
-
-    // 2. Multiply that time by our speed and subtract it from the remaining time
-    remainingMs -= (deltaTime * speedMultiplier);
-
-    // 3. Check if we hit zero
-    if (remainingMs <= 0) {
-        remainingMs = 0;
-        isRunning = false;
-        clearInterval(timerInterval);
+    if (isRunning) {
+        // Add time to our custom world
+        totalCustomSeconds += (deltaRealSeconds * speedMultiplier);
         updateDisplay();
-        alert("Timer Finished!");
-        return;
     }
+}
 
-    updateDisplay();
+// --- CALCULATION & DISPLAY ---
+function updateDisplay() {
+    // 1. Calculate the structure of time based on our custom rules
+    let secPerMin = 60;
+    
+    // Slicing the total seconds into smaller buckets using Math.floor and Modulo (%)
+    let currentSec = Math.floor(totalCustomSeconds % secPerMin);
+    
+    let totalMinutes = Math.floor(totalCustomSeconds / secPerMin);
+    let currentMin = Math.floor(totalMinutes % minPerHour);
+    
+    let totalHours = Math.floor(totalMinutes / minPerHour);
+    let currentHour = Math.floor(totalHours % hoursPerDay);
+    
+    let totalDays = Math.floor(totalHours / hoursPerDay);
+    let currentDay = Math.floor(totalDays % daysPerMonth) + 1; // +1 so days start at 1, not 0
+    
+    let totalMonths = Math.floor(totalDays / daysPerMonth);
+    let currentMonth = Math.floor(totalMonths % monthsPerYear) + 1; // +1 so months start at 1
+    
+    let currentYear = Math.floor(totalMonths / monthsPerYear) + 1; // +1 so years start at 1
+
+    // 2. Format with leading zeros for the clock
+    let h = String(currentHour).padStart(2, '0');
+    let m = String(currentMin).padStart(2, '0');
+    let s = String(currentSec).padStart(2, '0');
+
+    // 3. Update the HTML
+    document.getElementById('time-display').innerText = `${h}:${m}:${s}`;
+    document.getElementById('date-display').innerText = `Year ${currentYear}, Month ${currentMonth}, Day ${currentDay}`;
 }
 
 // --- CONTROLS ---
-function startTimer() {
-    if (isRunning) return; // Prevent multiple intervals from starting
-    isRunning = true;
-    lastTickTime = Date.now();
+function toggleTime() {
+    let btn = document.getElementById('play-btn');
+    isRunning = !isRunning;
     
-    // Run the tick function every 50ms for smooth visual updates
-    timerInterval = setInterval(tick, 50);
-}
-
-function stopTimer() {
-    isRunning = false;
-    clearInterval(timerInterval);
-}
-
-function resetTimer() {
-    stopTimer();
-    remainingMs = defaultTimeMs;
-    speedMultiplier = 1;
-    document.getElementById('speed-label').innerText = "1x";
-    updateDisplay();
+    if (isRunning) {
+        lastRealTime = Date.now(); // Reset the real-world clock so it doesn't jump
+        btn.innerText = "Pause Time";
+        btn.className = "btn-stop";
+    } else {
+        btn.innerText = "Start Time";
+        btn.className = "btn-start";
+    }
 }
 
 function setSpeed(newSpeed) {
-    // If the timer is actively running, force a final tick at the old speed 
-    // before applying the new speed so the math stays accurate.
-    if (isRunning) tick(); 
-    
     speedMultiplier = newSpeed;
     document.getElementById('speed-label').innerText = newSpeed + "x";
 }
 
-// --- UI UPDATER ---
-function updateDisplay() {
-    // Convert remaining milliseconds to Minutes, Seconds, and Tenths of a second
-    const m = Math.floor(remainingMs / (1000 * 60));
-    const s = Math.floor((remainingMs % (1000 * 60)) / 1000);
-    const ms = Math.floor((remainingMs % 1000) / 100); // Just getting the first decimal
-
-    document.getElementById('clock-display').innerText = 
-        `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${ms}`;
+function updateRules() {
+    // Read the inputs from the HTML and update our custom world logic
+    minPerHour = parseInt(document.getElementById('min-per-hour').value) || 60;
+    hoursPerDay = parseInt(document.getElementById('hours-per-day').value) || 24;
+    daysPerMonth = parseInt(document.getElementById('days-per-month').value) || 30;
+    monthsPerYear = parseInt(document.getElementById('months-per-year').value) || 12;
+    
+    updateDisplay(); // Instantly update the screen to reflect the new laws of time
 }
 
-// Initialize the display when the page loads
+// Run the engine constantly
+setInterval(tick, 50);
 updateDisplay();
