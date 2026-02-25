@@ -188,3 +188,9 @@ button:hover { opacity: 0.8; }
 .admin-title-small { margin-top: 0; color: #ef4444; }
 .physics-input { width: 50px; background: #18181b; border: 1px solid #27272a; color: white; padding: 5px; border-radius: 4px; }
 .physics-label { margin-left: 10px; }
+
+/* --- IMAGE GALLERY --- */
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
+.gallery-img { width: 100%; aspect-ratio: 1; border-radius: 6px; object-fit: cover; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+.gallery-img:hover { transform: scale(1.05); }
+.gallery-img.is-main { border-color: #00ff88; box-shadow: 0 0 10px rgba(0, 255, 136, 0.3); }
