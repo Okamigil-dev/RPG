@@ -85,6 +85,7 @@ body {
 /* ==========================================
    --- 6. SIDEBAR HUD ---
    ========================================== */
+
 .active-char-hud { 
     padding: 15px; 
     background: #111; 
@@ -92,6 +93,7 @@ body {
     border: 1px solid #27272a; 
     margin-bottom: 20px; 
 }
+
 .portrait-circle-small {
     width: 45px;
     height: 45px;
@@ -101,8 +103,16 @@ body {
     background-size: cover;
     background-position: center;
 }
+
 .hp-bar-bg { width: 100%; height: 8px; background: #27272a; border-radius: 4px; overflow: hidden; margin: 5px 0; }
 .hp-bar-fill { height: 100%; background: #ef4444; transition: width 0.3s; }
+
+.mp-bar-bg { width: 100%; height: 8px; background: #1e1e21; border-radius: 4px; overflow: hidden; margin: 5px 0; }
+.mp-bar-fill { height: 100%; background: #3b82f6; transition: width 0.3s; }
+
+.exp-bar-bg { width: 100%; height: 4px; background: #27272a; border-radius: 2px; overflow: hidden; margin-top: 4px; }
+.exp-bar-fill { height: 100%; background: #a855f7; width: 0%; transition: width 0.3s; }
+
 .hud-stat-box { background: #09090b; padding: 5px; text-align: center; border-radius: 4px; border: 1px solid #27272a; font-size: 0.7em; }
 
 /* ==========================================
@@ -190,6 +200,18 @@ body {
    --- 12. FORM ELEMENTS ---
    ========================================== */
 .panel-card { background: #18181b; padding: 20px; border-radius: 8px; border: 1px solid #27272a; margin-bottom: 20px; }
+
+/* Custom Spacing & Widths (Replacing inline styles) */
+.header-spacing { margin-bottom: 20px; }
+.field-spacing { margin-bottom: 15px; }
+.input-w-md { width: 120px; }
+.input-w-sm { width: 80px; }
+.exp-input-field { width: 100px; }
+.divider { padding: 0 5px; color: #3f3f46; font-weight: bold; }
+.resource-group { text-align: center; flex-grow: 1; }
+.centered-content { justify-content: center; }
+
+/* Standard Inputs */
 .attr-input, .hp-input, .form-input { 
     background: #09090b !important; 
     color: white !important; 
@@ -197,5 +219,6 @@ body {
     padding: 8px; 
     border-radius: 4px; 
 }
+
 .btn-primary { background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; }
 .btn-secondary { background: #27272a; color: white; border: 1px solid #3f3f46; padding: 10px; border-radius: 4px; cursor: pointer; }
