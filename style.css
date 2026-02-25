@@ -115,6 +115,25 @@ body {
 .sidebar-bottom { margin-top: auto; }
 .char-select { width: 100%; padding: 8px; margin-bottom: 10px; background: #27272a; color: white; border: 1px solid #3f3f46; border-radius: 4px; }
 
+/* --- GAME CLOCK --- */
+.game-ui { 
+    margin-top: 20px; 
+    text-align: center; 
+    padding-top: 20px; 
+    border-top: 1px solid #27272a; 
+    margin-bottom: 20px; 
+}
+.date-text { 
+    font-size: 0.7em; 
+    color: #a1a1aa; 
+}
+.time-text { 
+    font-size: 1.2em; 
+    color: #06b6d4; 
+    font-weight: bold; 
+    margin-top: 5px; 
+}
+
 /* --- LOGIN & TABS --- */
 .tab-content { display: none; }
 .tab-content[style*="display: block"] { display: block !important; }
