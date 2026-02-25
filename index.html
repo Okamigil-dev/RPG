@@ -7,11 +7,9 @@
     
     <link rel="stylesheet" href="style.css">
     
-    <!-- Icon Libraries -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
 
-    <!-- Firebase Compat -->
+    <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -20,13 +18,14 @@
 <body>
 
     <div id="top-nav" class="top-nav">
+        
         <div class="nav-left">
             <div class="brand-logo">WORLD VTT</div>
             <div id="main-nav-tabs" class="nav-tabs hide-default">
-                <button onclick="openTab('tab-character')" class="tab-btn"><i class="ph ph-identification-card"></i> Character</button>
-                <button onclick="openTab('tab-backpack')" class="tab-btn"><i class="ph ph-backpack"></i> Backpack</button>
-                <button onclick="openTab('tab-skills')" class="tab-btn"><i class="ph ph-sparkle"></i> Skills</button>
-                <button onclick="openTab('tab-control-panel')" id="nav-control-panel" class="tab-btn hide-default"><i class="ph ph-gear"></i> Master</button>
+                <button onclick="openTab('tab-character')" class="tab-btn"><i class="fa-regular fa-id-card fa-fw"></i> Character</button>
+                <button onclick="openTab('tab-backpack')" class="tab-btn"><i class="ph ph-briefcase"></i> Backpack</button>
+                <button onclick="openTab('tab-skills')" class="tab-btn"><i class="fa-solid fa-khanda fa-fw"></i> Skills</button>
+                <button onclick="openTab('tab-control-panel')" id="nav-control-panel" class="tab-btn hide-default"><i class="fa-solid fa-gear fa-fw"></i> Master</button>
             </div>
         </div>
 
@@ -36,14 +35,14 @@
                 <div id="user-role-label" class="user-role">Offline</div>
             </div>
             <div id="nav-user-portrait" class="nav-portrait"></div>
-            <button onclick="logoutUser()" id="logout-btn" class="btn-danger hide-default"><i class="ph ph-sign-out"></i></button>
+            <button onclick="logoutUser()" id="logout-btn" class="btn-danger hide-default"><i class="fa-solid fa-right-from-bracket"></i></button>
         </div>
     </div>
 
     <div class="app-body">
+
         <div id="sidebar" class="sidebar">
             
-            <!-- Sidebar HUD: Essential Stats -->
             <div id="active-char-hud" class="active-char-hud hide-default">
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
                     <div id="hud-portrait" class="portrait-circle-small" onclick="document.getElementById('portrait-input').click()"></div>
@@ -55,7 +54,7 @@
                 <input type="file" id="portrait-input" accept="image/*" class="hide-default" onchange="handlePortraitUpload(event)">
                 
                 <div class="hud-resource">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 2px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.7em; margin-bottom: 2px;">
                         <span style="color: #ef4444; font-weight: bold;">HP</span>
                         <span id="hud-hp-text">0 / 0</span>
                     </div>
@@ -63,7 +62,7 @@
                 </div>
             
                 <div class="hud-resource" style="margin-top: 10px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 2px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.7em; margin-bottom: 2px;">
                         <span style="color: #3b82f6; font-weight: bold;">MP</span>
                         <span id="hud-mp-text">0 / 0</span>
                     </div>
@@ -77,44 +76,52 @@
                 </div>
             </div>
 
-            <!-- Game Clock -->
             <div id="game-ui" class="game-ui hide-default">
                 <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
                 <div id="time-display" class="time-text">00:00:00</div>
             </div>
             
-            <!-- Dice Tray with standard Font Awesome icons -->
             <div class="dice-tray">
-                <div id="dice-result" class="dice-result">Roll!</div> 
-                <div class="dice-grid">
-                    <!-- d6 -->
-                    <button onclick="rollDice(6)" title="d6"><i class="fa-solid fa-dice-d6"></i></button>
-                    <!-- d20 -->
-                    <button onclick="rollDice(20)" title="d20" class="d20-btn"><i class="fa-solid fa-dice-d20"></i></button>
-                </div>
+                <div id="dice-result" class="dice-result">Roll!</div> <div class="dice-grid">
+                    </div>
+            </div>
+            <div class="dice-grid">
+                <button onclick="rollDice(4)" title="d4"><i class="ph ph-triangle"></i></button>
+                <button onclick="rollDice(6)" title="d6"><i class="ph ph-square"></i></button>
+                <button onclick="rollDice(8)" title="d8"><i class="ph ph-diamond"></i></button>
+                <button onclick="rollDice(10)" title="d10"><i class="ph ph-pentagon"></i></button>
+                <button onclick="rollDice(12)" title="d12"><i class="ph ph-hexagon"></i></button>
+                <button onclick="rollDice(20)" title="d20" class="d20-btn"><i class="ph ph-circle"></i></button>
             </div>
         </div>
 
         <div id="main-content" class="main-content">
-            <!-- LOGIN TAB -->
+            
             <div id="tab-login" class="tab-content">
+                <h2>Log In or Register</h2>
                 <div class="login-box">
-                    <h2 style="color: #06b6d4; margin-bottom: 20px;">World Tabletop</h2>
                     <input type="email" id="email-input" class="form-input" placeholder="Email">
                     <input type="password" id="password-input" class="form-input" placeholder="Password">
-                    <button id="login-btn" onclick="loginUser()" class="btn-primary btn-full" style="margin-top: 15px;"><i class="ph ph-sign-in"></i> Log In</button>
-                    <button id="register-btn" onclick="registerUser()" class="btn-secondary btn-full"><i class="ph ph-user-plus"></i> Register</button>
+                    
+                    <button id="login-btn" onclick="loginUser()" class="btn-primary btn-full"><i class="fa-solid fa-right-to-bracket"></i> Log In</button>
+                    <button id="register-btn" onclick="registerUser()" class="btn-secondary btn-full"><i class="fa-solid fa-user-plus"></i> Register</button>
                 </div>
             </div>
             
+            
+            
             <!-- 1. CHARACTER TAB -->
+            
             <div id="tab-character" class="tab-content hide-default">
+                
                 <div id="char-selection-view">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #06b6d4; padding-bottom: 10px; margin-bottom: 20px;">
                         <h2 class="tab-title" style="border: none; margin: 0;">Select Character</h2>
                         <button onclick="createNewCharacter()" class="btn-success"><i class="ph ph-plus"></i> New Character</button>
                     </div>
-                    <div id="char-list-grid" class="char-list-grid"></div>
+                    
+                    <div id="char-list-grid" class="char-list-grid">
+                        </div>
                 </div>
             
                 <div id="char-sheet-view" class="hide-default">
@@ -130,32 +137,31 @@
                             <h3 class="panel-title">Core Stats</h3>
                             <div class="attr-list">
                                 <div class="attr-row">
-                                    <span class="attr-label">BODY</span>
+                                    <span class="attr-label text-str">BODY</span>
                                     <div style="display: flex; align-items: center; gap: 10px;">
                                         <span id="mod-body" class="stat-mod">+0</span>
                                         <input type="number" id="char-body" class="attr-input" onchange="saveCharacter()" value="10">
                                     </div>
                                 </div>
                                 <div class="attr-row">
-                                    <span class="attr-label">MIND</span>
+                                    <span class="attr-label text-int">MIND</span>
                                     <div style="display: flex; align-items: center; gap: 10px;">
                                         <span id="mod-mind" class="stat-mod">+0</span>
                                         <input type="number" id="char-mind" class="attr-input" onchange="saveCharacter()" value="10">
                                     </div>
                                 </div>
                                 <div class="attr-row">
-                                    <span class="attr-label">SPIRIT</span>
+                                    <span class="attr-label text-wis">SPIRIT</span>
                                     <div style="display: flex; align-items: center; gap: 10px;">
                                         <span id="mod-spirit" class="stat-mod">+0</span>
                                         <input type="number" id="char-spirit" class="attr-input" onchange="saveCharacter()" value="10">
                                     </div>
                                 </div>
                             </div>
-                            <p style="font-size: 0.65rem; color: #a1a1aa; text-align: center; margin-top: 15px;">Roll: d20 + Modifier vs Target 15</p>
                         </div>
                 
                         <div class="char-main-col">
-                            <div class="panel-card flex-row" style="flex-wrap: wrap; gap: 15px; display: flex;">
+                            <div class="panel-card flex-row" style="flex-wrap: wrap;">
                                 <div style="flex: 2; min-width: 150px;">
                                     <label class="input-label">Name</label>
                                     <input type="text" id="char-name" class="form-input" onchange="saveCharacter()">
@@ -176,7 +182,7 @@
                 
                             <div class="panel-card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                                 <div class="text-center">
-                                    <h4 style="margin:0 0 10px 0; color: #ef4444; font-size: 0.9rem;">Health (HP)</h4>
+                                    <h4 class="hp-title">HP</h4>
                                     <div class="hp-inputs">
                                         <input type="number" id="char-hp-current" class="hp-input" onchange="saveCharacter()">
                                         <span>/</span>
@@ -184,7 +190,7 @@
                                     </div>
                                 </div>
                                 <div class="text-center">
-                                    <h4 style="margin:0 0 10px 0; color: #3b82f6; font-size: 0.9rem;">Mana (MP)</h4>
+                                    <h4 class="hp-title" style="color: #3b82f6;">MP</h4>
                                     <div class="hp-inputs">
                                         <input type="number" id="char-mp-current" class="hp-input" onchange="saveCharacter()">
                                         <span>/</span>
@@ -203,47 +209,51 @@
                 
                     <div class="panel-card" style="margin-top: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3f3f46; padding-bottom: 10px; margin-bottom: 15px;">
-                            <h3 class="panel-title" style="border: none; margin: 0; font-size: 1rem;">Portrait Gallery</h3>
-                            <button onclick="document.getElementById('portrait-input').click()" class="btn-primary btn-small">Upload Image</button>
+                            <h3 class="panel-title" style="border: none; margin: 0;">Gallery</h3>
+                            <button onclick="document.getElementById('portrait-input').click()" class="btn-primary btn-small">Upload</button>
                         </div>
                         <div id="gallery-container" class="gallery-grid"></div>
                     </div>
                 </div>
             </div>
 
+            
+
+            <!-- 2. BACKPACK TAB -->
+            
             <div id="tab-backpack" class="tab-content hide-default">
-                <div class="tab-header"><h2 style="margin: 0;">Backpack</h2></div>
-                <div class="panel-card">Inventory systems coming soon...</div>
+                <h2>Backpack</h2>
             </div>
 
+
+
+            <!-- 3. SKILLS TAB -->
             <div id="tab-skills" class="tab-content hide-default">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #06b6d4; padding-bottom: 10px; margin-bottom: 20px;">
-                    <h2 class="tab-title" style="border: none; margin: 0;">Skills & Abilities</h2>
-                    <div id="skill-mp-display" style="color: #3b82f6; font-weight: bold; font-size: 1.1rem;">MP: 0 / 0</div>
-                </div>
-                <div id="skills-list" class="skills-container"></div>
+                <h2>Skills & Abilities</h2>
             </div>
 
+
+
+            <!-- 0. CONTROL PANEL TAB -->
             <div id="tab-control-panel" class="tab-content hide-default">
-                <h2 class="tab-title" style="margin-bottom: 20px;">Master Control Panel</h2>
-                <div id="master-panel" class="panel-card hide-default">
-                    <h3 class="panel-title">Live Game Controls</h3>
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <button onclick="toggleTime()" id="play-btn" class="btn-success">Start Time</button>
-                        <span style="color: #a1a1aa;">Speed: <strong id="speed-label" style="color: #06b6d4;">1x</strong></span>
-                        <button onclick="setSpeed(1)" class="btn-secondary btn-small">1x</button>
-                        <button onclick="setSpeed(10)" class="btn-secondary btn-small">10x</button>
-                        <button onclick="setSpeed(100)" class="btn-secondary btn-small">100x</button>
-                    </div>
+                <h2 class="tab-title master-title">Master Control Panel</h2>
+                
+                <div id="master-panel" class="panel-card master-panel hide-default">
+                    <h3 class="master-title-small">Live Game Controls</h3>
+                    <button onclick="toggleTime()" id="play-btn" class="btn-success"><i class="fa-solid fa-play"></i> Start Time</button>
+                    <span class="speed-label-text">Speed: <span id="speed-label">1x</span></span>
+                    <button onclick="setSpeed(1)" class="btn-small">1x</button>
+                    <button onclick="setSpeed(10)" class="btn-small">10x</button>
+                    <button onclick="setSpeed(100)" class="btn-small">100x</button>
                 </div>
-                <div id="admin-panel" class="panel-card hide-default">
-                    <h3 class="panel-title">World Physics & Rules</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div><label class="input-label">Minutes per Hour</label><input type="number" id="min-per-hour" class="form-input" onchange="updateRules()"></div>
-                        <div><label class="input-label">Hours per Day</label><input type="number" id="hours-per-day" class="form-input" onchange="updateRules()"></div>
-                    </div>
+
+                <div id="admin-panel" class="panel-card admin-panel hide-default">
+                    <h3 class="admin-title-small">World Physics & Rules</h3>
+                    <label>Min/Hour: <input type="number" id="min-per-hour" class="physics-input" value="60" onchange="updateRules()"></label>
+                    <label class="physics-label">Hours/Day: <input type="number" id="hours-per-day" class="physics-input" value="24" onchange="updateRules()"></label>
                 </div>
             </div>
+
         </div>
     </div>
 
