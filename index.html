@@ -251,11 +251,23 @@
                     
                     <div id="sub-accounts" class="control-sub-content">
                         <div class="panel-card">
-                            <h3>Account Management</h3>
-                            <p style="color: #71717a;">Admin tools for user roles and permissions will be here.</p>
+                            <div class="flex-row" style="justify-content: space-between; margin-bottom: 20px;">
+                                <h3>User Access Control</h3>
+                                <button onclick="loadUserList()" class="btn-small"><i class="fa-solid fa-rotate"></i> Refresh List</button>
+                            </div>
+                            
+                            <div class="user-list-header" style="display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 10px; color: #71717a; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid #27272a;">
+                                <span>Email</span>
+                                <span>Current Role</span>
+                                <span style="text-align: right;">Actions</span>
+                            </div>
+                    
+                            <div id="admin-user-list" class="user-list-body">
+                                <p style="padding: 20px; text-align: center; color: #52525b;">Click refresh to load users...</p>
+                            </div>
                         </div>
                     </div>
-            
+                    
                     <div id="sub-groups" class="control-sub-content hide-default">
                         <div class="panel-card">
                             <h3>Group Management & World Clock</h3>
