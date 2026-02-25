@@ -202,15 +202,86 @@ function goBackToSelection() {
     document.getElementById('char-sheet-view').classList.add('hide-default');
 }
 
+// Convert file to Base64 string
+function handleImageUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64String = e.target.result;
+        saveImageToGallery(base64String);
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveImageToGallery(base64Data) {
+    const user = auth.currentUser;
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
+
+    charRef.get().then(doc => {
+        let gallery = doc.data().gallery || [];
+        gallery.push(base64Data);
+        // If it's the first image, make it the portrait
+        const updateData = { gallery: gallery };
+        if (!doc.data().portrait) updateData.portrait = base64Data;
+        
+        charRef.update(updateData).then(() => renderGallery(gallery, doc.data().portrait));
+    });
+}
+
+function renderGallery(gallery, activePortrait) {
+    const container = document.getElementById('char-gallery-grid');
+    container.innerHTML = "";
+    gallery.forEach((img) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = `gallery-item ${img === activePortrait ? 'active-img' : ''}`;
+        wrapper.innerHTML = `<img src="${img}" onclick="setActivePortrait('${img}')">`;
+        container.appendChild(wrapper);
+    });
+}
+
+function setActivePortrait(imgData) {
+    const user = auth.currentUser;
+    firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId)
+        .update({ portrait: imgData }).then(() => {
+            document.getElementById('hud-portrait').style.backgroundImage = `url(${imgData})`;
+            loadUserCharacters(); // Refresh the selection grid
+        });
+}
+
+// Update loadUserCharacters to show the image in the selection grid
+function loadUserCharacters() {
+    const user = auth.currentUser;
+    firestore.collection('users').doc(user.uid).collection('characters').get().then(snap => {
+        const grid = document.getElementById('char-list-grid');
+        grid.innerHTML = "";
+        snap.forEach(doc => {
+            const d = doc.data();
+            const card = document.createElement('div');
+            card.className = 'char-card';
+            card.onclick = () => selectCharacter(doc.id);
+            // Added the portrait div to match the sidebar style
+            card.innerHTML = `
+                <div class="portrait-circle-small" style="background-image: url(${d.portrait || ''}); margin: 0 auto 10px;"></div>
+                <strong>${d.name}</strong>
+            `;
+            grid.appendChild(card);
+        });
+    });
+}
+
 // ==========================================
 // --- 10. HUD HANDLING ---
 // ==========================================
 function updateHUD(char) {
     document.getElementById('active-char-hud').classList.remove('hide-default');
     document.getElementById('hud-name').innerText = char.name;
+    document.getElementById('hud-portrait').style.backgroundImage = `url(${char.portrait || ''})`;
     document.getElementById('hud-hp-fill').style.width = (char.hpCurrent / char.hpMax * 100) + "%";
+    
+    if (char.gallery) renderGallery(char.gallery, char.portrait);
 }
-
 // ==========================================
 // --- 11. DICE ROLLER ---
 // ==========================================
