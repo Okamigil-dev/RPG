@@ -113,12 +113,10 @@
                             </div>
             
                             <div class="panel-card">
-                                <h3>Character Gallery</h3>
-                                <div class="gallery-controls">
-                                    <input type="file" id="image-upload" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
-                                    <button onclick="document.getElementById('image-upload').click()" class="btn-secondary btn-full">Upload Image</button>
-                                </div>
-                                <div id="char-gallery-grid" class="gallery-grid"></div>
+                                <h3>Gallery (Max 10 Slots)</h3>
+                                <input type="file" id="slot-upload" accept="image/*" style="display:none" onchange="handleSlotUpload(this)">
+                                <div id="char-gallery-grid" class="gallery-grid">
+                                    </div>
                             </div>
                         </div>
             
