@@ -2,29 +2,37 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>World Timer</title>
+    <title>World Clock</title>
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <div class="timer-container">
-      <h2>Control Panel</h2>
+    <div class="clock-container">
+      <h2>World Time</h2>
 
-      <div class="display" id="clock-display">05:00.0</div>
+        <div class="date-display" id="date-display">Year 1, Month 1, Day 1</div>
+        <div class="time-display" id="time-display">00:00:00</div>      
       
-      <div class="controls">
-        <button onclick="startTimer()" class="btn-start">Start</button>
-        <button onclick="stopTimer()" class="btn-stop">Stop / Pause</button>
-        <button onclick="resetTimer()" class="btn-reset">Reset</button>
-      </div>
+        <div class="controls">
+            <button onclick="toggleTime()" id="play-btn" class="btn-start">Start Time</button>
+            <div class="speed-controls">
+                <span>Speed: <span id="speed-label">1x</span></span>
+                <button onclick="setSpeed(1)">1x</button>
+                <button onclick="setSpeed(10)">10x</button>
+                <button onclick="setSpeed(100)">100x</button>
+                <button onclick="setSpeed(1000)">1000x</button>
+            </div>
+        </div>
 
-      <div class="speed-controls">
-        <span>Speed: <span id="speed-label">1x</span></span>
-        <button onclick="setSpeed(0.5)">0.5x (Slow)</button>
-        <button onclick="setSpeed(1)">1x (Normal)</button>
-        <button onclick="setSpeed(2)">2x (Fast)</button>
-        <button onclick="setSpeed(10)">10x (Ultra)</button>
-      </div>
-    </div>
+        <div class="settings">
+            <h3>Time Rules</h3>
+            <div class="rule-group">
+                <label>Minutes in an Hour: <input type="number" id="min-per-hour" value="60" onchange="updateRules()"></label>
+                <label>Hours in a Day: <input type="number" id="hours-per-day" value="24" onchange="updateRules()"></label>
+                <label>Days in a Month: <input type="number" id="days-per-month" value="30" onchange="updateRules()"></label>
+                <label>Months in a Year: <input type="number" id="months-per-year" value="12" onchange="updateRules()"></label>
+            </div>
+        </div>
+    </div>    
     
     <script src="script.js"></script>
   
