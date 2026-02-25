@@ -25,16 +25,13 @@
         </div>
             <div id="user-status" style="margin-top: 10px; color: #a1a1aa; font-size: 14px;">Not logged in</div>
     </div>
-    
-    <div class="clock-container" id="game-ui" style="display: none;">
-        <h2>World Time</h2>
-        
-        <div class="date-display" id="date-display">Year 1, Month 1, Day 1</div>
-        <div class="time-display" id="time-display">00:00:00</div>
 
+    <div id="master-panel" style="display: none; border: 2px solid #3b82f6; padding: 15px; border-radius: 10px; margin-top: 20px; background: #18181b;">
+        <h3 style="color: #3b82f6; text-align: center; margin-top: 0; margin-bottom: 15px;">Dungeon Master Controls</h3>
+        
         <div class="controls" id="time-controls">
             <button onclick="toggleTime()" id="play-btn" class="btn-start">Start Time</button>
-            <div class="speed-controls">
+            <div class="speed-controls" style="margin-top: 10px;">
                 <span>Speed: <span id="speed-label">1x</span></span>
                 <button onclick="setSpeed(1)">1x</button>
                 <button onclick="setSpeed(10)">10x</button>
@@ -42,16 +39,28 @@
                 <button onclick="setSpeed(1000)">1000x</button>
             </div>
         </div>
-
+    </div>
+    
+    <div id="admin-panel" style="display: none; border: 2px solid #ef4444; padding: 15px; border-radius: 10px; margin-top: 20px; background: #18181b;">
+        <h3 style="color: #ef4444; text-align: center; margin-top: 0; margin-bottom: 15px;">Admin World Settings</h3>
+        
         <div class="settings" id="time-settings">
-            <h3>Time Rules</h3>
             <div class="rule-group">
-                <label>Minutes in an Hour: <input type="number" id="min-per-hour" value="60" onchange="updateRules()"></label>
-                <label>Hours in a Day: <input type="number" id="hours-per-day" value="24" onchange="updateRules()"></label>
-                <label>Days in a Month: <input type="number" id="days-per-month" value="30" onchange="updateRules()"></label>
-                <label>Months in a Year: <input type="number" id="months-per-year" value="12" onchange="updateRules()"></label>
+                <label>Min/Hour: <input type="number" id="min-per-hour" value="60" onchange="updateRules()"></label>
+                <label>Hours/Day: <input type="number" id="hours-per-day" value="24" onchange="updateRules()"></label>
+                <label>Days/Month: <input type="number" id="days-per-month" value="30" onchange="updateRules()"></label>
+                <label>Months/Year: <input type="number" id="months-per-year" value="12" onchange="updateRules()"></label>
             </div>
         </div>
+    </div>
+
+    
+    <div class="clock-container" id="game-ui" style="display: none;">
+        <h2>World Time</h2>
+        
+        <div class="date-display" id="date-display">Year 1, Month 1, Day 1</div>
+        <div class="time-display" id="time-display">00:00:00</div>
+
     </div>
 
     <script src="script.js"></script>
