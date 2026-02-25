@@ -22,36 +22,45 @@ let minPerHour = 60, hoursPerDay = 24, daysPerMonth = 30, monthsPerYear = 12;
 // ==========================================
 const initAuth = async () => {
     try {
+        // Only sign in if a custom token is provided by the environment
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
             await auth.signInWithCustomToken(__initial_auth_token);
-        } else {
-            await auth.signInAnonymously();
         }
+        // Anonymous login removed as requested: Users must login manually.
     } catch (err) {
-        console.error("Auth Error:", err);
+        console.error("Auth Initialization Error:", err);
     }
 };
 
 initAuth();
 
 auth.onAuthStateChanged(async (user) => {
+    const gameUI = document.getElementById('game-ui');
+    const mainNav = document.getElementById('main-nav-tabs');
+
     if (!user) {
+        // Force the login tab and hide game elements if no user is signed in
         openTab('tab-login');
-        document.getElementById('main-nav-tabs')?.classList.add('hide-default');
+        mainNav?.classList.add('hide-default');
+        gameUI?.classList.add('hide-default');
+        document.getElementById('logout-btn')?.classList.add('hide-default');
         return;
     }
 
     try {
-        // Path follows Rule 1
+        // Path follows RULE 1
         const userDoc = await firestore.collection('artifacts').doc(appId).collection('users').doc(user.uid).get();
         const userData = userDoc.data() || { role: 'Player' };
         
         // Update UI Header
-        if(document.getElementById('user-display-name')) document.getElementById('user-display-name').innerText = user.email ? user.email.split('@')[0] : "Adventurer";
-        if(document.getElementById('user-role-label')) document.getElementById('user-role-label').innerText = userData.role;
+        const userDisp = document.getElementById('user-display-name');
+        const roleLabel = document.getElementById('user-role-label');
+        if (userDisp) userDisp.innerText = user.email ? user.email.split('@')[0] : "Adventurer";
+        if (roleLabel) roleLabel.innerText = userData.role;
+
         document.getElementById('logout-btn')?.classList.remove('hide-default');
-        document.getElementById('main-nav-tabs')?.classList.remove('hide-default');
-        document.getElementById('game-ui')?.classList.remove('hide-default');
+        mainNav?.classList.remove('hide-default');
+        gameUI?.classList.remove('hide-default');
 
         // Master/Admin permissions
         if (userData.role === 'Admin' || userData.role === 'Master') {
@@ -75,15 +84,20 @@ auth.onAuthStateChanged(async (user) => {
 function loginUser() {
     const e = document.getElementById('email-input').value;
     const p = document.getElementById('password-input').value;
-    auth.signInWithEmailAndPassword(e, p).catch(err => alert(err.message));
+    if (!e || !p) return console.error("Email and Password required.");
+    auth.signInWithEmailAndPassword(e, p).catch(err => console.error(err.message));
 }
 
 function registerUser() {
     const e = document.getElementById('email-input').value;
     const p = document.getElementById('password-input').value;
+    if (!e || !p) return console.error("Email and Password required.");
     auth.createUserWithEmailAndPassword(e, p).then(cred => {
-        firestore.collection('artifacts').doc(appId).collection('users').doc(cred.user.uid).set({ email: e, role: 'Player' });
-    }).catch(err => alert(err.message));
+        firestore.collection('artifacts').doc(appId).collection('users').doc(cred.user.uid).set({ 
+            email: e, 
+            role: 'Player' 
+        });
+    }).catch(err => console.error(err.message));
 }
 
 function logoutUser() { auth.signOut().then(() => location.reload()); }
@@ -195,7 +209,8 @@ async function selectCharacter(id) {
 
 function goBackToSelection() {
     currentCharacterId = null;
-    firestore.collection('artifacts').doc(appId).collection('users').doc(auth.currentUser.uid).update({ lastActiveCharacter: null });
+    const uid = auth.currentUser.uid;
+    firestore.collection('artifacts').doc(appId).collection('users').doc(uid).update({ lastActiveCharacter: null });
     document.getElementById('char-selection-view')?.classList.remove('hide-default');
     document.getElementById('char-sheet-view')?.classList.add('hide-default');
     document.getElementById('active-char-hud')?.classList.add('hide-default');
@@ -274,8 +289,10 @@ function updateHUD(char) {
     const hud = document.getElementById('active-char-hud');
     if (!char || !hud) return;
 
-    if (document.getElementById('hud-name')) document.getElementById('hud-name').innerText = char.name || "Unnamed";
-    if (document.getElementById('hud-meta')) document.getElementById('hud-meta').innerText = `Lv. ${char.level || 1} ${char.race || ''} ${char.class || ''}`;
+    const name = document.getElementById('hud-name');
+    const meta = document.getElementById('hud-meta');
+    if (name) name.innerText = char.name || "Unnamed";
+    if (meta) meta.innerText = `Lv. ${char.level || 1} ${char.race || ''} ${char.class || ''}`;
     
     // Bars
     const hpPct = (char.hpMax > 0) ? (char.hpCurrent / char.hpMax) * 100 : 0;
@@ -286,13 +303,18 @@ function updateHUD(char) {
     if (hpFill) hpFill.style.width = hpPct + "%";
     if (mpFill) mpFill.style.width = mpPct + "%";
 
-    if (document.getElementById('hud-hp-text')) document.getElementById('hud-hp-text').innerText = `${char.hpCurrent}/${char.hpMax}`;
-    if (document.getElementById('hud-mp-text')) document.getElementById('hud-mp-text').innerText = `${char.mpCurrent}/${char.mpMax}`;
+    const hpText = document.getElementById('hud-hp-text');
+    const mpText = document.getElementById('hud-mp-text');
+    if (hpText) hpText.innerText = `${char.hpCurrent}/${char.hpMax}`;
+    if (mpText) mpText.innerText = `${char.mpCurrent}/${char.mpMax}`;
     
-    // Sidebar Stats
-    if (document.getElementById('hud-mod-body')) document.getElementById('hud-mod-body').innerText = calculateModifier(char.body);
-    if (document.getElementById('hud-mod-mind')) document.getElementById('hud-mod-mind').innerText = calculateModifier(char.mind);
-    if (document.getElementById('hud-mod-spirit')) document.getElementById('hud-mod-spirit').innerText = calculateModifier(char.spirit);
+    // Sidebar Modifiers
+    const hBody = document.getElementById('hud-mod-body');
+    const hMind = document.getElementById('hud-mod-mind');
+    const hSpirit = document.getElementById('hud-mod-spirit');
+    if (hBody) hBody.innerText = calculateModifier(char.body);
+    if (hMind) hMind.innerText = calculateModifier(char.mind);
+    if (hSpirit) hSpirit.innerText = calculateModifier(char.spirit);
 
     if (char.portrait) {
         const port = document.getElementById('hud-portrait');
@@ -305,8 +327,10 @@ function updateHUD(char) {
 async function createNewCharacter() {
     const uid = auth.currentUser.uid;
     const initData = { 
-        name: "New Hero", level: 1, hpCurrent: 10, hpMax: 10, mpCurrent: 10, mpMax: 10,
-        body: 10, mind: 10, spirit: 10, ac: 10, init: 0, speed: 30, skills: getDefaultSkills("Adventurer")
+        name: "New Hero", race: "Human", class: "Adventurer", level: 1, 
+        hpCurrent: 10, hpMax: 10, mpCurrent: 10, mpMax: 10,
+        body: 10, mind: 10, spirit: 10, ac: 10, init: 0, speed: 30,
+        portrait: "", gallery: [], skills: getDefaultSkills("Adventurer")
     };
     const ref = await firestore.collection('artifacts').doc(appId).collection('users').doc(uid).collection('characters').add(initData);
     selectCharacter(ref.id);
@@ -316,14 +340,16 @@ async function createNewCharacter() {
 // --- 5. SKILLS & UTILS ---
 // ==========================================
 function openTab(tabId) {
+    // Block tab access if not authenticated, unless it's the login tab
     if (!auth.currentUser && tabId !== 'tab-login') return;
     
     document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hide-default'));
-    document.getElementById(tabId)?.classList.remove('hide-default');
+    const target = document.getElementById(tabId);
+    if (target) target.classList.remove('hide-default');
     
-    // Manage active state for nav buttons
+    // UI Button state logic
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+    const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabId));
     if (activeBtn) activeBtn.classList.add('active');
 
     if (tabId === 'tab-character' && !currentCharacterId) loadUserCharacters();
@@ -351,19 +377,30 @@ function handlePortraitUpload(event) {
         const img = new Image();
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            const max = 300;
+            const max = 400;
             let w = img.width, h = img.height;
             if (w > h) { if (w > max) { h *= max/w; w = max; } } else { if (h > max) { w *= max/h; h = max; } }
             canvas.width = w; canvas.height = h;
             canvas.getContext('2d').drawImage(img, 0, 0, w, h);
             const base64 = canvas.toDataURL('image/jpeg', 0.8);
+            
             firestore.collection('artifacts').doc(appId).collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).update({
-                portrait: base64, gallery: firebase.firestore.FieldValue.arrayUnion(base64)
-            }).then(() => selectCharacter(currentCharacterId));
+                portrait: base64, 
+                gallery: firebase.firestore.FieldValue.arrayUnion(base64)
+            }).then(() => {
+                currentPortraitString = base64;
+                switchCharacterReload();
+            });
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
+}
+
+async function switchCharacterReload() {
+    if (!currentCharacterId) return;
+    const doc = await firestore.collection('artifacts').doc(appId).collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get();
+    if (doc.exists) loadCharacterData(doc.data());
 }
 
 function renderGallery(gallery, main) {
@@ -376,7 +413,7 @@ function renderGallery(gallery, main) {
         el.className = `gallery-img ${img === main ? 'is-main' : ''}`;
         el.onclick = () => {
             firestore.collection('artifacts').doc(appId).collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).update({ portrait: img });
-            selectCharacter(currentCharacterId);
+            switchCharacterReload();
         };
         container.appendChild(el);
     });
@@ -412,18 +449,25 @@ function renderSkills(skills) {
 
 async function castSkill(idx) {
     const uid = auth.currentUser.uid;
+    if (!uid || !currentCharacterId) return;
     const doc = await firestore.collection('artifacts').doc(appId).collection('users').doc(uid).collection('characters').doc(currentCharacterId).get();
     const char = doc.data();
-    const skill = char.skills[idx];
-    if (char.mpCurrent < skill.cost) return alert("Out of MP!");
+    const skills = char.skills || getDefaultSkills(char.class);
+    const skill = skills[idx];
     
-    char.mpCurrent -= skill.cost;
+    if (char.mpCurrent < (skill.cost || 0)) return console.warn("Out of MP!");
+    
+    char.mpCurrent -= (skill.cost || 0);
     skill.uses++;
     if (skill.uses >= skill.target) {
         skill.level++;
         skill.uses = 0;
         skill.target = Math.floor(skill.target * 1.5);
     }
-    await firestore.collection('artifacts').doc(appId).collection('users').doc(uid).collection('characters').doc(currentCharacterId).update({ mpCurrent: char.mpCurrent, skills: char.skills });
+    
+    await firestore.collection('artifacts').doc(appId).collection('users').doc(uid).collection('characters').doc(currentCharacterId).update({ 
+        mpCurrent: char.mpCurrent, 
+        skills: skills 
+    });
     loadCharacterData(char);
 }
