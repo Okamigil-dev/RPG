@@ -13,6 +13,8 @@ let monthsPerYear = 12;
 
 let currentCampaignId = "global"; 
 let currentCharacterId = null; // Tracks which specific character is open
+let currentPortraitString = ""; // Safely holds the image string
+
 
 
 // ==========================================
@@ -303,7 +305,9 @@ function saveCharacter() {
         int: document.getElementById('char-int').value,
         wis: document.getElementById('char-wis').value,
         cha: document.getElementById('char-cha').value,
-        portrait: document.getElementById('portrait-preview').style.backgroundImage.slice(5, -2).replace(/"/g, "")
+        
+        // FIXED: No more slicing HTML! We just save the raw variable directly.
+        portrait: currentPortraitString
     };
     firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).set(charData, { merge: true })
         .then(() => {
@@ -326,7 +330,10 @@ function loadCharacterData(char) {
     document.getElementById('char-int').value = char.int || 10;
     document.getElementById('char-wis').value = char.wis || 10;
     document.getElementById('char-cha').value = char.cha || 10;
-    updatePortraitUI(char.portrait);
+    
+    // FIXED: Safely load the portrait into our variable
+    currentPortraitString = char.portrait || "";
+    updatePortraitUI(currentPortraitString);
     updateHUD(char);
 }
 
@@ -338,37 +345,30 @@ function loadCharacterData(char) {
 function handlePortraitUpload(event) {
     const file = event.target.files[0];
     if (!file || !currentCharacterId) return;
-    
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            
-            // 1. Calculate the new size while keeping the original aspect ratio
             let width = img.width;
             let height = img.height;
-            const maxSize = 500; // Increased from 150 for much better quality
+            const maxSize = 500; 
 
             if (width > height) {
-                if (width > maxSize) {
-                    height *= maxSize / width;
-                    width = maxSize;
-                }
+                if (width > maxSize) { height *= maxSize / width; width = maxSize; }
             } else {
-                if (height > maxSize) {
-                    width *= maxSize / height;
-                    height = maxSize;
-                }
+                if (height > maxSize) { width *= maxSize / height; height = maxSize; }
             }
 
-            // 2. Draw the high-res, properly scaled image
             canvas.width = width;
             canvas.height = height;
             canvas.getContext('2d').drawImage(img, 0, 0, width, height);
             
-            // 3. Save it with much higher JPEG quality (0.9 instead of 0.7)
             const base64 = canvas.toDataURL('image/jpeg', 0.9);
+            
+            // FIXED: Store the exact string in memory before saving
+            currentPortraitString = base64; 
+            
             updatePortraitUI(base64);
             saveCharacter(); 
         };
