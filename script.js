@@ -511,3 +511,62 @@ function deleteImage(event, index) {
         charRef.update(updateData).then(() => renderGallery(gallery, updateData.portrait));
     });
 }
+
+
+
+/* ==========================================
+   --- 13. MASTER CONTROL LOGIC ---
+   ========================================== */
+
+/**
+ * Handles switching between sub-tabs within the Master Control Panel
+ */
+function openControlSubTab(evt, subId) {
+    // 1. Hide all sub-content blocks
+    const subContents = document.getElementsByClassName("control-sub-content");
+    for (let i = 0; i < subContents.length; i++) {
+        subContents[i].classList.add("hide-default");
+    }
+
+    // 2. Remove 'active' class from all sub-nav buttons
+    const subButtons = document.getElementsByClassName("sub-nav-btn");
+    for (let i = 0; i < subButtons.length; i++) {
+        subButtons[i].classList.remove("active");
+    }
+
+    // 3. Show the target sub-content
+    const targetSub = document.getElementById(subId);
+    if (targetSub) {
+        targetSub.classList.remove("hide-default");
+    }
+
+    // 4. Set clicked button to active
+    evt.currentTarget.classList.add("active");
+}
+
+/**
+ * Enhanced Speed Control with Role-Based Permissions
+ */
+function setSpeed(multiplier) {
+    const role = window.currentUserRole;
+
+    // Security Check: Must be Master or Admin
+    if (role !== 'Master' && role !== 'Admin') {
+        console.error("Unauthorized: Role insufficient for speed control.");
+        return;
+    }
+
+    // Rule: Only Admin can access 100x speed
+    if (multiplier >= 100 && role !== 'Admin') {
+        alert("Only the Admin can use 'Time Warp' speeds (100x+).");
+        return;
+    }
+
+    // Update the visual speed label in the Master Panel
+    const label = document.getElementById('speed-label');
+    if (label) label.innerText = multiplier + "x";
+
+    // --- YOUR EXISTING CLOCK LOGIC HERE ---
+    // Example: updateGlobalClockSpeed(multiplier);
+    console.log(`System: Clock speed set to ${multiplier}x by ${role}`);
+}
