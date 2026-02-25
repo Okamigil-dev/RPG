@@ -12,10 +12,8 @@ let daysPerMonth = 30;
 let monthsPerYear = 12;
 
 let currentCampaignId = "global"; 
-let currentCharacterId = null; // Tracks which specific character is open
-let currentPortraitString = ""; // Safely holds the image string
-
-
+let currentCharacterId = null; 
+let currentPortraitString = ""; 
 
 // ==========================================
 // --- 2. FIREBASE SETUP & INITIALIZATION ---
@@ -34,7 +32,6 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const rtdb = firebase.database();       
 const firestore = firebase.firestore(); 
-
 
 // ==========================================
 // --- 3. DATABASE SYNC (RTDB) ---
@@ -72,23 +69,15 @@ rtdb.ref(`campaigns/${currentCampaignId}/clock`).on('value', (snapshot) => {
         }
         lastRealTime = now;
 
-        // Update Admin Panel Inputs if they exist
         if(document.getElementById('min-per-hour')) document.getElementById('min-per-hour').value = minPerHour;
         if(document.getElementById('hours-per-day')) document.getElementById('hours-per-day').value = hoursPerDay;
         if(document.getElementById('speed-label')) document.getElementById('speed-label').innerText = speedMultiplier + "x";
         
         let btn = document.getElementById('play-btn');
-        if (btn) {
-            if (isRunning) {
-                btn.innerText = "Pause Time";
-            } else {
-                btn.innerText = "Start Time";
-            }
-        }
+        if (btn) btn.innerText = isRunning ? "Pause Time" : "Start Time";
         updateDisplay();
     }
 });
-
 
 // ==========================================
 // --- 4. CLOCK ENGINE & DISPLAY ---
@@ -125,7 +114,6 @@ function updateDisplay() {
 }
 setInterval(tick, 50);
 
-
 // ==========================================
 // --- 5. CLOCK CONTROLS (ADMIN ONLY) ---
 // ==========================================
@@ -147,7 +135,6 @@ function updateRules() {
     saveTimeState(); 
 }
 
-
 // ==========================================
 // --- 6. AUTHENTICATION & ROLES ---
 // ==========================================
@@ -156,7 +143,6 @@ function registerUser() {
     const pass = document.getElementById('password-input').value;
     auth.createUserWithEmailAndPassword(email, pass).then((userCredential) => {
         firestore.collection('users').doc(userCredential.user.uid).set({ email: email, role: 'Player' });
-        alert("Account created!");
     }).catch((error) => alert(error.message));
 }
 
@@ -166,8 +152,7 @@ function loginUser() {
     auth.signInWithEmailAndPassword(email, pass).catch((error) => alert(error.message));
 }
 
-function logoutUser() { auth.signOut(); }
-
+function logoutUser() { auth.signOut().then(() => location.reload()); }
 
 // ==========================================
 // --- 7. USER AUTHENTICATION ---
@@ -191,14 +176,11 @@ auth.onAuthStateChanged((user) => {
                 if(mainNavTabs) mainNavTabs.classList.remove('hide-default');
                 if (gameUI) gameUI.classList.remove('hide-default');
 
-                // NEW: Handle Dashboard vs Sheet View on login
                 if (userData.lastActiveCharacter) {
                     selectCharacter(userData.lastActiveCharacter);
                 } else {
                     loadUserCharacters(); 
                     openTab('tab-character');
-                    document.getElementById('char-selection-view').classList.remove('hide-default');
-                    document.getElementById('char-sheet-view').classList.add('hide-default');
                 }
 
                 if (role === 'Master' || role === 'Admin') {
@@ -208,45 +190,48 @@ auth.onAuthStateChanged((user) => {
                 if (role === 'Admin' && adminPanel) adminPanel.classList.remove('hide-default');
             }
         });
+    } else {
+        openTab('tab-login');
+        if(mainNavTabs) mainNavTabs.classList.add('hide-default');
     }
-
+}); // FIX: Added missing closing bracket and parenthesis
 
 // ==========================================
 // --- 8. UI NAVIGATION (TAB SWITCHER) ---
 // ==========================================
 function openTab(tabId) {
-    // HARD LOCK: If there is no user logged in, refuse to open any tab except the login screen
-    if (!auth.currentUser && tabId !== 'tab-login') {
-        console.warn("Access denied: You must log in first.");
-        return; 
-    }
+    if (!auth.currentUser && tabId !== 'tab-login') return;
 
-    const allTabs = document.querySelectorAll('.tab-content');
-    allTabs.forEach(tab => tab.style.display = 'none');
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hide-default'));
     const target = document.getElementById(tabId);
-    if (target) target.style.display = 'block';
-}
+    if (target) target.classList.remove('hide-default');
 
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    // Find button associated with this tabId if needed
+}
 
 // ==========================================
 // --- 9. CHARACTER SHEET LOGIC ---
 // ==========================================
-
 function createNewCharacter() {
     const user = auth.currentUser;
     if (!user) return;
     
-    // 1. Create the blank character profile
     const newRef = firestore.collection('users').doc(user.uid).collection('characters').doc();
-    const initData = { name: "New Hero", level: 1, hpCurrent: 10, hpMax: 10, str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10, portrait: "" };
+    // FIX: Updated to Body, Mind, Spirit and added MP
+    const initData = { 
+        name: "New Hero", race: "Human", class: "Adventurer", level: 1, 
+        hpCurrent: 10, hpMax: 10, mpCurrent: 10, mpMax: 10,
+        body: 10, mind: 10, spirit: 10, ac: 10, init: 0, speed: 30,
+        portrait: "", gallery: [], skills: getDefaultSkills("Adventurer")
+    };
     
-    // 2. Save it to the database
     newRef.set(initData).then(() => {
         currentCharacterId = newRef.id;
         loadUserCharacters(); 
-        
-        // 3. THIS IS THE MISSING LINE: Force the screen to load the new blank stats!
         loadCharacterData(initData);
+        document.getElementById('char-selection-view').classList.add('hide-default');
+        document.getElementById('char-sheet-view').classList.remove('hide-default');
     });
 }
 
@@ -254,6 +239,7 @@ function loadUserCharacters() {
     if (!auth.currentUser) return;
     firestore.collection('users').doc(auth.currentUser.uid).collection('characters').get().then(snap => {
         const listGrid = document.getElementById('char-list-grid');
+        if (!listGrid) return;
         listGrid.innerHTML = ""; 
 
         snap.forEach(doc => {
@@ -261,7 +247,6 @@ function loadUserCharacters() {
             const card = document.createElement('div');
             card.className = 'char-card';
             card.onclick = () => selectCharacter(doc.id);
-            
             card.innerHTML = `
                 <div class="char-card-portrait" style="background-image: url('${data.portrait || ''}')">
                     ${!data.portrait ? '<i class="ph ph-user" style="font-size: 2em; line-height: 80px; color: #3f3f46;"></i>' : ''}
@@ -276,9 +261,7 @@ function loadUserCharacters() {
 
 function selectCharacter(id) {
     currentCharacterId = id;
-    firestore.collection('users').doc(auth.currentUser.uid).set({
-        lastActiveCharacter: id
-    }, { merge: true });
+    firestore.collection('users').doc(auth.currentUser.uid).set({ lastActiveCharacter: id }, { merge: true });
 
     firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(id).get().then(doc => {
         if (doc.exists) {
@@ -291,37 +274,26 @@ function selectCharacter(id) {
 
 function goBackToSelection() {
     currentCharacterId = null;
+    firestore.collection('users').doc(auth.currentUser.uid).update({ lastActiveCharacter: null });
     document.getElementById('char-selection-view').classList.remove('hide-default');
     document.getElementById('char-sheet-view').classList.add('hide-default');
-    document.getElementById('active-char-hud').classList.add('hide-default');
-}
-
-function switchCharacter() {
-    // This is now used primarily for internal reloads (like after image uploads)
-    if (!currentCharacterId) return;
-    firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get().then(doc => {
-        if (doc.exists) loadCharacterData(doc.data());
-    });
+    if(document.getElementById('active-char-hud')) document.getElementById('active-char-hud').classList.add('hide-default');
+    loadUserCharacters();
 }
 
 function calculateModifier(val) {
-    const mod = Math.floor((val - 10) / 2);
+    const mod = Math.floor((parseInt(val) - 10) / 2);
     return mod >= 0 ? `+${mod}` : mod;
 }
 
 function saveCharacter() {
     if (!currentCharacterId || !auth.currentUser) return;
     
-    // Update visual modifiers immediately
-    document.getElementById('mod-body').innerText = calculateModifier(document.getElementById('char-body').value);
-    document.getElementById('mod-mind').innerText = calculateModifier(document.getElementById('char-mind').value);
-    document.getElementById('mod-spirit').innerText = calculateModifier(document.getElementById('char-spirit').value);
-
     const charData = {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
         class: document.getElementById('char-class').value,
-        level: document.getElementById('char-level').value,
+        level: parseInt(document.getElementById('char-level').value) || 1,
         hpCurrent: parseInt(document.getElementById('char-hp-current').value) || 0,
         hpMax: parseInt(document.getElementById('char-hp-max').value) || 0,
         mpCurrent: parseInt(document.getElementById('char-mp-current').value) || 0,
@@ -329,13 +301,13 @@ function saveCharacter() {
         body: parseInt(document.getElementById('char-body').value) || 10,
         mind: parseInt(document.getElementById('char-mind').value) || 10,
         spirit: parseInt(document.getElementById('char-spirit').value) || 10,
-        ac: document.getElementById('char-ac').value,
-        init: document.getElementById('char-init').value,
-        speed: document.getElementById('char-speed').value,
+        ac: parseInt(document.getElementById('char-ac').value) || 10,
+        init: parseInt(document.getElementById('char-init').value) || 0,
+        speed: parseInt(document.getElementById('char-speed').value) || 30,
         portrait: currentPortraitString
     };
     
-    firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).set(charData, { merge: true })
+    firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).update(charData)
         .then(() => { updateHUD(charData); });
 }
 
@@ -363,13 +335,12 @@ function loadCharacterData(char) {
     renderGallery(char.gallery || [], currentPortraitString);
     updatePortraitUI(currentPortraitString);
     updateHUD(char);
+    renderSkills(char.skills || getDefaultSkills(char.class));
 }
-
 
 // ==========================================
 // --- 10. IMAGE GALLERY & HUD HANDLING ---
 // ==========================================
-
 function handlePortraitUpload(event) {
     const file = event.target.files[0];
     if (!file || !currentCharacterId) return;
@@ -379,23 +350,19 @@ function handlePortraitUpload(event) {
         const img = new Image();
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            let width = img.width, height = img.height;
-            const maxSize = 400; // Scaled slightly to fit multiple images safely in the database
-
+            let width = img.width, height = img.height, maxSize = 400;
             if (width > height) { if (width > maxSize) { height *= maxSize / width; width = maxSize; } } 
             else { if (height > maxSize) { width *= maxSize / height; height = maxSize; } }
-
             canvas.width = width; canvas.height = height;
             canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-            
             const base64 = canvas.toDataURL('image/jpeg', 0.8);
             
-            // Add the new image to the gallery array AND set it as the main portrait
             firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).update({
                 gallery: firebase.firestore.FieldValue.arrayUnion(base64),
                 portrait: base64
             }).then(() => {
-                switchCharacter(); // Reloads the screen to show the new image
+                currentPortraitString = base64;
+                switchCharacter(); 
             });
         };
         img.src = e.target.result;
@@ -404,101 +371,136 @@ function handlePortraitUpload(event) {
 }
 
 function setMainPortrait(base64String) {
-    // When you click an image in the gallery, it updates the main portrait
     firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).update({
         portrait: base64String
-    }).then(() => switchCharacter());
+    }).then(() => {
+        currentPortraitString = base64String;
+        switchCharacter();
+    });
 }
 
 function renderGallery(galleryArray, currentMain) {
     const container = document.getElementById('gallery-container');
     if (!container) return;
-    container.innerHTML = ""; // Clear old images
-    
+    container.innerHTML = ""; 
     galleryArray.forEach(base64 => {
         let img = document.createElement('img');
         img.src = base64;
-        img.className = "gallery-img";
-        if (base64 === currentMain) img.classList.add('is-main');
-        
-        // Make the image clickable
+        img.className = "gallery-img" + (base64 === currentMain ? " is-main" : "");
         img.onclick = () => setMainPortrait(base64);
         container.appendChild(img);
     });
 }
 
 function updatePortraitUI(url) {
-    const preview = document.getElementById('portrait-preview');
-    const placeholder = document.getElementById('portrait-placeholder');
-    if (url) {
-        preview.style.backgroundImage = `url('${url}')`;
-        placeholder.style.display = 'none';
-    } else {
-        preview.style.backgroundImage = '';
-        placeholder.style.display = 'block';
+    const port = document.getElementById('hud-portrait');
+    if (port) {
+        port.style.backgroundImage = url ? `url('${url}')` : '';
+        port.innerHTML = url ? "" : '<i class="ph ph-user"></i>';
     }
 }
 
 function updateHUD(char) {
     const hud = document.getElementById('active-char-hud');
     if (!char || !hud) return;
-
     hud.classList.remove('hide-default');
     
-    // Identity
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
-    const hudMeta = document.getElementById('hud-meta');
-    if(hudMeta) hudMeta.innerText = `Lv. ${char.level || 1} ${char.race || ''} ${char.class || ''}`;
+    if(document.getElementById('hud-meta')) document.getElementById('hud-meta').innerText = `Lv. ${char.level || 1} ${char.race || ''} ${char.class || ''}`;
     
-    // Portrait
-    const port = document.getElementById('hud-portrait') || document.getElementById('portrait-preview');
-    if (char.portrait) port.style.backgroundImage = `url('${char.portrait}')`;
-    else port.style.backgroundImage = '';
-
-    // Bars
     const hpPct = (char.hpMax > 0) ? (char.hpCurrent / char.hpMax) * 100 : 0;
     document.getElementById('hud-hp-fill').style.width = hpPct + "%";
-    document.getElementById('hud-hp-text').innerText = `${char.hpCurrent} / ${char.hpMax}`;
+    document.getElementById('hud-hp-text').innerText = `${char.hpCurrent}/${char.hpMax}`;
 
     const mpPct = (char.mpMax > 0) ? (char.mpCurrent / char.mpMax) * 100 : 0;
-    const mpFill = document.getElementById('hud-mp-fill');
-    const mpText = document.getElementById('hud-mp-text');
-    if(mpFill) mpFill.style.width = mpPct + "%";
-    if(mpText) mpText.innerText = `${char.mpCurrent} / ${char.mpMax}`;
+    if(document.getElementById('hud-mp-fill')) document.getElementById('hud-mp-fill').style.width = mpPct + "%";
+    if(document.getElementById('hud-mp-text')) document.getElementById('hud-mp-text').innerText = `${char.mpCurrent}/${char.mpMax}`;
+    if(document.getElementById('skill-mp-display')) document.getElementById('skill-mp-display').innerText = `MP: ${char.mpCurrent} / ${char.mpMax}`;
 
-    // Sidebar Stats (The +0 modifiers)
-    const hBody = document.getElementById('hud-mod-body');
-    const hMind = document.getElementById('hud-mod-mind');
-    const hSpirit = document.getElementById('hud-mod-spirit');
-    
-    if(hBody) hBody.innerText = calculateModifier(char.body || 10);
-    if(hMind) hMind.innerText = calculateModifier(char.mind || 10);
-    if(hSpirit) hSpirit.innerText = calculateModifier(char.spirit || 10);
+    if(document.getElementById('hud-mod-body')) document.getElementById('hud-mod-body').innerText = calculateModifier(char.body || 10);
+    if(document.getElementById('hud-mod-mind')) document.getElementById('hud-mod-mind').innerText = calculateModifier(char.mind || 10);
+    if(document.getElementById('hud-mod-spirit')) document.getElementById('hud-mod-spirit').innerText = calculateModifier(char.spirit || 10);
+
+    const navPort = document.getElementById('nav-user-portrait');
+    if(navPort) navPort.style.backgroundImage = char.portrait ? `url('${char.portrait}')` : '';
 }
-
-
 
 // ==========================================
 // --- 11. DICE ROLLER ---
 // ==========================================
-
 function rollDice(sides) {
-    const resultDisplay = document.getElementById('dice-result');
+    const res = document.getElementById('dice-result');
+    if(!res) return;
     let rolls = 0;
-    
-    // Simple "rolling" animation
     const interval = setInterval(() => {
-        resultDisplay.innerText = Math.floor(Math.random() * sides) + 1;
-        rolls++;
-        if (rolls > 10) {
+        res.innerText = Math.floor(Math.random() * sides) + 1;
+        if (++rolls > 10) {
             clearInterval(interval);
-            const finalRoll = Math.floor(Math.random() * sides) + 1;
-            resultDisplay.innerText = `d${sides}: ${finalRoll}`;
-            
-            // Highlight criticals on d20
-            if (sides === 20 && finalRoll === 20) resultDisplay.style.color = "#fbbf24";
-            else if (sides === 20 && finalRoll === 1) resultDisplay.style.color = "#ef4444";
-            else resultDisplay.style.color = "#00ff88";
+            const final = Math.floor(Math.random() * sides) + 1;
+            res.innerText = `d${sides}: ${final}`;
+            res.style.color = (sides === 20 && final === 20) ? "#fbbf24" : (sides === 20 && final === 1) ? "#ef4444" : "#10b981";
         }
     }, 40);
+}
+
+// ==========================================
+// --- 12. SKILLS ENGINE ---
+// ==========================================
+function getDefaultSkills(cls) {
+    const className = (cls || "").toLowerCase();
+    if (className === 'cleric') {
+        return [
+            { name: "Heal", level: 1, uses: 0, targetUses: 5, baseCost: 10 },
+            { name: "Cure", level: 1, uses: 0, targetUses: 5, baseCost: 10 },
+            { name: "Blessing", level: 1, uses: 0, targetUses: 5, baseCost: 10 },
+            { name: "Barrier", level: 1, uses: 0, targetUses: 5, baseCost: 10 }
+        ];
+    }
+    return [{ name: "Strike", level: 1, uses: 0, targetUses: 10, baseCost: 0 }];
+}
+
+function renderSkills(skills) {
+    const list = document.getElementById('skills-list');
+    if(!list) return;
+    list.innerHTML = "";
+    skills.forEach((s, i) => {
+        const cost = Math.max(1, s.baseCost - Math.floor(s.level / 2));
+        const prog = (s.uses / s.targetUses) * 100;
+        const div = document.createElement('div');
+        div.className = 'skill-item';
+        div.innerHTML = `
+            <div class="skill-info">
+                <strong>${s.name} <small>Lv.${s.level}</small></strong>
+                <div><small style="color:var(--mana)">Cost: ${cost} MP</small></div>
+                <div class="skill-progress-container"><div class="skill-progress-fill" style="width:${prog}%"></div></div>
+            </div>
+            <button onclick="castSkill(${i})" class="btn-primary">Cast</button>
+        `;
+        list.appendChild(div);
+    });
+}
+
+async function castSkill(idx) {
+    const uid = auth.currentUser.uid;
+    const doc = await firestore.collection('users').doc(uid).collection('characters').doc(currentCharacterId).get();
+    if(!doc.exists) return;
+    const char = doc.data();
+    const skills = char.skills || getDefaultSkills(char.class);
+    const skill = skills[idx];
+    const cost = Math.max(1, skill.baseCost - Math.floor(skill.level / 2));
+
+    if (char.mpCurrent < cost) return alert("Not enough MP");
+
+    char.mpCurrent -= cost;
+    skill.uses += 1;
+    if (skill.uses >= skill.targetUses) {
+        skill.level++;
+        skill.uses = 0;
+        skill.targetUses = Math.floor(skill.targetUses * 1.5);
+    }
+    await firestore.collection('users').doc(uid).collection('characters').doc(currentCharacterId).update({ 
+        mpCurrent: char.mpCurrent, 
+        skills: skills 
+    });
+    loadCharacterData(char);
 }
