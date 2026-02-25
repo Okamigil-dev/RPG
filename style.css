@@ -95,8 +95,8 @@ body {
 }
 
 .portrait-circle-small {
-    width: 45px;
-    height: 45px;
+    width: 100px;
+    height: 100px;
     border-radius: 8px;
     border: 2px solid #27272a;
     background-color: #020617;
@@ -144,10 +144,7 @@ body {
     text-align: center; transition: 0.3s; cursor: pointer; 
 }
 .char-card:hover { border-color: #00ff88; transform: translateY(-5px); }
-.portrait-preview { 
-    width: 100px; height: 100px; margin: 0 auto 15px; border-radius: 12px; 
-    border: 2px solid #27272a; background-size: cover; background-position: center; 
-}
+
 
 /* ==========================================
    --- 11. CHARACTER GALLERY ---
