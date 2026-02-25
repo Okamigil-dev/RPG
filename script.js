@@ -191,11 +191,12 @@ function logoutUser() {
 
 // Reacts instantly when a user logs in or out
 // Reacts instantly when a user logs in or out
+// Reacts instantly when a user logs in or out
 auth.onAuthStateChanged((user) => {
     // Grab the UI elements
     const gameUI = document.getElementById('game-ui');
-    const controlsDiv = document.getElementById('time-controls');
-    const settingsDiv = document.getElementById('time-settings');
+    const masterPanel = document.getElementById('master-panel'); // The Level 2 box
+    const adminPanel = document.getElementById('admin-panel');   // The Level 3 box
 
     if (user) {
         // Fetch their profile from FIRESTORE
@@ -213,17 +214,25 @@ auth.onAuthStateChanged((user) => {
                 document.querySelector('button[onclick="loginUser()"]').style.display = "none";
                 document.querySelector('button[onclick="registerUser()"]').style.display = "none";
                 
-                // --- SECURITY CHECK ---
-                // 1. Show the main clock to ALL logged-in players
+                // ==========================================
+                // --- THE HIERARCHY SECURITY CHECK ---
+                // ==========================================
+                
+                // LEVEL 1: Player (Everyone logged in gets to see the clock)
                 if (gameUI) gameUI.style.display = 'block';
 
-                // 2. Only show the control buttons if they are an Admin
-                if (role === 'Admin') {
-                    if (controlsDiv) controlsDiv.style.display = 'block';
-                    if (settingsDiv) settingsDiv.style.display = 'block';
+                // LEVEL 2: Master (Admins and Masters get the Game Controls)
+                if (role === 'Master' || role === 'Admin') {
+                    if (masterPanel) masterPanel.style.display = 'block';
                 } else {
-                    if (controlsDiv) controlsDiv.style.display = 'none';
-                    if (settingsDiv) settingsDiv.style.display = 'none';
+                    if (masterPanel) masterPanel.style.display = 'none';
+                }
+
+                // LEVEL 3: Admin (Only Admins get to change the literal laws of time)
+                if (role === 'Admin') {
+                    if (adminPanel) adminPanel.style.display = 'block';
+                } else {
+                    if (adminPanel) adminPanel.style.display = 'none';
                 }
             }
         });
@@ -239,7 +248,9 @@ auth.onAuthStateChanged((user) => {
         document.querySelector('button[onclick="loginUser()"]').style.display = "inline-block";
         document.querySelector('button[onclick="registerUser()"]').style.display = "inline-block";
         
-        // Hide absolutely everything on the right side from guests!
+        // Hide the game world and ALL panels from guests
         if (gameUI) gameUI.style.display = 'none';
+        if (masterPanel) masterPanel.style.display = 'none';
+        if (adminPanel) adminPanel.style.display = 'none';
     }
 });
