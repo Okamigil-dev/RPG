@@ -210,8 +210,12 @@ auth.onAuthStateChanged((user) => {
     if (user) {
         // Fetch profile from Firestore
         firestore.collection('users').doc(user.uid).get().then((doc) => {
-            if (doc.exists) {
-                const role = doc.data().role;
+             if (doc.exists) {
+                const userData = doc.data();
+                const role = userData.role;
+                        
+                // FILL IN THE SHEET!
+                loadCharacter(userData);
                 
                 // Show who is logged in
                 document.getElementById('user-status').innerText = `User: ${user.email} (${role})`;
@@ -272,6 +276,8 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
+
+
 // ==========================================
 // --- 8. UI NAVIGATION (TAB SWITCHER) ---
 // ==========================================
@@ -282,4 +288,60 @@ function openTab(tabId) {
     
     // 2. Unhide exactly the one we asked for
     document.getElementById(tabId).style.display = 'block';
+}
+
+
+
+// ==========================================
+// --- 9. CHARACTER SHEET LOGIC ---
+// ==========================================
+
+// This runs automatically every time a player types a number and clicks away
+function saveCharacter() {
+    const user = auth.currentUser;
+    if (!user) return; // Stop if they aren't logged in
+
+    // 1. Gather all the data from the HTML inputs
+    const charData = {
+        name: document.getElementById('char-name').value,
+        level: document.getElementById('char-level').value,
+        hpCurrent: document.getElementById('char-hp-current').value,
+        hpMax: document.getElementById('char-hp-max').value,
+        ac: document.getElementById('char-ac').value,
+        init: document.getElementById('char-init').value,
+        speed: document.getElementById('char-speed').value,
+        str: document.getElementById('char-str').value,
+        dex: document.getElementById('char-dex').value,
+        con: document.getElementById('char-con').value,
+        int: document.getElementById('char-int').value,
+        wis: document.getElementById('char-wis').value,
+        cha: document.getElementById('char-cha').value
+    };
+
+    // 2. Save it to Firestore inside a "character" object
+    firestore.collection('users').doc(user.uid).set({
+        character: charData
+    }, { merge: true }).then(() => {
+        console.log("Auto-saved character data to Firestore!");
+    }).catch(error => console.error("Error saving character:", error));
+}
+
+// This function fills in the boxes when the user first logs in
+function loadCharacter(userData) {
+    if (userData && userData.character) {
+        const char = userData.character;
+        document.getElementById('char-name').value = char.name || "";
+        document.getElementById('char-level').value = char.level || 1;
+        document.getElementById('char-hp-current').value = char.hpCurrent || "";
+        document.getElementById('char-hp-max').value = char.hpMax || "";
+        document.getElementById('char-ac').value = char.ac || 10;
+        document.getElementById('char-init').value = char.init || 0;
+        document.getElementById('char-speed').value = char.speed || 30;
+        document.getElementById('char-str').value = char.str || 10;
+        document.getElementById('char-dex').value = char.dex || 10;
+        document.getElementById('char-con').value = char.con || 10;
+        document.getElementById('char-int').value = char.int || 10;
+        document.getElementById('char-wis').value = char.wis || 10;
+        document.getElementById('char-cha').value = char.cha || 10;
+    }
 }
