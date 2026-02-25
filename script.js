@@ -316,52 +316,65 @@ function switchCharacter() {
     });
 }
 
+function calculateModifier(val) {
+    const mod = Math.floor((val - 10) / 2);
+    return mod >= 0 ? `+${mod}` : mod;
+}
+
 function saveCharacter() {
     if (!currentCharacterId || !auth.currentUser) return;
+    
+    // Auto-update the visual modifiers before saving
+    document.getElementById('mod-body').innerText = calculateModifier(document.getElementById('char-body').value);
+    document.getElementById('mod-mind').innerText = calculateModifier(document.getElementById('char-mind').value);
+    document.getElementById('mod-spirit').innerText = calculateModifier(document.getElementById('char-spirit').value);
+
     const charData = {
         name: document.getElementById('char-name').value,
+        race: document.getElementById('char-race').value,
+        class: document.getElementById('char-class').value,
         level: document.getElementById('char-level').value,
         hpCurrent: document.getElementById('char-hp-current').value,
         hpMax: document.getElementById('char-hp-max').value,
+        mpCurrent: document.getElementById('char-mp-current').value,
+        mpMax: document.getElementById('char-mp-max').value,
+        body: document.getElementById('char-body').value,
+        mind: document.getElementById('char-mind').value,
+        spirit: document.getElementById('char-spirit').value,
         ac: document.getElementById('char-ac').value,
         init: document.getElementById('char-init').value,
         speed: document.getElementById('char-speed').value,
-        str: document.getElementById('char-str').value,
-        dex: document.getElementById('char-dex').value,
-        con: document.getElementById('char-con').value,
-        int: document.getElementById('char-int').value,
-        wis: document.getElementById('char-wis').value,
-        cha: document.getElementById('char-cha').value,
-        
-        // FIXED: No more slicing HTML! We just save the raw variable directly.
         portrait: currentPortraitString
     };
+    
     firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).set(charData, { merge: true })
-        .then(() => {
-            updateHUD(charData);
-            loadUserCharacters(); 
-        });
+        .then(() => { updateHUD(charData); });
 }
 
 function loadCharacterData(char) {
     document.getElementById('char-name').value = char.name || "";
+    document.getElementById('char-race').value = char.race || "";
+    document.getElementById('char-class').value = char.class || "";
     document.getElementById('char-level').value = char.level || 1;
     document.getElementById('char-hp-current').value = char.hpCurrent || 0;
     document.getElementById('char-hp-max').value = char.hpMax || 0;
+    document.getElementById('char-mp-current').value = char.mpCurrent || 0;
+    document.getElementById('char-mp-max').value = char.mpMax || 0;
+    document.getElementById('char-body').value = char.body || 10;
+    document.getElementById('char-mind').value = char.mind || 10;
+    document.getElementById('char-spirit').value = char.spirit || 10;
     document.getElementById('char-ac').value = char.ac || 10;
     document.getElementById('char-init').value = char.init || 0;
     document.getElementById('char-speed').value = char.speed || 30;
-    document.getElementById('char-str').value = char.str || 10;
-    document.getElementById('char-dex').value = char.dex || 10;
-    document.getElementById('char-con').value = char.con || 10;
-    document.getElementById('char-int').value = char.int || 10;
-    document.getElementById('char-wis').value = char.wis || 10;
-    document.getElementById('char-cha').value = char.cha || 10;
+
+    // Update modifiers on screen
+    document.getElementById('mod-body').innerText = calculateModifier(char.body || 10);
+    document.getElementById('mod-mind').innerText = calculateModifier(char.mind || 10);
+    document.getElementById('mod-spirit').innerText = calculateModifier(char.spirit || 10);
     
-    // FIXED: Safely load the portrait into our variable
     currentPortraitString = char.portrait || "";
+    renderGallery(char.gallery || [], currentPortraitString);
     updatePortraitUI(currentPortraitString);
-    renderGallery(char.gallery || [], char.portrait || "");
     updateHUD(char);
 }
 
@@ -462,5 +475,26 @@ function updateHUD(char) {
 
 
 // ==========================================
-// --- 11. ---
+// --- 11. DICE ROLLER ---
 // ==========================================
+
+function rollDice(sides) {
+    const resultDisplay = document.getElementById('dice-result');
+    let rolls = 0;
+    
+    // Simple "rolling" animation
+    const interval = setInterval(() => {
+        resultDisplay.innerText = Math.floor(Math.random() * sides) + 1;
+        rolls++;
+        if (rolls > 10) {
+            clearInterval(interval);
+            const finalRoll = Math.floor(Math.random() * sides) + 1;
+            resultDisplay.innerText = `d${sides}: ${finalRoll}`;
+            
+            // Highlight criticals on d20
+            if (sides === 20 && finalRoll === 20) resultDisplay.style.color = "#fbbf24";
+            else if (sides === 20 && finalRoll === 1) resultDisplay.style.color = "#ef4444";
+            else resultDisplay.style.color = "#00ff88";
+        }
+    }, 40);
+}
