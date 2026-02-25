@@ -81,7 +81,12 @@
         </div>
 
         <div id="main-content" class="main-content">
+
+
             
+            <!--===========================
+            ---- 1. LOGIN TAB ----
+            ============================-->
             <div id="tab-login" class="tab-content">
                 <h2>Log In or Register</h2>
                 <div class="login-box">
@@ -92,8 +97,12 @@
                 </div>
             </div>
 
+            
+            
+            <!--===========================
+            ---- 2. CHARACTER TAB ----
+            ============================-->
             <div id="tab-character" class="tab-content hide-default">
-                
                 <div id="char-selection-view">
                     <div class="flex-row">
                         <h2 class="tab-title">Character Dashboard</h2>
@@ -148,7 +157,6 @@
                                     <label>Name</label>
                                     <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
                                 </div>
-                                
                                 <div class="field-group">
                                     <label>Race</label>
                                     <select id="char-race" onchange="saveCharacter()" class="form-input">
@@ -159,7 +167,6 @@
                                         <option value="Orc">Orc</option>
                                     </select>
                                 </div>
-                                
                                 <div class="field-group">
                                     <label>Class</label>
                                     <select id="char-class" onchange="saveCharacter()" class="form-input">
@@ -170,7 +177,6 @@
                                         <option value="Cleric">Cleric</option>
                                     </select>
                                 </div>
-                                
                             </div>
                             
                             <div class="level-exp-grid">
@@ -198,15 +204,71 @@
                 </div>
             </div>
 
+            
+            
+            <!--===========================
+            ---- 3. BACKPACK TAB ----
+            ============================-->
+            <div id="tab-backpack" class="tab-content hide-default">
+                <h2 class="tab-title">Backpack</h2>
+                <div class="panel-card">
+                    <p>Inventory system coming soon...</p>
+                </div>
+            </div>
+
+            
+
+            <!--===========================
+            ---- 4. SKILLS TAB ----
+            ============================-->
+            <div id="tab-skills" class="tab-content hide-default">
+                <h2 class="tab-title">Skills & Abilities</h2>
+                <div class="panel-card">
+                    <p>Skills system coming soon...</p>
+                </div>
+            </div>
+
+
+            
+            <!--===========================
+            ---- 5. CONTROL PANEL TAB ----
+            ============================-->
             <div id="tab-control-panel" class="tab-content hide-default">
                 <h2 class="tab-title">Master Control</h2>
-                <div class="panel-card">
-                    <h3>Time Control</h3>
-                    <button onclick="toggleTime()" id="play-btn" class="btn-success">Start Time</button>
-                    <span id="speed-label">1x</span>
-                    <button onclick="setSpeed(1)" class="btn-small">1x</button>
-                    <button onclick="setSpeed(10)" class="btn-small">10x</button>
-                    <button onclick="setSpeed(100)" class="btn-small">100x</button>
+            
+                <div class="sub-nav-tabs">
+                    <button class="sub-nav-btn active" onclick="openControlSubTab(event, 'sub-time')">Time Management</button>
+                    <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-players')">Player Management</button>
+                    <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-rules')">Core Rules</button>
+                </div>
+            
+                <div class="sub-tab-container">
+                    <div id="sub-time" class="control-sub-content">
+                        <div class="panel-card">
+                            <h3>Time Control</h3>
+                            <button onclick="toggleTime()" id="play-btn" class="btn-success">Start Time</button>
+                            <span id="speed-label">1x</span>
+                            <div class="mt-m">
+                                <button onclick="setSpeed(1)" class="btn-small">1x</button>
+                                <button onclick="setSpeed(10)" class="btn-small">10x</button>
+                                <button onclick="setSpeed(100)" class="btn-small">100x</button>
+                            </div>
+                        </div>
+                    </div>
+            
+                    <div id="sub-players" class="control-sub-content hide-default">
+                        <div class="panel-card">
+                            <h3>Player List</h3>
+                            <p>Player management tools will go here.</p>
+                        </div>
+                    </div>
+            
+                    <div id="sub-rules" class="control-sub-content hide-default">
+                        <div class="panel-card">
+                            <h3>System Settings</h3>
+                            <p>EXP caps and global rules will go here.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
