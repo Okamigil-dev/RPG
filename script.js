@@ -48,9 +48,11 @@ rtdb.ref(`campaigns/${currentCampaignId}/clock`).on('value', (snapshot) => {
         let now = Date.now();
         if (data.isRunning) {
             let deltaRealSeconds = (now - data.lastRealWorldSaveTime) / 1000;
-            totalCustomSeconds = data.totalSeconds + (deltaRealSeconds * speedMultiplier);
+            // FIX: Changed data.totalSeconds to data.totalCustomSeconds
+            totalCustomSeconds = (data.totalCustomSeconds || 0) + (deltaRealSeconds * speedMultiplier);
         } else {
-            totalCustomSeconds = data.totalSeconds;
+            // FIX: Changed data.totalSeconds to data.totalCustomSeconds
+            totalCustomSeconds = data.totalCustomSeconds || 0;
         }
         lastRealTime = now;
         updateDisplay();
