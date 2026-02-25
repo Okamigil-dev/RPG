@@ -361,47 +361,102 @@ function loadCharacterData(char) {
     // FIXED: Safely load the portrait into our variable
     currentPortraitString = char.portrait || "";
     updatePortraitUI(currentPortraitString);
+    renderGallery(char.gallery || [], char.portrait || "");
     updateHUD(char);
 }
 
 
 // ==========================================
-// --- 10. IMAGE & HUD HANDLING ---
+// --- 10. IMAGE GALLERY & HUD HANDLING ---
 // ==========================================
 
 function handlePortraitUpload(event) {
     const file = event.target.files[0];
     if (!file || !currentCharacterId) return;
+    
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-            const maxSize = 500; 
+            let width = img.width, height = img.height;
+            const maxSize = 400; // Scaled slightly to fit multiple images safely in the database
 
-            if (width > height) {
-                if (width > maxSize) { height *= maxSize / width; width = maxSize; }
-            } else {
-                if (height > maxSize) { width *= maxSize / height; height = maxSize; }
-            }
+            if (width > height) { if (width > maxSize) { height *= maxSize / width; width = maxSize; } } 
+            else { if (height > maxSize) { width *= maxSize / height; height = maxSize; } }
 
-            canvas.width = width;
-            canvas.height = height;
+            canvas.width = width; canvas.height = height;
             canvas.getContext('2d').drawImage(img, 0, 0, width, height);
             
-            const base64 = canvas.toDataURL('image/jpeg', 0.9);
+            const base64 = canvas.toDataURL('image/jpeg', 0.8);
             
-            // FIXED: Store the exact string in memory before saving
-            currentPortraitString = base64; 
-            
-            updatePortraitUI(base64);
-            saveCharacter(); 
+            // Add the new image to the gallery array AND set it as the main portrait
+            firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).update({
+                gallery: firebase.firestore.FieldValue.arrayUnion(base64),
+                portrait: base64
+            }).then(() => {
+                switchCharacter(); // Reloads the screen to show the new image
+            });
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
+}
+
+function setMainPortrait(base64String) {
+    // When you click an image in the gallery, it updates the main portrait
+    firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).update({
+        portrait: base64String
+    }).then(() => switchCharacter());
+}
+
+function renderGallery(galleryArray, currentMain) {
+    const container = document.getElementById('gallery-container');
+    if (!container) return;
+    container.innerHTML = ""; // Clear old images
+    
+    galleryArray.forEach(base64 => {
+        let img = document.createElement('img');
+        img.src = base64;
+        img.className = "gallery-img";
+        if (base64 === currentMain) img.classList.add('is-main');
+        
+        // Make the image clickable
+        img.onclick = () => setMainPortrait(base64);
+        container.appendChild(img);
+    });
+}
+
+function updatePortraitUI(url) {
+    const preview = document.getElementById('portrait-preview');
+    const placeholder = document.getElementById('portrait-placeholder');
+    if (url) {
+        preview.style.backgroundImage = `url('${url}')`;
+        placeholder.style.display = 'none';
+    } else {
+        preview.style.backgroundImage = '';
+        placeholder.style.display = 'block';
+    }
+}
+
+function updateHUD(char) {
+    const hud = document.getElementById('active-char-hud');
+    const navPortrait = document.getElementById('nav-user-portrait'); 
+    
+    if (!char) {
+        if(hud) hud.classList.add('hide-default');
+        if(navPortrait) navPortrait.style.backgroundImage = '';
+        return;
+    }
+    
+    if(hud) hud.classList.remove('hide-default');
+    document.getElementById('hud-name').innerText = char.name || "Unnamed";
+    
+    const hpPercent = (char.hpMax > 0) ? (char.hpCurrent / char.hpMax) * 100 : 0;
+    document.getElementById('hud-hp-fill').style.width = hpPercent + "%";
+    document.getElementById('hud-hp-text').innerText = `${char.hpCurrent || 0} / ${char.hpMax || 0}`;
+    
+    if (navPortrait) navPortrait.style.backgroundImage = char.portrait ? `url('${char.portrait}')` : '';
 }
 
 
