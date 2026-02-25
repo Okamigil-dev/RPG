@@ -1,17 +1,18 @@
-<html>
-  <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>World Clock</title>
     <link rel="stylesheet" href="style.css">
-  </head>
-  <body>
-    <div class="clock-container">
-      <h2>World Time</h2>
+</head>
+<body>
 
+    <div class="clock-container">
+        <h2>World Time</h2>
+        
         <div class="date-display" id="date-display">Year 1, Month 1, Day 1</div>
-        <div class="time-display" id="time-display">00:00:00</div>      
-      
+        <div class="time-display" id="time-display">00:00:00</div>
+
         <div class="controls">
             <button onclick="toggleTime()" id="play-btn" class="btn-start">Start Time</button>
             <div class="speed-controls">
@@ -32,9 +33,8 @@
                 <label>Months in a Year: <input type="number" id="months-per-year" value="12" onchange="updateRules()"></label>
             </div>
         </div>
-    </div>    
-    
+    </div>
+
     <script src="script.js"></script>
-  
-  </body>
+</body>
 </html>
