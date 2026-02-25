@@ -26,13 +26,13 @@
             <div id="user-status" style="margin-top: 10px; color: #a1a1aa; font-size: 14px;">Not logged in</div>
     </div>
     
-    <div class="clock-container">
+    <div class="clock-container" id="game-ui" style="display: none;">
         <h2>World Time</h2>
         
         <div class="date-display" id="date-display">Year 1, Month 1, Day 1</div>
         <div class="time-display" id="time-display">00:00:00</div>
 
-        <div class="controls">
+        <div class="controls" id="time-controls">
             <button onclick="toggleTime()" id="play-btn" class="btn-start">Start Time</button>
             <div class="speed-controls">
                 <span>Speed: <span id="speed-label">1x</span></span>
@@ -43,7 +43,7 @@
             </div>
         </div>
 
-        <div class="settings">
+        <div class="settings" id="time-settings">
             <h3>Time Rules</h3>
             <div class="rule-group">
                 <label>Minutes in an Hour: <input type="number" id="min-per-hour" value="60" onchange="updateRules()"></label>
