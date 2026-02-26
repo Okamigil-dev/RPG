@@ -491,6 +491,24 @@ body {
     font-weight: bold;
 }
 
+/* Delete Character Button*/
+.char-card-meta {
+    font-size: 0.75rem;
+    color: #a1a1aa;
+    margin-top: 5px;
+}
+
+.char-card .btn-danger-small {
+    opacity: 0.6;
+    transition: 0.2s;
+}
+
+.char-card:hover .btn-danger-small {
+    opacity: 1;
+}
+
+
+
 
 /* ==========================================
    --- 15. INPUTS & SELECTS ---
