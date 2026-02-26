@@ -626,11 +626,14 @@ async function loadUserList() {
             row.style.borderBottom = '1px solid #18181b';
             row.style.alignItems = 'center';
 
+            // Define a safe role string to use in both the display and the function call
+            const displayRole = user.role || 'Player';
+            
             row.innerHTML = `
                 <span style="font-size: 0.85rem; color: #e4e4e7;">${user.email || 'Anonymous'}</span>
-                <span class="role-badge" style="color: ${user.role === 'Admin' ? '#00ff88' : '#3b82f6'}; font-size: 0.7rem; font-weight: bold;">${user.role || 'Player'}</span>
+                <span class="role-badge" style="color: ${displayRole === 'Admin' ? '#00ff88' : '#3b82f6'}; font-size: 0.7rem; font-weight: bold;">${displayRole}</span>
                 <div style="text-align: right;">
-                    <button onclick="changeUserRole('${doc.id}', '${user.role}')" class="btn-small">Edit</button>
+                    <button onclick="changeUserRole('${doc.id}', '${displayRole}')" class="btn-small">Edit</button>
                 </div>
             `;
             listContainer.appendChild(row);
@@ -640,3 +643,39 @@ async function loadUserList() {
         listContainer.innerHTML = '<p style="color: #ef4444;">Error: Check Firestore Permissions</p>';
     }
 }
+
+/**
+ * Changes a user's role in Firestore
+ * @param {string} userId - The document ID of the user
+ * @param {string} currentRole - The role they currently have
+ */
+async function changeUserRole(userId, currentRole) {
+    // 1. Ask for the new role via a simple prompt
+    const newRole = prompt(`Current Role: ${currentRole}\nEnter new role (Player, Master, or Admin):`, currentRole);
+
+    // 2. If the user cancelled or didn't type anything, stop
+    if (newRole === null || newRole === "") return;
+
+    // 3. Validate the input to prevent typos
+    const validRoles = ['Player', 'Master', 'Admin'];
+    if (!validRoles.includes(newRole)) {
+        alert("Invalid role! Please use: Player, Master, or Admin (Case Sensitive).");
+        return;
+    }
+
+    try {
+        // 4. Update the document in Firestore
+        await firestore.collection('users').doc(userId).update({
+            role: newRole
+        });
+
+        alert("User role updated successfully!");
+        
+        // 5. Refresh the list to show the change
+        loadUserList();
+    } catch (error) {
+        console.error("Error updating role:", error);
+        alert("Failed to update role. Check console for details.");
+    }
+}
+
