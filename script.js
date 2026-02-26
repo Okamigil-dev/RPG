@@ -535,11 +535,13 @@ function updateHUD(char) {
     }
 
     // 5. Portrait
-    const portraitEl = document.getElementById('hud-portrait');
-    if (char.portrait) {
-        portraitEl.style.backgroundImage = `url(${char.portrait})`;
-    } else {
-        portraitEl.style.backgroundImage = "none"; // Clear if no portrait
+    if (char.portrait !== undefined) {
+        const portraitEl = document.getElementById('hud-portrait');
+        if (char.portrait) {
+            portraitEl.style.backgroundImage = `url(${char.portrait})`;
+        } else {
+            portraitEl.style.backgroundImage = "none";
+        }
     }
 }
 
