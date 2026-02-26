@@ -98,7 +98,16 @@ setInterval(tick, 100);
 // --- 5. CLOCK CONTROLS (ADMIN ONLY) ---
 // ==========================================
 
-function toggleTime() { isRunning = !isRunning; saveTimeState(); }
+function toggleTime() { 
+    isRunning = !isRunning; 
+    saveTimeState(); 
+    
+    // Update sidebar icon
+    const btn = document.getElementById('sidebar-play-btn');
+    if (btn) {
+        btn.innerHTML = isRunning ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+    }
+}
 function setSpeed(s) { speedMultiplier = s; saveTimeState(); }
 
 
@@ -142,6 +151,7 @@ auth.onAuthStateChanged((user) => {
                 document.getElementById('user-role-label').innerText = data.role;
                 if (data.role === 'Master' || data.role === 'Admin') {
                     document.getElementById('nav-control-panel').classList.remove('hide-default');
+                    document.getElementById('master-quick-controls').classList.remove('hide-default'); // Show sidebar controls
                 }
                 if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
             }
