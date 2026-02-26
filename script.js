@@ -361,16 +361,27 @@ function updateHUD(char) {
 // ==========================================
 function rollDice(sides) {
     const res = document.getElementById('dice-result');
+    
+    // Safety check: prevent crash if HTML element is missing
+    if (!res) {
+        console.error("Error: Element 'dice-result' not found in HTML.");
+        return;
+    }
+
     let c = 0;
+    res.style.color = "#a1a1aa"; // Dim the color while rolling
+
     const i = setInterval(() => {
         res.innerText = Math.floor(Math.random() * sides) + 1;
+        
         if (++c > 10) {
             clearInterval(i);
-            res.innerText = `d${sides}: ${Math.floor(Math.random() * sides) + 1}`;
+            const finalRoll = Math.floor(Math.random() * sides) + 1;
+            res.innerText = `d${sides}: ${finalRoll}`;
+            res.style.color = "#00ff88"; // Highlight final result in green
         }
     }, 50);
 }
-
 
 
 // ==========================================
