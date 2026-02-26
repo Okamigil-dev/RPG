@@ -613,69 +613,59 @@ async function loadUserList() {
 
     try {
         const snapshot = await firestore.collection('users').get();
-        listContainer.innerHTML = ""; // Clear loader
+        listContainer.innerHTML = ""; 
 
         snapshot.forEach(doc => {
             const user = doc.data();
             const row = document.createElement('div');
+            const displayRole = user.role || 'Player';
             
-            // Basic styling for the row
             row.style.display = 'grid';
-            row.style.gridTemplateColumns = '2fr 1fr 1fr';
+            row.style.gridTemplateColumns = '2fr 1fr';
             row.style.padding = '12px 10px';
             row.style.borderBottom = '1px solid #18181b';
             row.style.alignItems = 'center';
 
-            // Define a safe role string to use in both the display and the function call
-            const displayRole = user.role || 'Player';
-            
+            // Use data-userid to identify this row later
             row.innerHTML = `
                 <span style="font-size: 0.85rem; color: #e4e4e7;">${user.email || 'Anonymous'}</span>
-                <span class="role-badge" style="color: ${displayRole === 'Admin' ? '#00ff88' : '#3b82f6'}; font-size: 0.7rem; font-weight: bold;">${displayRole}</span>
-                <div style="text-align: right;">
-                    <button onclick="changeUserRole('${doc.id}', '${displayRole}')" class="btn-small">Edit</button>
-                </div>
+                <select class="role-selector form-input" data-userid="${doc.id}" style="padding: 5px; font-size: 0.8rem;">
+                    <option value="Player" ${displayRole === 'Player' ? 'selected' : ''}>Player</option>
+                    <option value="Master" ${displayRole === 'Master' ? 'selected' : ''}>Master</option>
+                    <option value="Admin" ${displayRole === 'Admin' ? 'selected' : ''}>Admin</option>
+                </select>
             `;
             listContainer.appendChild(row);
         });
     } catch (error) {
         console.error("Error loading user list:", error);
-        listContainer.innerHTML = '<p style="color: #ef4444;">Error: Check Firestore Permissions</p>';
+        listContainer.innerHTML = '<p style="color: #ef4444;">Error fetching users.</p>';
     }
 }
 
 /**
- * Changes a user's role in Firestore
- * @param {string} userId - The document ID of the user
- * @param {string} currentRole - The role they currently have
+ * Collects all dropdown values and saves them to Firestore in a single batch
  */
-async function changeUserRole(userId, currentRole) {
-    // 1. Ask for the new role via a simple prompt
-    const newRole = prompt(`Current Role: ${currentRole}\nEnter new role (Player, Master, or Admin):`, currentRole);
+async function saveAllUserRoles() {
+    const selectors = document.querySelectorAll('.role-selector');
+    const batch = firestore.batch(); 
+    let changesCount = 0;
 
-    // 2. If the user cancelled or didn't type anything, stop
-    if (newRole === null || newRole === "") return;
-
-    // 3. Validate the input to prevent typos
-    const validRoles = ['Player', 'Master', 'Admin'];
-    if (!validRoles.includes(newRole)) {
-        alert("Invalid role! Please use: Player, Master, or Admin (Case Sensitive).");
-        return;
-    }
+    selectors.forEach(select => {
+        const userId = select.getAttribute('data-userid');
+        const newRole = select.value;
+        
+        const userRef = firestore.collection('users').doc(userId);
+        batch.update(userRef, { role: newRole });
+        changesCount++;
+    });
 
     try {
-        // 4. Update the document in Firestore
-        await firestore.collection('users').doc(userId).update({
-            role: newRole
-        });
-
-        alert("User role updated successfully!");
-        
-        // 5. Refresh the list to show the change
-        loadUserList();
+        await batch.commit(); 
+        alert(`Successfully updated ${changesCount} accounts!`);
+        loadUserList(); // Refresh the UI
     } catch (error) {
-        console.error("Error updating role:", error);
-        alert("Failed to update role. Check console for details.");
+        console.error("Error saving roles:", error);
+        alert("Failed to save changes. You might not have Admin permissions in Firestore Rules.");
     }
 }
-
