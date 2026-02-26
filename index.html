@@ -72,12 +72,15 @@
             </div>
 
             <div class="dice-tray">
+                <div id="dice-log" class="dice-log">
+                    <div class="dice-log-placeholder">No rolls yet</div>
+                </div>
+            
                 <div class="dice-grid">
                     <button onclick="rollDice(6, this)" class="dice-btn">
                         <i class="fa-solid fa-dice-six"></i>
                         <span class="roll-number"></span>
                     </button>
-            
                     <button onclick="rollDice(20, this)" class="dice-btn">
                         <i class="fa-solid fa-dice-d20"></i>
                         <span class="roll-number"></span>
