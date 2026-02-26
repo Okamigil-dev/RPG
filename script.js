@@ -225,32 +225,44 @@ function openTab(tabId) {
 function createNewCharacter() {
     const user = auth.currentUser;
     const data = { 
-        // Basic Identity
         name: "New Hero", 
         race: "",
         class: "",
-        level: 1,
+        
+        charLevel: 1,      
+        classLevel: 1,     
+        totalSP: 1,        
+        spentSP: 0,        
 
-        // Stats & Vitals
-        body: 10, 
-        mind: 10, 
-        spirit: 10, 
-        hpCurrent: 10, 
-        hpMax: 10,
-        mpCurrent: 10,
-        mpMax: 10,
+        // SKILL SLOTS WITH USAGE TRACKING
+        // name: The name of the skill
+        // level: 1-10 (used for merging requirements)
+        // exp: How many times it has been used this level
+        // expMax: How many uses are needed to reach the next level
+        basicSkills: [
+            { name: "", level: 1, exp: 0, expMax: 10 },
+            { name: "", level: 1, exp: 0, expMax: 10 },
+            { name: "", level: 1, exp: 0, expMax: 10 },
+            { name: "", level: 1, exp: 0, expMax: 10 }
+        ],
+        intSkills: [
+            { name: "", level: 1, exp: 0, expMax: 20 },
+            { name: "", level: 1, exp: 0, expMax: 20 }
+        ],
+        advSkills: [
+            { name: "", level: 1, exp: 0, expMax: 50 }
+        ],
 
-        // Progress
-        expCurrent: 0,
-        expMax: 1000,
-
-        // Gallery & Systems
-        gallery: [], 
-        portrait: "",
-        instanceId: "global", // Default instance
+        body: 0, mind: 0, spirit: 0,
+        hpMaxBonus: 0, mpMaxBonus: 0,
+        hpCurrent: 10, hpMax: 10,
+        mpCurrent: 10, mpMax: 10,
+        expCurrent: 0, expMax: 1000,
+        gallery: [], portrait: "",
+        instanceId: "global",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-
+    
     firestore.collection('users').doc(user.uid)
         .collection('characters').add(data)
         .then(() => loadUserCharacters());
@@ -278,7 +290,7 @@ function loadUserCharacters() {
             card.innerHTML = `
                 <div class="portrait-circle-small" style="background-image: url(${d.portrait || ''}); margin: 0 auto 10px;"></div>
                 <strong>${d.name || 'New Hero'}</strong>
-                <div class="char-card-meta">Lv. ${d.level || 1} ${d.class || ''}</div>
+                <div class="char-card-meta">Lv.${d.charLevel || 1} ${d.class || ''}</div>
                 <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">
                     <i class="fa-solid fa-trash"></i> Delete
                 </button>
@@ -289,7 +301,7 @@ function loadUserCharacters() {
 }
 
 function selectCharacter(id) {
-    // 0. RESET UI (Clears ghost data from previous characters)
+    // 0. RESET UI (Clears ghost data)
     const allInputs = document.querySelectorAll('#char-sheet-view input');
     allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
 
@@ -301,40 +313,39 @@ function selectCharacter(id) {
             const d = doc.data();
             
             // 1. IDENTITY & METADATA
-            const raceEl = document.getElementById('char-race');
-            const classEl = document.getElementById('char-class');
-            
             document.getElementById('char-name').value = d.name || "";
-            document.getElementById('char-level').value = d.level || 1;
-            raceEl.value = d.race || "";
-            classEl.value = d.class || "";
+            document.getElementById('char-race').value = d.race || "";
+            document.getElementById('char-class').value = d.class || "";
             
-            // 2. LOCKING LOGIC
-            const isMaster = (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin');
-            raceEl.disabled = (d.race && !isMaster);
-            classEl.disabled = (d.class && !isMaster);
+            // DUAL LEVELS
+            document.getElementById('char-level').value = d.charLevel || 1; // Base Level
+            document.getElementById('char-class-level').value = d.classLevel || 1; // Class Level
             
-            // 3. PROGRESS & RESOURCES
+            // 2. STATS & NEW BONUSES
+            document.getElementById('char-body').value = d.body || 0;
+            document.getElementById('char-mind').value = d.mind || 0;
+            document.getElementById('char-spirit').value = d.spirit || 0;
+            
+            document.getElementById('char-hp-bonus-input').value = d.hpMaxBonus || 0;
+            document.getElementById('char-mp-bonus-input').value = d.mpMaxBonus || 0;
+
+            // 3. RESOURCES & EXP
+            document.getElementById('char-hp-current').value = d.hpCurrent || 0;
+            document.getElementById('char-hp-max').value = d.hpMax || 10;
+            document.getElementById('char-mp-current').value = d.mpCurrent || 0;
+            document.getElementById('char-mp-max').value = d.mpMax || 10;
+            
             document.getElementById('char-exp-current').value = d.expCurrent || 0;
             document.getElementById('char-exp-max').value = d.expMax || 1000;
-            document.getElementById('char-hp-current').value = d.hpCurrent || 0;
-            document.getElementById('char-hp-max').value = d.hpMax || 0;
-            document.getElementById('char-mp-current').value = d.mpCurrent || 0;
-            document.getElementById('char-mp-max').value = d.mpMax || 0;
 
-            // 4. CORE STATS
-            document.getElementById('char-body').value = d.body || 10;
-            document.getElementById('char-mind').value = d.mind || 10;
-            document.getElementById('char-spirit').value = d.spirit || 10;
-
-            // 5. GALLERY & PORTRAIT
+            // 4. GALLERY & SKILLS
             renderGallery(d.gallery || [], d.portrait || "");
+            renderSkills(d); // We'll build this next to show the Pyramid
 
-            // 6. UI NAVIGATION
+            // 5. UI NAVIGATION
             document.getElementById('char-selection-view').classList.add('hide-default');
             document.getElementById('char-sheet-view').classList.remove('hide-default');
             
-            // 7. SYNC HUD & PERSISTENCE
             updateHUD(d);
             firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
         }
@@ -364,25 +375,52 @@ async function deleteCharacter(event, charId, name) {
 function saveCharacter() {
     if (!currentCharacterId) return;
     
+    // 1. Get raw stat values
+    const body = parseInt(document.getElementById('char-body').value) || 0;
+    const mind = parseInt(document.getElementById('char-mind').value) || 0;
+    const spirit = parseInt(document.getElementById('char-spirit').value) || 0;
+    
+    // 2. Get bonus values (if you've added the inputs to your HTML)
+    const hpBonus = parseInt(document.getElementById('char-hp-bonus-input')?.value) || 0;
+    const mpBonus = parseInt(document.getElementById('char-mp-bonus-input')?.value) || 0;
+
+    // 3. Prepare the update object
     const data = {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
         class: document.getElementById('char-class').value,
-        level: parseInt(document.getElementById('char-level').value) || 1,
-        expCurrent: parseInt(document.getElementById('char-exp-current').value) || 0,
-        expMax: parseInt(document.getElementById('char-exp-max').value) || 1000,
-        body: parseInt(document.getElementById('char-body').value) || 10,
-        mind: parseInt(document.getElementById('char-mind').value) || 10,
-        spirit: parseInt(document.getElementById('char-spirit').value) || 10,
+        
+        // DUAL TRACK LEVELS
+        charLevel: parseInt(document.getElementById('char-level').value) || 1,
+        classLevel: parseInt(document.getElementById('char-class-level')?.value) || 1,
+        
+        // STATS & BONUSES
+        body: body,
+        mind: mind,
+        spirit: spirit,
+        hpMaxBonus: hpBonus,
+        mpMaxBonus: mpBonus,
+
+        // CALCULATED TOTALS (Stat * 5 + Bonus + 10 base)
+        hpMax: (body * 5) + hpBonus + 10,
+        mpMax: (spirit * 5) + mpBonus + 10,
+
+        // CURRENT RESOURCES & EXP
         hpCurrent: parseInt(document.getElementById('char-hp-current').value) || 0,
-        hpMax: parseInt(document.getElementById('char-hp-max').value) || 0,
         mpCurrent: parseInt(document.getElementById('char-mp-current').value) || 0,
-        mpMax: parseInt(document.getElementById('char-mp-max').value) || 0
+        expCurrent: parseInt(document.getElementById('char-exp-current').value) || 0,
+        expMax: parseInt(document.getElementById('char-exp-max').value) || 1000
+        
+        // Note: We do NOT include 'basicSkills', 'intSkills', etc. here 
+        // because we want those to be updated only by specific skill functions.
     };
 
     firestore.collection('users').doc(auth.currentUser.uid)
         .collection('characters').doc(currentCharacterId)
-        .update(data).then(() => updateHUD(data));
+        .update(data).then(() => {
+            updateHUD(data);
+            console.log("System: Character state synchronized.");
+        });
 }
 
 function goBackToSelection() {
@@ -395,23 +433,34 @@ function goBackToSelection() {
 /* ==========================================
    --- 10. HUD HANDLING ---
    ========================================== */
+
 function updateHUD(char) {
     const hud = document.getElementById('active-char-hud');
     if (!hud) return;
     hud.classList.remove('hide-default');
     
-    // 1. Names and Metadata (Race & Class)
+    // 1. Names and Dual-Level Metadata
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
-    const raceClassText = `Lv. ${char.level || 1} ${char.race || ''} ${char.class || 'Adventurer'}`;
+    
+    // Show both Character Level and Class Level in the HUD
+    const charLv = char.charLevel || 1;
+    const classLv = char.classLevel || 1;
+    const raceClassText = `Lv.${charLv} (${char.class || 'Adventurer'} Lv.${classLv})`;
     document.getElementById('hud-meta').innerText = raceClassText;
     
-    // 2. Text Resources
-    document.getElementById('hud-hp-text').innerText = `${char.hpCurrent || 0}/${char.hpMax || 0}`;
-    document.getElementById('hud-mp-text').innerText = `${char.mpCurrent || 0}/${char.mpMax || 0}`;
+    // 2. Text Resources with Bonus Visualization
+    const hpBonus = char.hpMaxBonus || 0;
+    const mpBonus = char.mpMaxBonus || 0;
     
-    // 3. Modifier Calculation
+    // Displays as "10/15 (+5)" if a bonus exists
+    document.getElementById('hud-hp-text').innerText = 
+        `${char.hpCurrent || 0}/${char.hpMax || 10} ${hpBonus > 0 ? '(+' + hpBonus + ')' : ''}`;
+    document.getElementById('hud-mp-text').innerText = 
+        `${char.mpCurrent || 0}/${char.mpMax || 10} ${mpBonus > 0 ? '(+' + mpBonus + ')' : ''}`;
+    
+    // 3. New Modifier Calculation: Stat / 2
     const getMod = (val) => {
-        const mod = Math.floor(((val || 10) - 10) / 2);
+        const mod = Math.floor((val || 0) / 2); // Stat divided by 2, rounded down
         return mod >= 0 ? `+${mod}` : mod;
     };
     
@@ -420,10 +469,9 @@ function updateHUD(char) {
     document.getElementById('hud-mod-spirit').innerText = getMod(char.spirit);
 
     // 4. Progress Bars (HP, MP, and EXP)
-    // We use .style.width here because the percentage is dynamic data
-    const hpPerc = Math.min((char.hpCurrent / (char.hpMax || 1)) * 100, 100);
-    const mpPerc = Math.min((char.mpCurrent / (char.mpMax || 1)) * 100, 100);
-    const expPerc = Math.min((char.expCurrent / (char.expMax || 1000)) * 100, 100);
+    const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 10)) * 100, 100);
+    const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 10)) * 100, 100);
+    const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
 
     document.getElementById('hud-hp-fill').style.width = hpPerc + "%";
     document.getElementById('hud-mp-fill').style.width = mpPerc + "%";
@@ -434,11 +482,13 @@ function updateHUD(char) {
     }
 
     // 5. Portrait
+    const portraitEl = document.getElementById('hud-portrait');
     if (char.portrait) {
-        document.getElementById('hud-portrait').style.backgroundImage = `url(${char.portrait})`;
+        portraitEl.style.backgroundImage = `url(${char.portrait})`;
+    } else {
+        portraitEl.style.backgroundImage = "none"; // Clear if no portrait
     }
 }
-
 
 
 // ==========================================
@@ -812,7 +862,6 @@ async function loadInstanceList() {
     if (!listContainer || !currentUser) return;
 
     try {
-        // Fetch instances where the current user's UID is in the masters array
         const snapshot = await firestore.collection('instances')
             .where('masters', 'array-contains', currentUser.uid)
             .get();
@@ -822,21 +871,8 @@ async function loadInstanceList() {
             return;
         }
 
-        html += `
-            <tr>
-                <td><strong>${data.name}</strong></td>
-                <td><code class="join-code-pill">${data.joinCode}</code></td>
-                <td>${data.masters ? data.masters.length : 1}</td>
-                <td>
-                    <div class="flex-row" style="gap: 5px;">
-                        <button class="btn-small" onclick="viewInstanceDetails('${id}')">Manage</button>
-                        <button class="btn-danger-small" onclick="deleteInstance('${id}', '${data.name}')">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
+        // FIX: Declare the html variable first
+        let html = `<table class="instance-table"><thead><tr><th>Name</th><th>Join Code</th><th>Masters</th><th>Actions</th></tr></thead><tbody>`;
 
         snapshot.forEach(doc => {
             const data = doc.data();
@@ -847,7 +883,12 @@ async function loadInstanceList() {
                     <td><code style="background: #27272a; padding: 2px 6px; border-radius: 4px; color: #00ff88;">${data.joinCode}</code></td>
                     <td>${data.masters ? data.masters.length : 1}</td>
                     <td>
-                        <button class="btn-small" onclick="viewInstanceDetails('${id}')">Manage</button>
+                        <div class="flex-row" style="gap: 5px;">
+                            <button class="btn-small" onclick="viewInstanceDetails('${id}')">Manage</button>
+                            <button class="btn-danger-small" onclick="deleteInstance('${id}', '${data.name}')">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -924,4 +965,47 @@ async function deleteInstance(instanceId, name) {
         console.error("Delete Error:", error);
         alert("Failed to delete instance. Check console.");
     }
+}
+
+
+
+/* ==========================================
+   --- 14. SKILLS ---
+   ========================================== */
+
+
+function renderSkills(charData) {
+    const container = document.getElementById('skills-container');
+    if (!container) return;
+    container.innerHTML = ""; // Clear for fresh draw
+
+    const tiers = [
+        { key: 'basicSkills', label: 'Basic Skills' },
+        { key: 'intSkills', label: 'Intermediate Skills' },
+        { key: 'advSkills', label: 'Advanced Skills' }
+    ];
+
+    tiers.forEach(tier => {
+        const section = document.createElement('div');
+        section.className = 'skill-tier-section';
+        section.innerHTML = `<h4 class="mt-m mb-s">${tier.label}</h4>`;
+        
+        const skills = charData[tier.key] || [];
+        skills.forEach((s, i) => {
+            const perc = Math.min((s.exp / (s.expMax || 10)) * 100, 100);
+            const slot = document.createElement('div');
+            slot.className = 'skill-slot-card';
+            slot.innerHTML = `
+                <div class="flex-row" style="justify-content: space-between;">
+                    <strong>${s.name || '---'}</strong>
+                    <span style="font-size: 0.8rem; opacity: 0.7;">Lv.${s.level}</span>
+                </div>
+                <div class="skill-exp-bg" style="height: 4px; background: #27272a; margin-top: 5px; border-radius: 2px;">
+                    <div class="skill-exp-fill" style="width: ${perc}%; height: 100%; background: #a855f7; border-radius: 2px;"></div>
+                </div>
+            `;
+            section.appendChild(slot);
+        });
+        container.appendChild(section);
+    });
 }
