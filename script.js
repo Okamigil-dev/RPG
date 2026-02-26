@@ -47,34 +47,42 @@ function saveTimeState() {
     rtdb.ref(`instance_clocks/${currentCampaignId}`).set(timeData);
 }
 
-rtdb.ref(`instance_clocks/${currentCampaignId}`).on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (!data) return;
+function initClockListener() {
+    // 1. CLEAR: Stop listening to the old world path to avoid "Ghost Ticking"
+    rtdb.ref(`instance_clocks`).off(); 
 
-    const isMaster = (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin');
+    // 2. START: Connect to the currentCampaignId (which now changes dynamically)
+    rtdb.ref(`instance_clocks/${currentCampaignId}`).on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
 
-    // 1. ALWAYS sync 'isRunning' so play/pause works for everyone
-    isRunning = data.isRunning;
+        const isMaster = (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin');
 
-    // 2. MASTER OVERRIDE: If you are the Master, IGNORE the speed coming from the DB.
-    // You are the one who sets the speed; don't let the DB tell you otherwise.
-    if (!isMaster) {
-        speedMultiplier = data.speedMultiplier || 1;
-    }
+        // Sync state
+        isRunning = data.isRunning;
 
-    // 3. TIME SYNC MATH
-    let now = Date.now();
-    if (data.isRunning) {
-        let deltaRealSeconds = (now - data.lastRealWorldSaveTime) / 1000;
-        // Use local speed if Master, otherwise use database speed
-        totalCustomSeconds = (data.totalCustomSeconds || 0) + (deltaRealSeconds * speedMultiplier);
-    } else {
-        totalCustomSeconds = data.totalCustomSeconds || 0;
-    }
+        // Masters keep their local speed to prevent the 1x reset bug
+        if (!isMaster) {
+            speedMultiplier = data.speedMultiplier || 1;
+        }
 
-    lastRealTime = now;
-    updateDisplay();
-});
+        let now = Date.now();
+        if (data.isRunning) {
+            let deltaRealSeconds = (now - data.lastRealWorldSaveTime) / 1000;
+            // MATH: Current Time = Saved Time + (Real Seconds passed * Speed)
+            totalCustomSeconds = (data.totalCustomSeconds || 0) + (deltaRealSeconds * speedMultiplier);
+        } else {
+            totalCustomSeconds = data.totalCustomSeconds || 0;
+        }
+
+        lastRealTime = now;
+        updateDisplay();
+    });
+}
+
+// 3. INITIALIZE: Run it once when the script loads
+initClockListener();
+
 
 
 // ==========================================
@@ -787,6 +795,7 @@ function openControlSubTab(evt, subTabId) {
     // 4. If opening instances or accounts, refresh the lists
     if (subTabId === 'sub-instances') loadInstanceList();
     if (subTabId === 'sub-accounts') loadUserList();
+    if (subTabId === 'sub-characters') loadGlobalCharacterManager();
 }
 
 /**
@@ -1000,9 +1009,9 @@ async function spawnInstance() {
 }
 
 function viewInstanceDetails(instanceId) {
-    // For now, we just alert the ID. 
-    // Later, this will open a detailed view to kick players or change the clock.
-    alert("Managing Instance: " + instanceId);
+    currentCampaignId = instanceId; // Update the ID
+    initClockListener();           // REBOOT THE BRAIN
+    alert("Controls now synced to Instance: " + instanceId);
 }
 
 /**
@@ -1023,6 +1032,80 @@ async function deleteInstance(instanceId, name) {
     } catch (error) {
         console.error("Delete Error:", error);
         alert("Failed to delete instance. Check console.");
+    }
+}
+
+async function loadGlobalCharacterManager() {
+    const listContainer = document.getElementById('admin-character-list'); // Ensure this ID exists in your HTML
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '<p class="text-center" style="opacity:0.5;">Scanning all realms...</p>';
+
+    try {
+        // 1. Fetch all Instances first (to populate dropdowns)
+        const instanceSnap = await firestore.collection('instances').get();
+        let instances = [];
+        instanceSnap.forEach(doc => instances.push({ id: doc.id, name: doc.data().name }));
+
+        // 2. Fetch all Characters (using a Collection Group query or iterating users)
+        // For simplicity here, we'll iterate users to find their characters
+        const usersSnap = await firestore.collection('users').get();
+        let html = `<table class="admin-table">
+            <thead><tr><th>Character</th><th>Owner</th><th>Current World</th><th>Action</th></tr></thead>
+            <tbody>`;
+
+        for (const userDoc of usersSnap.docs) {
+            const charSnap = await firestore.collection('users').doc(userDoc.id).collection('characters').get();
+            
+            charSnap.forEach(charDoc => {
+                const charData = charDoc.data();
+                const ownerEmail = userDoc.data().email || "Unknown";
+                
+                html += `
+                    <tr>
+                        <td><strong>${charData.name}</strong></td>
+                        <td><small>${ownerEmail}</small></td>
+                        <td>
+                            <select class="role-selector form-input" onchange="assignCharToInstance('${userDoc.id}', '${charDoc.id}', this.value)">
+                                <option value="global">Global (None)</option>
+                                ${instances.map(inst => `
+                                    <option value="${inst.id}" ${charData.instanceId === inst.id ? 'selected' : ''}>
+                                        ${inst.name}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </td>
+                        <td>
+                             <i class="fa-solid fa-link" style="opacity:0.3;"></i>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        html += `</tbody></table>`;
+        listContainer.innerHTML = html;
+
+    } catch (error) {
+        console.error("Char Manager Error:", error);
+        listContainer.innerHTML = `<p style="color: #ef4444;">Error fetching global characters.</p>`;
+    }
+}
+
+// The function that actually moves the character in the database
+async function assignCharToInstance(userId, charId, newInstanceId) {
+    try {
+        await firestore.collection('users').doc(userId)
+            .collection('characters').doc(charId)
+            .update({ instanceId: newInstanceId });
+            
+        console.log(`Character ${charId} moved to Instance ${newInstanceId}`);
+        // If the Master is currently viewing this character, update their clock path
+        if (currentCharacterId === charId) {
+            currentCampaignId = newInstanceId;
+            initClockListener();
+        }
+    } catch (e) {
+        alert("Transfer failed: " + e.message);
     }
 }
 
