@@ -157,22 +157,14 @@ function toggleTime() {
 }
 
 function setSpeed(multiplier) {
-    // 1. Update the local variable IMMEDIATELY
     speedMultiplier = multiplier;
-
-    // 2. Update the UI Label IMMEDIATELY 
     const label = document.getElementById('speed-label');
     if (label) label.innerText = multiplier + "x";
 
-    // 3. PUSH TO RTDB (Using the current campaign ID)
-    // We update the save time at the exact same moment to keep the math in sync
-    const now = Date.now();
     rtdb.ref(`instance_clocks/${currentCampaignId}`).update({
         speedMultiplier: multiplier,
-        lastRealWorldSaveTime: now,
-        totalCustomSeconds: totalCustomSeconds // Push the current time so the DB doesn't lag
-    }).then(() => {
-        console.log("RTDB: Speed multiplier locked at " + multiplier);
+        totalCustomSeconds: totalCustomSeconds,
+        lastRealWorldSaveTime: Date.now()
     });
 }
 
