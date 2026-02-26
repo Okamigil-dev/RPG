@@ -108,7 +108,30 @@ function toggleTime() {
         btn.innerHTML = isRunning ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
     }
 }
-function setSpeed(s) { speedMultiplier = s; saveTimeState(); }
+function setSpeed(multiplier) {
+    const role = window.currentUserRole;
+
+    // 1. Security Check
+    if (role !== 'Master' && role !== 'Admin') return;
+
+    // 2. Admin-only speed check
+    if (multiplier >= 100 && role !== 'Admin') {
+        alert("Only the Admin can use 'Time Warp' speeds.");
+        return;
+    }
+
+    // 3. Update local state
+    speedMultiplier = multiplier;
+
+    // 4. Update the UI Label
+    const label = document.getElementById('speed-label');
+    if (label) label.innerText = multiplier + "x";
+
+    // 5. IMPORTANT: Push this change to the Database!
+    saveTimeState(); 
+
+    console.log(`System: Clock speed set to ${multiplier}x`);
+}
 
 
 
