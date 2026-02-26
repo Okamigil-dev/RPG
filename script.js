@@ -362,25 +362,56 @@ function updateHUD(char) {
 function rollDice(sides, btn) {
     const numDisplay = btn.querySelector('.roll-number');
     
-    // 1. Trigger the CSS transition (dims icon, shows span)
+    // KILL OLD TIMERS: This prevents the result from vanishing 
+    // if you click again before the 3 seconds are up.
+    if (btn.rollInterval) clearInterval(btn.rollInterval);
+    if (btn.resetTimeout) clearTimeout(btn.resetTimeout);
+    
     btn.classList.add('active-roll');
     
     let rolls = 0;
-    const interval = setInterval(() => {
+    btn.rollInterval = setInterval(() => {
         numDisplay.innerText = Math.floor(Math.random() * sides) + 1;
         
-        if (++rolls > 10) {
-            clearInterval(interval);
-            // 2. Final Result
-            numDisplay.innerText = Math.floor(Math.random() * sides) + 1;
+        if (++rolls > 12) {
+            clearInterval(btn.rollInterval);
             
-            // 3. Reset the button look after 3 seconds
-            setTimeout(() => {
+            const finalRoll = Math.floor(Math.random() * sides) + 1;
+            numDisplay.innerText = finalRoll;
+            
+            // Add to the log
+            updateDiceLog(sides, finalRoll);
+            
+            // Set a new reset timer
+            btn.resetTimeout = setTimeout(() => {
                 btn.classList.remove('active-roll');
             }, 3000);
         }
-    }, 50);
+    }, 40);
 }
+
+function updateDiceLog(sides, result) {
+    const log = document.getElementById('dice-log');
+    if (!log) return;
+
+    const placeholder = log.querySelector('.dice-log-placeholder');
+    if (placeholder) placeholder.remove();
+
+    const entry = document.createElement('div');
+    entry.className = 'dice-log-entry';
+    entry.innerHTML = `
+        <span class="dice-log-label">d${sides}</span>
+        <span class="dice-log-value">${result}</span>
+    `;
+    
+    log.prepend(entry); 
+    
+    // Only keep the last 5 rolls
+    if (log.children.length > 5) {
+        log.removeChild(log.lastChild);
+    }
+}
+
 
 
 // ==========================================
