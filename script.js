@@ -783,33 +783,6 @@ function openControlSubTab(evt, subTabId) {
     if (subTabId === 'sub-characters') loadGlobalCharacterManager();
 }
 
-/**
- * Enhanced Speed Control with Role-Based Permissions
- */
-function setSpeed(multiplier) {
-    const role = window.currentUserRole;
-
-    // Security Check: Must be Master or Admin
-    if (role !== 'Master' && role !== 'Admin') {
-        console.error("Unauthorized: Role insufficient for speed control.");
-        return;
-    }
-
-    // Rule: Only Admin can access 100x speed
-    if (multiplier >= 100 && role !== 'Admin') {
-        alert("Only the Admin can use 'Time Warp' speeds (100x+).");
-        return;
-    }
-
-    // Update the visual speed label in the Master Panel
-    const label = document.getElementById('speed-label');
-    if (label) label.innerText = multiplier + "x";
-
-    // --- YOUR EXISTING CLOCK LOGIC HERE ---
-    // Example: updateGlobalClockSpeed(multiplier);
-    console.log(`System: Clock speed set to ${multiplier}x by ${role}`);
-}
-
 function openMasterPanel() {
     const role = window.currentUserRole;
 
