@@ -1,3 +1,4 @@
+
 /* ==========================================
    --- 1. GLOBAL RESET & BASE ---
    ========================================== */
@@ -9,6 +10,8 @@ body {
     overflow: hidden;
 }
 
+
+
 /* ==========================================
    --- 2. UTILITY CLASSES ---
    ========================================== */
@@ -18,6 +21,8 @@ body {
 .text-center { text-align: center; }
 .btn-full { width: 100%; }
 .mt-m { margin-top: 20px; }
+
+
 
 /* ==========================================
    --- 3. TOP NAVIGATION ---
@@ -37,6 +42,8 @@ body {
 .brand-logo { font-weight: bold; color: #00ff88; letter-spacing: 1px; }
 .nav-tabs { display: flex; gap: 5px; }
 
+
+
 /* ==========================================
    --- 4. USER HEADER ---
    ========================================== */
@@ -44,6 +51,8 @@ body {
 .user-info { text-align: right; line-height: 1.2; }
 .user-name { font-weight: bold; font-size: 0.9em; }
 .user-role { font-size: 0.7em; color: #00ff88; text-transform: uppercase; }
+
+
 
 /* ==========================================
    --- 5. APP LAYOUT ---
@@ -71,6 +80,8 @@ body {
     overflow-y: auto;
     background-color: #09090b;
 }
+
+
 
 /* ==========================================
    --- 6. SIDEBAR HUD ---
@@ -104,41 +115,42 @@ body {
 
 .hud-stat-box { background: #09090b; padding: 5px; text-align: center; border-radius: 4px; border: 1px solid #27272a; font-size: 0.7em; }
 
+
+
 /* ==========================================
    --- 7. WORLD CLOCK ---
    ========================================== */
 .game-ui { text-align: center; padding: 15px 0; border-top: 1px solid #27272a; }
 .time-text { font-size: 1.2em; color: #06b6d4; font-weight: bold; font-variant-numeric: tabular-nums; }
 
+
+
 /* ==========================================
    --- 8. DICE TRAY ---
    ========================================== */
-.dice-tray { margin-top: auto; padding-top: 20px; border-top: 1px solid #27272a; }
-.dice-result { font-size: 1.4rem; text-align: center; color: #00ff88; margin-bottom: 12px; height: 30px; }
-.dice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-.dice-grid button { 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    aspect-ratio: 1/1; 
-    background: #27272a; 
-    border: 1px solid #3f3f46; 
-    color: white; 
-    border-radius: 8px; 
-    cursor: pointer; 
+.dice-tray { 
+    margin-top: auto; 
+    padding-top: 20px; 
+    border-top: 1px solid #27272a; 
 }
 
-.dice-grid button i { font-size: 1.8rem; }
-.dice-label { font-size: 0.65rem; text-transform: uppercase; font-weight: bold; color: #a1a1aa; }
+.dice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+
 
 /* ==========================================
    --- 9. TAB LOGIC ---
    ========================================== */
 .tab-content { display: none; }
 .tab-content:not(.hide-default) { display: block !important; }
+
+
 
 /* ==========================================
    --- 10. DASHBOARD & CARDS ---
@@ -149,6 +161,8 @@ body {
     text-align: center; transition: 0.3s; cursor: pointer; 
 }
 .char-card:hover { border-color: #00ff88; transform: translateY(-5px); }
+
+
 
 /* ==========================================
    --- 11. CHARACTER GALLERY ---
@@ -185,6 +199,8 @@ body {
     opacity: 0; transition: 0.2s;
 }
 .gallery-item:hover .delete-img-btn { opacity: 1; }
+
+
 
 /* ==========================================
    --- 12. FORM ELEMENTS & ALIGNMENT ---
@@ -229,6 +245,8 @@ body {
     text-transform: uppercase; letter-spacing: 1px;
 }
 
+
+
 /* ============================================
     ---- 13. MASTER CONTROL SUB-TABS ----
     ============================================ */
@@ -259,6 +277,8 @@ body {
     border-radius: 4px; border: 1px solid #27272a;
 }
 
+
+
 /* ==========================================
    --- 14. BUTTONS ---
    ========================================== */
@@ -283,6 +303,55 @@ body {
 
 .btn-small { background: #27272a; color: white; border: 1px solid #3f3f46; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
 .btn-small:hover { background: #3f3f46; }
+
+/* --- SPECIALIZED DICE BUTTONS --- */
+.dice-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1/1;
+    background: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 12px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.dice-btn i {
+    font-size: 2.2rem;
+    color: #3f3f46;
+    transition: all 0.2s ease;
+}
+
+.roll-number {
+    position: absolute;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #00ff88;
+    display: none; /* Hidden until roll starts */
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+    z-index: 2;
+}
+
+/* State: During the roll animation and display */
+.dice-btn.active-roll i {
+    opacity: 0.1;
+    transform: scale(0.8);
+}
+
+.dice-btn.active-roll .roll-number {
+    display: block;
+    animation: dice-pop 0.2s ease-out;
+}
+
+@keyframes dice-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+
 
 /* ==========================================
    --- 15. INPUTS & SELECTS ---
