@@ -40,11 +40,11 @@ const firestore = firebase.firestore();
 function saveTimeState() {
     const timeData = {
         totalCustomSeconds: totalCustomSeconds,
-        speedMultiplier: speedMultiplier,
         isRunning: isRunning,
         lastRealWorldSaveTime: Date.now()
     };
-    rtdb.ref(`instance_clocks/${currentCampaignId}`).set(timeData);
+    // USE UPDATE, NOT SET. DO NOT INCLUDE speedMultiplier.
+    rtdb.ref(`instance_clocks/${currentCampaignId}`).update(timeData);
 }
 
 function initClockListener() {
