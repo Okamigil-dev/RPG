@@ -48,28 +48,23 @@ function saveTimeState() {
 }
 
 function initClockListener() {
-    // 1. CLEAR: Stop listening to the old world path to avoid "Ghost Ticking"
     rtdb.ref(`instance_clocks`).off(); 
 
-    // 2. START: Connect to the currentCampaignId (which now changes dynamically)
     rtdb.ref(`instance_clocks/${currentCampaignId}`).on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
 
-        const isMaster = (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin');
-
-        // Sync state
+        // Everyone (Master and Player) syncs to the DB speed
         isRunning = data.isRunning;
+        speedMultiplier = data.speedMultiplier || 1;
 
-        // Masters keep their local speed to prevent the 1x reset bug
-        if (!isMaster) {
-            speedMultiplier = data.speedMultiplier || 1;
-        }
+        // Sync the Master's UI label if it exists on their screen
+        const label = document.getElementById('speed-label');
+        if (label) label.innerText = speedMultiplier + "x";
 
         let now = Date.now();
         if (data.isRunning) {
             let deltaRealSeconds = (now - data.lastRealWorldSaveTime) / 1000;
-            // MATH: Current Time = Saved Time + (Real Seconds passed * Speed)
             totalCustomSeconds = (data.totalCustomSeconds || 0) + (deltaRealSeconds * speedMultiplier);
         } else {
             totalCustomSeconds = data.totalCustomSeconds || 0;
@@ -79,7 +74,6 @@ function initClockListener() {
         updateDisplay();
     });
 }
-
 
 
 // ==========================================
