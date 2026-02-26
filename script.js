@@ -48,36 +48,41 @@ function saveTimeState() {
 }
 
 rtdb.ref(`instance_clocks/${currentCampaignId}`).on('value', (snapshot) => {
-    // CRITICAL: If I am the Master, I AM the source of truth. 
-    // Ignore the echo coming back from the database so I don't overwrite my own speed logic.
-    if (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin') return;
-
     const data = snapshot.val();
-    if (data) {
-        speedMultiplier = data.speedMultiplier || 1;
-        isRunning = data.isRunning;
-        let now = Date.now();
-        
-        if (data.isRunning) {
-            let deltaRealSeconds = (now - data.lastRealWorldSaveTime) / 1000;
-            totalCustomSeconds = (data.totalCustomSeconds || 0) + (deltaRealSeconds * speedMultiplier);
-        } else {
-            totalCustomSeconds = data.totalCustomSeconds || 0;
-        }
-        
-        lastRealTime = now;
-        updateDisplay();
-    }
-});
+    if (!data) return;
 
+    const isMaster = (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin');
+
+    // 1. ALWAYS sync 'isRunning' so play/pause works for everyone
+    isRunning = data.isRunning;
+
+    // 2. MASTER OVERRIDE: If you are the Master, IGNORE the speed coming from the DB.
+    // You are the one who sets the speed; don't let the DB tell you otherwise.
+    if (!isMaster) {
+        speedMultiplier = data.speedMultiplier || 1;
+    }
+
+    // 3. TIME SYNC MATH
+    let now = Date.now();
+    if (data.isRunning) {
+        let deltaRealSeconds = (now - data.lastRealWorldSaveTime) / 1000;
+        // Use local speed if Master, otherwise use database speed
+        totalCustomSeconds = (data.totalCustomSeconds || 0) + (deltaRealSeconds * speedMultiplier);
+    } else {
+        totalCustomSeconds = data.totalCustomSeconds || 0;
+    }
+
+    lastRealTime = now;
+    updateDisplay();
+});
 
 
 // ==========================================
 // --- 4. CLOCK ENGINE & DISPLAY ---
 // ==========================================
 
-let lastRegenMinute = 0; // Track the last time regen fired
-let syncCounter = 0; // Temporary counter for saving
+let lastRegenMinute = 0;
+let syncCounter = 0;
 
 function tick() {
     let now = Date.now();
@@ -85,18 +90,16 @@ function tick() {
     lastRealTime = now;
 
     if (isRunning) {
-        // 1. Advance local clock
         totalCustomSeconds += (deltaRealSeconds * speedMultiplier);
         
-        // 2. PASSIVE REGEN (Every game minute)
+        // Passive Regen
         let currentMinute = Math.floor(totalCustomSeconds / 60);
         if (currentMinute > lastRegenMinute) {
             applyPassiveRegen();
             lastRegenMinute = currentMinute;
         }
 
-        // 3. MASTER AUTHORITY: Auto-Sync every 5 real seconds
-        // This ensures players who join late get the correct time
+        // MASTER AUTO-SYNC: Heartbeat every 5 seconds
         if (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin') {
             syncCounter += deltaRealSeconds;
             if (syncCounter > 5) {
@@ -141,35 +144,42 @@ setInterval(tick, 100);
 
 
 // ==========================================
-// --- 5. CLOCK CONTROLS (ADMIN ONLY) ---
+// --- 5. CLOCK CONTROLS ---
 // ==========================================
 
 function toggleTime() { 
     isRunning = !isRunning; 
     saveTimeState(); 
     
-    // Update sidebar icon
     const btn = document.getElementById('sidebar-play-btn');
     if (btn) {
         btn.innerHTML = isRunning ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
     }
 }
+
 function setSpeed(multiplier) {
     const role = window.currentUserRole;
-    if (role !== 'Master' && role !== 'Admin') return;
+    if (role !== 'Master' && role !== 'Admin') {
+        console.warn("Permission Denied: Only Masters can change speed.");
+        return;
+    }
 
-    // 1. Update local state
+    // 1. Set local variable FIRST
     speedMultiplier = multiplier;
 
-    // 2. IMPORTANT: Immediately push this to Firebase 
-    // This tells the database: "Hey, the speed is now X, and the time is Y"
-    saveTimeState(); 
-
-    // 3. Update UI Label
+    // 2. Update UI Label IMMEDIATELY
     const label = document.getElementById('speed-label');
     if (label) label.innerText = multiplier + "x";
 
-    console.log(`System: Master changed speed to ${multiplier}x`);
+    // 3. DIRECT DB WRITE (Bypass saveTimeState to ensure immediate sync)
+    rtdb.ref(`instance_clocks/${currentCampaignId}`).update({
+        speedMultiplier: multiplier,
+        lastRealWorldSaveTime: Date.now()
+    }).then(() => {
+        console.log(`System: Speed synced to ${multiplier}x`);
+    }).catch(err => {
+        console.error("System: Sync Failed!", err.message);
+    });
 }
 
 
