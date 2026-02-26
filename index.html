@@ -71,15 +71,19 @@
                 <div id="time-display" class="time-text">00:00:00</div>
             </div>
 
-            <div class="dice-grid">
-                <button onclick="rollDice(6)">
-                    <span class="dice-label">d6</span>
-                    <i class="fa-solid fa-dice-six"></i>
-                </button>
-                <button onclick="rollDice(20)" class="d20-btn">
-                    <span class="dice-label">d20</span>
-                    <i class="fa-solid fa-dice-d20"></i>
-                </button>
+            <div class="dice-tray">
+                <div id="dice-result" class="dice-result">--</div>
+            
+                <div class="dice-grid">
+                    <button onclick="rollDice(6)">
+                        <span class="dice-label">d6</span>
+                        <i class="fa-solid fa-dice-six"></i>
+                    </button>
+                    <button onclick="rollDice(20)">
+                        <span class="dice-label">d20</span>
+                        <i class="fa-solid fa-dice-d20"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
