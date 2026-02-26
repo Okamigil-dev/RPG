@@ -243,75 +243,72 @@
             ---- 5. CONTROL PANEL TAB ----
             ============================-->
             <div id="tab-control-panel" class="tab-content hide-default">
-                <h2 class="tab-title">Master Control</h2>
-            
-                <div class="sub-nav-tabs">
-                    <button class="sub-nav-btn active" onclick="openControlSubTab(event, 'sub-accounts')">Account Management</button>
-                    <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-groups')">Group Management</button>
-                    <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-characters')">Character Management</button>
-                    <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-items')">Item Management</button>
-                    <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-skills')">Skill Management</button>
-                </div>
-            
-                <div class="sub-tab-container">
+                <div class="master-dashboard-layout">
                     
-                    <div id="sub-accounts" class="control-sub-content">
-                        <div class="panel-card">
-                            <div class="flex-row" style="justify-content: space-between; margin-bottom: 20px;">
-                                <h3>User Access Control</h3>
+                    <div class="master-nav-sidebar">
+                        <h3 class="nav-section-title">World Management</h3>
+                        <button class="sub-nav-btn active" onclick="openControlSubTab(event, 'sub-instances')">
+                            <i class="fa-solid fa-layer-group"></i> Instances
+                        </button>
+                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-accounts')">
+                            <i class="fa-solid fa-users-gear"></i> User Access
+                        </button>
+                        
+                        <h3 class="nav-section-title">Data Assets</h3>
+                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-characters')">
+                            <i class="fa-solid fa-user-shield"></i> Characters
+                        </button>
+                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-items')">
+                            <i class="fa-solid fa-box-open"></i> Items
+                        </button>
+                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-skills')">
+                            <i class="fa-solid fa-scroll"></i> Skills
+                        </button>
+                    </div>
+            
+                    <div class="master-workspace">
+                        
+                        <div id="sub-instances" class="control-sub-content">
+                            <div class="panel-card">
+                                <h3>Spawn New Instance</h3>
                                 <div class="flex-row">
-                                    <button onclick="saveAllUserRoles()" class="btn-success">Save All Changes</button>
-                                    <button onclick="loadUserList()" class="btn-small"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                                    <input type="text" id="new-instance-name" class="form-input" placeholder="Instance Name (e.g. Campaign: North)">
+                                    <button onclick="spawnInstance()" class="btn-success">Spawn Instance</button>
                                 </div>
                             </div>
-                            
-                            <div class="user-list-header" style="display: grid; grid-template-columns: 2fr 1fr; padding: 10px; color: #71717a; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid #27272a;">
-                                <span>Email</span>
-                                <span>Role Assignment</span>
-                            </div>
-                    
-                            <div id="admin-user-list" class="user-list-body">
-                                </div>
-                        </div>
-                    </div>
-                    
-                    <div id="sub-groups" class="control-sub-content hide-default">
-                        <div class="panel-card">
-                            <h3>Group Management & World Clock</h3>
-                            
-                            <div class="field-group">
-                                <button onclick="toggleTime()" id="play-btn" class="btn-success">Start Time</button>
-                                <span id="speed-label">1x</span>
-                                <div class="mt-m">
-                                    <button onclick="setSpeed(1)" class="btn-small">1x</button>
-                                    <button onclick="setSpeed(10)" class="btn-small">10x</button>
-                                    <button onclick="setSpeed(100)" class="btn-small">100x</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
             
-                    <div id="sub-characters" class="control-sub-content hide-default">
-                        <div class="panel-card">
-                            <h3>Character Management</h3>
-                            <p style="color: #71717a;">Tools to oversee and edit player sheets will be here.</p>
+                            <div class="panel-card">
+                                <h3>Active Instance Registry</h3>
+                                <div id="admin-instance-list">
+                                    <p class="text-center" style="opacity: 0.5; padding: 20px;">No active instances found.</p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-
-                    <div id="sub-items" class="control-sub-content hide-default">
-                        <div class="panel-card">
-                            <h3>Item Management</h3>
-                            <p style="color: #71717a;">Master item list and loot generators will be here.</p>
-                        </div>
-                    </div>
-
-                    <div id="sub-skills" class="control-sub-content hide-default">
-                        <div class="panel-card">
-                            <h3>Skill Management</h3>
-                            <p style="color: #71717a;">Ability editors and class skill trees will be here.</p>
-                        </div>
-                    </div>
             
+                        <div id="sub-accounts" class="control-sub-content hide-default">
+                            <div class="panel-card">
+                                <div class="flex-row" style="justify-content: space-between; margin-bottom: 20px;">
+                                    <h3>Account Permissions</h3>
+                                    <div class="flex-row">
+                                        <button onclick="saveAllUserRoles()" class="btn-success">Save All Changes</button>
+                                        <button onclick="loadUserList()" class="btn-small"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="user-list-header" style="display: grid; grid-template-columns: 2fr 1fr; padding: 10px; color: #71717a; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid #27272a;">
+                                    <span>Email</span>
+                                    <span>Role Assignment</span>
+                                </div>
+            
+                                <div id="admin-user-list" class="user-list-body">
+                                    </div>
+                            </div>
+                        </div>
+            
+                        <div id="sub-characters" class="control-sub-content hide-default"><div class="panel-card"><h3>Character Supervision</h3></div></div>
+                        <div id="sub-items" class="control-sub-content hide-default"><div class="panel-card"><h3>Master Item List</h3></div></div>
+                        <div id="sub-skills" class="control-sub-content hide-default"><div class="panel-card"><h3>Global Skill Tree</h3></div></div>
+                    </div>
                 </div>
             </div>
 
