@@ -119,12 +119,13 @@ function applyPassiveRegen() {
     let mpCur = parseFloat(document.getElementById('char-mp-current').value) || 0;
     let mpMax = parseFloat(document.getElementById('char-mp-max').value) || 10;
 
-    // 0.2% per minute
-    let hpRegen = hpMax * 0.002;
-    let mpRegen = mpMax * 0.002;
+    // Regen ~100% in 8 hours
+    let hpRegen = hpMax * 0.00208333;
+    let mpRegen = mpMax * 0.00208333;
 
-    document.getElementById('char-hp-current').value = Math.min(hpCur + hpRegen, hpMax).toFixed(1);
-    document.getElementById('char-mp-current').value = Math.min(mpCur + mpRegen, mpMax).toFixed(1);
+    // Use .toFixed(2) to keep the fraction safe in the hidden input
+    document.getElementById('char-hp-current').value = Math.min(hpCur + hpRegen, hpMax).toFixed(2);
+    document.getElementById('char-mp-current').value = Math.min(mpCur + mpRegen, mpMax).toFixed(2);
     
     saveCharacter(); // Syncs to DB
 }
@@ -459,8 +460,8 @@ function saveCharacter() {
         mpMax: (spirit * 5) + mpBonus + 10,
 
         // CURRENT RESOURCES & EXP
-        hpCurrent: parseInt(document.getElementById('char-hp-current').value) || 0,
-        mpCurrent: parseInt(document.getElementById('char-mp-current').value) || 0,
+        hpCurrent: parseFloat(document.getElementById('char-hp-current').value) || 0,
+        mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0,
         expCurrent: parseInt(document.getElementById('char-exp-current').value) || 0,
         expMax: parseInt(document.getElementById('char-exp-max').value) || 1000
         
@@ -501,15 +502,15 @@ function updateHUD(char) {
     const raceClassText = `Lv.${charLv} (${char.class || 'Adventurer'} Lv.${classLv})`;
     document.getElementById('hud-meta').innerText = raceClassText;
     
-    // 2. Text Resources with Bonus Visualization
+    // 2. Text Resources with Bonus Visualization (Rounded down for display)
     const hpBonus = char.hpMaxBonus || 0;
     const mpBonus = char.mpMaxBonus || 0;
-    
-    // Displays as "10/15 (+5)" if a bonus exists
+
+    // Regen Formula
     document.getElementById('hud-hp-text').innerText = 
-        `${char.hpCurrent || 0}/${char.hpMax || 10} ${hpBonus > 0 ? '(+' + hpBonus + ')' : ''}`;
+        `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 10)} ${hpBonus > 0 ? '(+' + hpBonus + ')' : ''}`;
     document.getElementById('hud-mp-text').innerText = 
-        `${char.mpCurrent || 0}/${char.mpMax || 10} ${mpBonus > 0 ? '(+' + mpBonus + ')' : ''}`;
+        `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 10)} ${mpBonus > 0 ? '(+' + mpBonus + ')' : ''}`;
     
     // 3. New Modifier Calculation: Stat / 2
     const getMod = (val) => {
