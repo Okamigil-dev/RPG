@@ -731,17 +731,20 @@ async function loadInstanceList() {
             return;
         }
 
-        let html = `
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Instance Name</th>
-                        <th>Join Code</th>
-                        <th>Masters</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
+        html += `
+            <tr>
+                <td><strong>${data.name}</strong></td>
+                <td><code class="join-code-pill">${data.joinCode}</code></td>
+                <td>${data.masters ? data.masters.length : 1}</td>
+                <td>
+                    <div class="flex-row" style="gap: 5px;">
+                        <button class="btn-small" onclick="viewInstanceDetails('${id}')">Manage</button>
+                        <button class="btn-danger-small" onclick="deleteInstance('${id}', '${data.name}')">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
         `;
 
         snapshot.forEach(doc => {
@@ -809,4 +812,25 @@ function viewInstanceDetails(instanceId) {
     // For now, we just alert the ID. 
     // Later, this will open a detailed view to kick players or change the clock.
     alert("Managing Instance: " + instanceId);
+}
+
+/**
+ * Deletes an instance from both Firestore and Realtime Database
+ */
+async function deleteInstance(instanceId, name) {
+    if (!confirm(`Are you sure you want to PERMANENTLY delete "${name}"? This cannot be undone.`)) return;
+
+    try {
+        // 1. Remove from Firestore (Permissions & Metadata)
+        await firestore.collection('instances').doc(instanceId).delete();
+
+        // 2. Remove from RTDB (The Live Clock)
+        await rtdb.ref(`instance_clocks/${instanceId}`).remove();
+
+        alert("Instance deleted successfully.");
+        loadInstanceList(); // Refresh the table
+    } catch (error) {
+        console.error("Delete Error:", error);
+        alert("Failed to delete instance. Check console.");
+    }
 }
