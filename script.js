@@ -256,23 +256,43 @@ function createNewCharacter() {
         .then(() => loadUserCharacters());
 }
 
+/**
+ * Loads characters and builds the selection grid with Delete capability.
+ */
 function loadUserCharacters() {
     const user = auth.currentUser;
+    if (!user) return;
+
     firestore.collection('users').doc(user.uid).collection('characters').get().then(snap => {
         const grid = document.getElementById('char-list-grid');
-        grid.innerHTML = "";
+        grid.innerHTML = ""; // Prevents "weird" stacking
+        
         snap.forEach(doc => {
             const d = doc.data();
             const card = document.createElement('div');
             card.className = 'char-card';
+            
+            // Selection Logic
             card.onclick = () => selectCharacter(doc.id);
-            card.innerHTML = `<strong>${d.name}</strong>`;
+            
+            card.innerHTML = `
+                <div class="portrait-circle-small" style="background-image: url(${d.portrait || ''}); margin: 0 auto 10px;"></div>
+                <strong>${d.name || 'New Hero'}</strong>
+                <div class="char-card-meta">Lv. ${d.level || 1} ${d.class || ''}</div>
+                <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            `;
             grid.appendChild(card);
         });
     });
 }
 
 function selectCharacter(id) {
+    // 0. RESET UI (Clears ghost data from previous characters)
+    const allInputs = document.querySelectorAll('#char-sheet-view input');
+    allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
+
     currentCharacterId = id;
     const user = auth.currentUser;
     
@@ -289,8 +309,7 @@ function selectCharacter(id) {
             raceEl.value = d.race || "";
             classEl.value = d.class || "";
             
-            // 2. LOCKING LOGIC (Master/Admin Bypass)
-            // If race/class are set, players can't change them, but Masters can.
+            // 2. LOCKING LOGIC
             const isMaster = (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin');
             raceEl.disabled = (d.race && !isMaster);
             classEl.disabled = (d.class && !isMaster);
@@ -308,8 +327,7 @@ function selectCharacter(id) {
             document.getElementById('char-mind').value = d.mind || 10;
             document.getElementById('char-spirit').value = d.spirit || 10;
 
-            // 5. GALLERY & PORTRAIT (THE NEW FIX)
-            // Passing an empty array if d.gallery is missing ensures slots appear.
+            // 5. GALLERY & PORTRAIT
             renderGallery(d.gallery || [], d.portrait || "");
 
             // 6. UI NAVIGATION
@@ -323,16 +341,36 @@ function selectCharacter(id) {
     });
 }
 
+async function deleteCharacter(event, charId, name) {
+    event.stopPropagation(); // Stops selectCharacter from firing
+    
+    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+
+    try {
+        const user = auth.currentUser;
+        await firestore.collection('users').doc(user.uid).collection('characters').doc(charId).delete();
+        
+        if (currentCharacterId === charId) {
+            currentCharacterId = null;
+            goBackToSelection();
+        }
+        
+        loadUserCharacters();
+    } catch (err) {
+        alert("Error: " + err.message);
+    }
+}
+
 function saveCharacter() {
     if (!currentCharacterId) return;
     
     const data = {
         name: document.getElementById('char-name').value,
-        race: document.getElementById('char-race').value,   // Added
-        class: document.getElementById('char-class').value, // Added
+        race: document.getElementById('char-race').value,
+        class: document.getElementById('char-class').value,
         level: parseInt(document.getElementById('char-level').value) || 1,
-        expCurrent: parseInt(document.getElementById('char-exp-current').value) || 0, // Added
-        expMax: parseInt(document.getElementById('char-exp-max').value) || 1000,    // Added
+        expCurrent: parseInt(document.getElementById('char-exp-current').value) || 0,
+        expMax: parseInt(document.getElementById('char-exp-max').value) || 1000,
         body: parseInt(document.getElementById('char-body').value) || 10,
         mind: parseInt(document.getElementById('char-mind').value) || 10,
         spirit: parseInt(document.getElementById('char-spirit').value) || 10,
@@ -350,26 +388,6 @@ function saveCharacter() {
 function goBackToSelection() {
     document.getElementById('char-selection-view').classList.remove('hide-default');
     document.getElementById('char-sheet-view').classList.add('hide-default');
-}
-
-// Update loadUserCharacters to show the image in the selection grid
-function loadUserCharacters() {
-    const user = auth.currentUser;
-    firestore.collection('users').doc(user.uid).collection('characters').get().then(snap => {
-        const grid = document.getElementById('char-list-grid');
-        grid.innerHTML = "";
-        snap.forEach(doc => {
-            const d = doc.data();
-            const card = document.createElement('div');
-            card.className = 'char-card';
-            card.onclick = () => selectCharacter(doc.id);
-            card.innerHTML = `
-                <div class="portrait-circle-small" style="background-image: url(${d.portrait || ''}); margin: 0 auto 10px;"></div>
-                <strong>${d.name}</strong>
-            `;
-            grid.appendChild(card);
-        });
-    });
 }
 
 
