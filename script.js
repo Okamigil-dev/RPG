@@ -48,19 +48,23 @@ function saveTimeState() {
 }
 
 rtdb.ref(`instance_clocks/${currentCampaignId}`).on('value', (snapshot) => {
+    // CRITICAL: If I am the Master, I AM the source of truth. 
+    // Ignore the echo coming back from the database so I don't overwrite my own speed logic.
+    if (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin') return;
+
     const data = snapshot.val();
     if (data) {
-        speedMultiplier = data.speedMultiplier;
+        speedMultiplier = data.speedMultiplier || 1;
         isRunning = data.isRunning;
         let now = Date.now();
+        
         if (data.isRunning) {
             let deltaRealSeconds = (now - data.lastRealWorldSaveTime) / 1000;
-            // FIX: Changed data.totalSeconds to data.totalCustomSeconds
             totalCustomSeconds = (data.totalCustomSeconds || 0) + (deltaRealSeconds * speedMultiplier);
         } else {
-            // FIX: Changed data.totalSeconds to data.totalCustomSeconds
             totalCustomSeconds = data.totalCustomSeconds || 0;
         }
+        
         lastRealTime = now;
         updateDisplay();
     }
@@ -73,19 +77,32 @@ rtdb.ref(`instance_clocks/${currentCampaignId}`).on('value', (snapshot) => {
 // ==========================================
 
 let lastRegenMinute = 0; // Track the last time regen fired
+let syncCounter = 0; // Temporary counter for saving
 
 function tick() {
     let now = Date.now();
     let deltaRealSeconds = (now - lastRealTime) / 1000;
     lastRealTime = now;
+
     if (isRunning) {
+        // 1. Advance local clock
         totalCustomSeconds += (deltaRealSeconds * speedMultiplier);
         
-        // --- PASSIVE REGEN ENGINE ---
+        // 2. PASSIVE REGEN (Every game minute)
         let currentMinute = Math.floor(totalCustomSeconds / 60);
         if (currentMinute > lastRegenMinute) {
             applyPassiveRegen();
             lastRegenMinute = currentMinute;
+        }
+
+        // 3. MASTER AUTHORITY: Auto-Sync every 5 real seconds
+        // This ensures players who join late get the correct time
+        if (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin') {
+            syncCounter += deltaRealSeconds;
+            if (syncCounter > 5) {
+                saveTimeState(); 
+                syncCounter = 0;
+            }
         }
 
         updateDisplay();
@@ -139,27 +156,20 @@ function toggleTime() {
 }
 function setSpeed(multiplier) {
     const role = window.currentUserRole;
-
-    // 1. Security Check
     if (role !== 'Master' && role !== 'Admin') return;
 
-    // 2. Admin-only speed check
-    if (multiplier >= 100 && role !== 'Admin') {
-        alert("Only the Admin can use 'Time Warp' speeds.");
-        return;
-    }
-
-    // 3. Update local state
+    // 1. Update local state
     speedMultiplier = multiplier;
 
-    // 4. Update the UI Label
+    // 2. IMPORTANT: Immediately push this to Firebase 
+    // This tells the database: "Hey, the speed is now X, and the time is Y"
+    saveTimeState(); 
+
+    // 3. Update UI Label
     const label = document.getElementById('speed-label');
     if (label) label.innerText = multiplier + "x";
 
-    // 5. IMPORTANT: Push this change to the Database!
-    saveTimeState(); 
-
-    console.log(`System: Clock speed set to ${multiplier}x`);
+    console.log(`System: Master changed speed to ${multiplier}x`);
 }
 
 
@@ -898,32 +908,30 @@ async function saveAllUserRoles() {
 async function loadInstanceList() {
     const listContainer = document.getElementById('admin-instance-list');
     const user = auth.currentUser;
-
     if (!listContainer || !user) return;
 
     try {
-        // Log to console so you can see if the query is firing
-        console.log("System: Fetching Instance Registry...");
-
+        // Fetch only instances where YOU are a Master
         const snapshot = await firestore.collection('instances')
             .where('masters', 'array-contains', user.uid)
             .get();
 
         if (snapshot.empty) {
-            listContainer.innerHTML = `<p class="text-center" style="opacity: 0.5; padding: 20px;">No active instances found.</p>`;
+            listContainer.innerHTML = `<p class="text-center" style="opacity: 0.5; padding: 20px;">No active instances found for this Master.</p>`;
             return;
         }
 
-        // FIX: Declare the html variable first
-        let html = `<table class="instance-table"><thead><tr><th>Name</th><th>Join Code</th><th>Masters</th><th>Actions</th></tr></thead><tbody>`;
+        let html = `<table class="admin-table">
+            <thead><tr><th>World Name</th><th>Join Code</th><th>Masters</th><th>Actions</th></tr></thead>
+            <tbody>`;
 
         snapshot.forEach(doc => {
             const data = doc.data();
-            const id = doc.id;
+            const id = doc.id; // Added this variable back in
             html += `
                 <tr>
-                    <td><strong>${data.name}</strong></td>
-                    <td><code style="background: #27272a; padding: 2px 6px; border-radius: 4px; color: #00ff88;">${data.joinCode}</code></td>
+                    <td><strong>${data.name || 'Unnamed World'}</strong></td>
+                    <td><code class="join-code-pill">${data.joinCode || 'N/A'}</code></td>
                     <td>${data.masters ? data.masters.length : 1}</td>
                     <td>
                         <div class="flex-row" style="gap: 5px;">
@@ -933,16 +941,14 @@ async function loadInstanceList() {
                             </button>
                         </div>
                     </td>
-                </tr>
-            `;
+                </tr>`;
         });
 
         html += `</tbody></table>`;
         listContainer.innerHTML = html;
-
     } catch (error) {
-        console.error("Error loading instances:", error);
-        listContainer.innerHTML = `<p class="text-center" style="color: #ef4444;">Error loading registry.</p>`;
+        console.error("Registry Error:", error);
+        listContainer.innerHTML = `<p class="text-center" style="color: #ef4444; padding: 20px;">Database error. Check Firestore Index.</p>`;
     }
 }
 
