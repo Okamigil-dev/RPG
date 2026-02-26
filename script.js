@@ -224,8 +224,36 @@ function openTab(tabId) {
 
 function createNewCharacter() {
     const user = auth.currentUser;
-    const data = { name: "New Hero", body: 10, mind: 10, spirit: 10, hpCurrent: 10, hpMax: 10 };
-    firestore.collection('users').doc(user.uid).collection('characters').add(data).then(() => loadUserCharacters());
+    const data = { 
+        // Basic Identity
+        name: "New Hero", 
+        race: "",
+        class: "",
+        level: 1,
+
+        // Stats & Vitals
+        body: 10, 
+        mind: 10, 
+        spirit: 10, 
+        hpCurrent: 10, 
+        hpMax: 10,
+        mpCurrent: 10,
+        mpMax: 10,
+
+        // Progress
+        expCurrent: 0,
+        expMax: 1000,
+
+        // Gallery & Systems
+        gallery: [], 
+        portrait: "",
+        instanceId: "global", // Default instance
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    firestore.collection('users').doc(user.uid)
+        .collection('characters').add(data)
+        .then(() => loadUserCharacters());
 }
 
 function loadUserCharacters() {
@@ -252,42 +280,44 @@ function selectCharacter(id) {
         if (doc.exists) {
             const d = doc.data();
             
-            // 1. Define Elements
+            // 1. IDENTITY & METADATA
             const raceEl = document.getElementById('char-race');
             const classEl = document.getElementById('char-class');
-
-            // 2. Set Values
+            
             document.getElementById('char-name').value = d.name || "";
             document.getElementById('char-level').value = d.level || 1;
             raceEl.value = d.race || "";
             classEl.value = d.class || "";
             
-            // 3. Locking Logic (Master/Admin Bypass)
+            // 2. LOCKING LOGIC (Master/Admin Bypass)
+            // If race/class are set, players can't change them, but Masters can.
             const isMaster = (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin');
             raceEl.disabled = (d.race && !isMaster);
             classEl.disabled = (d.class && !isMaster);
             
-            // 4. EXP Fields
+            // 3. PROGRESS & RESOURCES
             document.getElementById('char-exp-current').value = d.expCurrent || 0;
             document.getElementById('char-exp-max').value = d.expMax || 1000;
-
-            // 5. Stats & Resources
-            document.getElementById('char-body').value = d.body || 10;
-            document.getElementById('char-mind').value = d.mind || 10;
-            document.getElementById('char-spirit').value = d.spirit || 10;
             document.getElementById('char-hp-current').value = d.hpCurrent || 0;
             document.getElementById('char-hp-max').value = d.hpMax || 0;
             document.getElementById('char-mp-current').value = d.mpCurrent || 0;
             document.getElementById('char-mp-max').value = d.mpMax || 0;
 
-            // 6. Navigation & UI Updates
+            // 4. CORE STATS
+            document.getElementById('char-body').value = d.body || 10;
+            document.getElementById('char-mind').value = d.mind || 10;
+            document.getElementById('char-spirit').value = d.spirit || 10;
+
+            // 5. GALLERY & PORTRAIT (THE NEW FIX)
+            // Passing an empty array if d.gallery is missing ensures slots appear.
+            renderGallery(d.gallery || [], d.portrait || "");
+
+            // 6. UI NAVIGATION
             document.getElementById('char-selection-view').classList.add('hide-default');
             document.getElementById('char-sheet-view').classList.remove('hide-default');
             
+            // 7. SYNC HUD & PERSISTENCE
             updateHUD(d);
-            if (d.gallery) renderGallery(d.gallery, d.portrait);
-            
-            // 7. Persistence
             firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
         }
     });
