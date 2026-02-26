@@ -72,15 +72,44 @@ rtdb.ref(`instance_clocks/${currentCampaignId}`).on('value', (snapshot) => {
 // --- 4. CLOCK ENGINE & DISPLAY ---
 // ==========================================
 
+let lastRegenMinute = 0; // Track the last time regen fired
+
 function tick() {
     let now = Date.now();
     let deltaRealSeconds = (now - lastRealTime) / 1000;
     lastRealTime = now;
     if (isRunning) {
         totalCustomSeconds += (deltaRealSeconds * speedMultiplier);
+        
+        // --- PASSIVE REGEN ENGINE ---
+        let currentMinute = Math.floor(totalCustomSeconds / 60);
+        if (currentMinute > lastRegenMinute) {
+            applyPassiveRegen();
+            lastRegenMinute = currentMinute;
+        }
+
         updateDisplay();
     }
 }
+
+function applyPassiveRegen() {
+    if (!currentCharacterId) return;
+
+    let hpCur = parseFloat(document.getElementById('char-hp-current').value) || 0;
+    let hpMax = parseFloat(document.getElementById('char-hp-max').value) || 10;
+    let mpCur = parseFloat(document.getElementById('char-mp-current').value) || 0;
+    let mpMax = parseFloat(document.getElementById('char-mp-max').value) || 10;
+
+    // 0.2% per minute
+    let hpRegen = hpMax * 0.002;
+    let mpRegen = mpMax * 0.002;
+
+    document.getElementById('char-hp-current').value = Math.min(hpCur + hpRegen, hpMax).toFixed(1);
+    document.getElementById('char-mp-current').value = Math.min(mpCur + mpRegen, mpMax).toFixed(1);
+    
+    saveCharacter(); // Syncs to DB
+}
+
 function updateDisplay() {
     let tDays = Math.floor(totalCustomSeconds / 86400);
     let h = Math.floor((totalCustomSeconds / 3600) % 24);
@@ -168,28 +197,36 @@ auth.onAuthStateChanged((user) => {
         firestore.collection('users').doc(user.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
-
                 window.currentUserRole = data.role || 'Player';
                 
+                // --- NEW: Vitals Lock Check ---
+                const isMaster = (data.role === 'Master' || data.role === 'Admin');
+                const hpIn = document.getElementById('char-hp-current');
+                const mpIn = document.getElementById('char-mp-current');
+                [hpIn, mpIn].forEach(el => {
+                    el.readOnly = !isMaster;
+                    el.classList.toggle('locked-resource', !isMaster);
+                });
+
                 document.getElementById('user-role-label').innerText = data.role;
-                if (data.role === 'Master' || data.role === 'Admin') {
+                if (isMaster) {
                     document.getElementById('nav-control-panel').classList.remove('hide-default');
-                    document.getElementById('master-quick-controls').classList.remove('hide-default'); // Show sidebar controls
+                    document.getElementById('master-quick-controls').classList.remove('hide-default');
+                    
+                    // --- NEW: Load Registry immediately for Masters ---
+                    loadInstanceList(); 
                 }
-                // we start listening to the instance dice log.
-                initDiceLogListener();
                 
+                initDiceLogListener();
                 if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
             }
         });
         loadUserCharacters();
         openTab('tab-character');
     } else {
-    // Clear the role to prevent state bleed
-    window.currentUserRole = null; 
-    openTab('tab-login');
-    
-}
+        window.currentUserRole = null; 
+        openTab('tab-login');
+    }
 });
 
 
@@ -210,7 +247,10 @@ function openTab(tabId) {
         target.style.display = 'block';
         target.classList.remove('hide-default');
     }
-    if (tabId === 'tab-control-panel') {
+
+    // NEW: Load instances when opening the control panel
+    if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
+        loadInstanceList();
         openMasterPanel();
     }
 }
@@ -857,13 +897,16 @@ async function saveAllUserRoles() {
  */
 async function loadInstanceList() {
     const listContainer = document.getElementById('admin-instance-list');
-    const currentUser = firebase.auth().currentUser;
+    const user = auth.currentUser;
 
-    if (!listContainer || !currentUser) return;
+    if (!listContainer || !user) return;
 
     try {
+        // Log to console so you can see if the query is firing
+        console.log("System: Fetching Instance Registry...");
+
         const snapshot = await firestore.collection('instances')
-            .where('masters', 'array-contains', currentUser.uid)
+            .where('masters', 'array-contains', user.uid)
             .get();
 
         if (snapshot.empty) {
