@@ -304,6 +304,18 @@
                                     <p class="text-center" style="opacity: 0.5; padding: 20px;">No active instances found.</p>
                                 </div>
                             </div>
+
+                            <div class="panel-card">
+                                <h3>Instance Heartbeat: <span id="current-instance-name">Global</span></h3>
+                                <div class="flex-row">
+                                    <button onclick="toggleTime()" class="btn-success">Play/Pause</button>
+                                    <span id="speed-label">1x</span>
+                                    <button onclick="setSpeed(1)" class="btn-small">1x</button>
+                                    <button onclick="setSpeed(60)" class="btn-small">1h/min</button>
+                                    <button onclick="setSpeed(1440)" class="btn-small">1d/min</button>
+                                </div>
+                            </div>
+                                                        
                         </div>
             
                         <div id="sub-accounts" class="control-sub-content hide-default">
