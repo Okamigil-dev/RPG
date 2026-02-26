@@ -379,6 +379,11 @@ function selectCharacter(id) {
     firestore.collection('users').doc(user.uid).collection('characters').doc(id).get().then(doc => {
         if (doc.exists) {
             const d = doc.data();
+
+            // === SWITCH INSTANCE CLOCK ===
+            currentCampaignId = d.instanceId || "global"; 
+            initClockListener(); 
+            // ===============================================
             
             // 1. IDENTITY & METADATA
             document.getElementById('char-name').value = d.name || "";
