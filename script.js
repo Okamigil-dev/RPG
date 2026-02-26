@@ -80,9 +80,6 @@ function initClockListener() {
     });
 }
 
-// 3. INITIALIZE: Run it once when the script loads
-initClockListener();
-
 
 
 // ==========================================
@@ -226,6 +223,8 @@ auth.onAuthStateChanged((user) => {
             if (doc.exists) {
                 const data = doc.data();
                 window.currentUserRole = data.role || 'Player';
+
+                initClockListener();
                 
                 // --- NEW: Vitals Lock Check ---
                 const isMaster = (data.role === 'Master' || data.role === 'Admin');
