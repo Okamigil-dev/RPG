@@ -449,7 +449,17 @@ body {
     justify-content: space-between;
     animation: fadeIn 0.3s ease forwards;
 }
-.dice-log-label { color: #06b6d4; font-weight: bold; }
+
+.dice-log-label { 
+    color: #06b6d4; 
+    font-weight: bold; 
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px; /* Prevents long names from pushing the number off screen */
+}
+
 .dice-log-value { color: #e4e4e7; }
 
 @keyframes fadeIn {
