@@ -253,18 +253,19 @@
                         <div class="panel-card">
                             <div class="flex-row" style="justify-content: space-between; margin-bottom: 20px;">
                                 <h3>User Access Control</h3>
-                                <button onclick="loadUserList()" class="btn-small"><i class="fa-solid fa-rotate"></i> Refresh List</button>
+                                <div class="flex-row">
+                                    <button onclick="saveAllUserRoles()" class="btn-success">Save All Changes</button>
+                                    <button onclick="loadUserList()" class="btn-small"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                                </div>
                             </div>
                             
-                            <div class="user-list-header" style="display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 10px; color: #71717a; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid #27272a;">
+                            <div class="user-list-header" style="display: grid; grid-template-columns: 2fr 1fr; padding: 10px; color: #71717a; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid #27272a;">
                                 <span>Email</span>
-                                <span>Current Role</span>
-                                <span style="text-align: right;">Actions</span>
+                                <span>Role Assignment</span>
                             </div>
                     
                             <div id="admin-user-list" class="user-list-body">
-                                <p style="padding: 20px; text-align: center; color: #52525b;">Click refresh to load users...</p>
-                            </div>
+                                </div>
                         </div>
                     </div>
                     
