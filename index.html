@@ -66,11 +66,32 @@
                 </div>
             </div>
 
+
+
+            <!--===========================
+            ---- 1. WORLD CLOCK ----
+            ============================-->
+            
             <div id="game-ui" class="game-ui hide-default">
                 <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
                 <div id="time-display" class="time-text">00:00:00</div>
+            
+                <div id="master-quick-controls" class="mt-m hide-default">
+                    <div class="flex-row" style="justify-content: center; gap: 8px;">
+                        <button onclick="toggleTime()" id="sidebar-play-btn" class="btn-small">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="setSpeed(1)" class="btn-small">1x</button>
+                        <button onclick="setSpeed(10)" class="btn-small">10x</button>
+                    </div>
+                </div>
             </div>
 
+            
+            <!--===========================
+            ---- 2. DICE TRAY ----
+            ============================-->
+         
             <div class="dice-tray">
                 <div id="dice-log" class="dice-log">
                     <div class="dice-log-placeholder">No rolls yet</div>
@@ -94,7 +115,7 @@
 
             
             <!--===========================
-            ---- 1. LOGIN TAB ----
+            ---- 3. LOGIN TAB ----
             ============================-->
             <div id="tab-login" class="tab-content">
                 <h2>Log In or Register</h2>
@@ -109,7 +130,7 @@
             
             
             <!--===========================
-            ---- 2. CHARACTER TAB ----
+            ---- 4. CHARACTER TAB ----
             ============================-->
             <div id="tab-character" class="tab-content hide-default">
                 <div id="char-selection-view">
@@ -216,7 +237,7 @@
             
             
             <!--===========================
-            ---- 3. BACKPACK TAB ----
+            ---- 5. BACKPACK TAB ----
             ============================-->
             <div id="tab-backpack" class="tab-content hide-default">
                 <h2 class="tab-title">Backpack</h2>
@@ -228,7 +249,7 @@
             
 
             <!--===========================
-            ---- 4. SKILLS TAB ----
+            ---- 6. SKILLS TAB ----
             ============================-->
             <div id="tab-skills" class="tab-content hide-default">
                 <h2 class="tab-title">Skills & Abilities</h2>
@@ -240,7 +261,7 @@
 
             
             <!--===========================
-            ---- 5. CONTROL PANEL TAB ----
+            ---- 7. CONTROL PANEL TAB ----
             ============================-->
             <div id="tab-control-panel" class="tab-content hide-default">
                 <div class="master-dashboard-layout">
