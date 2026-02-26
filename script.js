@@ -157,27 +157,22 @@ function toggleTime() {
 }
 
 function setSpeed(multiplier) {
-    const role = window.currentUserRole;
-    if (role !== 'Master' && role !== 'Admin') {
-        console.warn("Permission Denied: Only Masters can change speed.");
-        return;
-    }
-
-    // 1. Set local variable FIRST
+    // 1. Update the local variable IMMEDIATELY
     speedMultiplier = multiplier;
 
-    // 2. Update UI Label IMMEDIATELY
+    // 2. Update the UI Label IMMEDIATELY 
     const label = document.getElementById('speed-label');
     if (label) label.innerText = multiplier + "x";
 
-    // 3. DIRECT DB WRITE (Bypass saveTimeState to ensure immediate sync)
+    // 3. PUSH TO RTDB (Using the current campaign ID)
+    // We update the save time at the exact same moment to keep the math in sync
+    const now = Date.now();
     rtdb.ref(`instance_clocks/${currentCampaignId}`).update({
         speedMultiplier: multiplier,
-        lastRealWorldSaveTime: Date.now()
+        lastRealWorldSaveTime: now,
+        totalCustomSeconds: totalCustomSeconds // Push the current time so the DB doesn't lag
     }).then(() => {
-        console.log(`System: Speed synced to ${multiplier}x`);
-    }).catch(err => {
-        console.error("System: Sync Failed!", err.message);
+        console.log("RTDB: Speed multiplier locked at " + multiplier);
     });
 }
 
