@@ -153,6 +153,9 @@ auth.onAuthStateChanged((user) => {
                     document.getElementById('nav-control-panel').classList.remove('hide-default');
                     document.getElementById('master-quick-controls').classList.remove('hide-default'); // Show sidebar controls
                 }
+                // we start listening to the instance dice log.
+                initDiceLogListener();
+                
                 if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
             }
         });
@@ -162,6 +165,7 @@ auth.onAuthStateChanged((user) => {
     // Clear the role to prevent state bleed
     window.currentUserRole = null; 
     openTab('tab-login');
+    
 }
 });
 
@@ -372,8 +376,6 @@ function updateHUD(char) {
 function rollDice(sides, btn) {
     const numDisplay = btn.querySelector('.roll-number');
     
-    // KILL OLD TIMERS: This prevents the result from vanishing 
-    // if you click again before the 3 seconds are up.
     if (btn.rollInterval) clearInterval(btn.rollInterval);
     if (btn.resetTimeout) clearTimeout(btn.resetTimeout);
     
@@ -385,14 +387,23 @@ function rollDice(sides, btn) {
         
         if (++rolls > 12) {
             clearInterval(btn.rollInterval);
-            
             const finalRoll = Math.floor(Math.random() * sides) + 1;
             numDisplay.innerText = finalRoll;
             
-            // Add to the log
-            updateDiceLog(sides, finalRoll);
+            // --- HYBRID PUSH TO RTDB ---
+            // We get the name from the HUD so it's the "Active Character"
+            const charName = document.getElementById('hud-name').innerText || "Unknown";
             
-            // Set a new reset timer
+            const rollData = {
+                name: charName,
+                sides: sides,
+                result: finalRoll,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            // Push to the shared instance log
+            rtdb.ref(`instance_logs/${currentCampaignId}/dice`).push(rollData);
+            
             btn.resetTimeout = setTimeout(() => {
                 btn.classList.remove('active-roll');
             }, 3000);
@@ -400,7 +411,19 @@ function rollDice(sides, btn) {
     }, 40);
 }
 
-function updateDiceLog(sides, result) {
+// This function now listens to the DB instead of being called manually
+function initDiceLogListener() {
+    // Turn off old listeners if switching instances
+    rtdb.ref(`instance_logs/${currentCampaignId}/dice`).off();
+
+    // Only show the last 10 rolls to keep the sidebar clean
+    rtdb.ref(`instance_logs/${currentCampaignId}/dice`).limitToLast(10).on('child_added', (snapshot) => {
+        const data = snapshot.val();
+        renderDiceLogEntry(data);
+    });
+}
+
+function renderDiceLogEntry(data) {
     const log = document.getElementById('dice-log');
     if (!log) return;
 
@@ -410,14 +433,13 @@ function updateDiceLog(sides, result) {
     const entry = document.createElement('div');
     entry.className = 'dice-log-entry';
     entry.innerHTML = `
-        <span class="dice-log-label">d${sides}</span>
-        <span class="dice-log-value">${result}</span>
+        <span class="dice-log-label">${data.name} (d${data.sides})</span>
+        <span class="dice-log-value">${data.result}</span>
     `;
     
-    log.prepend(entry); 
+    log.prepend(entry); // Newest rolls at the top
     
-    // Only keep the last 5 rolls
-    if (log.children.length > 5) {
+    if (log.children.length > 10) {
         log.removeChild(log.lastChild);
     }
 }
