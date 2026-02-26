@@ -159,25 +159,29 @@
                             </div>
                     
                             <div class="panel-card">
-                                <h3>Resources</h3>
+                                <h3>Status Vitals</h3>
                                 <div class="resources-grid">
                                     <div class="resource-group">
-                                        <label>HP Current / Max</label>
-                                        <div class="resource-inputs">
-                                            <input type="number" id="char-hp-current" onchange="saveCharacter()" class="hp-input">
+                                        <label><i class="fa-solid fa-heart"></i> Health Points</label>
+                                        <div class="resource-inputs display-only">
+                                            <input type="number" id="char-hp-current" class="hp-input locked-resource" readonly tabindex="-1">
                                             <span class="divider">/</span>
-                                            <input type="number" id="char-hp-max" onchange="saveCharacter()" class="hp-input">
+                                            <input type="number" id="char-hp-max" class="hp-input locked-resource" readonly tabindex="-1">
                                         </div>
                                     </div>
+                            
                                     <div class="resource-group">
-                                        <label>MP Current / Max</label>
-                                        <div class="resource-inputs">
-                                            <input type="number" id="char-mp-current" onchange="saveCharacter()" class="hp-input">
+                                        <label><i class="fa-solid fa-droplet"></i> Mana Points</label>
+                                        <div class="resource-inputs display-only">
+                                            <input type="number" id="char-mp-current" class="hp-input locked-resource" readonly tabindex="-1">
                                             <span class="divider">/</span>
-                                            <input type="number" id="char-mp-max" onchange="saveCharacter()" class="hp-input">
+                                            <input type="number" id="char-mp-max" class="hp-input locked-resource" readonly tabindex="-1">
                                         </div>
                                     </div>
                                 </div>
+                            
+                                <input type="hidden" id="char-hp-bonus-input" value="0">
+                                <input type="hidden" id="char-mp-bonus-input" value="0">
                             </div>
                         </div>
                     
@@ -209,18 +213,23 @@
                                 </div>
                             </div>
                             
-                            <div class="level-exp-grid">
+                            <div class="level-exp-grid mt-m">
                                 <div class="field-group">
-                                    <label>Lv</label>
+                                    <label>Char Lv</label>
                                     <input type="number" id="char-level" onchange="saveCharacter()" class="form-input">
                                 </div>
                                 <div class="field-group">
-                                    <label>Experience (EXP)</label>
-                                    <div class="exp-input-wrapper">
-                                        <input type="number" id="char-exp-current" onchange="saveCharacter()" class="form-input">
-                                        <span class="divider">/</span>
-                                        <input type="number" id="char-exp-max" onchange="saveCharacter()" class="form-input">
-                                    </div>
+                                    <label>Class Lv</label>
+                                    <input type="number" id="char-class-level" onchange="saveCharacter()" class="form-input">
+                                </div>
+                            </div>
+
+                            <div id="master-exp-controls" class="field-group mt-m hide-default">
+                                <label>Experience (Master Only)</label>
+                                <div class="exp-input-wrapper">
+                                    <input type="number" id="char-exp-current" onchange="saveCharacter()" class="form-input">
+                                    <span class="divider">/</span>
+                                    <input type="number" id="char-exp-max" onchange="saveCharacter()" class="form-input">
                                 </div>
                             </div>
                         </div>
@@ -252,9 +261,14 @@
             ---- 6. SKILLS TAB ----
             ============================-->
             <div id="tab-skills" class="tab-content hide-default">
-                <h2 class="tab-title">Skills & Abilities</h2>
+                <div class="flex-row">
+                    <h2 class="tab-title">Skill Pyramid</h2>
+                    <div class="sp-indicator">SP: <span id="char-sp-total">1</span> / Spent: <span id="char-sp-spent">0</span></div>
+                </div>
                 <div class="panel-card">
-                    <p>Skills system coming soon...</p>
+                    <div id="skills-container" class="skills-pyramid-grid">
+                        <p class="text-center opacity-50">Select a character to view skills...</p>
+                    </div>
                 </div>
             </div>
 
