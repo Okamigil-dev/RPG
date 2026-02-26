@@ -44,10 +44,10 @@ function saveTimeState() {
         isRunning: isRunning,
         lastRealWorldSaveTime: Date.now()
     };
-    rtdb.ref(`campaigns/${currentCampaignId}/clock`).set(timeData);
+    rtdb.ref(`instance_clocks/${currentCampaignId}`).set(timeData);
 }
 
-rtdb.ref(`campaigns/${currentCampaignId}/clock`).on('value', (snapshot) => {
+rtdb.ref(`instance_clocks/${currentCampaignId}`).on('value', (snapshot) => {
     const data = snapshot.val();
     if (data) {
         speedMultiplier = data.speedMultiplier;
@@ -566,27 +566,26 @@ function deleteImage(event, index) {
 /**
  * Handles switching between sub-tabs within the Master Control Panel
  */
-function openControlSubTab(evt, subId) {
-    // 1. Hide all sub-content blocks
-    const subContents = document.getElementsByClassName("control-sub-content");
-    for (let i = 0; i < subContents.length; i++) {
-        subContents[i].classList.add("hide-default");
+function openControlSubTab(evt, subTabId) {
+    // 1. Hide all sub-content
+    const contents = document.getElementsByClassName("control-sub-content");
+    for (let content of contents) {
+        content.classList.add("hide-default");
     }
 
-    // 2. Remove 'active' class from all sub-nav buttons
-    const subButtons = document.getElementsByClassName("sub-nav-btn");
-    for (let i = 0; i < subButtons.length; i++) {
-        subButtons[i].classList.remove("active");
+    // 2. Remove 'active' class from all buttons
+    const buttons = document.getElementsByClassName("sub-nav-btn");
+    for (let btn of buttons) {
+        btn.classList.remove("active");
     }
 
-    // 3. Show the target sub-content
-    const targetSub = document.getElementById(subId);
-    if (targetSub) {
-        targetSub.classList.remove("hide-default");
-    }
-
-    // 4. Set clicked button to active
+    // 3. Show the target tab and mark button as active
+    document.getElementById(subTabId).classList.remove("hide-default");
     evt.currentTarget.classList.add("active");
+
+    // 4. If opening instances or accounts, refresh the lists
+    if (subTabId === 'sub-instances') loadInstanceList();
+    if (subTabId === 'sub-accounts') loadUserList();
 }
 
 /**
@@ -637,7 +636,7 @@ function openMasterPanel() {
             accountBtn.style.display = 'none';
             
             // If a Master opens the panel, move them to the first tab they ARE allowed to see
-            const groupsBtn = document.querySelector('[onclick*="sub-groups"]');
+            const groupsBtn = document.querySelector('[onclick*="sub-instances"]');
             if (groupsBtn) {
                 groupsBtn.click(); 
             }
@@ -709,4 +708,105 @@ async function saveAllUserRoles() {
         console.error("Error saving roles:", error);
         alert("Failed to save changes. You might not have Admin permissions in Firestore Rules.");
     }
+}
+
+
+/**
+ * Loads all instances where the current user is a Master
+ */
+async function loadInstanceList() {
+    const listContainer = document.getElementById('admin-instance-list');
+    const currentUser = firebase.auth().currentUser;
+
+    if (!listContainer || !currentUser) return;
+
+    try {
+        // Fetch instances where the current user's UID is in the masters array
+        const snapshot = await firestore.collection('instances')
+            .where('masters', 'array-contains', currentUser.uid)
+            .get();
+
+        if (snapshot.empty) {
+            listContainer.innerHTML = `<p class="text-center" style="opacity: 0.5; padding: 20px;">No active instances found.</p>`;
+            return;
+        }
+
+        let html = `
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Instance Name</th>
+                        <th>Join Code</th>
+                        <th>Masters</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const id = doc.id;
+            html += `
+                <tr>
+                    <td><strong>${data.name}</strong></td>
+                    <td><code style="background: #27272a; padding: 2px 6px; border-radius: 4px; color: #00ff88;">${data.joinCode}</code></td>
+                    <td>${data.masters ? data.masters.length : 1}</td>
+                    <td>
+                        <button class="btn-small" onclick="viewInstanceDetails('${id}')">Manage</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table>`;
+        listContainer.innerHTML = html;
+
+    } catch (error) {
+        console.error("Error loading instances:", error);
+        listContainer.innerHTML = `<p class="text-center" style="color: #ef4444;">Error loading registry.</p>`;
+    }
+}
+
+async function spawnInstance() {
+    const nameInput = document.getElementById('new-instance-name');
+    const instanceName = nameInput.value.trim();
+    const currentUser = auth.currentUser;
+
+    if (!instanceName) return alert("Please name your instance!");
+
+    try {
+        // 1. Create the Instance Record in Firestore
+        const instanceRef = await firestore.collection('instances').add({
+            name: instanceName,
+            masters: [currentUser.uid],
+            members: [currentUser.uid],
+            joinCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            isActive: true
+        });
+
+        const instanceId = instanceRef.id;
+
+        // 2. Initialize the Clock "Heartbeat" in RTDB
+        await rtdb.ref(`instance_clocks/${instanceId}`).set({
+            totalCustomSeconds: 32400, // 09:00 AM
+            speedMultiplier: 1,
+            isRunning: false,
+            lastRealWorldSaveTime: Date.now()
+        });
+
+        nameInput.value = "";
+        alert(`Instance spawned!`);
+        loadInstanceList(); 
+
+    } catch (error) {
+        console.error("Spawn Error:", error);
+    }
+}
+
+function viewInstanceDetails(instanceId) {
+    // For now, we just alert the ID. 
+    // Later, this will open a detailed view to kick players or change the clock.
+    alert("Managing Instance: " + instanceId);
 }
