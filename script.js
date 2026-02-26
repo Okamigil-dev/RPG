@@ -359,26 +359,25 @@ function updateHUD(char) {
 // ==========================================
 // --- 11. DICE ROLLER ---
 // ==========================================
-function rollDice(sides) {
-    const res = document.getElementById('dice-result');
+function rollDice(sides, btn) {
+    const numDisplay = btn.querySelector('.roll-number');
     
-    // Safety check: prevent crash if HTML element is missing
-    if (!res) {
-        console.error("Error: Element 'dice-result' not found in HTML.");
-        return;
-    }
-
-    let c = 0;
-    res.style.color = "#a1a1aa"; // Dim the color while rolling
-
-    const i = setInterval(() => {
-        res.innerText = Math.floor(Math.random() * sides) + 1;
+    // 1. Trigger the CSS transition (dims icon, shows span)
+    btn.classList.add('active-roll');
+    
+    let rolls = 0;
+    const interval = setInterval(() => {
+        numDisplay.innerText = Math.floor(Math.random() * sides) + 1;
         
-        if (++c > 10) {
-            clearInterval(i);
-            const finalRoll = Math.floor(Math.random() * sides) + 1;
-            res.innerText = `d${sides}: ${finalRoll}`;
-            res.style.color = "#00ff88"; // Highlight final result in green
+        if (++rolls > 10) {
+            clearInterval(interval);
+            // 2. Final Result
+            numDisplay.innerText = Math.floor(Math.random() * sides) + 1;
+            
+            // 3. Reset the button look after 3 seconds
+            setTimeout(() => {
+                btn.classList.remove('active-roll');
+            }, 3000);
         }
     }, 50);
 }
