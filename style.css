@@ -142,6 +142,17 @@ body {
     margin-top: 10px;
 }
 
+.dice-log {
+    font-size: 0.75rem;
+    height: 60px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #27272a;
+    padding-bottom: 5px;
+    scrollbar-width: none;
+}
+.dice-log::-webkit-scrollbar { display: none; }
+.dice-log-placeholder { text-align: center; opacity: 0.3; padding-top: 15px; }
 
 
 /* ==========================================
@@ -349,6 +360,20 @@ body {
 @keyframes dice-pop {
     0% { transform: scale(0.5); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
+}
+
+.dice-log-entry {
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    animation: fadeIn 0.3s ease forwards;
+}
+.dice-log-label { color: #06b6d4; font-weight: bold; }
+.dice-log-value { color: #e4e4e7; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 
