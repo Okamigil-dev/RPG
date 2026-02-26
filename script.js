@@ -469,80 +469,12 @@ function renderDiceLogEntry(data) {
 
 
 
-// ==========================================
-// --- 12. GALLERY MANAGEMENT ---
-// ==========================================
-
-// Convert file to Base64 string
-function handleImageUpload(input) {
-    const file = input.files[0];
-    if (!file || !currentCharacterId) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const base64String = e.target.result;
-        const user = auth.currentUser;
-        const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
-
-        charRef.get().then(doc => {
-            let gallery = doc.data().gallery || [];
-            gallery.push(base64String);
-            const updateData = { gallery: gallery };
-            if (!doc.data().portrait) updateData.portrait = base64String;
-            
-            charRef.update(updateData).then(() => renderGallery(gallery, doc.data().portrait || base64String));
-        });
-    };
-    reader.readAsDataURL(file);
-}
-
-function saveImageToGallery(base64Data) {
-    const user = auth.currentUser;
-    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
-
-    charRef.get().then(doc => {
-        let gallery = doc.data().gallery || [];
-        gallery.push(base64Data);
-        // If it's the first image, make it the portrait
-        const updateData = { gallery: gallery };
-        if (!doc.data().portrait) updateData.portrait = base64Data;
-        
-        charRef.update(updateData).then(() => renderGallery(gallery, doc.data().portrait));
-    });
-}
-
+/* ==========================================
+   --- 12. GALLERY MANAGEMENT ---
+   ========================================== */
 const MAX_SLOTS = 10;
 
-function renderGallery(galleryArray, activePortrait) {
-    const container = document.getElementById('char-gallery-grid');
-    if (!container) return;
-    container.innerHTML = "";
-
-    const images = galleryArray || [];
-
-    for (let i = 0; i < MAX_SLOTS; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'gallery-item';
-
-        if (images[i]) {
-            // Occupied Slot
-            const isActive = images[i] === activePortrait;
-            if (isActive) slot.classList.add('active-img');
-            
-            slot.innerHTML = `
-                <img src="${images[i]}" onclick="setActivePortrait('${images[i]}')">
-                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
-            `;
-        } else {
-            // Empty Slot
-            slot.className = 'gallery-item empty-slot';
-            slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
-            slot.onclick = () => document.getElementById('slot-upload').click();
-        }
-        container.appendChild(slot);
-    }
-}
-
+// 1. Triggered when you click an empty [+] slot
 function handleSlotUpload(input) {
     const file = input.files[0];
     if (!file || !currentCharacterId) return;
@@ -551,7 +483,7 @@ function handleSlotUpload(input) {
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-            // Resize to 800px max for Firestore Free Tier safety
+            // Resize to 800px max for Firestore safety
             const canvas = document.createElement('canvas');
             let w = img.width, h = img.height, max = 800;
             if (w > h) { if (w > max) { h *= max / w; w = max; } } 
@@ -566,31 +498,80 @@ function handleSlotUpload(input) {
     reader.readAsDataURL(file);
 }
 
+// 2. Saves the resized image string to Firestore
 function saveImageToNextSlot(base64Data) {
     const user = auth.currentUser;
     const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
 
     charRef.get().then(doc => {
         let gallery = doc.data().gallery || [];
-        if (gallery.length >= 10) return alert("Gallery Full!");
-        gallery.push(base64Data);
+        if (gallery.length >= MAX_SLOTS) return alert("Gallery Full!");
         
+        gallery.push(base64Data);
         const updateData = { gallery: gallery };
+        
+        // If this is the first image ever, make it the portrait
         if (!doc.data().portrait) updateData.portrait = base64Data;
         
-        charRef.update(updateData).then(() => renderGallery(gallery, doc.data().portrait || base64Data));
+        charRef.update(updateData).then(() => {
+            // RE-RENDER: This puts the new image on the screen
+            renderGallery(gallery, doc.data().portrait || base64Data);
+            
+            // If we just set a new portrait, update the HUD too
+            if (updateData.portrait) {
+                document.getElementById('hud-portrait').style.backgroundImage = `url(${base64Data})`;
+            }
+        });
     });
 }
 
-function setActivePortrait(imgData) {
-    const user = auth.currentUser;
-    firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId)
-        .update({ portrait: imgData }).then(() => {
-            document.getElementById('hud-portrait').style.backgroundImage = `url(${imgData})`;
-            loadUserCharacters(); // Refresh the selection grid
-        });
+// 3. DRAWING THE GRID (THE ESSENTIAL PART)
+function renderGallery(galleryArray, activePortrait) {
+    const container = document.getElementById('char-gallery-grid');
+    if (!container) return;
+    container.innerHTML = "";
+
+    const images = galleryArray || [];
+
+    for (let i = 0; i < MAX_SLOTS; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'gallery-item';
+
+        if (images[i]) {
+            // OCCUPIED SLOT: Show the image
+            const isActive = images[i] === activePortrait;
+            if (isActive) slot.classList.add('active-img');
+            
+            slot.innerHTML = `
+                <img src="${images[i]}" onclick="setActivePortrait('${images[i]}')">
+                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
+            `;
+        } else {
+            // EMPTY SLOT: Show the [+] button
+            slot.className = 'gallery-item empty-slot';
+            slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
+            slot.onclick = () => document.getElementById('slot-upload').click();
+        }
+        container.appendChild(slot);
+    }
 }
 
+// 4. Sets which image appears in the HUD and Selection Grid
+function setActivePortrait(imgData) {
+    const user = auth.currentUser;
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
+    
+    charRef.update({ portrait: imgData }).then(() => {
+        // Update HUD instantly
+        document.getElementById('hud-portrait').style.backgroundImage = `url(${imgData})`;
+        loadUserCharacters(); // Update the tiny circle in selection grid
+        
+        // Re-render gallery to move the "active" green border
+        charRef.get().then(doc => renderGallery(doc.data().gallery, imgData));
+    });
+}
+
+// 5. Removes image and handles portrait fallback
 function deleteImage(event, index) {
     event.stopPropagation();
     if (!confirm("Delete this image?")) return;
@@ -604,11 +585,18 @@ function deleteImage(event, index) {
         gallery.splice(index, 1);
 
         const updateData = { gallery: gallery };
+        
+        // If we deleted the one they were using as a portrait, pick the first available one
         if (doc.data().portrait === deletedImg) {
             updateData.portrait = gallery.length > 0 ? gallery[0] : "";
         }
 
-        charRef.update(updateData).then(() => renderGallery(gallery, updateData.portrait));
+        charRef.update(updateData).then(() => {
+            renderGallery(gallery, updateData.portrait);
+            // Sync HUD and Selection view
+            document.getElementById('hud-portrait').style.backgroundImage = `url(${updateData.portrait || ''})`;
+            loadUserCharacters();
+        });
     });
 }
 
