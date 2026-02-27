@@ -230,10 +230,13 @@ auth.onAuthStateChanged((user) => {
                 
                 initDiceLogListener();
                 if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
+
+                const savedTab = localStorage.getItem('activeMainTab') || 'tab-character';
+                openTab(savedTab);
+                
             }
         });
         loadUserCharacters();
-        openTab('tab-character');
     } else {
         window.currentUserRole = null; 
 
@@ -263,13 +266,52 @@ function openTab(tabId) {
         target.classList.remove('hide-default');
     }
 
-    // NEW: Load instances when opening the control panel
+    // --- NEW: Save the main tab to memory ---
+    localStorage.setItem('activeMainTab', tabId);
+
     if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
         loadInstanceList();
         openMasterPanel();
+        
+        // --- NEW: Restore the last opened sub-tab automatically ---
+        const savedSubTab = localStorage.getItem('activeMasterSubTab') || 'sub-instances';
+        openControlSubTab(null, savedSubTab); 
     }
 }
 
+
+function openControlSubTab(evt, subTabId) {
+    // --- NEW: Save the sub-tab to memory ---
+    localStorage.setItem('activeMasterSubTab', subTabId);
+
+    // 1. Hide all sub-content
+    const contents = document.getElementsByClassName("control-sub-content");
+    for (let content of contents) {
+        content.classList.add("hide-default");
+    }
+
+    // 2. Remove 'active' class from all buttons
+    const buttons = document.getElementsByClassName("sub-nav-btn");
+    for (let btn of buttons) {
+        btn.classList.remove("active");
+    }
+
+    // 3. Show the target tab and mark button as active
+    document.getElementById(subTabId).classList.remove("hide-default");
+    
+    // Check if triggered by a click (evt) or by the auto-loader
+    if (evt) {
+        evt.currentTarget.classList.add("active");
+    } else {
+        const targetBtn = document.querySelector(`[onclick*="${subTabId}"]`);
+        if (targetBtn) targetBtn.classList.add("active");
+    }
+
+    // 4. If opening instances or accounts, refresh the lists
+    if (subTabId === 'sub-instances') loadInstanceList();
+    if (subTabId === 'sub-accounts') loadUserList();
+    if (subTabId === 'sub-characters') loadGlobalCharacterManager();
+}
 
 
 
@@ -784,31 +826,7 @@ function deleteImage(event, index) {
    --- 13. MASTER CONTROL LOGIC ---
    ========================================== */
 
-/**
- * Handles switching between sub-tabs within the Master Control Panel
- */
-function openControlSubTab(evt, subTabId) {
-    // 1. Hide all sub-content
-    const contents = document.getElementsByClassName("control-sub-content");
-    for (let content of contents) {
-        content.classList.add("hide-default");
-    }
 
-    // 2. Remove 'active' class from all buttons
-    const buttons = document.getElementsByClassName("sub-nav-btn");
-    for (let btn of buttons) {
-        btn.classList.remove("active");
-    }
-
-    // 3. Show the target tab and mark button as active
-    document.getElementById(subTabId).classList.remove("hide-default");
-    evt.currentTarget.classList.add("active");
-
-    // 4. If opening instances or accounts, refresh the lists
-    if (subTabId === 'sub-instances') loadInstanceList();
-    if (subTabId === 'sub-accounts') loadUserList();
-    if (subTabId === 'sub-characters') loadGlobalCharacterManager();
-}
 
 function openMasterPanel() {
     const role = window.currentUserRole;
@@ -1034,7 +1052,6 @@ async function loadGlobalCharacterManager() {
 
         const usersSnap = await firestore.collection('users').get();
         
-        // --- ADDED: Search input field on the left, buttons on the right ---
         let html = `
             <div class="flex-row" style="justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <input type="text" id="char-search-input" class="form-input" placeholder="Search character or owner..." onkeyup="filterCharacterTable()" style="width: 250px;">
@@ -1070,7 +1087,7 @@ async function loadGlobalCharacterManager() {
                             </select>
                         </td>
                         <td>
-                             <i class="fa-solid fa-link" style="opacity:0.3;"></i>
+                             <button class="btn-small" onclick="openCharacterManagerModal('${userDoc.id}', '${charDoc.id}')">Edit</button>
                         </td>
                     </tr>`;
             });
