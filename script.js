@@ -548,34 +548,35 @@ async function deleteCharacter(event, charId, name) {
 async function saveCharacter() {
     if (!currentCharacterId) return;
 
-    // 1. Gather current inputs (The "Spent" or "Current" data)
+    // 1. Fetch current DB data first to protect Multi-Class info
+    const charRef = firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId);
+    const doc = await charRef.get();
+    const currentData = doc.data();
+
+    // 2. Gather only the valid inputs from the sheet
     const data = {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
-        class: document.getElementById('char-class').value,
         charLevel: parseInt(document.getElementById('char-level').value) || 1,
-        classLevel: parseInt(document.getElementById('char-class-level').value) || 0,
         body: parseInt(document.getElementById('char-body').value) || 0,
         mind: parseInt(document.getElementById('char-mind').value) || 0,
         spirit: parseInt(document.getElementById('char-spirit').value) || 0,
         hpCurrent: parseFloat(document.getElementById('char-hp-current').value) || 0,
         mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0,
-        // We no longer calculate or save hpMax/mpMax here as they are retroactive
+        // Carry over the existing class data from the DB
+        unlockedClasses: currentData.unlockedClasses || {}
     };
 
     try {
-        // 2. Update the character document in Firestore
-        await firestore.collection('users').doc(auth.currentUser.uid)
-            .collection('characters').doc(currentCharacterId).update(data);
+        await charRef.update(data);
 
-        // 3. Recalculate totals for the HUD using your retroactive logic
+        // 3. Recalculate totals for visual feedback
         const totals = await getFinalMaxStats(data);
         
-        // 4. Update the HUD with the new "Source of Truth"
+        // 4. Sync HUD and Sheet visuals
         const hudData = { ...data, hpMax: totals.finalHP, mpMax: totals.finalMP };
         updateHUD(hudData);
 
-        // 5. Update the hidden/read-only max fields on the sheet
         document.getElementById('char-hp-max').value = totals.finalHP;
         document.getElementById('char-mp-max').value = totals.finalMP;
 
