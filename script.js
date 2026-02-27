@@ -114,33 +114,53 @@ function tick() {
     }
 }
 
-function applyPassiveRegen() {
+async function getTotalRegen(charData) {
+    // 1. Fetch Race Regen
+    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
+    const raceD = raceSnap.empty ? { hpRegen: 0, mpRegen: 0 } : raceSnap.docs[0].data();
+
+    // 2. Baseline (~100% in 8 hours) + Racial Bonus
+    let totalHPRegen = (charData.hpMax * 0.00208333) + (raceD.hpRegen || 0);
+    let totalMPRegen = (charData.mpMax * 0.00208333) + (raceD.mpRegen || 0);
+
+    // 3. Add Class Regen Bonuses
+    for (const className of Object.keys(charData.unlockedClasses || {})) {
+        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
+        if (!classSnap.empty) {
+            const classD = classSnap.docs[0].data();
+            totalHPRegen += (classD.hpRegenBonus || 0);
+            totalMPRegen += (classD.mpRegenBonus || 0);
+        }
+    }
+
+    return { totalHPRegen, totalMPRegen };
+}
+
+async function applyPassiveRegen() {
     if (!currentCharacterId) return;
+
+    // Fetch the full character data to get the race/classes
+    const charSnap = await firestore.collection('users').doc(auth.currentUser.uid)
+        .collection('characters').doc(currentCharacterId).get();
+    const charData = charSnap.data();
+    
+    // Get the dynamic totals from the Registry
+    const { totalHPRegen, totalMPRegen } = await getTotalRegen(charData);
 
     const hpInput = document.getElementById('char-hp-current');
     const mpInput = document.getElementById('char-mp-current');
 
-    // 1. Always pull from the hidden precise value if it exists
     let hpCur = parseFloat(hpInput.dataset.trueValue) || parseFloat(hpInput.value) || 0;
     let mpCur = parseFloat(mpInput.dataset.trueValue) || parseFloat(mpInput.value) || 0;
-    
-    let hpMax = parseFloat(document.getElementById('char-hp-max').value) || 10;
-    let mpMax = parseFloat(document.getElementById('char-mp-max').value) || 10;
 
-    let hpRegen = hpMax * 0.00208333;
-    let mpRegen = mpMax * 0.00208333;
+    const newHP = Math.min(hpCur + totalHPRegen, charData.hpMax);
+    const newMP = Math.min(mpCur + totalMPRegen, charData.mpMax);
 
-    const newHP = Math.min(hpCur + hpRegen, hpMax);
-    const newMP = Math.min(mpCur + mpRegen, mpMax);
-
-    // 2. THE FIX: Update the hidden high-precision value
+    // Update the UI and hidden values
     hpInput.dataset.trueValue = newHP;
     mpInput.dataset.trueValue = newMP;
-
-    // 3. THE VISUAL FIX: Only show the floor in the actual box
     hpInput.value = Math.floor(newHP);
     mpInput.value = Math.floor(newMP);
-    
 }
 
 function updateDisplay() {
