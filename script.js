@@ -652,17 +652,22 @@ function goBackToSelection() {
 }
 
 // This replaces the hardcoded lists by fetching YOUR registry
+// This replaces the hardcoded lists by fetching YOUR registry
 async function syncRegistryToDropdowns() {
     const raceSelect = document.getElementById('char-race');
     if (!raceSelect) return; // Safety check
 
-    const raceSnap = await firestore.collection('master_races').get();
-    raceSelect.innerHTML = '<option value="">Select Race</option>';
-    raceSnap.forEach(doc => {
-        const d = doc.data();
-        raceSelect.innerHTML += `<option value="${d.name}">${d.name}</option>`;
-    });
-}
+    try {
+        const raceSnap = await firestore.collection('master_races').get();
+        raceSelect.innerHTML = '<option value="">Select Race</option>';
+        raceSnap.forEach(doc => {
+            const d = doc.data();
+            raceSelect.innerHTML += `<option value="${d.name}">${d.name}</option>`;
+        });
+    } catch (error) {
+        console.error("Error syncing registry:", error);
+    }
+} // <--- Ensure only ONE brace here
 
     // Fetch YOUR classes from Firestore
     const classSnap = await firestore.collection('master_classes').get();
