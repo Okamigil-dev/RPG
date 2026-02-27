@@ -133,10 +133,11 @@ body {
    --- 8. CHATBOX & DICE TRAY ---
    ========================================== */
 
-.dice-tray { 
-    margin-top: auto; 
-    padding-top: 20px; 
-    border-top: 1px solid #27272a; 
+.dice-tray {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Tells it to fill available sidebar space */
+    max-height: 450px; /* Adjust this to fit nicely under your clock */
 }
 
 .dice-grid {
@@ -147,13 +148,15 @@ body {
 }
 
 .dice-log {
-    font-size: 0.75rem;
-    height: 60px;
+    flex-grow: 1; /* Takes up all leftover space */
+    height: 0; /* CSS trick: Forces it to scroll instead of expanding */
+    min-height: 150px; /* Ensures it never disappears completely */
     overflow-y: auto;
-    margin-bottom: 15px;
-    border-bottom: 1px solid #27272a;
-    padding-bottom: 5px;
-    scrollbar-width: none;
+    display: flex;
+    flex-direction: column-reverse;
+    padding: 10px;
+    background: #121212;
+    gap: 8px;
 }
 
 .dice-log {
@@ -199,6 +202,28 @@ body {
     border-left: 3px solid #10b981;
     color: #a7f3d0;
     font-style: italic;
+}
+
+.chat-input-area, .dice-grid {
+    flex-shrink: 0; 
+}
+
+/* Custom Scrollbar specifically for the Chat/Dice Log */
+.dice-log::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dice-log::-webkit-scrollbar-track {
+    background: #121212; /* Matches the chatbox background */
+}
+
+.dice-log::-webkit-scrollbar-thumb {
+    background: #333; /* Dark grey scroll thumb */
+    border-radius: 10px;
+}
+
+.dice-log::-webkit-scrollbar-thumb:hover {
+    background: #555; /* Lightens up slightly when you hover over it */
 }
 
 .dice-log-placeholder { text-align: center; opacity: 0.3; padding-top: 15px; }
