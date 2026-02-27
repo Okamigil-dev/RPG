@@ -313,7 +313,10 @@ function openControlSubTab(evt, subTabId) {
     if (subTabId === 'sub-characters') loadGlobalCharacterManager();
     if (subTabId === 'sub-classes') loadMasterClassList();
     if (subTabId === 'sub-races') loadMasterRaceList();
-    if (subTabId === 'sub-skills') loadMasterSkillList();
+    if (subTabId === 'sub-skills') {
+        refreshSkillClassDropdown(); // Update the dropdown with your registered classes
+        loadMasterSkillList();
+    }
 }
 
 
