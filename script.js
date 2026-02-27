@@ -1462,7 +1462,8 @@ async function saveMasterClass() {
         mpRegenBonus: parseFloat(document.getElementById('m-class-mp-regen').value) || 0,
         critMultiplier: parseFloat(document.getElementById('m-class-crit').value) || 2.0,
         critChanceBonus: parseInt(document.getElementById('m-class-crit-chance').value) || 0,
-        dodgeBonus: parseInt(document.getElementById('m-class-dodge').value) || 0,
+        accuracyBonus: parseInt(document.getElementById('m-class-accuracy').value) || 0,
+        armorClassBonus: parseInt(document.getElementById('m-class-ac').value) || 0,
         speedBonus: parseInt(document.getElementById('m-class-speed-bonus').value) || 0,
         requirements: document.getElementById('m-class-reqs').value.trim(),
         description: document.getElementById('m-class-desc').value.trim(),
@@ -1545,7 +1546,8 @@ async function editClass(id) {
     document.getElementById('m-class-mp-regen').value = d.mpRegenBonus || 0;
     document.getElementById('m-class-crit').value = d.critMultiplier || 2.0;
     document.getElementById('m-class-crit-chance').value = d.critChanceBonus || 0;
-    document.getElementById('m-class-dodge').value = d.dodgeBonus || 0;
+    document.getElementById('m-class-accuracy').value = d.accuracyBonus || 0;
+    document.getElementById('m-class-ac').value = d.armorClassBonus || 0;
     document.getElementById('m-class-speed-bonus').value = d.speedBonus || 0;
     document.getElementById('m-class-reqs').value = d.requirements || "";
     document.getElementById('m-class-desc').value = d.description || "";
