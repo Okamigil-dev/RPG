@@ -195,9 +195,25 @@ function logoutUser() { auth.signOut().then(() => location.reload()); }
 // ==========================================
 
 auth.onAuthStateChanged((user) => {
-    const diceUI = document.getElementById('dice-tray');
-    
+    const topNav = document.getElementById('top-nav');
+    const appBody = document.querySelector('.app-body');
+    const mainContent = document.getElementById('main-content');
+    const sidebar = document.getElementById('sidebar');
+
     if (user) {
+        // --- LOGGED IN STATE ---
+        topNav.classList.remove('hide-default');
+        appBody.classList.remove('hide-default');
+        sidebar.classList.remove('hide-default'); // Make sure sidebar comes back
+
+        // RESET main-content from Splash Mode to Dashboard Mode
+        mainContent.style.width = "";
+        mainContent.style.display = "";
+        mainContent.style.justifyContent = "";
+        mainContent.style.alignItems = "";
+        mainContent.classList.remove('login-splash-mode');
+        
+        // Ensure sidebar and nav items are visible
         document.getElementById('main-nav-tabs').classList.remove('hide-default');
         document.getElementById('logout-btn').classList.remove('hide-default');
         document.getElementById('game-ui').classList.remove('hide-default');
@@ -207,41 +223,41 @@ auth.onAuthStateChanged((user) => {
             if (doc.exists) {
                 const data = doc.data();
                 window.currentUserRole = data.role || 'Player';
-
-                initClockListener();
                 
-                // --- NEW: Vitals Lock Check ---
+                // Master/Admin specific UI
                 const isMaster = (data.role === 'Master' || data.role === 'Admin');
-                const hpIn = document.getElementById('char-hp-current');
-                const mpIn = document.getElementById('char-mp-current');
-                [hpIn, mpIn].forEach(el => {
-                    el.readOnly = !isMaster;
-                    el.classList.toggle('locked-resource', !isMaster);
-                });
-
-                document.getElementById('user-role-label').innerText = data.role;
                 if (isMaster) {
                     document.getElementById('nav-control-panel').classList.remove('hide-default');
                     document.getElementById('master-quick-controls').classList.remove('hide-default');
-                    
-                    // --- NEW: Load Registry immediately for Masters ---
-                    loadInstanceList(); 
                 }
-                
-                initDiceLogListener();
-                if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
 
+                document.getElementById('user-role-label').innerText = data.role;
+                initClockListener();
+                initDiceLogListener();
+                
+                if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
                 const savedTab = localStorage.getItem('activeMainTab') || 'tab-character';
                 openTab(savedTab);
-                
             }
         });
         loadUserCharacters();
     } else {
-        window.currentUserRole = null; 
+        // --- LOGGED OFF MODE ---
+        window.currentUserRole = null;
+        
+        // 1. Hide the top bar
+        topNav.classList.add('hide-default');
+        
+        // 2. Hide the sidebar but KEEP app-body visible so we can see main-content
+        sidebar.classList.add('hide-default');
+        appBody.classList.remove('hide-default'); 
 
-        document.getElementById('game-ui').classList.add('hide-default'); // <--- ADDED THIS: Hides game UI
-        if (diceUI) diceUI.style.display = 'none'; // <--- ADDED THIS: Hides dice when logged out
+        // 3. Apply the Splash Screen centering
+        mainContent.classList.add('login-splash-mode'); 
+        // Note: Using the class .login-splash-mode is cleaner than setting .style manually
+        
+        // 4. Hide character HUD
+        document.getElementById('active-char-hud').classList.add('hide-default');
         
         openTab('tab-login');
     }
