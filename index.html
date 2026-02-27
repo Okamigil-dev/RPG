@@ -428,18 +428,33 @@
                         <!-- 6. Class Management -->
                         <div id="sub-classes" class="control-sub-content hide-default">
                             <div class="panel-card">
-                                <h3>Register New Class</h3>
+                                <h3>Register New Class Archetype</h3>
                                 <div class="flex-row gap-m mb-m">
-                                    <div class="form-group flex-1">
+                                    <div class="form-group flex-2">
                                         <label class="text-muted">Class Name</label>
-                                        <input type="text" id="m-class-name" class="form-input" placeholder="e.g., Paladin">
+                                        <input type="text" id="m-class-name" class="form-input" placeholder="e.g., Warrior, Mage, Paladin">
                                     </div>
                                     <div class="form-group flex-1">
-                                        <label class="text-muted">Initial Gold</label>
-                                        <input type="number" id="m-class-gold" class="form-input" value="100">
+                                        <label class="text-muted">Class Tier</label>
+                                        <select id="m-class-tier" class="form-input">
+                                            <option value="1">Tier 1 (Base)</option>
+                                            <option value="2">Tier 2 (Advanced)</option>
+                                            <option value="3">Tier 3 (Prestige)</option>
+                                        </select>
                                     </div>
                                 </div>
+                                
                                 <div class="flex-row gap-m mb-m">
+                                    <div class="form-group flex-1">
+                                        <label class="text-muted">Main Stat</label>
+                                        <select id="m-class-main-stat" class="form-input">
+                                            <option value="BODY">BODY</option>
+                                            <option value="MIND">MIND</option>
+                                            <option value="SPIRIT">SPIRIT</option>
+                                            <option value="BODY/SPIRIT">BODY + SPIRIT</option>
+                                            <option value="MIND/SPIRIT">MIND + SPIRIT</option>
+                                        </select>
+                                    </div>
                                     <div class="form-group flex-1">
                                         <label class="text-muted">HP Bonus / Lv</label>
                                         <input type="number" id="m-class-hp" class="form-input" value="5">
@@ -449,19 +464,21 @@
                                         <input type="number" id="m-class-mp" class="form-input" value="2">
                                     </div>
                                 </div>
+                        
                                 <div class="form-group mb-m">
-                                    <label class="text-muted">Class Passives (Comma separated)</label>
-                                    <input type="text" id="m-class-traits" class="form-input" placeholder="Divine Sense, Smite...">
+                                    <label class="text-muted">Class Passives / Traits (Comma separated)</label>
+                                    <input type="text" id="m-class-traits" class="form-input" placeholder="e.g., Heavy Armor Proficiency, Smite">
                                 </div>
+                        
                                 <div class="form-group mb-m">
-                                    <label class="text-muted">Description (Flavor Text)</label>
-                                    <textarea id="m-class-desc" class="form-input" style="height: 60px;"></textarea>
+                                    <label class="text-muted">Description & Requirements</label>
+                                    <textarea id="m-class-desc" class="form-input" style="height: 60px;" placeholder="Describe the class and its unlock requirements..."></textarea>
                                 </div>
                                 <button onclick="createMasterClass()" class="btn-success">Save Class Archetype</button>
                             </div>
                         
                             <div class="panel-card">
-                                <h3>Registered Classes</h3>
+                                <h3>Registered Class Archetypes</h3>
                                 <div id="master-class-list" class="master-asset-list"></div>
                             </div>
                         </div>
