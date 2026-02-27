@@ -478,8 +478,11 @@ async function selectCharacter(id) {
             document.getElementById('char-name').value = d.name || "";
             document.getElementById('char-race').value = d.race || "";
             
-            // Level Display (Now display-only)
-            document.getElementById('char-level-display').innerText = d.charLevel || 1;
+            // FIX: Change 'char-level' to 'char-level-display' to match your new HTML
+            const levelDisplay = document.getElementById('char-level-display');
+            if (levelDisplay) {
+                levelDisplay.innerText = d.charLevel || 1;
+            }
             
             // AP LOGIC INITIALIZATION: 1 AP per level
             totalAP = (d.charLevel || 1); 
