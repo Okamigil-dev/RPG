@@ -156,33 +156,49 @@
                     
                     <div class="char-sheet-grid">
                         <div class="stats-resources-wrapper">
+                           
                             <!-- 1. MAIN STATS -->
                             <div class="panel-card">
-                                <h3>Attributes</h3>
+                                <div class="flex-row" style="justify-content: space-between; margin-bottom: 15px;">
+                                    <h3>Attributes</h3>
+                                    <div class="sp-indicator">AP Available: <span id="char-ap-rem">0</span></div>
+                                </div>
+                                
                                 <div class="attr-list-grid">
                                     <div class="attr-row">
                                         <span>BODY</span>
-                                        <div class="flex-row" style="gap:10px;">
-                                            <input type="number" id="char-body" onchange="saveCharacter()" class="attr-input">
+                                        <div class="flex-row">
+                                            <button class="btn-small" onclick="adjustPendingStat('body', -1)">-</button>
+                                            <span id="display-body" style="min-width: 30px; text-align: center; font-weight: bold;">0</span>
+                                            <button class="btn-small" onclick="adjustPendingStat('body', 1)">+</button>
                                             <span id="total-body-label" class="join-code-pill">0</span>
                                         </div>
                                     </div>
                                     <div class="attr-row">
                                         <span>MIND</span>
-                                        <div class="flex-row" style="gap:10px;">
-                                            <input type="number" id="char-mind" onchange="saveCharacter()" class="attr-input">
+                                        <div class="flex-row">
+                                            <button class="btn-small" onclick="adjustPendingStat('mind', -1)">-</button>
+                                            <span id="display-mind" style="min-width: 30px; text-align: center; font-weight: bold;">0</span>
+                                            <button class="btn-small" onclick="adjustPendingStat('mind', 1)">+</button>
                                             <span id="total-mind-label" class="join-code-pill">0</span>
                                         </div>
                                     </div>
                                     <div class="attr-row">
                                         <span>SPIRIT</span>
-                                        <div class="flex-row" style="gap:10px;">
-                                            <input type="number" id="char-spirit" onchange="saveCharacter()" class="attr-input">
+                                        <div class="flex-row">
+                                            <button class="btn-small" onclick="adjustPendingStat('spirit', -1)">-</button>
+                                            <span id="display-spirit" style="min-width: 30px; text-align: center; font-weight: bold;">0</span>
+                                            <button class="btn-small" onclick="adjustPendingStat('spirit', 1)">+</button>
                                             <span id="total-spirit-label" class="join-code-pill">0</span>
                                         </div>
                                     </div>
                                 </div>
+                            
+                                <div id="attr-confirm-area" class="mt-m hide-default">
+                                    <button class="btn-primary btn-full" onclick="confirmAttributeChanges()">Confirm Changes</button>
+                                </div>
                             </div>
+                            
                             <!-- 2. HP & MP -->
                             <div class="panel-card">
                                 <h3>Status</h3>
@@ -232,7 +248,7 @@
                                 </div>
                             </div>
 
-                            <!-- 3. Name, Race & Class -->
+                            <!-- 4. Character Level & Exp -->
                             <div class="level-exp-grid mt-m">
                                 <div class="field-group">
                                     <label>Character Level</label>
