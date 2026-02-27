@@ -397,22 +397,45 @@
                                 <h3>Create Global Skill</h3>
                                 <div class="skill-creator-form">
                                     <div class="flex-row gap-m mb-m">
-                                        <div class="form-group flex-1">
+                                        <div class="form-group flex-2">
                                             <label class="text-muted">Skill Name</label>
-                                            <input type="text" id="ms-name" class="form-input w-100" placeholder="e.g. Fireball">
+                                            <input type="text" id="ms-name" class="form-input" placeholder="e.g. Fireball">
                                         </div>
                                         <div class="form-group flex-1">
-                                            <label class="text-muted">Tier</label>
-                                            <select id="ms-tier" class="form-input w-100">
+                                            <label class="text-muted">Pyramid Tier</label>
+                                            <select id="ms-tier" class="form-input">
                                                 <option value="basicSkills">Basic</option>
                                                 <option value="intSkills">Intermediate</option>
                                                 <option value="advSkills">Advanced</option>
                                             </select>
                                         </div>
                                     </div>
+                        
+                                    <div class="flex-row gap-m mb-m">
+                                        <div class="form-group flex-1">
+                                            <label class="text-muted">Required Class</label>
+                                            <select id="ms-class-tag" class="form-input">
+                                            <option value="All">All Classes</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group flex-1">
+                                            <label class="text-muted">Min. Class Lv</label>
+                                            <input type="number" id="ms-class-lv-req" class="form-input" value="1">
+                                        </div>
+                                        <div class="form-group flex-1">
+                                            <label class="text-muted">Scaling Stat</label>
+                                            <select id="ms-scaling-stat" class="form-input">
+                                                <option value="BODY">BODY</option>
+                                                <option value="MIND">MIND</option>
+                                                <option value="SPIRIT">SPIRIT</option>
+                                                <option value="NONE">None (Flat)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                        
                                     <div class="form-group mb-m">
-                                        <label class="text-muted">Description</label>
-                                        <textarea id="ms-desc" class="form-input w-100" style="height: 60px;" placeholder="What does this skill do?"></textarea>
+                                        <label class="text-muted">Description & Effect</label>
+                                        <textarea id="ms-desc" class="form-input" style="height: 60px;" placeholder="What does this skill do?"></textarea>
                                     </div>
                                     <button onclick="createMasterSkill()" class="btn-success">Add to Global Registry</button>
                                 </div>
@@ -420,8 +443,7 @@
                         
                             <div class="panel-card">
                                 <h3>Global Skill Registry</h3>
-                                <div id="master-skill-list" class="master-asset-list">
-                                    </div>
+                                <div id="master-skill-list" class="master-asset-list"></div>
                             </div>
                         </div>
 
