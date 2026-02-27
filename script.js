@@ -361,9 +361,10 @@ function selectCharacter(id) {
         if (doc.exists) {
             const d = doc.data();
 
-            // === SWITCH INSTANCE CLOCK ===
+            // === SWITCH INSTANCE LISTENERS ===
             currentCampaignId = d.instanceId || "global"; 
             initClockListener(); 
+            initDiceLogListener();
             // ===============================================
             
             // 1. IDENTITY & METADATA
@@ -384,9 +385,18 @@ function selectCharacter(id) {
             document.getElementById('char-mp-bonus-input').value = d.mpMaxBonus || 0;
 
             // 3. RESOURCES & EXP
-            document.getElementById('char-hp-current').value = d.hpCurrent || 0;
+            const hpCur = d.hpCurrent || 0;
+            const mpCur = d.mpCurrent || 0;
+
+            const hpInput = document.getElementById('char-hp-current');
+            hpInput.dataset.trueValue = hpCur;           // Hides the exact decimal (e.g. 10.5)
+            hpInput.value = Math.floor(hpCur);           // Shows the integer (e.g. 10)
+
+            const mpInput = document.getElementById('char-mp-current');
+            mpInput.dataset.trueValue = mpCur;
+            mpInput.value = Math.floor(mpCur);
+            
             document.getElementById('char-hp-max').value = d.hpMax || 10;
-            document.getElementById('char-mp-current').value = d.mpCurrent || 0;
             document.getElementById('char-mp-max').value = d.mpMax || 10;
             
             document.getElementById('char-exp-current').value = d.expCurrent || 0;
