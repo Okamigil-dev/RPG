@@ -1270,21 +1270,19 @@ function filterCharacterTable() {
 
 
 async function openCharacterManagerModal(uid, cid) {
-    // 1. Store the IDs secretly in the modal so the save function knows who to update
     document.getElementById('edit-modal-uid').value = uid;
     document.getElementById('edit-modal-cid').value = cid;
 
     try {
-        // 2. Fetch their exact current stats from Firestore
         const charRef = firestore.collection('users').doc(uid).collection('characters').doc(cid);
         const doc = await charRef.get();
         
         if (doc.exists) {
             const data = doc.data();
             
-            // 3. Fill in the modal inputs
+            // 1. Fill standard inputs
             document.getElementById('edit-modal-title').innerText = `Editing: ${data.name}`;
-            document.getElementById('edit-modal-exp').value = data.exp || 0;
+            document.getElementById('edit-modal-exp').value = data.expCurrent || 0; // Fixed field name
             document.getElementById('edit-modal-hp').value = data.hpCurrent || 0;
             document.getElementById('edit-modal-mp').value = data.mpCurrent || 0;
             document.getElementById('edit-modal-gold').value = data.gold || 0;
@@ -1292,13 +1290,25 @@ async function openCharacterManagerModal(uid, cid) {
             document.getElementById('edit-modal-mind').value = data.mind || 0;
             document.getElementById('edit-modal-spirit').value = data.spirit || 0;
 
-            // 4. Unhide the modal
-            const modal = document.getElementById('master-char-edit-modal');
-            modal.classList.remove('hide-default');
+            // 2. Populate YOUR tailored classes dynamically
+            const classPicker = document.getElementById('modal-class-picker');
+            const classSnap = await firestore.collection('master_classes').orderBy('name').get();
+            
+            classPicker.innerHTML = '<option value="">Select Class to Add...</option>';
+            classSnap.forEach(doc => {
+                const className = doc.data().name;
+                classPicker.innerHTML += `<option value="${className}">${className}</option>`;
+            });
+        
+            // 3. Render the list of classes they already have
+            renderModalClassList(uid, cid);
+            
+            // 4. Show the modal
+            document.getElementById('master-char-edit-modal').classList.remove('hide-default');
         }
     } catch (error) {
         console.error("Error fetching character details:", error);
-        alert("Failed to load character data. Check console.");
+        alert("Failed to load character data.");
     }
 }
 
@@ -1317,6 +1327,73 @@ function addExpQuick(amount) {
     expInput.value = currentExp + amount;
 }
 
+// --- Class Assigning & Removing --- //
+async function assignClassToCharacter() {
+    const uid = document.getElementById('edit-modal-uid').value;
+    const cid = document.getElementById('edit-modal-cid').value;
+    const newClassName = document.getElementById('modal-class-picker').value;
+
+    if (!newClassName) return;
+
+    const charRef = firestore.collection('users').doc(uid).collection('characters').doc(cid);
+    const doc = await charRef.get();
+    let currentClasses = doc.data().unlockedClasses || {};
+
+    // Only add if they don't have it yet
+    if (!currentClasses[newClassName]) {
+        currentClasses[newClassName] = {
+            level: 1,
+            exp: 0,
+            tier: 1 // You can fetch the actual tier from master_classes if needed
+        };
+
+        await charRef.update({ unlockedClasses: currentClasses });
+        sendSystemMessage(`${doc.data().name} was granted the ${newClassName} class.`);
+        renderModalClassList(uid, cid);
+    } else {
+        alert("Character already has this class.");
+    }
+}
+
+async function renderModalClassList(uid, cid) {
+    const container = document.getElementById('modal-active-classes');
+    const charRef = firestore.collection('users').doc(uid).collection('characters').doc(cid);
+    const doc = await charRef.get();
+    const classes = doc.data().unlockedClasses || {};
+
+    container.innerHTML = "";
+    
+    Object.keys(classes).forEach(className => {
+        const row = document.createElement('div');
+        row.className = "flex-row mb-s";
+        row.style.justifyContent = "space-between";
+        row.style.background = "#111";
+        row.style.padding = "8px";
+        row.style.borderRadius = "4px";
+
+        row.innerHTML = `
+            <span><strong>${className}</strong> (Lv.${classes[className].level})</span>
+            <button class="btn-danger-small" onclick="removeClassFromCharacter('${className}')">Remove</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+async function removeClassFromCharacter(className) {
+    if (!confirm(`Are you sure you want to strip the ${className} class from this character?`)) return;
+
+    const uid = document.getElementById('edit-modal-uid').value;
+    const cid = document.getElementById('edit-modal-cid').value;
+    const charRef = firestore.collection('users').doc(uid).collection('characters').doc(cid);
+
+    const doc = await charRef.get();
+    let currentClasses = doc.data().unlockedClasses || {};
+    
+    delete currentClasses[className];
+
+    await charRef.update({ unlockedClasses: currentClasses });
+    renderModalClassList(uid, cid);
+}
 
 async function saveCharacterManagerEdits() {
     const uid = document.getElementById('edit-modal-uid').value;
