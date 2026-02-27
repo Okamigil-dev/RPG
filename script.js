@@ -1418,15 +1418,16 @@ async function saveMasterRace() {
 
     const raceData = {
         name: name,
+        // CORE STATS - The "Stat-Gate" headstart
+        baseBody: parseInt(document.getElementById('m-race-body').value) || 0,
+        baseMind: parseInt(document.getElementById('m-race-mind').value) || 0,
+        baseSpirit: parseInt(document.getElementById('m-race-spirit').value) || 0,
+        
         hpPerLv: parseInt(document.getElementById('m-race-hp').value) || 0,
         mpPerLv: parseInt(document.getElementById('m-race-mp').value) || 0,
-        hpRegenBonus: parseFloat(document.getElementById('m-race-hp-regen').value) || 0,
-        mpRegenBonus: parseFloat(document.getElementById('m-race-mp-regen').value) || 0,
         speedBonus: parseInt(document.getElementById('m-race-speed').value) || 30,
         accuracyBonus: parseInt(document.getElementById('m-race-accuracy').value) || 0,
         armorClassBonus: parseInt(document.getElementById('m-race-ac').value) || 0,
-        critChanceBonus: parseInt(document.getElementById('m-race-crit-chance').value) || 0,
-        description: document.getElementById('m-race-desc').value.trim(),
         traits: traitsArray,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -1438,10 +1439,8 @@ async function saveMasterRace() {
             raceData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             await firestore.collection('master_races').add(raceData);
         }
-
-        // Shared with Class Library!
+        
         traitsArray.forEach(traitName => ensureTraitExists(traitName));
-
         resetRaceForm();
         loadMasterRaceList();
         alert("Race saved successfully!");
