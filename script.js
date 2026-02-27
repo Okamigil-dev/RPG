@@ -1447,33 +1447,44 @@ async function saveMasterRace() {
 
     const raceData = {
         name: name,
-        // CORE STATS - The "Stat-Gate" headstart
+        // 1-3 Growth
+        hpPerLv: parseInt(document.getElementById('m-race-hp').value) || 0,
+        mpPerLv: parseInt(document.getElementById('m-race-mp').value) || 0,
+        
+        // Natural Stats
         baseBody: parseInt(document.getElementById('m-race-body').value) || 0,
         baseMind: parseInt(document.getElementById('m-race-mind').value) || 0,
         baseSpirit: parseInt(document.getElementById('m-race-spirit').value) || 0,
         
-        hpPerLv: parseInt(document.getElementById('m-race-hp').value) || 0,
-        mpPerLv: parseInt(document.getElementById('m-race-mp').value) || 0,
-        speedBonus: parseInt(document.getElementById('m-race-speed').value) || 30,
-        accuracyBonus: parseInt(document.getElementById('m-race-accuracy').value) || 0,
-        armorClassBonus: parseInt(document.getElementById('m-race-ac').value) || 0,
+        // Modifiers
+        hpRegen: parseFloat(document.getElementById('m-race-hp-regen').value) || 0,
+        mpRegen: parseFloat(document.getElementById('m-race-mp-regen').value) || 0,
+        speed: parseInt(document.getElementById('m-race-speed').value) || 30,
+        accuracy: parseInt(document.getElementById('m-race-accuracy').value) || 0,
+        acBonus: parseInt(document.getElementById('m-race-ac').value) || 0,
+        critChance: parseInt(document.getElementById('m-race-crit-chance').value) || 0,
+        
         traits: traitsArray,
+        description: document.getElementById('m-race-desc').value.trim(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
         if (raceId) {
             await firestore.collection('master_races').doc(raceId).update(raceData);
+            alert("Race updated successfully!");
         } else {
             raceData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             await firestore.collection('master_races').add(raceData);
+            alert("New race registered!");
         }
         
-        traitsArray.forEach(traitName => ensureTraitExists(traitName));
         resetRaceForm();
         loadMasterRaceList();
-        alert("Race saved successfully!");
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error("Save Error:", e);
+        alert("Error saving race. Check console.");
+    }
 }
 
 async function loadMasterRaceList() {
@@ -1491,14 +1502,19 @@ async function loadMasterRaceList() {
         
         card.innerHTML = `
             <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
-                <div>
-                    <strong>${d.name}</strong>
-                    <div style="font-size: 0.7rem; color: #71717a; margin-top: 4px;">
-                        Speed: ${d.speedBonus} | AC: +${d.armorClassBonus} | HP/Lv: +${d.hpPerLv}
+                <div style="flex-grow: 1;">
+                    <div class="flex-row" style="gap: 10px;">
+                        <strong style="color: #10b981; font-size: 1.1rem;">${d.name}</strong>
+                        <span class="join-code-pill">HP/Lv: +${d.hpPerLv}</span>
+                        <span class="join-code-pill">MP/Lv: +${d.mpPerLv}</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #71717a; margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                        <span>BODY: +${d.baseBody} | MIND: +${d.baseMind} | SPIRIT: +${d.baseSpirit}</span>
+                        <span>SPD: ${d.speed} | AC: +${d.acBonus} | ACC: +${d.accuracy}</span>
                     </div>
                 </div>
                 <div class="flex-row" style="gap: 5px;">
-                    <button class="btn-small" onclick="editRace('${doc.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button class="btn-small" onclick="editRace('${doc.id}')"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn-danger-small" onclick="deleteMasterAsset('master_races', '${doc.id}', loadMasterRaceList)"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>
@@ -1512,28 +1528,48 @@ async function editRace(id) {
     if (!doc.exists) return;
     const d = doc.data();
 
+    // Mapping Firestore data back to the UI with safety fallbacks
     document.getElementById('m-race-id').value = id;
-    document.getElementById('m-race-name').value = d.name;
-    document.getElementById('m-race-hp').value = d.hpPerLv;
-    document.getElementById('m-race-mp').value = d.mpPerLv;
-    document.getElementById('m-race-hp-regen').value = d.hpRegenBonus;
-    document.getElementById('m-race-mp-regen').value = d.mpRegenBonus;
-    document.getElementById('m-race-speed').value = d.speedBonus;
-    document.getElementById('m-race-accuracy').value = d.accuracyBonus;
-    document.getElementById('m-race-ac').value = d.armorClassBonus;
-    document.getElementById('m-race-crit-chance').value = d.critChanceBonus;
+    document.getElementById('m-race-name').value = d.name || "";
+    
+    // Core Growth
+    document.getElementById('m-race-hp').value = d.hpPerLv || 0;
+    document.getElementById('m-race-mp').value = d.mpPerLv || 0;
+    
+    // Base Attributes
+    document.getElementById('m-race-body').value = d.baseBody || 0;
+    document.getElementById('m-race-mind').value = d.baseMind || 0;
+    document.getElementById('m-race-spirit').value = d.baseSpirit || 0;
+    
+    // Special Modifiers (The ones causing the 'undefined' error)
+    document.getElementById('m-race-hp-regen').value = d.hpRegen || 0;
+    document.getElementById('m-race-mp-regen').value = d.mpRegen || 0;
+    document.getElementById('m-race-speed').value = d.speed || 30;
+    document.getElementById('m-race-accuracy').value = d.accuracy || 0;
+    document.getElementById('m-race-ac').value = d.acBonus || 0;
+    document.getElementById('m-race-crit-chance').value = d.critChance || 0;
+    
+    // Metadata
     document.getElementById('m-race-traits').value = (d.traits || []).join(", ");
     document.getElementById('m-race-desc').value = d.description || "";
 
-    document.getElementById('race-editor-title').innerText = "Editing Race: " + d.name;
+    document.getElementById('race-editor-title').innerText = "Editing Race: " + (d.name || "Unknown");
     document.getElementById('race-cancel-btn').classList.remove('hide-default');
+    
+    // Scroll back to the top of the workspace so you can see the editor
     document.querySelector('.master-workspace').scrollTop = 0;
 }
 
 function resetRaceForm() {
+    document.getElementById('m-race-id').value = "";
     const inputs = document.querySelectorAll('#sub-races input, #sub-races textarea');
-    inputs.forEach(i => i.value = (i.type === "number") ? 0 : "");
+    inputs.forEach(i => {
+        if (i.type === "number") i.value = 0;
+        else i.value = "";
+    });
+    // Set default speed back to 30
     document.getElementById('m-race-speed').value = 30;
+    
     document.getElementById('race-editor-title').innerText = "Register New Race";
     document.getElementById('race-cancel-btn').classList.add('hide-default');
 }
