@@ -613,8 +613,49 @@ function updateHUD(char) {
 
 
 // ==========================================
-// --- 11. DICE ROLLER ---
+// --- 11. DICE ROLLER & CHATBOX (RTDB) ---
 // ==========================================
+
+function handleChatEnter(event) {
+    if (event.key === "Enter") {
+        sendChatMessage();
+    }
+}
+
+function sendChatMessage() {
+    const input = document.getElementById('chat-msg-input');
+    const text = input.value.trim();
+    
+    if (!text || !currentCharacterId) return; // Prevent empty messages or sending while not logged in
+    
+    const charName = document.getElementById('hud-name').innerText || "Unknown";
+    
+    const payload = {
+        type: 'chat',
+        name: charName,
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    // Push to the new shared chatbox stream
+    rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).push(payload);
+    input.value = ''; // Clear the input box
+}
+
+// Master function to announce EXP or items to the room
+function sendSystemMessage(text) {
+    if (!currentCampaignId) return;
+    
+    const payload = {
+        type: 'system',
+        name: 'System',
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+    
+    rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).push(payload);
+}
+
 function rollDice(sides, btn) {
     const numDisplay = btn.querySelector('.roll-number');
     
@@ -632,19 +673,19 @@ function rollDice(sides, btn) {
             const finalRoll = Math.floor(Math.random() * sides) + 1;
             numDisplay.innerText = finalRoll;
             
-            // --- NEW: Only push to the database if a character is actively selected ---
             if (currentCharacterId) {
                 const charName = document.getElementById('hud-name').innerText || "Unknown";
                 
-                const rollData = {
+                // NEW: Added type 'roll'
+                const payload = {
+                    type: 'roll',
                     name: charName,
                     sides: sides,
                     result: finalRoll,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 };
 
-                // Push to the shared instance log
-                rtdb.ref(`instance_logs/${currentCampaignId}/dice`).push(rollData);
+                rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).push(payload);
             }
             
             btn.resetTimeout = setTimeout(() => {
@@ -654,19 +695,18 @@ function rollDice(sides, btn) {
     }, 40);
 }
 
-// This function now listens to the DB instead of being called manually
 function initDiceLogListener() {
-    // Turn off old listeners if switching instances
-    rtdb.ref(`instance_logs/${currentCampaignId}/dice`).off();
+    // Note: We use the same function name so your existing code calls it normally
+    rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).off();
 
-    // Only show the last 10 rolls to keep the sidebar clean
-    rtdb.ref(`instance_logs/${currentCampaignId}/dice`).limitToLast(10).on('child_added', (snapshot) => {
+    // Pull the last 50 messages instead of 10 so people can read back
+    rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).limitToLast(50).on('child_added', (snapshot) => {
         const data = snapshot.val();
-        renderDiceLogEntry(data);
+        renderChatLogEntry(data);
     });
 }
 
-function renderDiceLogEntry(data) {
+function renderChatLogEntry(data) {
     const log = document.getElementById('dice-log');
     if (!log) return;
 
@@ -674,15 +714,27 @@ function renderDiceLogEntry(data) {
     if (placeholder) placeholder.remove();
 
     const entry = document.createElement('div');
-    entry.className = 'dice-log-entry';
-    entry.innerHTML = `
-        <span class="dice-log-label">${data.name} (d${data.sides})</span>
-        <span class="dice-log-value">${data.result}</span>
-    `;
     
-    log.prepend(entry); // Newest rolls at the top
+    // Sort the HTML based on what type of message it is
+    if (data.type === 'system') {
+        entry.className = 'chat-entry system-type';
+        entry.innerHTML = `<span><strong>[System]:</strong> ${data.text}</span>`;
+    } 
+    else if (data.type === 'roll') {
+        entry.className = 'chat-entry roll-type';
+        entry.innerHTML = `<span class="chat-name">${data.name}</span> rolled a d${data.sides}: <span class="roll-result">${data.result}</span>`;
+    } 
+    else {
+        // Default to text chat
+        entry.className = 'chat-entry';
+        entry.innerHTML = `<span class="chat-name">${data.name}:</span> <span>${data.text}</span>`;
+    }
     
-    if (log.children.length > 10) {
+    // Prepend puts newest at the bottom because of our CSS flex-direction: column-reverse
+    log.prepend(entry); 
+    
+    // Keep the DOM clean by removing old elements if it gets above 50
+    if (log.children.length > 50) {
         log.removeChild(log.lastChild);
     }
 }
