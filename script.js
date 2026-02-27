@@ -195,6 +195,8 @@ function logoutUser() { auth.signOut().then(() => location.reload()); }
 // ==========================================
 
 auth.onAuthStateChanged((user) => {
+    const diceUI = document.getElementById('dice-tray');
+    
     if (user) {
         document.getElementById('main-nav-tabs').classList.remove('hide-default');
         document.getElementById('logout-btn').classList.remove('hide-default');
@@ -584,19 +586,20 @@ function rollDice(sides, btn) {
             const finalRoll = Math.floor(Math.random() * sides) + 1;
             numDisplay.innerText = finalRoll;
             
-            // --- HYBRID PUSH TO RTDB ---
-            // We get the name from the HUD so it's the "Active Character"
-            const charName = document.getElementById('hud-name').innerText || "Unknown";
-            
-            const rollData = {
-                name: charName,
-                sides: sides,
-                result: finalRoll,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            };
+            // --- NEW: Only push to the database if a character is actively selected ---
+            if (currentCharacterId) {
+                const charName = document.getElementById('hud-name').innerText || "Unknown";
+                
+                const rollData = {
+                    name: charName,
+                    sides: sides,
+                    result: finalRoll,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
 
-            // Push to the shared instance log
-            rtdb.ref(`instance_logs/${currentCampaignId}/dice`).push(rollData);
+                // Push to the shared instance log
+                rtdb.ref(`instance_logs/${currentCampaignId}/dice`).push(rollData);
+            }
             
             btn.resetTimeout = setTimeout(() => {
                 btn.classList.remove('active-roll');
