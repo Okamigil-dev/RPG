@@ -498,11 +498,9 @@ async function selectCharacter(id) {
             document.getElementById('char-name').value = d.name || "";
             document.getElementById('char-race').value = d.race || "";
             
-            // FIX: Change 'char-level' to 'char-level-display' to match your new HTML
-            const levelDisplay = document.getElementById('char-level-display');
-            if (levelDisplay) {
-                levelDisplay.innerText = d.charLevel || 1;
-            }
+            // NEW: Calculate level from current EXP
+            const currentLevel = calculateLevelFromEXP(d.expCurrent || 0);
+            document.getElementById('char-level-display').innerText = currentLevel;
             
             // AP LOGIC INITIALIZATION: 1 AP per level
             totalAP = (d.charLevel || 1); 
@@ -645,6 +643,12 @@ async function saveCharacter() {
     const doc = await charRef.get();
     const currentData = doc.data();
 
+    //TEMPORARY RULE
+    // Calculate level based on the EXP currently in the input field
+    const currentExp = parseFloat(document.getElementById('char-exp-current').value) || 0;
+    const newLevel = calculateLevelFromEXP(currentExp);
+    //TEMPORARY RULE
+    
     const data = {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
@@ -2147,6 +2151,17 @@ function renderSkills(charData) {
 /* ==========================================
    --- 15. PURE MATH ---
    ========================================== */
+// --- TEMPORARY LEVEL EXP RULE --- //
+function calculateLevelFromEXP(exp) {
+    // Formula: Level = (EXP / 100) + 1
+    // 0 EXP = Level 1
+    // 100 EXP = Level 2
+    // 200 EXP = Level 3
+    return Math.floor(exp / 100) + 1;
+}
+// --- TEMPORARY LEVEL EXP RULE --- //
+
+
 async function getFinalMaxStats(charData) {
     // 1. Fetch live Registry data (Retroactive part)
     const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
