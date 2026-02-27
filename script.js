@@ -1013,22 +1013,31 @@ async function deleteInstance(instanceId, name) {
     }
 }
 
+// ==========================================
+// 1. GENERATE THE TABLE (WITH TOP BUTTONS)
+// ==========================================
 async function loadGlobalCharacterManager() {
-    const listContainer = document.getElementById('admin-character-list'); // Ensure this ID exists in your HTML
+    const listContainer = document.getElementById('admin-character-list'); 
     if (!listContainer) return;
 
     listContainer.innerHTML = '<p class="text-center" style="opacity:0.5;">Scanning all realms...</p>';
 
     try {
-        // 1. Fetch all Instances first (to populate dropdowns)
+        // Fetch Instances
         const instanceSnap = await firestore.collection('instances').get();
         let instances = [];
         instanceSnap.forEach(doc => instances.push({ id: doc.id, name: doc.data().name }));
 
-        // 2. Fetch all Characters (using a Collection Group query or iterating users)
-        // For simplicity here, we'll iterate users to find their characters
+        // Fetch Characters
         const usersSnap = await firestore.collection('users').get();
-        let html = `<table class="admin-table">
+        
+        // --- ADDED: Top Control Bar mirroring the Accounts tab ---
+        let html = `
+            <div class="flex-row" style="justify-content: flex-end; gap: 10px; margin-bottom: 15px;">
+                <button class="btn-primary" style="background-color: #059669; border-color: #059669;" onclick="saveAllCharacterInstances()">Save All Assignments</button>
+                <button class="btn-secondary" onclick="loadGlobalCharacterManager()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+            </div>
+            <table class="admin-table">
             <thead><tr><th>Character</th><th>Owner</th><th>Current World</th><th>Action</th></tr></thead>
             <tbody>`;
 
@@ -1044,7 +1053,7 @@ async function loadGlobalCharacterManager() {
                         <td><strong>${charData.name}</strong></td>
                         <td><small>${ownerEmail}</small></td>
                         <td>
-                            <select class="role-selector form-input" onchange="assignCharToInstance('${userDoc.id}', '${charDoc.id}', this)">
+                            <select class="realm-assign-select form-input" data-uid="${userDoc.id}" data-cid="${charDoc.id}" style="padding: 5px; font-size: 0.8rem; width: 100%;">
                                 <option value="global">Global (None)</option>
                                 ${instances.map(inst => `
                                     <option value="${inst.id}" ${charData.instanceId === inst.id ? 'selected' : ''}>
@@ -1060,10 +1069,8 @@ async function loadGlobalCharacterManager() {
             });
         }
 
-        html += `</tbody></table>
-                 <div class="mt-m" style="text-align: right; margin-top: 15px;">
-                     <button class="btn-primary" onclick="saveAllCharacterInstances()">Save All Assignments</button>
-                 </div>`;
+        html += `</tbody></table>`; // Bottom button removed entirely
+        
         listContainer.innerHTML = html;
 
     } catch (error) {
@@ -1073,44 +1080,57 @@ async function loadGlobalCharacterManager() {
 }
 
 async function saveAllCharacterInstances() {
-    const selectors = document.querySelectorAll('.instance-selector');
+    // 1. Find all dropdowns we just generated using the exact class
+    const selectors = document.querySelectorAll('.realm-assign-select');
+    
+    // Safety check
+    if (selectors.length === 0) {
+        alert("System Error: No dropdowns found to save.");
+        return;
+    }
+
     const batch = firestore.batch(); 
     let changesCount = 0;
     let activeCharMoved = false; 
 
+    // 2. Loop through every dropdown and queue a database update
     selectors.forEach(select => {
-        const userId = select.getAttribute('data-userid');
-        const charId = select.getAttribute('data-charid');
+        // Pull the exact IDs we embedded in the HTML
+        const userId = select.getAttribute('data-uid');
+        const charId = select.getAttribute('data-cid');
+        
+        if (!userId || !charId) return; // Skip if somehow missing
+
         const newInstanceId = select.value;
         const newInstanceName = select.options[select.selectedIndex].text.trim();
         
         const charRef = firestore.collection('users').doc(userId).collection('characters').doc(charId);
         
-        // Queue the update in the Firestore batch
+        // Add to the batch
         batch.update(charRef, { 
             instanceId: newInstanceId,
             instanceName: newInstanceName 
         });
         changesCount++;
 
-        // If the GM just moved the character they are currently viewing, flag it
+        // 3. Update Master's view if they moved their current character
         if (currentCharacterId === charId && currentCampaignId !== newInstanceId) {
             currentCampaignId = newInstanceId;
             activeCharMoved = true;
         }
     });
 
+    // 4. Commit to Firestore
     try {
         await batch.commit(); 
         alert(`Successfully saved ${changesCount} character assignments!`);
         
-        // Re-tune the GM's clock and dice if they moved their own active character
         if (activeCharMoved) {
             initClockListener();
-            initDiceLogListener();
+            if (typeof initDiceLogListener === "function") initDiceLogListener();
         }
         
-        loadGlobalCharacterManager(); // Refresh the table
+        loadGlobalCharacterManager(); // Reload the table
     } catch (error) {
         console.error("Batch Save Error:", error);
         alert("Failed to save. Check the console for permissions errors.");
