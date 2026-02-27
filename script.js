@@ -669,15 +669,6 @@ async function syncRegistryToDropdowns() {
     }
 } // <--- Ensure only ONE brace here
 
-    // Fetch YOUR classes from Firestore
-    const classSnap = await firestore.collection('master_classes').get();
-    classSelect.innerHTML = '<option value="">Select Class</option>';
-    classSnap.forEach(doc => {
-        const d = doc.data();
-        classSelect.innerHTML += `<option value="${d.name}">${d.name}</option>`;
-    });
-}
-
 
 
 /* ==========================================
