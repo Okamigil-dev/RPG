@@ -328,7 +328,9 @@
             
                     <div class="master-workspace">
                          
-                        <!-- 1. Instances -->
+                        <!-----------------------------
+                        --- 1. Instance Management --- 
+                        ------------------------------>
                         <div id="sub-instances" class="control-sub-content">
                             <div class="panel-card">
                                 <h3>Spawn New Instance</h3>
@@ -358,7 +360,9 @@
                                                         
                         </div>
 
-                        <!-- 2. User Management -->
+                        <!-------------------------
+                        --- 2. User Management --- 
+                        -------------------------->
                         <div id="sub-accounts" class="control-sub-content hide-default">
                             <div class="panel-card">
                                 <div class="flex-row" style="justify-content: space-between; margin-bottom: 20px;">
@@ -379,7 +383,9 @@
                             </div>
                         </div>
 
-                        <!-- 3. Character Management -->
+                        <!------------------------------
+                        --- 3. Character Management --- 
+                        ------------------------------->
                         <div id="sub-characters" class="control-sub-content hide-default">
                             <div class="panel-card">
                                 <h3>Character Supervision</h3>
@@ -388,10 +394,14 @@
                             </div>
                         </div>
 
-                        <!-- 4. Item Management -->
+                        <!-------------------------
+                        --- 4. Item Management --- 
+                        -------------------------->
                         <div id="sub-items" class="control-sub-content hide-default"><div class="panel-card"><h3>Master Item List</h3></div></div>
 
-                        <!-- 5. Skill Management -->
+                        <!-------------------------
+                        --- 5. Skill Management --- 
+                        -------------------------->
                         <div id="sub-skills" class="control-sub-content hide-default">
                             <div class="panel-card">
                                 <h3>Create Global Skill</h3>
@@ -447,14 +457,18 @@
                             </div>
                         </div>
 
-                        <!-- 6. Class Management -->
+                        <!-------------------------
+                        --- 6. Class Management --- 
+                        -------------------------->
                         <div id="sub-classes" class="control-sub-content hide-default">
                             <div class="panel-card">
-                                <h3>Register New Class Archetype</h3>
+                                <h3 id="class-editor-title">Register New Class Archetype</h3>
+                                <input type="hidden" id="m-class-id" value="">
+                        
                                 <div class="flex-row gap-m mb-m">
                                     <div class="form-group flex-2">
                                         <label class="text-muted">Class Name</label>
-                                        <input type="text" id="m-class-name" class="form-input" placeholder="e.g., Warrior, Mage, Paladin">
+                                        <input type="text" id="m-class-name" class="form-input">
                                     </div>
                                     <div class="form-group flex-1">
                                         <label class="text-muted">Class Tier</label>
@@ -473,43 +487,89 @@
                                             <option value="BODY">BODY</option>
                                             <option value="MIND">MIND</option>
                                             <option value="SPIRIT">SPIRIT</option>
-                                            <option value="BODY/SPIRIT">BODY + SPIRIT</option>
-                                            <option value="MIND/SPIRIT">MIND + SPIRIT</option>
                                         </select>
                                     </div>
                                     <div class="form-group flex-1">
-                                        <label class="text-muted">HP Bonus / Lv</label>
+                                        <label class="text-muted">HP/Lv</label>
                                         <input type="number" id="m-class-hp" class="form-input" value="5">
                                     </div>
                                     <div class="form-group flex-1">
-                                        <label class="text-muted">MP Bonus / Lv</label>
+                                        <label class="text-muted">MP/Lv</label>
                                         <input type="number" id="m-class-mp" class="form-input" value="2">
                                     </div>
                                 </div>
                         
-                                <div class="form-group mb-m">
-                                    <label class="text-muted">Class Passives / Traits (Comma separated)</label>
-                                    <input type="text" id="m-class-traits" class="form-input" placeholder="e.g., Heavy Armor Proficiency, Smite">
+                                <div class="panel-header-small mt-l mb-s">
+                                    <span class="text-muted" style="text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Special Modifiers</span>
+                                </div>
+                                <div class="flex-row gap-m mb-m">
+                                    <div class="form-group flex-1">
+                                        <label class="text-muted">HP Regen</label>
+                                        <input type="number" step="0.1" id="m-class-hp-regen" class="form-input" placeholder="0.0">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label class="text-muted">MP Regen</label>
+                                        <input type="number" step="0.1" id="m-class-mp-regen" class="form-input" placeholder="0.0">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label class="text-muted">Crit Multiplier</label>
+                                        <input type="number" step="0.1" id="m-class-crit" class="form-input" placeholder="2.0">
+                                    </div>
+                                </div>
+                        
+                                <div class="flex-row gap-m mb-m">
+                                    <div class="form-group flex-1">
+                                        <label class="text-muted">Crit Chance (+)</label>
+                                        <input type="number" id="m-class-crit-chance" class="form-input" placeholder="0">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label class="text-muted">Dodge %</label>
+                                        <input type="number" id="m-class-dodge" class="form-input" placeholder="0">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label class="text-muted">Move Spd</label>
+                                        <input type="number" id="m-class-speed-bonus" class="form-input" placeholder="0">
+                                    </div>
                                 </div>
                         
                                 <div class="form-group mb-m">
-                                    <label class="text-muted">Unlocking Requirements</label>
-                                    <input type="text" id="m-class-reqs" class="form-input" placeholder="e.g., Warrior Lv.10, Cleric Lv.10">
+                                    <label class="text-muted">Requirements</label>
+                                    <input type="text" id="m-class-reqs" class="form-input" placeholder="e.g., Warrior Lv.10, Cleric Lv.5">
                                 </div>
+                        
                                 <div class="form-group mb-m">
-                                    <label class="text-muted">Class Description (Flavor Text)</label>
+                                    <label class="text-muted">Passives / Traits (Comma separated)</label>
+                                    <input type="text" id="m-class-traits" class="form-input" placeholder="Darkvision, Smite">
+                                </div>
+                        
+                                <div class="form-group mb-m">
+                                    <label class="text-muted">Description</label>
                                     <textarea id="m-class-desc" class="form-input" style="height: 60px;"></textarea>
                                 </div>
-                                <button onclick="createMasterClass()" class="btn-success">Save Class Archetype</button>
-                            </div>
                         
+                                <div class="flex-row" style="justify-content: flex-end; gap: 10px;">
+                                    <button id="class-cancel-btn" onclick="resetClassForm()" class="btn-secondary hide-default">Cancel Edit</button>
+                                    <button onclick="saveMasterClass()" class="btn-success">Save Class Archetype</button>
+                                </div>
+                            </div>
+                            
                             <div class="panel-card">
                                 <h3>Registered Class Archetypes</h3>
                                 <div id="master-class-list" class="master-asset-list"></div>
                             </div>
                         </div>
+                        
+                        <div id="sub-traits" class="control-sub-content hide-default">
+                            <div class="panel-card">
+                                <h3>Trait Library</h3>
+                                <p class="text-muted">Define the mechanics for traits registered in your classes and races.</p>
+                                <div id="master-trait-list" class="master-asset-list"></div>
+                            </div>
+                        </div>
 
-                        <!-- 7. Race Management -->
+                        <!-------------------------
+                        --- 7. Race Management --- 
+                        -------------------------->
                         <div id="sub-races" class="control-sub-content hide-default">
                             <div class="panel-card">
                                 <h3>Register New Race</h3>
