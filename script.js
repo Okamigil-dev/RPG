@@ -625,18 +625,22 @@ async function updateHUD(char) {
     if (!hud) return;
     hud.classList.remove('hide-default');
     
-    // 1. Fetch live Race data for Natural Bonuses from the Master Registry
+    // 1. Fetch live Race data for Natural Bonuses
     const raceSnap = await firestore.collection('master_races').where('name', '==', char.race).limit(1).get();
     const raceD = raceSnap.empty ? { baseBody: 0, baseMind: 0, baseSpirit: 0 } : raceSnap.docs[0].data();
 
-    // Helper for Effective Stat Modifiers: (Spent Points + Natural Bonus) / 2
-    const getMod = (spent, natural) => {
-        const total = (spent || 0) + (natural || 0);
-        const mod = Math.floor(total / 2);
+    // 2. Calculate the ACTUAL Totals (Spent Points + Natural Racial Bonus)
+    const totalB = (char.body || 0) + (raceD.baseBody || 0);
+    const totalM = (char.mind || 0) + (raceD.baseMind || 0);
+    const totalS = (char.spirit || 0) + (raceD.baseSpirit || 0);
+
+    // Helper for HUD Effective Modifiers: Floor(Total / 2)
+    const getMod = (totalVal) => {
+        const mod = Math.floor(totalVal / 2);
         return mod >= 0 ? `+${mod}` : mod;
     };
 
-    // 2. Identity and Metadata (Handles Multi-Class listing)
+    // 3. Identity and Metadata (Handles Multi-Class listing)
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
     
     const classes = char.unlockedClasses || {}; 
@@ -645,22 +649,29 @@ async function updateHUD(char) {
     
     document.getElementById('hud-meta').innerText = `Lv.${char.charLevel || 1} (${classText})`;
 
-    // 3. Text Resources (Floored for visual clarity; 0 fallback for safety)
+    // 4. Text Resources (Floored for visual clarity)
     document.getElementById('hud-hp-text').innerText = 
         `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
     document.getElementById('hud-mp-text').innerText = 
         `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
 
-    // 4. Portrait Stabilizer
+    // 5. Portrait Stabilizer
     const portraitEl = document.getElementById('hud-portrait');
     portraitEl.style.backgroundImage = char.portrait ? `url(${char.portrait})` : "none";
     
-    // 5. Effective Attribute Modifiers (+0, +1, etc.)
-    document.getElementById('hud-mod-body').innerText = `BODY ${getMod(char.body, raceD.baseBody)}`;
-    document.getElementById('hud-mod-mind').innerText = `MIND ${getMod(char.mind, raceD.baseMind)}`;
-    document.getElementById('hud-mod-spirit').innerText = `SPIRIT ${getMod(char.spirit, raceD.baseSpirit)}`;
+    // 6. Sidebar Modifiers (Fixed: No double text, adds prefix + calculated mod)
+    document.getElementById('hud-mod-body').innerText = `BODY ${getMod(totalB)}`;
+    document.getElementById('hud-mod-mind').innerText = `MIND ${getMod(totalM)}`;
+    document.getElementById('hud-mod-spirit').innerText = `SPIRIT ${getMod(totalS)}`;
 
-    // 6. Progress Bar Widths (Uses || 1 to avoid divide-by-zero errors)
+    // 7. SYNC: Update Character Sheet Green Pills (Visual Reflection)
+    if(document.getElementById('total-body-label')) {
+        document.getElementById('total-body-label').innerText = totalB;
+        document.getElementById('total-mind-label').innerText = totalM;
+        document.getElementById('total-spirit-label').innerText = totalS;
+    }
+
+    // 8. Progress Bar Widths
     const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 1)) * 100, 100);
     const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 1)) * 100, 100);
     const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
