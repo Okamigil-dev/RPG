@@ -432,55 +432,86 @@
                                 <div class="flex-row gap-m mb-m">
                                     <div class="form-group flex-1">
                                         <label class="text-muted">Class Name</label>
-                                        <input type="text" id="m-class-name" class="form-input w-100" placeholder="e.g., Paladin">
+                                        <input type="text" id="m-class-name" class="form-input" placeholder="e.g., Paladin">
                                     </div>
                                     <div class="form-group flex-1">
-                                        <label class="text-muted">HP Bonus per Lv</label>
-                                        <input type="number" id="m-class-hp" class="form-input w-100" value="5">
+                                        <label class="text-muted">Initial Gold</label>
+                                        <input type="number" id="m-class-gold" class="form-input" value="100">
+                                    </div>
+                                </div>
+                                <div class="flex-row gap-m mb-m">
+                                    <div class="form-group flex-1">
+                                        <label class="text-muted">HP Bonus / Lv</label>
+                                        <input type="number" id="m-class-hp" class="form-input" value="5">
                                     </div>
                                     <div class="form-group flex-1">
-                                        <label class="text-muted">MP Bonus per Lv</label>
-                                        <input type="number" id="m-class-mp" class="form-input w-100" value="2">
+                                        <label class="text-muted">MP Bonus / Lv</label>
+                                        <input type="number" id="m-class-mp" class="form-input" value="2">
                                     </div>
+                                </div>
+                                <div class="form-group mb-m">
+                                    <label class="text-muted">Class Passives (Comma separated)</label>
+                                    <input type="text" id="m-class-traits" class="form-input" placeholder="Divine Sense, Smite...">
+                                </div>
+                                <div class="form-group mb-m">
+                                    <label class="text-muted">Description (Flavor Text)</label>
+                                    <textarea id="m-class-desc" class="form-input" style="height: 60px;"></textarea>
                                 </div>
                                 <button onclick="createMasterClass()" class="btn-success">Save Class Archetype</button>
                             </div>
-
-
-                            <!-- 7. Race Management -->
-                            <div id="sub-races" class="control-sub-content hide-default">
-                                <div class="panel-card">
-                                    <h3>Register New Race</h3>
-                                    <div class="flex-row gap-m mb-m">
-                                        <div class="form-group flex-1">
-                                            <label class="text-muted">Race Name</label>
-                                            <input type="text" id="m-race-name" class="form-input w-100" placeholder="e.g., Wood Elf">
-                                        </div>
-                                    </div>
-                                    <div class="flex-row gap-m mb-m">
-                                         <div class="form-group flex-1">
-                                            <label class="text-muted">Body Mod</label>
-                                            <input type="number" id="m-race-body" class="form-input w-100" value="0">
-                                        </div>
-                                        <div class="form-group flex-1">
-                                            <label class="text-muted">Mind Mod</label>
-                                            <input type="number" id="m-race-mind" class="form-input w-100" value="0">
-                                        </div>
-                                        <div class="form-group flex-1">
-                                            <label class="text-muted">Spirit Mod</label>
-                                            <input type="number" id="m-race-spirit" class="form-input w-100" value="0">
-                                        </div>
-                                    </div>
-                                    <button onclick="createMasterRace()" class="btn-success">Save Race Origin</button>
-                                </div>
-                            
-                                <div class="panel-card">
-                                    <h3>Registered Races</h3>
-                                    <div id="master-race-list" class="master-asset-list"></div>
-                                </div>
+                        
+                            <div class="panel-card">
+                                <h3>Registered Classes</h3>
+                                <div id="master-class-list" class="master-asset-list"></div>
                             </div>
+                        </div>
 
-                            <!-- 8. ??? Management -->
+                        <!-- 7. Race Management -->
+                        <div id="sub-races" class="control-sub-content hide-default">
+                            <div class="panel-card">
+                                <h3>Register New Race</h3>
+                                <div class="flex-row gap-m mb-m">
+                                    <div class="form-group flex-1">
+                                        <label class="text-muted">Race Name</label>
+                                        <input type="text" id="m-race-name" class="form-input" placeholder="e.g., Wood Elf">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label class="text-muted">Base Speed</label>
+                                        <input type="number" id="m-race-speed" class="form-input" value="30">
+                                    </div>
+                                </div>
+                                <div class="flex-row gap-m mb-m">
+                                     <div class="form-group flex-1">
+                                        <label class="text-muted">Body Mod</label>
+                                        <input type="number" id="m-race-body" class="form-input" value="0">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label class="text-muted">Mind Mod</label>
+                                        <input type="number" id="m-race-mind" class="form-input" value="0">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label class="text-muted">Spirit Mod</label>
+                                        <input type="number" id="m-race-spirit" class="form-input" value="0">
+                                    </div>
+                                </div>
+                                <div class="form-group mb-m">
+                                    <label class="text-muted">Racial Traits (Comma separated)</label>
+                                    <input type="text" id="m-race-traits" class="form-input" placeholder="Darkvision, Underwater Breathing...">
+                                </div>
+                                <div class="form-group mb-m">
+                                    <label class="text-muted">Lore / Description</label>
+                                    <textarea id="m-race-desc" class="form-input" style="height: 60px;"></textarea>
+                                </div>
+                                <button onclick="createMasterRace()" class="btn-success">Save Race Origin</button>
+                            </div>
+                        
+                            <div class="panel-card">
+                                <h3>Registered Races</h3>
+                                <div id="master-race-list" class="master-asset-list"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 8. ??? Management -->
                         
                     </div>
                 </div>
