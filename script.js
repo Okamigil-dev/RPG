@@ -114,10 +114,10 @@ function tick() {
 function applyPassiveRegen() {
     if (!currentCharacterId) return;
 
-    // 1. Pull the PRECISE values from the hidden dataset, not the rounded input
     const hpInput = document.getElementById('char-hp-current');
     const mpInput = document.getElementById('char-mp-current');
-    
+
+    // 1. Always pull from the hidden precise value if it exists
     let hpCur = parseFloat(hpInput.dataset.trueValue) || parseFloat(hpInput.value) || 0;
     let mpCur = parseFloat(mpInput.dataset.trueValue) || parseFloat(mpInput.value) || 0;
     
@@ -130,14 +130,15 @@ function applyPassiveRegen() {
     const newHP = Math.min(hpCur + hpRegen, hpMax);
     const newMP = Math.min(mpCur + mpRegen, mpMax);
 
-    // 2. Visual Fix: Update the hidden decimal and the clean display integer
+    // 2. THE FIX: Update the hidden high-precision value
     hpInput.dataset.trueValue = newHP;
-    hpInput.value = Math.floor(newHP);
-
     mpInput.dataset.trueValue = newMP;
+
+    // 3. THE VISUAL FIX: Only show the floor in the actual box
+    hpInput.value = Math.floor(newHP);
     mpInput.value = Math.floor(newMP);
     
-    saveCharacter(); // Syncs precise numbers to DB
+    saveCharacter(); 
 }
 
 function updateDisplay() {
