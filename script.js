@@ -236,6 +236,10 @@ auth.onAuthStateChanged((user) => {
         openTab('tab-character');
     } else {
         window.currentUserRole = null; 
+
+        document.getElementById('game-ui').classList.add('hide-default'); // <--- ADDED THIS: Hides game UI
+        if (diceUI) diceUI.style.display = 'none'; // <--- ADDED THIS: Hides dice when logged out
+        
         openTab('tab-login');
     }
 });
