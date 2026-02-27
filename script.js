@@ -1457,6 +1457,7 @@ async function saveMasterRace() {
         baseSpirit: parseInt(document.getElementById('m-race-spirit').value) || 0,
         
         // Modifiers
+        expBonus: parseInt(document.getElementById('m-race-exp-bonus').value) || 0,
         hpRegen: parseFloat(document.getElementById('m-race-hp-regen').value) || 0,
         mpRegen: parseFloat(document.getElementById('m-race-mp-regen').value) || 0,
         speed: parseInt(document.getElementById('m-race-speed').value) || 30,
@@ -1542,6 +1543,7 @@ async function editRace(id) {
     document.getElementById('m-race-spirit').value = d.baseSpirit || 0;
     
     // Special Modifiers (The ones causing the 'undefined' error)
+    document.getElementById('m-race-exp-bonus').value = d.expBonus || 0;
     document.getElementById('m-race-hp-regen').value = d.hpRegen || 0;
     document.getElementById('m-race-mp-regen').value = d.mpRegen || 0;
     document.getElementById('m-race-speed').value = d.speed || 30;
