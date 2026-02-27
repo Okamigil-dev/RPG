@@ -309,6 +309,7 @@ function createNewCharacter() {
         expCurrent: 0, expMax: 1000,
         gallery: [], portrait: "",
         instanceId: "global",
+        instanceName: "Global",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     
@@ -340,9 +341,15 @@ function loadUserCharacters() {
                 <div class="portrait-circle-small" style="background-image: url(${d.portrait || ''}); margin: 0 auto 10px;"></div>
                 <strong>${d.name || 'New Hero'}</strong>
                 <div class="char-card-meta">Lv.${d.charLevel || 1} ${d.class || ''}</div>
+                
+                <div style="font-size: 0.75rem; color: #a855f7; margin-top: 5px; font-weight: bold;">
+                    <i class="fa-solid fa-globe"></i> Realm: ${d.instanceName || 'Global'}
+                </div>
+                
                 <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">
                     <i class="fa-solid fa-trash"></i> Delete
                 </button>
+                
             `;
             grid.appendChild(card);
         });
@@ -1037,7 +1044,7 @@ async function loadGlobalCharacterManager() {
                         <td><strong>${charData.name}</strong></td>
                         <td><small>${ownerEmail}</small></td>
                         <td>
-                            <select class="role-selector form-input" onchange="assignCharToInstance('${userDoc.id}', '${charDoc.id}', this.value)">
+                            <select class="role-selector form-input" onchange="assignCharToInstance('${userDoc.id}', '${charDoc.id}', this)">
                                 <option value="global">Global (None)</option>
                                 ${instances.map(inst => `
                                     <option value="${inst.id}" ${charData.instanceId === inst.id ? 'selected' : ''}>
@@ -1062,18 +1069,25 @@ async function loadGlobalCharacterManager() {
     }
 }
 
-// The function that actually moves the character in the database
-async function assignCharToInstance(userId, charId, newInstanceId) {
+async function assignCharToInstance(userId, charId, selectElement) {
+    // Read both the hidden ID and the visible Text from the Master's dropdown
+    const newInstanceId = selectElement.value;
+    const newInstanceName = selectElement.options[selectElement.selectedIndex].text.trim();
+
     try {
         await firestore.collection('users').doc(userId)
             .collection('characters').doc(charId)
-            .update({ instanceId: newInstanceId });
+            .update({ 
+                instanceId: newInstanceId,
+                instanceName: newInstanceName // Saves the name for the player to see!
+            });
             
-        console.log(`Character ${charId} moved to Instance ${newInstanceId}`);
-        // If the Master is currently viewing this character, update their clock path
+        console.log(`Character ${charId} moved to Instance ${newInstanceName}`);
+        
         if (currentCharacterId === charId) {
             currentCampaignId = newInstanceId;
             initClockListener();
+            initDiceLogListener();
         }
     } catch (e) {
         alert("Transfer failed: " + e.message);
