@@ -123,12 +123,14 @@
             ---- 3. LOGIN TAB ----
             ============================-->
             <div id="tab-login" class="tab-content">
-                <h2>Log In or Register</h2>
                 <div class="login-box">
+                    <div class="brand-logo" style="text-align: center; margin-bottom: 10px; font-size: 1.8rem;">WORLD VTT</div>
+                    <h2>Sign In</h2>
                     <input type="email" id="email-input" class="form-input" placeholder="Email">
                     <input type="password" id="password-input" class="form-input" placeholder="Password">
-                    <button onclick="loginUser()" class="btn-primary btn-full">Log In</button>
-                    <button onclick="registerUser()" class="btn-secondary btn-full">Register</button>
+                    <button onclick="loginUser()" class="btn-primary btn-full">Access Realm</button>
+                    <div style="margin: 20px 0; text-align: center; opacity: 0.3;">OR</div>
+                    <button onclick="registerUser()" class="btn-secondary btn-full">Create New Account</button>
                 </div>
             </div>
 
@@ -713,7 +715,16 @@
                     <button class="btn-secondary" onclick="addExpQuick(500)">+500</button> 
                 </div>
             </div>
-
+            <div class="panel-header-small mt-l mb-s">
+                <span class="text-muted" style="text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Class Management</span>
+            </div>
+            <div class="flex-row gap-s mb-m">
+                <select id="modal-class-picker" class="form-input flex-grow">
+                    </select>
+                <button class="btn-success" onclick="assignClassToCharacter()">Add Class</button>
+            </div>
+            <div id="modal-active-classes" class="master-asset-list">
+                </div>
             <div class="flex-row gap-m mb-m">
                 <div class="form-group flex-1">
                     <label class="text-muted">Current HP</label>
