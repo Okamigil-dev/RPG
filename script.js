@@ -1259,6 +1259,9 @@ async function openCharacterManagerModal(uid, cid) {
             document.getElementById('edit-modal-hp').value = data.hpCurrent || 0;
             document.getElementById('edit-modal-mp').value = data.mpCurrent || 0;
             document.getElementById('edit-modal-gold').value = data.gold || 0;
+            document.getElementById('edit-modal-body').value = data.body || 0;
+            document.getElementById('edit-modal-mind').value = data.mind || 0;
+            document.getElementById('edit-modal-spirit').value = data.spirit || 0;
 
             // 4. Unhide the modal
             const modal = document.getElementById('master-char-edit-modal');
@@ -1289,34 +1292,48 @@ async function saveCharacterManagerEdits() {
     const uid = document.getElementById('edit-modal-uid').value;
     const cid = document.getElementById('edit-modal-cid').value;
     
-    // Get the values from the modal
+    // 1. Gather all inputs
     const newExp = parseInt(document.getElementById('edit-modal-exp').value) || 0;
     const newHp = parseInt(document.getElementById('edit-modal-hp').value) || 0;
     const newMp = parseInt(document.getElementById('edit-modal-mp').value) || 0;
     const newGold = parseInt(document.getElementById('edit-modal-gold').value) || 0;
+    
+    const newBody = parseInt(document.getElementById('edit-modal-body').value) || 0;
+    const newMind = parseInt(document.getElementById('edit-modal-mind').value) || 0;
+    const newSpirit = parseInt(document.getElementById('edit-modal-spirit').value) || 0;
 
     try {
         const charRef = firestore.collection('users').doc(uid).collection('characters').doc(cid);
-        
-        // 1. Get the current data first to see how much EXP was actually added
         const oldDoc = await charRef.get();
         const oldData = oldDoc.data();
-        const expGained = newExp - (oldData.expCurrent || 0);
+        
+        // 2. Recalculate Max Values based on your existing formula: (Stat * 5) + Bonus + 10
+        const hpBonus = oldData.hpMaxBonus || 0;
+        const mpBonus = oldData.mpMaxBonus || 0;
+        const calcHpMax = (newBody * 5) + hpBonus + 10;
+        const calcMpMax = (newSpirit * 5) + mpBonus + 10;
 
-        // 2. Update the Database
+        // 3. Update Database
         await charRef.update({
             expCurrent: newExp,
             hpCurrent: newHp,
+            hpMax: calcHpMax, // Auto-sync max to the new Body stat
             mpCurrent: newMp,
-            gold: newGold
+            mpMax: calcMpMax, // Auto-sync max to the new Spirit stat
+            gold: newGold,
+            body: newBody,
+            mind: newMind,
+            spirit: newSpirit
         });
 
-        // 3. Fire a System Message to the Chatbox!
-        if (expGained > 0) {
-            sendSystemMessage(`${oldData.name} has been awarded ${expGained} EXP!`);
-        } else if (expGained < 0) {
-            sendSystemMessage(`${oldData.name} had ${Math.abs(expGained)} EXP removed.`);
+        // 4. Log the changes
+        const expGained = newExp - (oldData.expCurrent || 0);
+        if (expGained !== 0) {
+            sendSystemMessage(`${oldData.name} EXP adjusted by ${expGained}.`);
         }
+        
+        // Optional: announce stat changes if you want the players to know
+        // sendSystemMessage(`${oldData.name}'s core attributes were adjusted by the Master.`);
 
         closeCharacterManagerModal();
         
