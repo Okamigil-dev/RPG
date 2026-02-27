@@ -875,7 +875,7 @@ function deleteImage(event, index) {
 
 
 /* ==========================================
-   --- 13. MASTER CONTROL LOGIC ---
+   --- 13. MASTER CONTROL PANEL ---
    ========================================== */
 
 
@@ -1288,6 +1288,7 @@ function addExpQuick(amount) {
     expInput.value = currentExp + amount;
 }
 
+
 async function saveCharacterManagerEdits() {
     const uid = document.getElementById('edit-modal-uid').value;
     const cid = document.getElementById('edit-modal-cid').value;
@@ -1343,6 +1344,37 @@ async function saveCharacterManagerEdits() {
     }
 }
 
+// --- RACE REGISTRY LOGIC ---
+async function createMasterClass() {
+    const name = document.getElementById('m-class-name').value.trim();
+    const hpPerLv = parseInt(document.getElementById('m-class-hp').value) || 0;
+    const mpPerLv = parseInt(document.getElementById('m-class-mp').value) || 0;
+
+    if (!name) return;
+
+    await firestore.collection('master_classes').add({
+        name, hpPerLv, mpPerLv,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    document.getElementById('m-class-name').value = "";
+    loadMasterClassList();
+}
+
+// --- CLASS REGISTRY LOGIC ---
+async function loadMasterClassList() {
+    const list = document.getElementById('master-class-list');
+    const snap = await firestore.collection('master_classes').orderBy('name').get();
+    list.innerHTML = "";
+    snap.forEach(doc => {
+        const d = doc.data();
+        const item = document.createElement('div');
+        item.className = "panel-card mb-s";
+        item.style.background = "#18181b";
+        item.innerHTML = `<strong>${d.name}</strong> <span class="text-muted">HP/Lv: +${d.hpPerLv} | MP/Lv: +${d.mpPerLv}</span>`;
+        list.appendChild(item);
+    });
+}
 
 
 /* ==========================================
