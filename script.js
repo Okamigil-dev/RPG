@@ -204,6 +204,18 @@ function setSpeed(multiplier) {
     });
 }
 
+function updateDisplay() {
+    let tDays = Math.floor(totalCustomSeconds / 86400);
+    let h = Math.floor((totalCustomSeconds / 3600) % 24);
+    let m = Math.floor((totalCustomSeconds / 60) % 60);
+    let s = Math.floor(totalCustomSeconds % 60);
+    
+    if(document.getElementById('time-display')) {
+        document.getElementById('time-display').innerText = 
+            `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+}
+
 setInterval(tick, 100);
 
 
