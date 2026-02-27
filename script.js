@@ -1568,6 +1568,23 @@ function resetClassForm() {
     document.getElementById('class-cancel-btn').classList.add('hide-default');
 }
 
+function getEffectiveMainStat(character, classData) {
+    const stats = character.baseStats; // {BODY: 14, MIND: 10, SPIRIT: 16}
+    
+    switch(classData.mainStat) {
+        case 'BODY_OR_SPIRIT':
+            return Math.max(stats.BODY, stats.SPIRIT);
+        case 'BODY_OR_MIND':
+            return Math.max(stats.BODY, stats.MIND);
+        case 'MIND_OR_SPIRIT':
+            return Math.max(stats.MIND, stats.SPIRIT);
+        case 'ANY':
+            return Math.max(stats.BODY, stats.MIND, stats.SPIRIT);
+        default:
+            return stats[classData.mainStat]; // Returns the single stat
+    }
+}
+
 // --- TRAIT LIBRARY LOGIC ---
 async function ensureTraitExists(traitName) {
     const slug = traitName.toLowerCase().trim().replace(/\s+/g, '-');
