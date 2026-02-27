@@ -1289,6 +1289,7 @@ async function saveCharacterManagerEdits() {
     const uid = document.getElementById('edit-modal-uid').value;
     const cid = document.getElementById('edit-modal-cid').value;
     
+    // Get the values from the modal
     const newExp = parseInt(document.getElementById('edit-modal-exp').value) || 0;
     const newHp = parseInt(document.getElementById('edit-modal-hp').value) || 0;
     const newMp = parseInt(document.getElementById('edit-modal-mp').value) || 0;
@@ -1297,14 +1298,26 @@ async function saveCharacterManagerEdits() {
     try {
         const charRef = firestore.collection('users').doc(uid).collection('characters').doc(cid);
         
+        // 1. Get the current data first to see how much EXP was actually added
+        const oldDoc = await charRef.get();
+        const oldData = oldDoc.data();
+        const expGained = newExp - (oldData.expCurrent || 0);
+
+        // 2. Update the Database
         await charRef.update({
-            exp: newExp,
+            expCurrent: newExp,
             hpCurrent: newHp,
             mpCurrent: newMp,
             gold: newGold
         });
 
-        alert("Character stats updated successfully!");
+        // 3. Fire a System Message to the Chatbox!
+        if (expGained > 0) {
+            sendSystemMessage(`${oldData.name} has been awarded ${expGained} EXP!`);
+        } else if (expGained < 0) {
+            sendSystemMessage(`${oldData.name} had ${Math.abs(expGained)} EXP removed.`);
+        }
+
         closeCharacterManagerModal();
         
     } catch (error) {
