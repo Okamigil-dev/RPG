@@ -138,7 +138,6 @@ function applyPassiveRegen() {
     hpInput.value = Math.floor(newHP);
     mpInput.value = Math.floor(newMP);
     
-    saveCharacter(); 
 }
 
 function updateDisplay() {
@@ -595,7 +594,6 @@ function goBackToSelection() {
 // This replaces the hardcoded lists by fetching YOUR registry
 async function syncRegistryToDropdowns() {
     const raceSelect = document.getElementById('char-race');
-    const classSelect = document.getElementById('char-class');
     
     // Fetch YOUR races from Firestore
     const raceSnap = await firestore.collection('master_races').get();
