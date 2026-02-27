@@ -311,6 +311,8 @@ function openControlSubTab(evt, subTabId) {
     if (subTabId === 'sub-instances') loadInstanceList();
     if (subTabId === 'sub-accounts') loadUserList();
     if (subTabId === 'sub-characters') loadGlobalCharacterManager();
+    if (subTabId === 'sub-classes') loadMasterClassList();
+    if (subTabId === 'sub-races') loadMasterRaceList();
 }
 
 
@@ -1345,37 +1347,144 @@ async function saveCharacterManagerEdits() {
 }
 
 // --- RACE REGISTRY LOGIC ---
+async function createMasterRace() {
+    const name = document.getElementById('m-race-name').value.trim();
+    const body = parseInt(document.getElementById('m-race-body').value) || 0;
+    const mind = parseInt(document.getElementById('m-race-mind').value) || 0;
+    const spirit = parseInt(document.getElementById('m-race-spirit').value) || 0;
+    const speed = parseInt(document.getElementById('m-race-speed').value) || 30;
+    const desc = document.getElementById('m-race-desc').value.trim();
+    
+    const traitsRaw = document.getElementById('m-race-traits').value;
+    const traitsArray = traitsRaw.split(',').map(t => t.trim()).filter(t => t !== "");
+
+    if (!name) return alert("Race name required!");
+
+    try {
+        await firestore.collection('master_races').add({
+            name, bodyMod: body, mindMod: mind, spiritMod: spirit, 
+            baseSpeed: speed, description: desc, traits: traitsArray,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        document.getElementById('m-race-name').value = "";
+        document.getElementById('m-race-traits').value = "";
+        document.getElementById('m-race-desc').value = "";
+        
+        loadMasterRaceList();
+    } catch (e) { console.error(e); }
+}
+
+async function loadMasterRaceList() {
+    const list = document.getElementById('master-race-list');
+    if (!list) return;
+
+    const snap = await firestore.collection('master_races').orderBy('name').get();
+    list.innerHTML = "";
+
+    snap.forEach(doc => {
+        const d = doc.data();
+        const card = document.createElement('div');
+        card.className = "panel-card mb-s";
+        card.style.background = "#18181b";
+        
+        const traitTags = (d.traits || []).map(t => 
+            `<span style="background:#064e3b; color:#a7f3d0; padding:2px 6px; border-radius:4px; font-size:0.7rem; margin-right:4px;">${t}</span>`
+        ).join('');
+
+        card.innerHTML = `
+            <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <strong style="color: #10b981;">${d.name}</strong>
+                    <div class="mt-s" style="margin-bottom:8px;">${traitTags}</div>
+                    <p style="font-size: 0.8rem; opacity: 0.8;">${d.description || 'No description.'}</p>
+                    <div style="font-size: 0.7rem; color: #71717a;">
+                        Mods: B+${d.bodyMod} M+${d.mindMod} S+${d.spiritMod} | Spd: ${d.baseSpeed}
+                    </div>
+                </div>
+                <button class="btn-danger-small" onclick="deleteMasterAsset('master_races', '${doc.id}', loadMasterRaceList)">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        `;
+        list.appendChild(card);
+    });
+}
+
+// --- CLASS REGISTRY LOGIC ---
 async function createMasterClass() {
     const name = document.getElementById('m-class-name').value.trim();
     const hpPerLv = parseInt(document.getElementById('m-class-hp').value) || 0;
     const mpPerLv = parseInt(document.getElementById('m-class-mp').value) || 0;
-
-    if (!name) return;
-
-    await firestore.collection('master_classes').add({
-        name, hpPerLv, mpPerLv,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    const initialGold = parseInt(document.getElementById('m-class-gold').value) || 0;
+    const desc = document.getElementById('m-class-desc').value.trim();
     
-    document.getElementById('m-class-name').value = "";
-    loadMasterClassList();
+    const traitsRaw = document.getElementById('m-class-traits').value;
+    const traitsArray = traitsRaw.split(',').map(t => t.trim()).filter(t => t !== "");
+
+    if (!name) return alert("Class name required!");
+
+    try {
+        await firestore.collection('master_classes').add({
+            name, hpPerLv, mpPerLv, initialGold, 
+            description: desc, traits: traitsArray,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Reset Form
+        document.getElementById('m-class-name').value = "";
+        document.getElementById('m-class-desc').value = "";
+        document.getElementById('m-class-traits').value = "";
+        
+        alert(`${name} registered.`);
+        loadMasterClassList();
+    } catch (e) { console.error(e); }
 }
 
-// --- CLASS REGISTRY LOGIC ---
 async function loadMasterClassList() {
     const list = document.getElementById('master-class-list');
+    if (!list) return;
+
     const snap = await firestore.collection('master_classes').orderBy('name').get();
     list.innerHTML = "";
+
     snap.forEach(doc => {
         const d = doc.data();
-        const item = document.createElement('div');
-        item.className = "panel-card mb-s";
-        item.style.background = "#18181b";
-        item.innerHTML = `<strong>${d.name}</strong> <span class="text-muted">HP/Lv: +${d.hpPerLv} | MP/Lv: +${d.mpPerLv}</span>`;
-        list.appendChild(item);
+        const card = document.createElement('div');
+        card.className = "panel-card mb-s";
+        card.style.background = "#18181b";
+        
+        const traitTags = (d.traits || []).map(t => 
+            `<span style="background:#312e81; color:#c7d2fe; padding:2px 6px; border-radius:4px; font-size:0.7rem; margin-right:4px;">${t}</span>`
+        ).join('');
+
+        card.innerHTML = `
+            <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <strong style="color: #6366f1;">${d.name}</strong>
+                    <div class="mt-s" style="margin-bottom:8px;">${traitTags}</div>
+                    <p style="font-size: 0.8rem; opacity: 0.8;">${d.description || 'No description.'}</p>
+                    <div style="font-size: 0.7rem; color: #71717a;">
+                        Lv Bonus: HP+${d.hpPerLv} MP+${d.mpPerLv} | Gold: ${d.initialGold}
+                    </div>
+                </div>
+                <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        `;
+        list.appendChild(card);
     });
 }
 
+// Global utility for deleting any master asset
+async function deleteMasterAsset(collection, id, callback) {
+    if (!confirm("Permanently remove this asset?")) return;
+    try {
+        await firestore.collection(collection).doc(id).delete();
+        callback();
+    } catch (e) { console.error(e); }
+}
 
 /* ==========================================
    --- 14. SKILLS ---
