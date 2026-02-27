@@ -363,7 +363,11 @@ function createNewCharacter() {
         classLevel: 1,     
         totalSP: 1,        
         spentSP: 0,        
-
+        
+        hpBonusFlat: 0,  
+        hpBonusPerc: 0,  
+        mpBonusFlat: 0,
+        mpBonusPerc: 0,
         // SKILL SLOTS WITH USAGE TRACKING
         // name: The name of the skill
         // level: 1-10 (used for merging requirements)
@@ -1322,6 +1326,10 @@ async function openCharacterManagerModal(uid, cid) {
             document.getElementById('edit-modal-body').value = data.body || 0;
             document.getElementById('edit-modal-mind').value = data.mind || 0;
             document.getElementById('edit-modal-spirit').value = data.spirit || 0;
+            document.getElementById('edit-modal-hp-flat').value = data.hpBonusFlat || 0;
+            document.getElementById('edit-modal-hp-perc').value = data.hpBonusPerc || 0;
+            document.getElementById('edit-modal-mp-flat').value = data.mpBonusFlat || 0;
+            document.getElementById('edit-modal-mp-perc').value = data.mpBonusPerc || 0;
 
             // 2. Populate YOUR tailored classes dynamically
             const classPicker = document.getElementById('modal-class-picker');
@@ -1464,6 +1472,10 @@ async function saveCharacterManagerEdits() {
             body: newBody,
             mind: newMind,
             spirit: newSpirit
+            hpBonusFlat: parseInt(document.getElementById('edit-modal-hp-flat').value) || 0,
+            hpBonusPerc: parseInt(document.getElementById('edit-modal-hp-perc').value) || 0,
+            mpBonusFlat: parseInt(document.getElementById('edit-modal-mp-flat').value) || 0,
+            mpBonusPerc: parseInt(document.getElementById('edit-modal-mp-perc').value) || 0
         });
 
         // 4. Log the changes
@@ -2046,4 +2058,43 @@ function renderSkills(charData) {
         });
         container.appendChild(section);
     });
+}
+
+
+
+/* ==========================================
+   --- 15. PURE MATH ---
+   ========================================== */
+async function getFinalMaxStats(charData) {
+    // 1. Fetch live Registry data (Retroactive part)
+    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
+    const raceD = raceSnap.empty ? { hpPerLv: 1, mpPerLv: 1, baseBody: 0 } : raceSnap.docs[0].data();
+
+    // 2. Calculate Base Max (Registry + Levels)
+    let baseHP = 10 + (charData.charLevel * (raceD.hpPerLv || 0));
+    let baseMP = 10 + (charData.charLevel * (raceD.mpPerLv || 0));
+
+    // 3. Add Class Growth (Retroactive)
+    // Assuming unlockedClasses is an object { Warrior: { level: 5 }, ... }
+    for (const [className, info] of Object.entries(charData.unlockedClasses || {})) {
+        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
+        if (!classSnap.empty) {
+            const classD = classSnap.docs[0].data();
+            baseHP += (info.level * (classD.hpPerLv || 0));
+            baseMP += (info.level * (classD.mpPerLv || 0));
+        }
+    }
+
+    // 4. Add Stat-to-Pool Ratio (1:2)
+    const totalBody = (charData.body || 0) + (raceD.baseBody || 0);
+    const totalSpirit = (charData.spirit || 0) + (raceD.baseSpirit || 0);
+    
+    baseHP += (totalBody * 2);
+    baseMP += (totalSpirit * 2);
+
+    // 5. Apply Equipment Layer
+    const finalHP = Math.floor((baseHP + (charData.hpBonusFlat || 0)) * (1 + (charData.hpBonusPerc || 0) / 100));
+    const finalMP = Math.floor((baseMP + (charData.mpBonusFlat || 0)) * (1 + (charData.mpBonusPerc || 0) / 100));
+
+    return { finalHP, finalMP };
 }
