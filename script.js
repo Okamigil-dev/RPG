@@ -180,13 +180,7 @@ async function applyPassiveRegen() {
     document.getElementById('hud-hp-fill').style.width = hpPerc + "%";
     document.getElementById('hud-mp-fill').style.width = mpPerc + "%";
 }
-setInterval(tick, 100);
 
-
-
-// ==========================================
-// --- 5. CLOCK CONTROLS ---
-// ==========================================
 
 function toggleTime() { 
     isRunning = !isRunning; 
@@ -208,6 +202,22 @@ function setSpeed(multiplier) {
         totalCustomSeconds: totalCustomSeconds,
         lastRealWorldSaveTime: Date.now()
     });
+}
+
+setInterval(tick, 100);
+
+
+
+// ==========================================
+// --- 5. ALERT ALTERNATIVE ---
+// ==========================================
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-container';
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }
 
 
@@ -506,12 +516,12 @@ async function selectCharacter(id) {
             document.getElementById('char-name').value = d.name || "";
             document.getElementById('char-race').value = d.race || "";
             
-            // NEW: Calculate level from current EXP
+            // --- CRITICAL FIX: Calculate Level from EXP immediately ---
             const currentLevel = calculateLevelFromEXP(d.expCurrent || 0);
             document.getElementById('char-level-display').innerText = currentLevel;
             
-            // AP LOGIC INITIALIZATION: 1 AP per level
-            totalAP = (d.charLevel || 1); 
+            // --- CRITICAL FIX: Use calculated level for AP ---
+            totalAP = currentLevel; 
             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
             pendingStats = { ...originalStats };
 
@@ -561,7 +571,13 @@ async function selectCharacter(id) {
             document.getElementById('char-selection-view').classList.add('hide-default');
             document.getElementById('char-sheet-view').classList.remove('hide-default');
             
-            const hudData = { ...d, hpMax: totals.finalHP, mpMax: totals.finalMP };
+            // --- CRITICAL FIX: Send calculated level to HUD so it syncs immediately ---
+            const hudData = { 
+                ...d, 
+                charLevel: currentLevel, 
+                hpMax: totals.finalHP, 
+                mpMax: totals.finalMP 
+            };
             updateHUD(hudData);
             
             firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
@@ -753,7 +769,10 @@ async function updateHUD(char) {
     const classStrings = Object.keys(classes).map(name => `${name} Lv.${classes[name].level}`);
     const classText = classStrings.length > 0 ? classStrings.join(', ') : (char.class || "Adventurer");
     
-    document.getElementById('hud-meta').innerText = `Lv.${char.charLevel || 1} (${classText})`;
+    // --- CRITICAL FIX: Calculate level from EXP if available, otherwise fallback ---
+    const trueLevel = char.expCurrent ? calculateLevelFromEXP(char.expCurrent) : (char.charLevel || 1);
+    
+    document.getElementById('hud-meta').innerText = `Lv.${trueLevel} (${classText})`;
 
     // 4. Text Resources (Floored for visual clarity)
     document.getElementById('hud-hp-text').innerText = 
