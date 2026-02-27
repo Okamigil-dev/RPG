@@ -625,35 +625,49 @@ async function updateHUD(char) {
     if (!hud) return;
     hud.classList.remove('hide-default');
     
-    // 1. Fetch live Race data for Natural Bonuses
+    // 1. Fetch live Race data for Natural Bonuses from the Master Registry
     const raceSnap = await firestore.collection('master_races').where('name', '==', char.race).limit(1).get();
     const raceD = raceSnap.empty ? { baseBody: 0, baseMind: 0, baseSpirit: 0 } : raceSnap.docs[0].data();
 
-    // 2. Dynamic Meta Label (Handles Multi-Class)
-    const classes = char.unlockedClasses || {};
-    const classStrings = Object.keys(classes).map(name => `${name} Lv.${classes[name].level}`);
-    const metaText = `Lv.${char.charLevel || 1} (${classStrings.length > 0 ? classStrings.join(', ') : 'Adventurer'})`;
-    document.getElementById('hud-meta').innerText = metaText;
-    
-    // 3. Stats & Bars (Using the totals we calculated earlier)
-    document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${char.hpMax || 10}`;
-    document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${char.mpMax || 15}`;
-    
-    // 4. Update the 3 Stat Modifier Boxes (+0, +1, etc)
+    // Helper for Effective Stat Modifiers: (Spent Points + Natural Bonus) / 2
     const getMod = (spent, natural) => {
-        const mod = Math.floor(((spent || 0) + (natural || 0)) / 2);
+        const total = (spent || 0) + (natural || 0);
+        const mod = Math.floor(total / 2);
         return mod >= 0 ? `+${mod}` : mod;
     };
+
+    // 2. Identity and Metadata (Handles Multi-Class listing)
+    document.getElementById('hud-name').innerText = char.name || "Unnamed";
     
+    const classes = char.unlockedClasses || {}; 
+    const classStrings = Object.keys(classes).map(name => `${name} Lv.${classes[name].level}`);
+    const classText = classStrings.length > 0 ? classStrings.join(', ') : (char.class || "Adventurer");
+    
+    document.getElementById('hud-meta').innerText = `Lv.${char.charLevel || 1} (${classText})`;
+
+    // 3. Text Resources (Floored for visual clarity; 0 fallback for safety)
+    document.getElementById('hud-hp-text').innerText = 
+        `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
+    document.getElementById('hud-mp-text').innerText = 
+        `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
+
+    // 4. Portrait Stabilizer
+    const portraitEl = document.getElementById('hud-portrait');
+    portraitEl.style.backgroundImage = char.portrait ? `url(${char.portrait})` : "none";
+    
+    // 5. Effective Attribute Modifiers (+0, +1, etc.)
     document.getElementById('hud-mod-body').innerText = `BODY ${getMod(char.body, raceD.baseBody)}`;
     document.getElementById('hud-mod-mind').innerText = `MIND ${getMod(char.mind, raceD.baseMind)}`;
     document.getElementById('hud-mod-spirit').innerText = `SPIRIT ${getMod(char.spirit, raceD.baseSpirit)}`;
 
-    // 5. Portrait & Bar Widths
-    const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 10)) * 100, 100);
-    const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 15)) * 100, 100);
+    // 6. Progress Bar Widths (Uses || 1 to avoid divide-by-zero errors)
+    const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 1)) * 100, 100);
+    const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 1)) * 100, 100);
+    const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
+
     document.getElementById('hud-hp-fill').style.width = hpPerc + "%";
     document.getElementById('hud-mp-fill').style.width = mpPerc + "%";
+    document.getElementById('hud-exp-fill').style.width = expPerc + "%";
 }
 
 
