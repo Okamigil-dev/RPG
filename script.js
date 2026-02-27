@@ -1060,7 +1060,10 @@ async function loadGlobalCharacterManager() {
             });
         }
 
-        html += `</tbody></table>`;
+        html += `</tbody></table>
+                 <div class="mt-m" style="text-align: right; margin-top: 15px;">
+                     <button class="btn-primary" onclick="saveAllCharacterInstances()">Save All Assignments</button>
+                 </div>`;
         listContainer.innerHTML = html;
 
     } catch (error) {
@@ -1069,28 +1072,48 @@ async function loadGlobalCharacterManager() {
     }
 }
 
-async function assignCharToInstance(userId, charId, selectElement) {
-    // Read both the hidden ID and the visible Text from the Master's dropdown
-    const newInstanceId = selectElement.value;
-    const newInstanceName = selectElement.options[selectElement.selectedIndex].text.trim();
+async function saveAllCharacterInstances() {
+    const selectors = document.querySelectorAll('.instance-selector');
+    const batch = firestore.batch(); 
+    let changesCount = 0;
+    let activeCharMoved = false; 
+
+    selectors.forEach(select => {
+        const userId = select.getAttribute('data-userid');
+        const charId = select.getAttribute('data-charid');
+        const newInstanceId = select.value;
+        const newInstanceName = select.options[select.selectedIndex].text.trim();
+        
+        const charRef = firestore.collection('users').doc(userId).collection('characters').doc(charId);
+        
+        // Queue the update in the Firestore batch
+        batch.update(charRef, { 
+            instanceId: newInstanceId,
+            instanceName: newInstanceName 
+        });
+        changesCount++;
+
+        // If the GM just moved the character they are currently viewing, flag it
+        if (currentCharacterId === charId && currentCampaignId !== newInstanceId) {
+            currentCampaignId = newInstanceId;
+            activeCharMoved = true;
+        }
+    });
 
     try {
-        await firestore.collection('users').doc(userId)
-            .collection('characters').doc(charId)
-            .update({ 
-                instanceId: newInstanceId,
-                instanceName: newInstanceName // Saves the name for the player to see!
-            });
-            
-        console.log(`Character ${charId} moved to Instance ${newInstanceName}`);
+        await batch.commit(); 
+        alert(`Successfully saved ${changesCount} character assignments!`);
         
-        if (currentCharacterId === charId) {
-            currentCampaignId = newInstanceId;
+        // Re-tune the GM's clock and dice if they moved their own active character
+        if (activeCharMoved) {
             initClockListener();
             initDiceLogListener();
         }
-    } catch (e) {
-        alert("Transfer failed: " + e.message);
+        
+        loadGlobalCharacterManager(); // Refresh the table
+    } catch (error) {
+        console.error("Batch Save Error:", error);
+        alert("Failed to save. Check the console for permissions errors.");
     }
 }
 
