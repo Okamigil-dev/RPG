@@ -139,38 +139,46 @@ async function getTotalRegen(charData) {
 async function applyPassiveRegen() {
     if (!currentCharacterId) return;
 
-    // Fetch the full character data to get the race/classes
+    // 1. Fetch data for accurate regen rates (Race + Class bonuses)
     const charSnap = await firestore.collection('users').doc(auth.currentUser.uid)
         .collection('characters').doc(currentCharacterId).get();
     const charData = charSnap.data();
     
-    // Get the dynamic totals from the Registry
+    // 2. Calculate the Regen Amount
     const { totalHPRegen, totalMPRegen } = await getTotalRegen(charData);
 
     const hpInput = document.getElementById('char-hp-current');
     const mpInput = document.getElementById('char-mp-current');
 
+    // 3. Get current high-precision values
     let hpCur = parseFloat(hpInput.dataset.trueValue) || parseFloat(hpInput.value) || 0;
     let mpCur = parseFloat(mpInput.dataset.trueValue) || parseFloat(mpInput.value) || 0;
 
-    const newHP = Math.min(hpCur + totalHPRegen, charData.hpMax);
-    const newMP = Math.min(mpCur + totalMPRegen, charData.mpMax);
+    // 4. Apply Regen (Clamped to Max)
+    // We use the calculated max from the sheet inputs to be safe
+    const hpMax = parseFloat(document.getElementById('char-hp-max').value) || 10;
+    const mpMax = parseFloat(document.getElementById('char-mp-max').value) || 10;
 
-    // Update the UI and hidden values
+    const newHP = Math.min(hpCur + totalHPRegen, hpMax);
+    const newMP = Math.min(mpCur + totalMPRegen, mpMax);
+
+    // 5. UPDATE CHARACTER SHEET (Inputs)
     hpInput.dataset.trueValue = newHP;
     mpInput.dataset.trueValue = newMP;
+    
     hpInput.value = Math.floor(newHP);
     mpInput.value = Math.floor(newMP);
-}
+    
+    // 6. UPDATE SIDEBAR HUD (Visuals)
+    // This answers your question: We use the same 'newHP' variable for both!
+    document.getElementById('hud-hp-text').innerText = `${Math.floor(newHP)}/${hpMax}`;
+    document.getElementById('hud-mp-text').innerText = `${Math.floor(newMP)}/${mpMax}`;
 
-function updateDisplay() {
-    let tDays = Math.floor(totalCustomSeconds / 86400);
-    let h = Math.floor((totalCustomSeconds / 3600) % 24);
-    let m = Math.floor((totalCustomSeconds / 60) % 60);
-    let s = Math.floor(totalCustomSeconds % 60);
-    if(document.getElementById('time-display')) {
-        document.getElementById('time-display').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    }
+    const hpPerc = Math.min((newHP / hpMax) * 100, 100);
+    const mpPerc = Math.min((newMP / mpMax) * 100, 100);
+
+    document.getElementById('hud-hp-fill').style.width = hpPerc + "%";
+    document.getElementById('hud-mp-fill').style.width = mpPerc + "%";
 }
 setInterval(tick, 100);
 
@@ -638,27 +646,33 @@ async function confirmAttributeChanges() {
 async function saveCharacter() {
     if (!currentCharacterId) return;
 
-    // Fetch existing data first so we don't overwrite portrait or classes
     const charRef = firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId);
+    
+    // 1. Get current data to preserve protected fields (like portrait)
     const doc = await charRef.get();
     const currentData = doc.data();
 
-    //TEMPORARY RULE
-    // Calculate level based on the EXP currently in the input field
-    const currentExp = parseFloat(document.getElementById('char-exp-current').value) || 0;
-    const newLevel = calculateLevelFromEXP(currentExp);
-    //TEMPORARY RULE
-    
+    // 2. AUTO-CALCULATE LEVEL based on EXP
+    // This replaces the old "document.getElementById('char-level').value" that was crashing
+    const expInput = document.getElementById('char-exp-current');
+    const currentExp = parseInt(expInput.value) || 0;
+    const automatedLevel = calculateLevelFromEXP(currentExp);
+
+    // 3. Prepare the data packet
     const data = {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
-        charLevel: parseInt(document.getElementById('char-level-display').value) || 1,
+        expCurrent: currentExp,
+        charLevel: automatedLevel, // Saved automatically
+        
         body: parseInt(document.getElementById('char-body').value) || 0,
         mind: parseInt(document.getElementById('char-mind').value) || 0,
         spirit: parseInt(document.getElementById('char-spirit').value) || 0,
+        
         hpCurrent: parseFloat(document.getElementById('char-hp-current').value) || 0,
         mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0,
-        // PROTECT THESE FIELDS:
+        
+        // Preserve existing data
         portrait: currentData.portrait || "", 
         gallery: currentData.gallery || [],
         unlockedClasses: currentData.unlockedClasses || {}
@@ -666,9 +680,19 @@ async function saveCharacter() {
 
     try {
         await charRef.update(data);
+        
+        // 4. Update the visual displays instantly
+        document.getElementById('char-level-display').innerText = automatedLevel;
+        
+        // 5. Update the Sidebar HUD immediately
         const totals = await getFinalMaxStats(data);
         updateHUD({ ...data, hpMax: totals.finalHP, mpMax: totals.finalMP });
-    } catch (e) { console.error(e); }
+        
+        showToast("Character Saved.");
+    } catch (e) { 
+        console.error("Save Error:", e); 
+        showToast("Error: Save Failed");
+    }
 }
 
 
