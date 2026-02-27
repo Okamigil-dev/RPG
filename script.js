@@ -497,60 +497,89 @@ async function deleteCharacter(event, charId, name) {
     }
 }
 
-function saveCharacter() {
+async function saveCharacter() {
     if (!currentCharacterId) return;
-    
-    // 1. Get raw stat values
-    const body = parseInt(document.getElementById('char-body').value) || 0;
-    const mind = parseInt(document.getElementById('char-mind').value) || 0;
-    const spirit = parseInt(document.getElementById('char-spirit').value) || 0;
-    
-    // 2. Get bonus values (if you've added the inputs to your HTML)
-    const hpBonus = parseInt(document.getElementById('char-hp-bonus-input')?.value) || 0;
-    const mpBonus = parseInt(document.getElementById('char-mp-bonus-input')?.value) || 0;
 
-    // 3. Prepare the update object
+    // 1. Get the current selections
+    const raceName = document.getElementById('char-race').value;
+    const className = document.getElementById('char-class').value;
+
+    // 2. Fetch the specific "Growth" and "Bonuses" from YOUR registry
+    const raceSnap = await firestore.collection('master_races').where('name', '==', raceName).get();
+    const classSnap = await firestore.collection('master_classes').where('name', '==', className).get();
+    
+    const raceD = raceSnap.empty ? { hpPerLv: 1, mpPerLv: 1, baseBody: 0 } : raceSnap.docs[0].data();
+    const classD = classSnap.empty ? { hpPerLv: 0, mpPerLv: 0 } : classSnap.docs[0].data();
+
+    // 3. Gather Inputs
+    const bodyPoints = parseInt(document.getElementById('char-body').value) || 0;
+    const spiritPoints = parseInt(document.getElementById('char-spirit').value) || 0;
+    const charLv = parseInt(document.getElementById('char-level').value) || 1;
+    const classLv = parseInt(document.getElementById('char-class-level').value) || 0;
+
+    // 4. THE CALCULATION (Static Horror Logic)
+    // Total HP = 10 (Base) + (RaceGrowth * Lv) + (ClassGrowth * ClassLv) + ((SpentPoints + NaturalBonus) * 2)
+    const totalBody = bodyPoints + (raceD.baseBody || 0);
+    const hpFromStats = totalBody * 2; // 1:2 Ratio
+    const hpFromRace = charLv * (raceD.hpPerLv || 1);
+    const hpFromClass = classLv * (classD.hpPerLv || 0);
+
+    const newMaxHP = 10 + hpFromRace + hpFromClass + hpFromStats;
+
+    // Repeat for MP
+    const totalSpirit = spiritPoints + (raceD.baseSpirit || 0);
+    const mpFromStats = totalSpirit * 2;
+    const mpFromRace = charLv * (raceD.mpPerLv || 1);
+    const mpFromClass = classLv * (classD.mpPerLv || 0);
+    
+    const newMaxMP = 10 + mpFromRace + mpFromClass + mpFromStats;
+
+    // 5. Update UI & Database
     const data = {
         name: document.getElementById('char-name').value,
-        race: document.getElementById('char-race').value,
-        class: document.getElementById('char-class').value,
-        
-        // DUAL TRACK LEVELS
-        charLevel: parseInt(document.getElementById('char-level').value) || 1,
-        classLevel: parseInt(document.getElementById('char-class-level')?.value) || 1,
-        
-        // STATS & BONUSES
-        body: body,
-        mind: mind,
-        spirit: spirit,
-        hpMaxBonus: hpBonus,
-        mpMaxBonus: mpBonus,
-
-        // CALCULATED TOTALS (Stat * 5 + Bonus + 10 base)
-        hpMax: (body * 5) + hpBonus + 10,
-        mpMax: (spirit * 5) + mpBonus + 10,
-
-        // CURRENT RESOURCES & EXP
+        race: raceName,
+        class: className,
+        body: bodyPoints,
+        spirit: spiritPoints,
+        charLevel: charLv,
+        classLevel: classLv,
+        hpMax: newMaxHP,
+        mpMax: newMaxMP,
         hpCurrent: parseFloat(document.getElementById('char-hp-current').value) || 0,
-        mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0,
-        expCurrent: parseInt(document.getElementById('char-exp-current').value) || 0,
-        expMax: parseInt(document.getElementById('char-exp-max').value) || 1000
-        
-        // Note: We do NOT include 'basicSkills', 'intSkills', etc. here 
-        // because we want those to be updated only by specific skill functions.
+        mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0
     };
 
-    firestore.collection('users').doc(auth.currentUser.uid)
-        .collection('characters').doc(currentCharacterId)
-        .update(data).then(() => {
-            updateHUD(data);
-            console.log("System: Character state synchronized.");
-        });
+    await firestore.collection('users').doc(auth.currentUser.uid)
+        .collection('characters').doc(currentCharacterId).update(data);
+
+    updateHUD(data);
 }
 
 function goBackToSelection() {
     document.getElementById('char-selection-view').classList.remove('hide-default');
     document.getElementById('char-sheet-view').classList.add('hide-default');
+}
+
+// This replaces the hardcoded lists by fetching YOUR registry
+async function syncRegistryToDropdowns() {
+    const raceSelect = document.getElementById('char-race');
+    const classSelect = document.getElementById('char-class');
+    
+    // Fetch YOUR races from Firestore
+    const raceSnap = await firestore.collection('master_races').get();
+    raceSelect.innerHTML = '<option value="">Select Race</option>';
+    raceSnap.forEach(doc => {
+        const d = doc.data();
+        raceSelect.innerHTML += `<option value="${d.name}">${d.name}</option>`;
+    });
+
+    // Fetch YOUR classes from Firestore
+    const classSnap = await firestore.collection('master_classes').get();
+    classSelect.innerHTML = '<option value="">Select Class</option>';
+    classSnap.forEach(doc => {
+        const d = doc.data();
+        classSelect.innerHTML += `<option value="${d.name}">${d.name}</option>`;
+    });
 }
 
 
