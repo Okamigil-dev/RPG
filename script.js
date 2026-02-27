@@ -481,7 +481,7 @@ async function selectCharacter(id) {
             // Level Display (Now display-only)
             document.getElementById('char-level-display').innerText = d.charLevel || 1;
             
-            // AP LOGIC INITIALIZATION
+            // AP LOGIC INITIALIZATION: 1 AP per level
             totalAP = (d.charLevel || 1); 
             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
             pendingStats = { ...originalStats };
@@ -541,6 +541,7 @@ async function selectCharacter(id) {
         console.error("Error selecting character:", error);
     }
 }
+
 async function deleteCharacter(event, charId, name) {
     event.stopPropagation(); // Stops selectCharacter from firing
     
@@ -653,14 +654,15 @@ function goBackToSelection() {
 // This replaces the hardcoded lists by fetching YOUR registry
 async function syncRegistryToDropdowns() {
     const raceSelect = document.getElementById('char-race');
-    
-    // Fetch YOUR races from Firestore
+    if (!raceSelect) return; // Safety check
+
     const raceSnap = await firestore.collection('master_races').get();
     raceSelect.innerHTML = '<option value="">Select Race</option>';
     raceSnap.forEach(doc => {
         const d = doc.data();
         raceSelect.innerHTML += `<option value="${d.name}">${d.name}</option>`;
     });
+}
 
     // Fetch YOUR classes from Firestore
     const classSnap = await firestore.collection('master_classes').get();
