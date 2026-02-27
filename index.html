@@ -156,22 +156,42 @@
                     
                     <div class="char-sheet-grid">
                         <div class="stats-resources-wrapper">
+                            <!-- 1. MAIN STATS -->
                             <div class="panel-card">
                                 <h3>Attributes</h3>
                                 <div class="attr-list-grid">
-                                    <div class="attr-row"><span>BODY</span><input type="number" id="char-body" onchange="saveCharacter()" class="attr-input"></div>
-                                    <div class="attr-row"><span>MIND</span><input type="number" id="char-mind" onchange="saveCharacter()" class="attr-input"></div>
-                                    <div class="attr-row"><span>SPIRIT</span><input type="number" id="char-spirit" onchange="saveCharacter()" class="attr-input"></div>
+                                    <div class="attr-row">
+                                        <span>BODY</span>
+                                        <div class="flex-row">
+                                            <input type="number" id="char-body" onchange="saveCharacter()" class="attr-input">
+                                            <span id="total-body-label" class="join-code-pill">0</span>
+                                        </div>
+                                    </div>
+                                    <div class="attr-row">
+                                        <span>MIND</span>
+                                        <div class="flex-row">
+                                            <input type="number" id="char-mind" onchange="saveCharacter()" class="attr-input">
+                                            <span id="total-mind-label" class="join-code-pill">0</span>
+                                        </div>
+                                    </div>
+                                    <div class="attr-row">
+                                        <span>SPIRIT</span>
+                                        <div class="flex-row">
+                                            <input type="number" id="char-spirit" onchange="saveCharacter()" class="attr-input">
+                                            <span id="total-spirit-label" class="join-code-pill">0</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                    
+
+                            <!-- 2. HP & MP -->
                             <div class="panel-card">
                                 <h3>Status</h3>
                                 <div class="resources-grid">
                                     <div class="resource-group">
                                         <label><i class="fa-solid fa-heart"></i> Health Points</label>
                                         <div class="resource-inputs display-only">
-                                            <input type="number" id="char-hp-current" class="hp-input locked-resource" readonly tabindex="-1">
+                                            <input type="number" id="char-hp-current" onchange="saveCharacter()" class="hp-input">
                                             <span class="divider">/</span>
                                             <input type="number" id="char-hp-max" class="hp-input locked-resource" readonly tabindex="-1">
                                         </div>
@@ -180,46 +200,40 @@
                                     <div class="resource-group">
                                         <label><i class="fa-solid fa-droplet"></i> Mana Points</label>
                                         <div class="resource-inputs display-only">
-                                            <input type="number" id="char-mp-current" class="hp-input locked-resource" readonly tabindex="-1">
+                                            <input type="number" id="char-mp-current" onchange="saveCharacter()" class="hp-input">
                                             <span class="divider">/</span>
                                             <input type="number" id="char-mp-max" class="hp-input locked-resource" readonly tabindex="-1">
                                         </div>
                                     </div>
                                 </div>
-                            
-                                <input type="hidden" id="char-hp-bonus-input" value="0">
-                                <input type="hidden" id="char-mp-bonus-input" value="0">
                             </div>
                         </div>
-                    
+
+                        
                         <div class="panel-card">
+                            
+                            <!-- 3. Name, Race & Class -->
                             <div class="identity-grid">
                                 <div class="field-group">
                                     <label>Name</label>
                                     <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
                                 </div>
+                                
                                 <div class="field-group">
                                     <label>Race</label>
                                     <select id="char-race" onchange="saveCharacter()" class="form-input">
                                         <option value="">Select Race</option>
-                                        <option value="Human">Human</option>
-                                        <option value="Elf">Elf</option>
-                                        <option value="Dwarf">Dwarf</option>
-                                        <option value="Orc">Orc</option>
                                     </select>
                                 </div>
+                                
                                 <div class="field-group">
-                                    <label>Class</label>
-                                    <select id="char-class" onchange="saveCharacter()" class="form-input">
-                                        <option value="">Select Class</option>
-                                        <option value="Warrior">Warrior</option>
-                                        <option value="Mage">Mage</option>
-                                        <option value="Rogue">Rogue</option>
-                                        <option value="Cleric">Cleric</option>
-                                    </select>
+                                    <label>Unlocked Classes</label>
+                                    <div id="char-class-list-display" class="flex-row" style="gap: 5px; flex-wrap: wrap;">
+                                        </div>
                                 </div>
                             </div>
-                            
+
+                            <!-- 3. Name, Race & Class -->
                             <div class="level-exp-grid mt-m">
                                 <div class="field-group">
                                     <label>Char Lv</label>
