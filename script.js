@@ -313,6 +313,7 @@ function openControlSubTab(evt, subTabId) {
     if (subTabId === 'sub-characters') loadGlobalCharacterManager();
     if (subTabId === 'sub-classes') loadMasterClassList();
     if (subTabId === 'sub-races') loadMasterRaceList();
+    if (subTabId === 'sub-skills') loadMasterSkillList();
 }
 
 
@@ -911,9 +912,8 @@ function openMasterPanel() {
     }
 }
 
-/**
- * Fetches all users from Firestore and displays them in the Admin panel
- */
+
+// Fetches all users from Firestore and displays them in the Admin panel
 async function loadUserList() {
     const listContainer = document.getElementById('admin-user-list');
     listContainer.innerHTML = '<p style="padding: 20px; text-align: center;">Fetching database...</p>';
@@ -950,9 +950,8 @@ async function loadUserList() {
     }
 }
 
-/**
- * Collects all dropdown values and saves them to Firestore in a single batch
- */
+// Collects all dropdown values and saves them to Firestore in a single batch
+ 
 async function saveAllUserRoles() {
     const selectors = document.querySelectorAll('.role-selector');
     const batch = firestore.batch(); 
@@ -978,9 +977,7 @@ async function saveAllUserRoles() {
 }
 
 
-/**
- * Loads all instances where the current user is a Master
- */
+// Loads all instances where the current user is a Master
 async function loadInstanceList() {
     const listContainer = document.getElementById('admin-instance-list');
     const user = auth.currentUser;
@@ -1071,9 +1068,7 @@ function viewInstanceDetails(instanceId) {
     alert("Controls now synced to Instance: " + instanceId);
 }
 
-/**
- * Deletes an instance from both Firestore and Realtime Database
- */
+// Deletes an instance from both Firestore and Realtime Database
 async function deleteInstance(instanceId, name) {
     if (!confirm(`Are you sure you want to PERMANENTLY delete "${name}"? This cannot be undone.`)) return;
 
@@ -1487,6 +1482,100 @@ async function loadMasterClassList() {
         `;
         list.appendChild(card);
     });
+}
+
+// --- MASTER SKILLS REGISTRY LOGIC ---
+async function createMasterSkill() {
+    const name = document.getElementById('ms-name').value.trim();
+    const tier = document.getElementById('ms-tier').value;
+    const classTag = document.getElementById('ms-class-tag').value;
+    const classLvReq = parseInt(document.getElementById('ms-class-lv-req').value) || 1;
+    const scalingStat = document.getElementById('ms-scaling-stat').value;
+    const desc = document.getElementById('ms-desc').value.trim();
+
+    if (!name) return alert("Skill name is required!");
+
+    try {
+        await firestore.collection('master_skills').add({
+            name,
+            tier,
+            classTag,
+            classLvReq,
+            scalingStat,
+            description: desc,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Reset fields
+        document.getElementById('ms-name').value = "";
+        document.getElementById('ms-desc').value = "";
+        
+        alert(`${name} added to global library.`);
+        loadMasterSkillList(); 
+    } catch (error) {
+        console.error("Error creating skill:", error);
+    }
+}
+
+async function loadMasterSkillList() {
+    const listContainer = document.getElementById('master-skill-list');
+    if (!listContainer) return;
+
+    try {
+        const snapshot = await firestore.collection('master_skills').orderBy('name').get();
+        listContainer.innerHTML = "";
+
+        if (snapshot.empty) {
+            listContainer.innerHTML = '<p class="text-center opacity-50">No skills registered yet.</p>';
+            return;
+        }
+
+        snapshot.forEach(doc => {
+            const s = doc.data();
+            const card = document.createElement('div');
+            card.className = 'panel-card mb-s';
+            card.style.background = '#18181b';
+            
+            card.innerHTML = `
+                <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <strong style="color: #a855f7;">${s.name}</strong>
+                        <div style="font-size: 0.7rem; color: #71717a; text-transform: uppercase; margin-top: 4px;">
+                            ${s.classTag} (Req. Class Lv.${s.classLvReq}) | Scales: ${s.scalingStat}
+                        </div>
+                        <p style="font-size: 0.85rem; margin-top: 8px; opacity: 0.8;">${s.description || 'No description.'}</p>
+                    </div>
+                    <button class="btn-danger-small" onclick="deleteMasterAsset('master_skills', '${doc.id}', loadMasterSkillList)">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            listContainer.appendChild(card);
+        });
+    } catch (error) {
+        console.error("Error loading master skills:", error);
+    }
+}
+
+async function refreshSkillClassDropdown() {
+    const dropdown = document.getElementById('ms-class-tag');
+    if (!dropdown) return;
+
+    try {
+        const snap = await firestore.collection('master_classes').orderBy('name').get();
+        
+        // Keep "All Classes", then add the rest
+        let html = `<option value="All">All Classes</option>`;
+        
+        snap.forEach(doc => {
+            const className = doc.data().name;
+            html += `<option value="${className}">${className}</option>`;
+        });
+
+        dropdown.innerHTML = html;
+    } catch (e) {
+        console.error("Error updating skill dropdown:", e);
+    }
 }
 
 // Global utility for deleting any master asset
