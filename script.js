@@ -316,6 +316,7 @@ function openControlSubTab(evt, subTabId) {
     if (subTabId === 'sub-skills') { refreshSkillClassDropdown(); loadMasterSkillList(); }
     if (subTabId === 'sub-classes') loadMasterClassList();
     if (subTabId === 'sub-traits') loadMasterTraitList();
+    
 }
 
 
@@ -1406,6 +1407,107 @@ async function loadMasterRaceList() {
         `;
         list.appendChild(card);
     });
+}
+
+async function saveMasterRace() {
+    const raceId = document.getElementById('m-race-id').value;
+    const name = document.getElementById('m-race-name').value.trim();
+    if (!name) return alert("Race name required!");
+
+    const traitsArray = document.getElementById('m-race-traits').value.split(',').map(t => t.trim()).filter(t => t !== "");
+
+    const raceData = {
+        name: name,
+        hpPerLv: parseInt(document.getElementById('m-race-hp').value) || 0,
+        mpPerLv: parseInt(document.getElementById('m-race-mp').value) || 0,
+        hpRegenBonus: parseFloat(document.getElementById('m-race-hp-regen').value) || 0,
+        mpRegenBonus: parseFloat(document.getElementById('m-race-mp-regen').value) || 0,
+        speedBonus: parseInt(document.getElementById('m-race-speed').value) || 30,
+        accuracyBonus: parseInt(document.getElementById('m-race-accuracy').value) || 0,
+        armorClassBonus: parseInt(document.getElementById('m-race-ac').value) || 0,
+        critChanceBonus: parseInt(document.getElementById('m-race-crit-chance').value) || 0,
+        description: document.getElementById('m-race-desc').value.trim(),
+        traits: traitsArray,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        if (raceId) {
+            await firestore.collection('master_races').doc(raceId).update(raceData);
+        } else {
+            raceData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await firestore.collection('master_races').add(raceData);
+        }
+
+        // Shared with Class Library!
+        traitsArray.forEach(traitName => ensureTraitExists(traitName));
+
+        resetRaceForm();
+        loadMasterRaceList();
+        alert("Race saved successfully!");
+    } catch (e) { console.error(e); }
+}
+
+async function loadMasterRaceList() {
+    const list = document.getElementById('master-race-list');
+    if (!list) return;
+
+    const snap = await firestore.collection('master_races').orderBy('name').get();
+    list.innerHTML = "";
+
+    snap.forEach(doc => {
+        const d = doc.data();
+        const card = document.createElement('div');
+        card.className = "panel-card mb-s";
+        card.style.background = "#18181b";
+        
+        card.innerHTML = `
+            <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <strong>${d.name}</strong>
+                    <div style="font-size: 0.7rem; color: #71717a; margin-top: 4px;">
+                        Speed: ${d.speedBonus} | AC: +${d.armorClassBonus} | HP/Lv: +${d.hpPerLv}
+                    </div>
+                </div>
+                <div class="flex-row" style="gap: 5px;">
+                    <button class="btn-small" onclick="editRace('${doc.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button class="btn-danger-small" onclick="deleteMasterAsset('master_races', '${doc.id}', loadMasterRaceList)"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+        `;
+        list.appendChild(card);
+    });
+}
+
+async function editRace(id) {
+    const doc = await firestore.collection('master_races').doc(id).get();
+    if (!doc.exists) return;
+    const d = doc.data();
+
+    document.getElementById('m-race-id').value = id;
+    document.getElementById('m-race-name').value = d.name;
+    document.getElementById('m-race-hp').value = d.hpPerLv;
+    document.getElementById('m-race-mp').value = d.mpPerLv;
+    document.getElementById('m-race-hp-regen').value = d.hpRegenBonus;
+    document.getElementById('m-race-mp-regen').value = d.mpRegenBonus;
+    document.getElementById('m-race-speed').value = d.speedBonus;
+    document.getElementById('m-race-accuracy').value = d.accuracyBonus;
+    document.getElementById('m-race-ac').value = d.armorClassBonus;
+    document.getElementById('m-race-crit-chance').value = d.critChanceBonus;
+    document.getElementById('m-race-traits').value = (d.traits || []).join(", ");
+    document.getElementById('m-race-desc').value = d.description || "";
+
+    document.getElementById('race-editor-title').innerText = "Editing Race: " + d.name;
+    document.getElementById('race-cancel-btn').classList.remove('hide-default');
+    document.querySelector('.master-workspace').scrollTop = 0;
+}
+
+function resetRaceForm() {
+    const inputs = document.querySelectorAll('#sub-races input, #sub-races textarea');
+    inputs.forEach(i => i.value = (i.type === "number") ? 0 : "");
+    document.getElementById('m-race-speed').value = 30;
+    document.getElementById('race-editor-title').innerText = "Register New Race";
+    document.getElementById('race-cancel-btn').classList.add('hide-default');
 }
 
 // --- CLASS REGISTRY LOGIC ---
