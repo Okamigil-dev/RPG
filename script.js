@@ -201,6 +201,15 @@ auth.onAuthStateChanged((user) => {
     const sidebar = document.getElementById('sidebar');
 
     if (user) {
+        // Inside the 'if (user)' block:
+        const savedTab = localStorage.getItem('activeMainTab');
+        
+        // If there's no saved tab, or the saved tab is the login tab, default to character sheet
+        if (!savedTab || savedTab === 'tab-login') {
+            openTab('tab-character');
+        } else {
+            openTab(savedTab);
+        }
         // --- LOGGED IN STATE ---
         topNav.classList.remove('hide-default');
         appBody.classList.remove('hide-default');
@@ -282,9 +291,11 @@ function openTab(tabId) {
         target.classList.remove('hide-default');
     }
 
-    // --- NEW: Save the main tab to memory ---
-    localStorage.setItem('activeMainTab', tabId);
-
+    // --- Only save to memory if it's NOT the login tab ---
+    if (tabId !== 'tab-login') {
+        localStorage.setItem('activeMainTab', tabId);
+    }
+    
     if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
         loadInstanceList();
         openMasterPanel();
