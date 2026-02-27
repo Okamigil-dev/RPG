@@ -1471,7 +1471,7 @@ async function saveCharacterManagerEdits() {
             gold: newGold,
             body: newBody,
             mind: newMind,
-            spirit: newSpirit
+            spirit: newSpirit,
             hpBonusFlat: parseInt(document.getElementById('edit-modal-hp-flat').value) || 0,
             hpBonusPerc: parseInt(document.getElementById('edit-modal-hp-perc').value) || 0,
             mpBonusFlat: parseInt(document.getElementById('edit-modal-mp-flat').value) || 0,
