@@ -130,7 +130,7 @@ body {
 
 
 /* ==========================================
-   --- 8. DICE TRAY ---
+   --- 8. CHATBOX & DICE TRAY ---
    ========================================== */
 
 .dice-tray { 
@@ -155,7 +155,52 @@ body {
     padding-bottom: 5px;
     scrollbar-width: none;
 }
-.dice-log::-webkit-scrollbar { display: none; }
+
+.dice-log {
+    height: 300px; /* Adjust this based on your layout */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse; /* Keeps newest messages at the bottom */
+    padding: 10px;
+    background: #121212;
+    gap: 8px;
+}
+
+.chat-entry {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #1e1e1e;
+    color: #e4e4e7;
+    word-wrap: break-word;
+}
+
+.chat-entry .chat-name {
+    font-weight: bold;
+    color: #a855f7; /* VTT Purple */
+    margin-right: 5px;
+}
+
+/* Specific styling for Dice Rolls */
+.chat-entry.roll-type {
+    background: #2a2a35;
+    border-left: 3px solid #3b82f6; /* Blue for rolls */
+}
+
+.chat-entry.roll-type .roll-result {
+    font-weight: bold;
+    color: #60a5fa;
+    font-size: 1rem;
+}
+
+/* Specific styling for System Alerts (Like EXP) */
+.chat-entry.system-type {
+    background: #064e3b; /* Dark Green */
+    border-left: 3px solid #10b981;
+    color: #a7f3d0;
+    font-style: italic;
+}
+
 .dice-log-placeholder { text-align: center; opacity: 0.3; padding-top: 15px; }
 
 
