@@ -747,6 +747,12 @@ function rollDice(sides, btn) {
 }
 
 function initDiceLogListener() {
+    // 1. CLEAR THE LOG before starting the listener
+    const log = document.getElementById('dice-log');
+    if (log) {
+        log.innerHTML = '<div class="dice-log-placeholder">Loading history...</div>';
+    }
+    
     // Note: We use the same function name so your existing code calls it normally
     rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).off();
 
