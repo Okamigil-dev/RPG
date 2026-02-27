@@ -1414,9 +1414,11 @@ async function loadMasterRaceList() {
 // --- CLASS REGISTRY LOGIC ---
 async function createMasterClass() {
     const name = document.getElementById('m-class-name').value.trim();
+    const tier = parseInt(document.getElementById('m-class-tier').value);
+    const mainStat = document.getElementById('m-class-main-stat').value;
     const hpPerLv = parseInt(document.getElementById('m-class-hp').value) || 0;
     const mpPerLv = parseInt(document.getElementById('m-class-mp').value) || 0;
-    const initialGold = parseInt(document.getElementById('m-class-gold').value) || 0;
+    const reqs = document.getElementById('m-class-reqs').value.trim(); // NEW
     const desc = document.getElementById('m-class-desc').value.trim();
     
     const traitsRaw = document.getElementById('m-class-traits').value;
@@ -1426,17 +1428,22 @@ async function createMasterClass() {
 
     try {
         await firestore.collection('master_classes').add({
-            name, hpPerLv, mpPerLv, initialGold, 
-            description: desc, traits: traitsArray,
+            name, 
+            tier,
+            mainStat,
+            hpPerLv, 
+            mpPerLv, 
+            requirements: reqs, // Saved for unlock logic later
+            description: desc, 
+            traits: traitsArray,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
         // Reset Form
         document.getElementById('m-class-name').value = "";
+        document.getElementById('m-class-reqs').value = "";
         document.getElementById('m-class-desc').value = "";
-        document.getElementById('m-class-traits').value = "";
         
-        alert(`${name} registered.`);
         loadMasterClassList();
     } catch (e) { console.error(e); }
 }
@@ -1445,13 +1452,15 @@ async function loadMasterClassList() {
     const list = document.getElementById('master-class-list');
     if (!list) return;
 
-    const snap = await firestore.collection('master_classes').orderBy('name').get();
+    // Order by Tier then Name
+    const snap = await firestore.collection('master_classes').orderBy('tier').orderBy('name').get();
     list.innerHTML = "";
 
     snap.forEach(doc => {
         const d = doc.data();
         const card = document.createElement('div');
         card.className = "panel-card mb-s";
+        card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#71717a'}`;
         card.style.background = "#18181b";
         
         const traitTags = (d.traits || []).map(t => 
@@ -1460,12 +1469,15 @@ async function loadMasterClassList() {
 
         card.innerHTML = `
             <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
-                <div>
-                    <strong style="color: #6366f1;">${d.name}</strong>
-                    <div class="mt-s" style="margin-bottom:8px;">${traitTags}</div>
-                    <p style="font-size: 0.8rem; opacity: 0.8;">${d.description || 'No description.'}</p>
-                    <div style="font-size: 0.7rem; color: #71717a;">
-                        Lv Bonus: HP+${d.hpPerLv} MP+${d.mpPerLv} | Gold: ${d.initialGold}
+                <div style="flex: 1;">
+                    <div class="flex-row" style="gap: 10px;">
+                        <strong style="color: #e4e4e7; font-size: 1.1rem;">${d.name}</strong>
+                        <span style="font-size: 0.65rem; background: #27272a; padding: 2px 8px; border-radius: 10px; color: #a1a1aa;">Tier ${d.tier}</span>
+                    </div>
+                    <div style="margin: 8px 0;">${traitTags}</div>
+                    <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 8px;">${d.description || 'No description.'}</p>
+                    <div style="font-size: 0.75rem; color: #a855f7; font-weight: bold;">
+                        MAIN STAT: ${d.mainStat} | HP/Lv: +${d.hpPerLv} | MP/Lv: +${d.mpPerLv}
                     </div>
                 </div>
                 <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)">
