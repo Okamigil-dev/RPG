@@ -463,20 +463,31 @@ async function selectCharacter(id) {
             // 1. IDENTITY & METADATA
             document.getElementById('char-name').value = d.name || "";
             document.getElementById('char-race').value = d.race || "";
-            document.getElementById('char-class').value = d.class || "";
             document.getElementById('char-level').value = d.charLevel || 1;
-            document.getElementById('char-class-level').value = d.classLevel || 1;
             
+            // CLEANED: Render the Multi-Class pills instead of a single dropdown
+            const classListContainer = document.getElementById('char-class-list-display');
+            classListContainer.innerHTML = "";
+            const classes = d.unlockedClasses || {};
+            
+            if (Object.keys(classes).length === 0) {
+                classListContainer.innerHTML = '<span class="text-muted" style="font-size: 0.8rem;">No classes unlocked</span>';
+            } else {
+                Object.keys(classes).forEach(className => {
+                    const pill = document.createElement('span');
+                    pill.className = 'join-code-pill';
+                    pill.innerText = `${className} Lv.${classes[className].level}`;
+                    classListContainer.appendChild(pill);
+                });
+            }
+
             // 2. CORE ATTRIBUTES
             document.getElementById('char-body').value = d.body || 0;
             document.getElementById('char-mind').value = d.mind || 0;
             document.getElementById('char-spirit').value = d.spirit || 0;
 
             // 3. RETROACTIVE CALCULATION
-            // We call your new function to get the current "Source of Truth" for Max HP/MP
             const totals = await getFinalMaxStats(d);
-            
-            // Update the UI Max inputs with the calculated values
             document.getElementById('char-hp-max').value = totals.finalHP;
             document.getElementById('char-mp-max').value = totals.finalMP;
 
@@ -503,7 +514,7 @@ async function selectCharacter(id) {
             document.getElementById('char-selection-view').classList.add('hide-default');
             document.getElementById('char-sheet-view').classList.remove('hide-default');
             
-            // Update HUD using the same calculated totals
+            // Update HUD and effective stat labels
             const hudData = { ...d, hpMax: totals.finalHP, mpMax: totals.finalMP };
             updateHUD(hudData);
             
@@ -638,6 +649,14 @@ async function updateHUD(char) {
     document.getElementById('hud-mod-mind').innerText = calculateMod(char.mind, raceD.baseMind);
     document.getElementById('hud-mod-spirit').innerText = calculateMod(char.spirit, raceD.baseSpirit);
 
+    const totalB = (char.body || 0) + (raceD.baseBody || 0);
+    const totalM = (char.mind || 0) + (raceD.baseMind || 0);
+    const totalS = (char.spirit || 0) + (raceD.baseSpirit || 0);
+    
+    document.getElementById('total-body-label').innerText = totalB;
+    document.getElementById('total-mind-label').innerText = totalM;
+    document.getElementById('total-spirit-label').innerText = totalS;
+    
     // 5. Progress Bars
     const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 10)) * 100, 100);
     const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 10)) * 100, 100);
