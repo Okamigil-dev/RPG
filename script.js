@@ -10,6 +10,9 @@ let lastRealTime = Date.now();
 let currentCampaignId = "global"; 
 let currentCharacterId = null; 
 
+let pendingStats = { body: 0, mind: 0, spirit: 0 };
+let originalStats = { body: 0, mind: 0, spirit: 0 };
+let totalAP = 0;
 
 
 // ==========================================
@@ -474,13 +477,19 @@ async function selectCharacter(id) {
             // 1. IDENTITY & METADATA
             document.getElementById('char-name').value = d.name || "";
             document.getElementById('char-race').value = d.race || "";
-            document.getElementById('char-level').value = d.charLevel || 1;
             
-            // CLEANED: Render the Multi-Class pills instead of a single dropdown
+            // Level Display (Now display-only)
+            document.getElementById('char-level-display').innerText = d.charLevel || 1;
+            
+            // AP LOGIC INITIALIZATION
+            totalAP = (d.charLevel || 1); 
+            originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
+            pendingStats = { ...originalStats };
+
+            // Render Multi-Class pills
             const classListContainer = document.getElementById('char-class-list-display');
             classListContainer.innerHTML = "";
             const classes = d.unlockedClasses || {};
-            
             if (Object.keys(classes).length === 0) {
                 classListContainer.innerHTML = '<span class="text-muted" style="font-size: 0.8rem;">No classes unlocked</span>';
             } else {
@@ -492,10 +501,8 @@ async function selectCharacter(id) {
                 });
             }
 
-            // 2. CORE ATTRIBUTES
-            document.getElementById('char-body').value = d.body || 0;
-            document.getElementById('char-mind').value = d.mind || 0;
-            document.getElementById('char-spirit').value = d.spirit || 0;
+            // 2. CORE ATTRIBUTES (Now handled by Pending Stats)
+            refreshStatDisplay();
 
             // 3. RETROACTIVE CALCULATION
             const totals = await getFinalMaxStats(d);
@@ -525,7 +532,6 @@ async function selectCharacter(id) {
             document.getElementById('char-selection-view').classList.add('hide-default');
             document.getElementById('char-sheet-view').classList.remove('hide-default');
             
-            // Update HUD and effective stat labels
             const hudData = { ...d, hpMax: totals.finalHP, mpMax: totals.finalMP };
             updateHUD(hudData);
             
@@ -535,7 +541,6 @@ async function selectCharacter(id) {
         console.error("Error selecting character:", error);
     }
 }
-
 async function deleteCharacter(event, charId, name) {
     event.stopPropagation(); // Stops selectCharacter from firing
     
@@ -554,6 +559,58 @@ async function deleteCharacter(event, charId, name) {
     } catch (err) {
         alert("Error: " + err.message);
     }
+}
+
+function refreshStatDisplay() {
+    // Calculate spent AP by comparing current pending to original database values
+    let spentAP = (pendingStats.body - originalStats.body) + 
+                  (pendingStats.mind - originalStats.mind) + 
+                  (pendingStats.spirit - originalStats.spirit);
+    
+    let remAP = totalAP - spentAP;
+    document.getElementById('char-ap-rem').innerText = remAP;
+    
+    // Update display labels
+    document.getElementById('display-body').innerText = pendingStats.body;
+    document.getElementById('display-mind').innerText = pendingStats.mind;
+    document.getElementById('display-spirit').innerText = pendingStats.spirit;
+
+    // Show/Hide confirm button only if there are changes
+    const hasChanges = spentAP !== 0;
+    document.getElementById('attr-confirm-area').classList.toggle('hide-default', !hasChanges);
+}
+
+function adjustPendingStat(stat, amt) {
+    let spentAP = (pendingStats.body - originalStats.body) + 
+                  (pendingStats.mind - originalStats.mind) + 
+                  (pendingStats.spirit - originalStats.spirit);
+
+    // 1 AP cost per point
+    if (amt > 0 && spentAP >= totalAP) return; // No AP left
+    if (amt < 0 && pendingStats[stat] <= originalStats[stat]) return; // No respec allowed
+
+    pendingStats[stat] += amt;
+    refreshStatDisplay();
+}
+
+async function confirmAttributeChanges() {
+    if (!currentCharacterId) return;
+    
+    try {
+        await firestore.collection('users').doc(auth.currentUser.uid)
+            .collection('characters').doc(currentCharacterId).update({
+                body: pendingStats.body,
+                mind: pendingStats.mind,
+                spirit: pendingStats.spirit
+            });
+            
+        // Sync local "original" to the new values
+        originalStats = { ...pendingStats };
+        alert("Attributes committed to the soul.");
+        
+        // Refresh the sheet to update Max HP/MP totals
+        saveCharacter(); 
+    } catch (e) { console.error("Update failed:", e); }
 }
 
 async function saveCharacter() {
@@ -585,6 +642,8 @@ async function saveCharacter() {
         updateHUD({ ...data, hpMax: totals.finalHP, mpMax: totals.finalMP });
     } catch (e) { console.error(e); }
 }
+
+
 
 function goBackToSelection() {
     document.getElementById('char-selection-view').classList.remove('hide-default');
