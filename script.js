@@ -1171,6 +1171,80 @@ function filterCharacterTable() {
 }
 
 
+async function openCharacterManagerModal(uid, cid) {
+    // 1. Store the IDs secretly in the modal so the save function knows who to update
+    document.getElementById('edit-modal-uid').value = uid;
+    document.getElementById('edit-modal-cid').value = cid;
+
+    try {
+        // 2. Fetch their exact current stats from Firestore
+        const charRef = firestore.collection('users').doc(uid).collection('characters').doc(cid);
+        const doc = await charRef.get();
+        
+        if (doc.exists) {
+            const data = doc.data();
+            
+            // 3. Fill in the modal inputs
+            document.getElementById('edit-modal-title').innerText = `Editing: ${data.name}`;
+            document.getElementById('edit-modal-exp').value = data.exp || 0;
+            document.getElementById('edit-modal-hp').value = data.hpCurrent || 0;
+            document.getElementById('edit-modal-mp').value = data.mpCurrent || 0;
+            document.getElementById('edit-modal-gold').value = data.gold || 0;
+
+            // 4. Unhide the modal
+            const modal = document.getElementById('master-char-edit-modal');
+            modal.classList.remove('hide-default');
+        }
+    } catch (error) {
+        console.error("Error fetching character details:", error);
+        alert("Failed to load character data. Check console.");
+    }
+}
+
+function closeCharacterManagerModal() {
+    const modal = document.getElementById('master-char-edit-modal');
+    modal.classList.add('hide-default');
+}
+
+function addExpQuick(amount) {
+    const expInput = document.getElementById('edit-modal-exp');
+    let currentExp = parseInt(expInput.value) || 0;
+    
+    // NOTE FOR LATER: This is exactly where we will inject the logic to check their backpack 
+    // for "+15% EXP Amulets" and multiply the 'amount' before adding it!
+    
+    expInput.value = currentExp + amount;
+}
+
+async function saveCharacterManagerEdits() {
+    const uid = document.getElementById('edit-modal-uid').value;
+    const cid = document.getElementById('edit-modal-cid').value;
+    
+    const newExp = parseInt(document.getElementById('edit-modal-exp').value) || 0;
+    const newHp = parseInt(document.getElementById('edit-modal-hp').value) || 0;
+    const newMp = parseInt(document.getElementById('edit-modal-mp').value) || 0;
+    const newGold = parseInt(document.getElementById('edit-modal-gold').value) || 0;
+
+    try {
+        const charRef = firestore.collection('users').doc(uid).collection('characters').doc(cid);
+        
+        await charRef.update({
+            exp: newExp,
+            hpCurrent: newHp,
+            mpCurrent: newMp,
+            gold: newGold
+        });
+
+        alert("Character stats updated successfully!");
+        closeCharacterManagerModal();
+        
+    } catch (error) {
+        console.error("Error saving character edits:", error);
+        alert("Failed to save. Check console.");
+    }
+}
+
+
 
 /* ==========================================
    --- 14. SKILLS ---
