@@ -652,7 +652,7 @@ async function saveCharacter() {
     const data = {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
-        charLevel: parseInt(document.getElementById('char-level').value) || 1,
+        charLevel: parseInt(document.getElementById('char-level-display').value) || 1,
         body: parseInt(document.getElementById('char-body').value) || 0,
         mind: parseInt(document.getElementById('char-mind').value) || 0,
         spirit: parseInt(document.getElementById('char-spirit').value) || 0,
