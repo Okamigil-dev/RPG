@@ -114,20 +114,24 @@ function tick() {
 function applyPassiveRegen() {
     if (!currentCharacterId) return;
 
+    // 1. Get current true values
     let hpCur = parseFloat(document.getElementById('char-hp-current').value) || 0;
-    let hpMax = parseFloat(document.getElementById('char-hp-max').value) || 10;
     let mpCur = parseFloat(document.getElementById('char-mp-current').value) || 0;
+    
+    // Use the Registry-calculated Maxes from the sheet
+    let hpMax = parseFloat(document.getElementById('char-hp-max').value) || 10;
     let mpMax = parseFloat(document.getElementById('char-mp-max').value) || 10;
 
-    // Regen ~100% in 8 hours
+    // 2. Calculate Regen (Precise decimals stay in memory)
     let hpRegen = hpMax * 0.00208333;
     let mpRegen = mpMax * 0.00208333;
 
-    // Use .toFixed(2) to keep the fraction safe in the hidden input
-    document.getElementById('char-hp-current').value = Math.min(hpCur + hpRegen, hpMax).toFixed(2);
-    document.getElementById('char-mp-current').value = Math.min(mpCur + mpRegen, mpMax).toFixed(2);
+    // 3. Update inputs as pure numbers (No .toFixed)
+    document.getElementById('char-hp-current').value = Math.min(hpCur + hpRegen, hpMax);
+    document.getElementById('char-mp-current').value = Math.min(mpCur + mpRegen, mpMax);
     
-    saveCharacter(); // Syncs to DB
+    // 4. Sync to DB (HUD will automatically floor the display next tick)
+    saveCharacter(); 
 }
 
 function updateDisplay() {
@@ -249,6 +253,7 @@ auth.onAuthStateChanged((user) => {
                 openTab(savedTab);
             }
         });
+        syncRegistryToDropdowns();
         loadUserCharacters();
     } else {
         // --- LOGGED OFF MODE ---
@@ -548,12 +553,11 @@ async function deleteCharacter(event, charId, name) {
 async function saveCharacter() {
     if (!currentCharacterId) return;
 
-    // 1. Fetch current DB data first to protect Multi-Class info
+    // Fetch existing data first so we don't overwrite portrait or classes
     const charRef = firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId);
     const doc = await charRef.get();
     const currentData = doc.data();
 
-    // 2. Gather only the valid inputs from the sheet
     const data = {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
@@ -563,26 +567,17 @@ async function saveCharacter() {
         spirit: parseInt(document.getElementById('char-spirit').value) || 0,
         hpCurrent: parseFloat(document.getElementById('char-hp-current').value) || 0,
         mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0,
-        // Carry over the existing class data from the DB
+        // PROTECT THESE FIELDS:
+        portrait: currentData.portrait || "", 
+        gallery: currentData.gallery || [],
         unlockedClasses: currentData.unlockedClasses || {}
     };
 
     try {
         await charRef.update(data);
-
-        // 3. Recalculate totals for visual feedback
         const totals = await getFinalMaxStats(data);
-        
-        // 4. Sync HUD and Sheet visuals
-        const hudData = { ...data, hpMax: totals.finalHP, mpMax: totals.finalMP };
-        updateHUD(hudData);
-
-        document.getElementById('char-hp-max').value = totals.finalHP;
-        document.getElementById('char-mp-max').value = totals.finalMP;
-
-    } catch (error) {
-        console.error("Error saving character:", error);
-    }
+        updateHUD({ ...data, hpMax: totals.finalHP, mpMax: totals.finalMP });
+    } catch (e) { console.error(e); }
 }
 
 function goBackToSelection() {
@@ -627,53 +622,31 @@ async function updateHUD(char) {
     const raceSnap = await firestore.collection('master_races').where('name', '==', char.race).limit(1).get();
     const raceD = raceSnap.empty ? { baseBody: 0, baseMind: 0, baseSpirit: 0 } : raceSnap.docs[0].data();
 
-    // 2. Identity and Metadata
-    document.getElementById('hud-name').innerText = char.name || "Unnamed";
-    const charLv = char.charLevel || 1;
-    const classLv = char.classLevel || 1;
-    document.getElementById('hud-meta').innerText = `Lv.${charLv} (${char.class || 'Adventurer'} Lv.${classLv})`;
+    // 2. Dynamic Meta Label (Handles Multi-Class)
+    const classes = char.unlockedClasses || {};
+    const classStrings = Object.keys(classes).map(name => `${name} Lv.${classes[name].level}`);
+    const metaText = `Lv.${char.charLevel || 1} (${classStrings.length > 0 ? classStrings.join(', ') : 'Adventurer'})`;
+    document.getElementById('hud-meta').innerText = metaText;
     
-    // 3. Text Resources
-    document.getElementById('hud-hp-text').innerText = 
-        `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 10)}`;
-    document.getElementById('hud-mp-text').innerText = 
-        `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 10)}`;
+    // 3. Stats & Bars (Using the totals we calculated earlier)
+    document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${char.hpMax || 10}`;
+    document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${char.mpMax || 15}`;
     
-    // 4. Effective Stat Modifiers (Spent + Natural) / 2
-    const calculateMod = (spent, natural) => {
-        const total = (spent || 0) + (natural || 0);
-        const mod = Math.floor(total / 2);
+    // 4. Update the 3 Stat Modifier Boxes (+0, +1, etc)
+    const getMod = (spent, natural) => {
+        const mod = Math.floor(((spent || 0) + (natural || 0)) / 2);
         return mod >= 0 ? `+${mod}` : mod;
     };
     
-    document.getElementById('hud-mod-body').innerText = calculateMod(char.body, raceD.baseBody);
-    document.getElementById('hud-mod-mind').innerText = calculateMod(char.mind, raceD.baseMind);
-    document.getElementById('hud-mod-spirit').innerText = calculateMod(char.spirit, raceD.baseSpirit);
+    document.getElementById('hud-mod-body').innerText = `BODY ${getMod(char.body, raceD.baseBody)}`;
+    document.getElementById('hud-mod-mind').innerText = `MIND ${getMod(char.mind, raceD.baseMind)}`;
+    document.getElementById('hud-mod-spirit').innerText = `SPIRIT ${getMod(char.spirit, raceD.baseSpirit)}`;
 
-    const totalB = (char.body || 0) + (raceD.baseBody || 0);
-    const totalM = (char.mind || 0) + (raceD.baseMind || 0);
-    const totalS = (char.spirit || 0) + (raceD.baseSpirit || 0);
-    
-    document.getElementById('total-body-label').innerText = totalB;
-    document.getElementById('total-mind-label').innerText = totalM;
-    document.getElementById('total-spirit-label').innerText = totalS;
-    
-    // 5. Progress Bars
+    // 5. Portrait & Bar Widths
     const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 10)) * 100, 100);
-    const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 10)) * 100, 100);
-    const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
-
+    const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 15)) * 100, 100);
     document.getElementById('hud-hp-fill').style.width = hpPerc + "%";
     document.getElementById('hud-mp-fill').style.width = mpPerc + "%";
-    document.getElementById('hud-exp-fill').style.width = expPerc + "%";
-
-    // 6. Portrait
-    const portraitEl = document.getElementById('hud-portrait');
-    if (char.portrait) {
-        portraitEl.style.backgroundImage = `url(${char.portrait})`;
-    } else {
-        portraitEl.style.backgroundImage = "none";
-    }
 }
 
 
