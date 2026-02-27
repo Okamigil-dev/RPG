@@ -114,24 +114,30 @@ function tick() {
 function applyPassiveRegen() {
     if (!currentCharacterId) return;
 
-    // 1. Get current true values
-    let hpCur = parseFloat(document.getElementById('char-hp-current').value) || 0;
-    let mpCur = parseFloat(document.getElementById('char-mp-current').value) || 0;
+    // 1. Pull the PRECISE values from the hidden dataset, not the rounded input
+    const hpInput = document.getElementById('char-hp-current');
+    const mpInput = document.getElementById('char-mp-current');
     
-    // Use the Registry-calculated Maxes from the sheet
+    let hpCur = parseFloat(hpInput.dataset.trueValue) || parseFloat(hpInput.value) || 0;
+    let mpCur = parseFloat(mpInput.dataset.trueValue) || parseFloat(mpInput.value) || 0;
+    
     let hpMax = parseFloat(document.getElementById('char-hp-max').value) || 10;
     let mpMax = parseFloat(document.getElementById('char-mp-max').value) || 10;
 
-    // 2. Calculate Regen (Precise decimals stay in memory)
     let hpRegen = hpMax * 0.00208333;
     let mpRegen = mpMax * 0.00208333;
 
-    // 3. Update inputs as pure numbers (No .toFixed)
-    document.getElementById('char-hp-current').value = Math.min(hpCur + hpRegen, hpMax);
-    document.getElementById('char-mp-current').value = Math.min(mpCur + mpRegen, mpMax);
+    const newHP = Math.min(hpCur + hpRegen, hpMax);
+    const newMP = Math.min(mpCur + mpRegen, mpMax);
+
+    // 2. Visual Fix: Update the hidden decimal and the clean display integer
+    hpInput.dataset.trueValue = newHP;
+    hpInput.value = Math.floor(newHP);
+
+    mpInput.dataset.trueValue = newMP;
+    mpInput.value = Math.floor(newMP);
     
-    // 4. Sync to DB (HUD will automatically floor the display next tick)
-    saveCharacter(); 
+    saveCharacter(); // Syncs precise numbers to DB
 }
 
 function updateDisplay() {
