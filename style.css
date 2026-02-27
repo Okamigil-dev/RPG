@@ -362,6 +362,16 @@ body {
     margin-bottom: 20px;
 }
 
+/* Specialized styling for the automated level display */
+.level-pill-large {
+    font-size: 1.2rem;
+    padding: 10px 20px;
+    text-align: center;
+    width: 100%;
+    display: block; /* Ensures it fills the container width */
+    box-sizing: border-box;
+}
+
 .level-exp-grid { 
     display: flex; 
     justify-content: center; 
