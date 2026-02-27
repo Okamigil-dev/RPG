@@ -441,7 +441,7 @@ function loadUserCharacters() {
     });
 }
 
-function selectCharacter(id) {
+async function selectCharacter(id) {
     // 0. RESET UI (Clears ghost data)
     const allInputs = document.querySelectorAll('#char-sheet-view input');
     allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
@@ -449,7 +449,9 @@ function selectCharacter(id) {
     currentCharacterId = id;
     const user = auth.currentUser;
     
-    firestore.collection('users').doc(user.uid).collection('characters').doc(id).get().then(doc => {
+    try {
+        const doc = await firestore.collection('users').doc(user.uid).collection('characters').doc(id).get();
+        
         if (doc.exists) {
             const d = doc.data();
 
@@ -457,55 +459,59 @@ function selectCharacter(id) {
             currentCampaignId = d.instanceId || "global"; 
             initClockListener(); 
             initDiceLogListener();
-            // ===============================================
             
             // 1. IDENTITY & METADATA
             document.getElementById('char-name').value = d.name || "";
             document.getElementById('char-race').value = d.race || "";
             document.getElementById('char-class').value = d.class || "";
+            document.getElementById('char-level').value = d.charLevel || 1;
+            document.getElementById('char-class-level').value = d.classLevel || 1;
             
-            // DUAL LEVELS
-            document.getElementById('char-level').value = d.charLevel || 1; // Base Level
-            document.getElementById('char-class-level').value = d.classLevel || 1; // Class Level
-            
-            // 2. STATS & NEW BONUSES
+            // 2. CORE ATTRIBUTES
             document.getElementById('char-body').value = d.body || 0;
             document.getElementById('char-mind').value = d.mind || 0;
             document.getElementById('char-spirit').value = d.spirit || 0;
-            
-            document.getElementById('char-hp-bonus-input').value = d.hpMaxBonus || 0;
-            document.getElementById('char-mp-bonus-input').value = d.mpMaxBonus || 0;
 
-            // 3. RESOURCES & EXP
+            // 3. RETROACTIVE CALCULATION
+            // We call your new function to get the current "Source of Truth" for Max HP/MP
+            const totals = await getFinalMaxStats(d);
+            
+            // Update the UI Max inputs with the calculated values
+            document.getElementById('char-hp-max').value = totals.finalHP;
+            document.getElementById('char-mp-max').value = totals.finalMP;
+
+            // 4. RESOURCES & EXP
             const hpCur = d.hpCurrent || 0;
             const mpCur = d.mpCurrent || 0;
 
             const hpInput = document.getElementById('char-hp-current');
-            hpInput.dataset.trueValue = hpCur;           // Hides the exact decimal (e.g. 10.5)
-            hpInput.value = Math.floor(hpCur);           // Shows the integer (e.g. 10)
+            hpInput.dataset.trueValue = hpCur;
+            hpInput.value = Math.floor(hpCur);
 
             const mpInput = document.getElementById('char-mp-current');
             mpInput.dataset.trueValue = mpCur;
             mpInput.value = Math.floor(mpCur);
             
-            document.getElementById('char-hp-max').value = d.hpMax || 10;
-            document.getElementById('char-mp-max').value = d.mpMax || 10;
-            
             document.getElementById('char-exp-current').value = d.expCurrent || 0;
             document.getElementById('char-exp-max').value = d.expMax || 1000;
 
-            // 4. GALLERY & SKILLS
+            // 5. GALLERY & SKILLS
             renderGallery(d.gallery || [], d.portrait || "");
-            renderSkills(d); // We'll build this next to show the Pyramid
+            renderSkills(d);
 
-            // 5. UI NAVIGATION
+            // 6. UI NAVIGATION
             document.getElementById('char-selection-view').classList.add('hide-default');
             document.getElementById('char-sheet-view').classList.remove('hide-default');
             
-            updateHUD(d);
+            // Update HUD using the same calculated totals
+            const hudData = { ...d, hpMax: totals.finalHP, mpMax: totals.finalMP };
+            updateHUD(hudData);
+            
             firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
         }
-    });
+    } catch (error) {
+        console.error("Error selecting character:", error);
+    }
 }
 
 async function deleteCharacter(event, charId, name) {
@@ -531,59 +537,40 @@ async function deleteCharacter(event, charId, name) {
 async function saveCharacter() {
     if (!currentCharacterId) return;
 
-    // 1. Get the current selections
-    const raceName = document.getElementById('char-race').value;
-    const className = document.getElementById('char-class').value;
-
-    // 2. Fetch the specific "Growth" and "Bonuses" from YOUR registry
-    const raceSnap = await firestore.collection('master_races').where('name', '==', raceName).get();
-    const classSnap = await firestore.collection('master_classes').where('name', '==', className).get();
-    
-    const raceD = raceSnap.empty ? { hpPerLv: 1, mpPerLv: 1, baseBody: 0 } : raceSnap.docs[0].data();
-    const classD = classSnap.empty ? { hpPerLv: 0, mpPerLv: 0 } : classSnap.docs[0].data();
-
-    // 3. Gather Inputs
-    const bodyPoints = parseInt(document.getElementById('char-body').value) || 0;
-    const spiritPoints = parseInt(document.getElementById('char-spirit').value) || 0;
-    const charLv = parseInt(document.getElementById('char-level').value) || 1;
-    const classLv = parseInt(document.getElementById('char-class-level').value) || 0;
-
-    // 4. THE CALCULATION (Static Horror Logic)
-    // Total HP = 10 (Base) + (RaceGrowth * Lv) + (ClassGrowth * ClassLv) + ((SpentPoints + NaturalBonus) * 2)
-    const totalBody = bodyPoints + (raceD.baseBody || 0);
-    const hpFromStats = totalBody * 2; // 1:2 Ratio
-    const hpFromRace = charLv * (raceD.hpPerLv || 1);
-    const hpFromClass = classLv * (classD.hpPerLv || 0);
-
-    const newMaxHP = 10 + hpFromRace + hpFromClass + hpFromStats;
-
-    // Repeat for MP
-    const totalSpirit = spiritPoints + (raceD.baseSpirit || 0);
-    const mpFromStats = totalSpirit * 2;
-    const mpFromRace = charLv * (raceD.mpPerLv || 1);
-    const mpFromClass = classLv * (classD.mpPerLv || 0);
-    
-    const newMaxMP = 10 + mpFromRace + mpFromClass + mpFromStats;
-
-    // 5. Update UI & Database
+    // 1. Gather current inputs (The "Spent" or "Current" data)
     const data = {
         name: document.getElementById('char-name').value,
-        race: raceName,
-        class: className,
-        body: bodyPoints,
-        spirit: spiritPoints,
-        charLevel: charLv,
-        classLevel: classLv,
-        hpMax: newMaxHP,
-        mpMax: newMaxMP,
+        race: document.getElementById('char-race').value,
+        class: document.getElementById('char-class').value,
+        charLevel: parseInt(document.getElementById('char-level').value) || 1,
+        classLevel: parseInt(document.getElementById('char-class-level').value) || 0,
+        body: parseInt(document.getElementById('char-body').value) || 0,
+        mind: parseInt(document.getElementById('char-mind').value) || 0,
+        spirit: parseInt(document.getElementById('char-spirit').value) || 0,
         hpCurrent: parseFloat(document.getElementById('char-hp-current').value) || 0,
-        mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0
+        mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0,
+        // We no longer calculate or save hpMax/mpMax here as they are retroactive
     };
 
-    await firestore.collection('users').doc(auth.currentUser.uid)
-        .collection('characters').doc(currentCharacterId).update(data);
+    try {
+        // 2. Update the character document in Firestore
+        await firestore.collection('users').doc(auth.currentUser.uid)
+            .collection('characters').doc(currentCharacterId).update(data);
 
-    updateHUD(data);
+        // 3. Recalculate totals for the HUD using your retroactive logic
+        const totals = await getFinalMaxStats(data);
+        
+        // 4. Update the HUD with the new "Source of Truth"
+        const hudData = { ...data, hpMax: totals.finalHP, mpMax: totals.finalMP };
+        updateHUD(hudData);
+
+        // 5. Update the hidden/read-only max fields on the sheet
+        document.getElementById('char-hp-max').value = totals.finalHP;
+        document.getElementById('char-mp-max').value = totals.finalMP;
+
+    } catch (error) {
+        console.error("Error saving character:", error);
+    }
 }
 
 function goBackToSelection() {
@@ -619,61 +606,53 @@ async function syncRegistryToDropdowns() {
    --- 10. HUD HANDLING ---
    ========================================== */
 
-function updateHUD(char) {
+async function updateHUD(char) {
     const hud = document.getElementById('active-char-hud');
     if (!hud) return;
     hud.classList.remove('hide-default');
     
-    // 1. Names and Dual-Level Metadata
+    // 1. Fetch live Race data for Natural Bonuses
+    const raceSnap = await firestore.collection('master_races').where('name', '==', char.race).limit(1).get();
+    const raceD = raceSnap.empty ? { baseBody: 0, baseMind: 0, baseSpirit: 0 } : raceSnap.docs[0].data();
+
+    // 2. Identity and Metadata
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
-    
-    // Show both Character Level and Class Level in the HUD
     const charLv = char.charLevel || 1;
     const classLv = char.classLevel || 1;
-    const raceClassText = `Lv.${charLv} (${char.class || 'Adventurer'} Lv.${classLv})`;
-    document.getElementById('hud-meta').innerText = raceClassText;
+    document.getElementById('hud-meta').innerText = `Lv.${charLv} (${char.class || 'Adventurer'} Lv.${classLv})`;
     
-    // 2. Text Resources with Bonus Visualization (Rounded down for display)
-    const hpBonus = char.hpMaxBonus || 0;
-    const mpBonus = char.mpMaxBonus || 0;
-
-    // Regen Formula
+    // 3. Text Resources
     document.getElementById('hud-hp-text').innerText = 
-        `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 10)} ${hpBonus > 0 ? '(+' + hpBonus + ')' : ''}`;
+        `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 10)}`;
     document.getElementById('hud-mp-text').innerText = 
-        `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 10)} ${mpBonus > 0 ? '(+' + mpBonus + ')' : ''}`;
+        `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 10)}`;
     
-    // 3. New Modifier Calculation: Stat / 2
-    const getMod = (val) => {
-        const mod = Math.floor((val || 0) / 2); // Stat divided by 2, rounded down
+    // 4. Effective Stat Modifiers (Spent + Natural) / 2
+    const calculateMod = (spent, natural) => {
+        const total = (spent || 0) + (natural || 0);
+        const mod = Math.floor(total / 2);
         return mod >= 0 ? `+${mod}` : mod;
     };
     
-    document.getElementById('hud-mod-body').innerText = getMod(char.body);
-    document.getElementById('hud-mod-mind').innerText = getMod(char.mind);
-    document.getElementById('hud-mod-spirit').innerText = getMod(char.spirit);
+    document.getElementById('hud-mod-body').innerText = calculateMod(char.body, raceD.baseBody);
+    document.getElementById('hud-mod-mind').innerText = calculateMod(char.mind, raceD.baseMind);
+    document.getElementById('hud-mod-spirit').innerText = calculateMod(char.spirit, raceD.baseSpirit);
 
-    // 4. Progress Bars (HP, MP, and EXP)
+    // 5. Progress Bars
     const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 10)) * 100, 100);
     const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 10)) * 100, 100);
     const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
 
     document.getElementById('hud-hp-fill').style.width = hpPerc + "%";
     document.getElementById('hud-mp-fill').style.width = mpPerc + "%";
-    
-    const expFill = document.getElementById('hud-exp-fill');
-    if (expFill) {
-        expFill.style.width = expPerc + "%";
-    }
+    document.getElementById('hud-exp-fill').style.width = expPerc + "%";
 
-    // 5. Portrait
-    if (char.portrait !== undefined) {
-        const portraitEl = document.getElementById('hud-portrait');
-        if (char.portrait) {
-            portraitEl.style.backgroundImage = `url(${char.portrait})`;
-        } else {
-            portraitEl.style.backgroundImage = "none";
-        }
+    // 6. Portrait
+    const portraitEl = document.getElementById('hud-portrait');
+    if (char.portrait) {
+        portraitEl.style.backgroundImage = `url(${char.portrait})`;
+    } else {
+        portraitEl.style.backgroundImage = "none";
     }
 }
 
