@@ -308,7 +308,8 @@
                     </div>
             
                     <div class="master-workspace">
-                        
+                         
+                        <!-- 1. Instances -->
                         <div id="sub-instances" class="control-sub-content">
                             <div class="panel-card">
                                 <h3>Spawn New Instance</h3>
@@ -337,7 +338,8 @@
                             </div>
                                                         
                         </div>
-            
+
+                        <!-- 2. User Management -->
                         <div id="sub-accounts" class="control-sub-content hide-default">
                             <div class="panel-card">
                                 <div class="flex-row" style="justify-content: space-between; margin-bottom: 20px;">
@@ -357,7 +359,8 @@
                                     </div>
                             </div>
                         </div>
-            
+
+                        <!-- 3. Character Management -->
                         <div id="sub-characters" class="control-sub-content hide-default">
                             <div class="panel-card">
                                 <h3>Character Supervision</h3>
@@ -365,9 +368,48 @@
                                 <div id="admin-character-list"></div> 
                             </div>
                         </div>
-                        
+
+                        <!-- 4. Item Management -->
                         <div id="sub-items" class="control-sub-content hide-default"><div class="panel-card"><h3>Master Item List</h3></div></div>
-                        <div id="sub-skills" class="control-sub-content hide-default"><div class="panel-card"><h3>Global Skill Tree</h3></div></div>
+
+                        <!-- 5. Skill Management -->
+                        <div id="sub-skills" class="control-sub-content hide-default">
+                            <div class="panel-card">
+                                <h3>Create Global Skill</h3>
+                                <div class="skill-creator-form">
+                                    <div class="flex-row gap-m mb-m">
+                                        <div class="form-group flex-1">
+                                            <label class="text-muted">Skill Name</label>
+                                            <input type="text" id="ms-name" class="form-input w-100" placeholder="e.g. Fireball">
+                                        </div>
+                                        <div class="form-group flex-1">
+                                            <label class="text-muted">Tier</label>
+                                            <select id="ms-tier" class="form-input w-100">
+                                                <option value="basicSkills">Basic</option>
+                                                <option value="intSkills">Intermediate</option>
+                                                <option value="advSkills">Advanced</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group mb-m">
+                                        <label class="text-muted">Description</label>
+                                        <textarea id="ms-desc" class="form-input w-100" style="height: 60px;" placeholder="What does this skill do?"></textarea>
+                                    </div>
+                                    <button onclick="createMasterSkill()" class="btn-success">Add to Global Registry</button>
+                                </div>
+                            </div>
+                        
+                            <div class="panel-card">
+                                <h3>Global Skill Registry</h3>
+                                <div id="master-skill-list" class="master-asset-list">
+                                    </div>
+                            </div>
+                        </div>
+
+                        <!-- 6. ...? -->
+
+
+                        
                     </div>
                 </div>
             </div>
