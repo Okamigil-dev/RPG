@@ -313,10 +313,9 @@ function openControlSubTab(evt, subTabId) {
     if (subTabId === 'sub-characters') loadGlobalCharacterManager();
     if (subTabId === 'sub-classes') loadMasterClassList();
     if (subTabId === 'sub-races') loadMasterRaceList();
-    if (subTabId === 'sub-skills') {
-        refreshSkillClassDropdown(); // Update the dropdown with your registered classes
-        loadMasterSkillList();
-    }
+    if (subTabId === 'sub-skills') { refreshSkillClassDropdown(); loadMasterSkillList(); }
+    if (subTabId === 'sub-classes') loadMasterClassList();
+    if (subTabId === 'sub-traits') loadMasterTraitList();
 }
 
 
@@ -1446,11 +1445,54 @@ async function createMasterClass() {
     } catch (e) { console.error(e); }
 }
 
+async function saveMasterClass() {
+    const classId = document.getElementById('m-class-id').value;
+    const name = document.getElementById('m-class-name').value.trim();
+    if (!name) return alert("Class name required!");
+
+    const traitsArray = document.getElementById('m-class-traits').value.split(',').map(t => t.trim()).filter(t => t !== "");
+
+    const classData = {
+        name: name,
+        tier: parseInt(document.getElementById('m-class-tier').value),
+        mainStat: document.getElementById('m-class-main-stat').value,
+        hpPerLv: parseInt(document.getElementById('m-class-hp').value) || 0,
+        mpPerLv: parseInt(document.getElementById('m-class-mp').value) || 0,
+        hpRegenBonus: parseFloat(document.getElementById('m-class-hp-regen').value) || 0,
+        mpRegenBonus: parseFloat(document.getElementById('m-class-mp-regen').value) || 0,
+        critMultiplier: parseFloat(document.getElementById('m-class-crit').value) || 2.0,
+        critChanceBonus: parseInt(document.getElementById('m-class-crit-chance').value) || 0,
+        dodgeBonus: parseInt(document.getElementById('m-class-dodge').value) || 0,
+        speedBonus: parseInt(document.getElementById('m-class-speed-bonus').value) || 0,
+        requirements: document.getElementById('m-class-reqs').value.trim(),
+        description: document.getElementById('m-class-desc').value.trim(),
+        traits: traitsArray,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        if (classId) {
+            await firestore.collection('master_classes').doc(classId).update(classData);
+            alert("Class updated successfully!");
+        } else {
+            classData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await firestore.collection('master_classes').add(classData);
+            alert("New class archetype registered!");
+        }
+
+        // Future-proof: Index traits automatically
+        traitsArray.forEach(traitName => ensureTraitExists(traitName));
+
+        resetClassForm();
+        loadMasterClassList();
+    } catch (e) { console.error(e); }
+}
+
 async function loadMasterClassList() {
     const list = document.getElementById('master-class-list');
     if (!list) return;
 
-    // Order by Tier then Name
+    // This may require a composite index (Tier + Name) in Firestore Console
     const snap = await firestore.collection('master_classes').orderBy('tier').orderBy('name').get();
     list.innerHTML = "";
 
@@ -1458,8 +1500,8 @@ async function loadMasterClassList() {
         const d = doc.data();
         const card = document.createElement('div');
         card.className = "panel-card mb-s";
-        card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#71717a'}`;
         card.style.background = "#18181b";
+        card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#3f3f46'}`;
         
         const traitTags = (d.traits || []).map(t => 
             `<span style="background:#312e81; color:#c7d2fe; padding:2px 6px; border-radius:4px; font-size:0.7rem; margin-right:4px;">${t}</span>`
@@ -1468,23 +1510,101 @@ async function loadMasterClassList() {
         card.innerHTML = `
             <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
                 <div style="flex: 1;">
-                    <div class="flex-row" style="gap: 10px;">
-                        <strong style="color: #e4e4e7; font-size: 1.1rem;">${d.name}</strong>
-                        <span style="font-size: 0.65rem; background: #27272a; padding: 2px 8px; border-radius: 10px; color: #a1a1aa;">Tier ${d.tier}</span>
+                    <div class="flex-row" style="gap:10px;">
+                        <strong>${d.name}</strong> <span style="font-size:0.7rem; opacity:0.6;">T${d.tier}</span>
                     </div>
-                    <div style="margin: 8px 0;">${traitTags}</div>
-                    <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 8px;">${d.description || 'No description.'}</p>
-                    <div style="font-size: 0.75rem; color: #a855f7; font-weight: bold;">
-                        MAIN STAT: ${d.mainStat} | HP/Lv: +${d.hpPerLv} | MP/Lv: +${d.mpPerLv}
+                    <div class="mt-s" style="margin-bottom:8px;">${traitTags}</div>
+                    <div style="font-size: 0.7rem; color: #71717a;">
+                        HP/Lv: +${d.hpPerLv} | MP/Lv: +${d.mpPerLv} | Crit: ${d.critMultiplier}x (+${d.critChanceBonus})
                     </div>
                 </div>
-                <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
+                <div class="flex-row" style="gap: 5px;">
+                    <button class="btn-small" onclick="editClass('${doc.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
             </div>
         `;
         list.appendChild(card);
     });
+}
+
+async function editClass(id) {
+    const doc = await firestore.collection('master_classes').doc(id).get();
+    if (!doc.exists) return;
+    const d = doc.data();
+
+    document.getElementById('m-class-id').value = id;
+    document.getElementById('m-class-name').value = d.name;
+    document.getElementById('m-class-tier').value = d.tier;
+    document.getElementById('m-class-main-stat').value = d.mainStat;
+    document.getElementById('m-class-hp').value = d.hpPerLv;
+    document.getElementById('m-class-mp').value = d.mpPerLv;
+    document.getElementById('m-class-hp-regen').value = d.hpRegenBonus || 0;
+    document.getElementById('m-class-mp-regen').value = d.mpRegenBonus || 0;
+    document.getElementById('m-class-crit').value = d.critMultiplier || 2.0;
+    document.getElementById('m-class-crit-chance').value = d.critChanceBonus || 0;
+    document.getElementById('m-class-dodge').value = d.dodgeBonus || 0;
+    document.getElementById('m-class-speed-bonus').value = d.speedBonus || 0;
+    document.getElementById('m-class-reqs').value = d.requirements || "";
+    document.getElementById('m-class-desc').value = d.description || "";
+    document.getElementById('m-class-traits').value = (d.traits || []).join(", ");
+
+    document.getElementById('class-editor-title').innerText = "Editing Class: " + d.name;
+    document.getElementById('class-cancel-btn').classList.remove('hide-default');
+    document.querySelector('.master-workspace').scrollTop = 0;
+}
+
+function resetClassForm() {
+    document.getElementById('m-class-id').value = "";
+    document.getElementById('m-class-name').value = "";
+    document.getElementById('m-class-desc').value = "";
+    document.getElementById('m-class-reqs').value = "";
+    document.getElementById('m-class-traits').value = "";
+    document.getElementById('class-editor-title').innerText = "Register New Class Archetype";
+    document.getElementById('class-cancel-btn').classList.add('hide-default');
+}
+
+// --- TRAIT LIBRARY LOGIC ---
+async function ensureTraitExists(traitName) {
+    const slug = traitName.toLowerCase().trim().replace(/\s+/g, '-');
+    const traitRef = firestore.collection('master_traits').doc(slug);
+    const doc = await traitRef.get();
+    if (!doc.exists) {
+        await traitRef.set({ name: traitName, description: "Detailed mechanics needed.", createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    }
+}
+
+async function loadMasterTraitList() {
+    const list = document.getElementById('master-trait-list');
+    if (!list) return;
+    const snap = await firestore.collection('master_traits').orderBy('name').get();
+    list.innerHTML = "";
+    snap.forEach(doc => {
+        const t = doc.data();
+        const card = document.createElement('div');
+        card.className = "panel-card mb-s";
+        card.style.background = "#121214";
+        card.innerHTML = `
+            <div class="form-group">
+                <strong style="color: #00ff88;">${t.name}</strong>
+                <textarea class="form-input w-100 mt-s" style="height: 60px;" 
+                    onchange="updateTraitDescription('${doc.id}', this.value)">${t.description}</textarea>
+            </div>
+        `;
+        list.appendChild(card);
+    });
+}
+
+async function updateTraitDescription(id, val) {
+    await firestore.collection('master_traits').doc(id).update({ description: val });
+}
+
+async function deleteMasterAsset(collection, id, callback) {
+    if (!confirm("Permanently remove this asset?")) return;
+    await firestore.collection(collection).doc(id).delete();
+    callback();
 }
 
 // --- MASTER SKILLS REGISTRY LOGIC ---
