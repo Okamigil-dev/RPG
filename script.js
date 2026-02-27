@@ -1020,9 +1020,7 @@ async function deleteInstance(instanceId, name) {
     }
 }
 
-// ==========================================
-// 1. GENERATE THE TABLE (WITH TOP BUTTONS)
-// ==========================================
+
 async function loadGlobalCharacterManager() {
     const listContainer = document.getElementById('admin-character-list'); 
     if (!listContainer) return;
@@ -1030,21 +1028,23 @@ async function loadGlobalCharacterManager() {
     listContainer.innerHTML = '<p class="text-center" style="opacity:0.5;">Scanning all realms...</p>';
 
     try {
-        // Fetch Instances
         const instanceSnap = await firestore.collection('instances').get();
         let instances = [];
         instanceSnap.forEach(doc => instances.push({ id: doc.id, name: doc.data().name }));
 
-        // Fetch Characters
         const usersSnap = await firestore.collection('users').get();
         
-        // --- ADDED: Top Control Bar mirroring the Accounts tab ---
+        // --- ADDED: Search input field on the left, buttons on the right ---
         let html = `
-            <div class="flex-row" style="justify-content: flex-end; gap: 10px; margin-bottom: 15px;">
-                <button class="btn-primary" style="background-color: #059669; border-color: #059669;" onclick="saveAllCharacterInstances()">Save All Assignments</button>
-                <button class="btn-secondary" onclick="loadGlobalCharacterManager()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+            <div class="flex-row" style="justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <input type="text" id="char-search-input" class="form-input" placeholder="Search character or owner..." onkeyup="filterCharacterTable()" style="width: 250px;">
+                <div class="flex-row" style="gap: 10px;">
+                    <button class="btn-primary" style="background-color: #059669; border-color: #059669;" onclick="saveAllCharacterInstances()">Save All Assignments</button>
+                    <button class="btn-secondary" onclick="loadGlobalCharacterManager()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                </div>
             </div>
-            <table class="admin-table">
+            
+            <table class="admin-table" id="admin-char-table">
             <thead><tr><th>Character</th><th>Owner</th><th>Current World</th><th>Action</th></tr></thead>
             <tbody>`;
 
@@ -1076,8 +1076,7 @@ async function loadGlobalCharacterManager() {
             });
         }
 
-        html += `</tbody></table>`; // Bottom button removed entirely
-        
+        html += `</tbody></table>`; 
         listContainer.innerHTML = html;
 
     } catch (error) {
@@ -1141,6 +1140,33 @@ async function saveAllCharacterInstances() {
     } catch (error) {
         console.error("Batch Save Error:", error);
         alert("Failed to save. Check the console for permissions errors.");
+    }
+}
+
+
+function filterCharacterTable() {
+    const input = document.getElementById('char-search-input');
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById('admin-char-table');
+    const tr = table.getElementsByTagName('tr');
+
+    // Loop through all table rows, starting at 1 to skip the header row
+    for (let i = 1; i < tr.length; i++) {
+        // Look at the Character Name (column 0) and Owner Email (column 1)
+        const charNameCol = tr[i].getElementsByTagName('td')[0];
+        const ownerCol = tr[i].getElementsByTagName('td')[1];
+        
+        if (charNameCol || ownerCol) {
+            const charName = charNameCol.textContent || charNameCol.innerText;
+            const owner = ownerCol.textContent || ownerCol.innerText;
+            
+            // If the search text is in either the name or the email, show the row. Otherwise, hide it.
+            if (charName.toLowerCase().indexOf(filter) > -1 || owner.toLowerCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
     }
 }
 
