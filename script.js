@@ -1547,19 +1547,23 @@ function resetClassForm() {
     document.getElementById('class-cancel-btn').classList.add('hide-default');
 }
 
-// --- 10.3 SKILL REGISTRY ---
-function openSkillCreator() {
-    document.getElementById('skill-creator-form').classList.remove('hide-default');
-    document.getElementById('reg-skill-name').value = '';
-    document.getElementById('reg-skill-desc').value = '';
-    document.getElementById('reg-skill-icon-base64').value = '';
-    document.getElementById('icon-preview').innerHTML = '';
+// ==========================================
+// --- 10.3 SKILL REGISTRY (Refined) ---
+// ==========================================
+
+function autoSetMpCost() {
+    const tier = parseInt(document.getElementById('reg-skill-tier').value) || 1;
+    // Tier 1=10, Tier 2=20, Tier 3=40
+    const cost = 10 * Math.pow(2, tier - 1);
+    document.getElementById('reg-skill-cost').value = cost;
 }
 
-// Image Resizer (64x64)
+// 1. Image Logic
+// No extra buttons needed; selecting a new file simply overwrites the previous one.
 document.getElementById('reg-skill-icon').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = function(e) {
         const img = new Image();
@@ -1570,54 +1574,136 @@ document.getElementById('reg-skill-icon').addEventListener('change', function(ev
             ctx.drawImage(img, 0, 0, 64, 64);
             const dataURL = canvas.toDataURL('image/png');
             document.getElementById('reg-skill-icon-base64').value = dataURL;
-            document.getElementById('icon-preview').innerHTML = `<img src="${dataURL}" style="width:40px; height:40px; border-radius:4px;">`;
+            document.getElementById('icon-preview').innerHTML = `<img src="${dataURL}" style="width:100%; height:100%; border-radius:4px;">`;
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 });
 
+// 2. Save / Update
 async function saveSkillToRegistry() {
-    const name = document.getElementById('reg-skill-name').value;
+    const skillId = document.getElementById('ms-skill-id').value; 
+    const name = document.getElementById('reg-skill-name').value.trim();
     const skillClass = document.getElementById('reg-skill-class').value;
     const tier = parseInt(document.getElementById('reg-skill-tier').value);
     
     if (!name || !skillClass) return alert("Name and Class are required.");
-    const baseCost = 10 * Math.pow(2, tier - 1);
 
     const skillData = {
-        name: name, class: skillClass, tier: tier,
-        description: document.getElementById('reg-skill-desc').value,
+        name: name,
+        class: skillClass,
+        tier: tier,
+        baseCost: parseInt(document.getElementById('reg-skill-cost').value) || (10 * Math.pow(2, tier - 1)),
+        description: document.getElementById('reg-skill-desc').value.trim(),
         iconData: document.getElementById('reg-skill-icon-base64').value, 
+        
+        // Updated Combat Fields
         range: document.getElementById('reg-skill-range').value,
+        aoe: document.getElementById('reg-skill-aoe').value.trim(), // NEW
         damageType: document.getElementById('reg-skill-dmg-type').value,
         savingThrow: document.getElementById('reg-skill-save').value,
+        
         scalingStat: document.getElementById('reg-skill-stat').value,
         scalingFactor: parseFloat(document.getElementById('reg-skill-factor').value) || 1.0,
-        cap: parseInt(document.getElementById('reg-skill-cap').value) || 110,
-        baseCost: baseCost, castTime: 0, cooldown: 0, targetType: "single", 
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
-        const docId = `${skillClass.toLowerCase()}_${name.replace(/\s+/g, '_').toLowerCase()}_t${tier}`;
-        await firestore.collection('master_skills').doc(docId).set(skillData);
-        alert("Skill Saved to Registry!");
+        if (skillId) {
+            await firestore.collection('master_skills').doc(skillId).update(skillData);
+            alert("Skill Updated!");
+        } else {
+            const newId = `${skillClass.toLowerCase()}_${name.replace(/\s+/g, '_').toLowerCase()}_t${tier}`;
+            skillData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            skillData.castTime = 0; 
+            skillData.cooldown = 0;
+            await firestore.collection('master_skills').doc(newId).set(skillData);
+            alert("New Skill Created!");
+        }
+        
+        resetSkillForm();
         loadSkillRegistry();
-    } catch (e) { console.error(e); alert("Error saving skill."); }
+    } catch (e) {
+        console.error("Error saving skill:", e);
+        alert("Error saving skill.");
+    }
 }
 
+// 3. Edit Mode
+async function editMasterSkill(id) {
+    const doc = await firestore.collection('master_skills').doc(id).get();
+    if (!doc.exists) return;
+    const d = doc.data();
+
+    document.getElementById('ms-skill-id').value = id;
+    document.getElementById('reg-skill-name').value = d.name;
+    document.getElementById('reg-skill-class').value = d.class;
+    document.getElementById('reg-skill-tier').value = d.tier;
+    document.getElementById('reg-skill-cost').value = d.baseCost || 10;
+    document.getElementById('reg-skill-desc').value = d.description || "";
+    document.getElementById('reg-skill-icon-base64').value = d.iconData || "";
+    
+    if (d.iconData) {
+        document.getElementById('icon-preview').innerHTML = `<img src="${d.iconData}" style="width:100%; height:100%; border-radius:4px;">`;
+    } else {
+        document.getElementById('icon-preview').innerHTML = "";
+    }
+
+    document.getElementById('reg-skill-range').value = d.range || "Melee";
+    document.getElementById('reg-skill-aoe').value = d.aoe || ""; // NEW
+    document.getElementById('reg-skill-dmg-type').value = d.damageType || "";
+    document.getElementById('reg-skill-save').value = d.savingThrow || "none";
+    document.getElementById('reg-skill-stat').value = d.scalingStat || "none";
+    document.getElementById('reg-skill-factor').value = d.scalingFactor || 1.0;
+
+    document.getElementById('skill-save-btn').innerText = "Update Skill";
+    document.getElementById('skill-save-btn').classList.remove('btn-success');
+    document.getElementById('skill-save-btn').classList.add('btn-primary'); 
+    document.getElementById('skill-cancel-btn').classList.remove('hide-default');
+    
+    document.querySelector('.master-workspace').scrollTop = 0;
+}
+
+// 4. Reset Form
+function resetSkillForm() {
+    document.getElementById('ms-skill-id').value = "";
+    document.getElementById('reg-skill-name').value = "";
+    document.getElementById('reg-skill-desc').value = "";
+    document.getElementById('reg-skill-icon').value = "";
+    document.getElementById('reg-skill-icon-base64').value = "";
+    document.getElementById('icon-preview').innerHTML = "";
+    
+    document.getElementById('reg-skill-tier').value = "1";
+    document.getElementById('reg-skill-cost').value = "10";
+    document.getElementById('reg-skill-range').value = "Melee";
+    document.getElementById('reg-skill-aoe').value = "";
+    document.getElementById('reg-skill-dmg-type').value = "";
+    document.getElementById('reg-skill-save').value = "none";
+    document.getElementById('reg-skill-stat').value = "body";
+    document.getElementById('reg-skill-factor').value = "1.0";
+
+    document.getElementById('skill-save-btn').innerText = "Save Skill to Library";
+    document.getElementById('skill-save-btn').classList.add('btn-success');
+    document.getElementById('skill-save-btn').classList.remove('btn-primary');
+    document.getElementById('skill-cancel-btn').classList.add('hide-default');
+}
+
+// 5. Load List
 async function loadSkillRegistry() {
     const container = document.getElementById('registry-skill-list');
     container.innerHTML = '<p>Loading...</p>';
+    
     try {
         const snap = await firestore.collection('master_skills').orderBy('class').get();
-        if(snap.empty) { container.innerHTML = '<p>No skills defined yet.</p>'; return; }
+        if(snap.empty) { container.innerHTML = '<p class="text-center opacity-50">No skills defined yet.</p>'; return; }
 
         let html = '<div class="grid-3-col">'; 
         snap.forEach(doc => {
             const d = doc.data();
             const icon = d.iconData ? `<img src="${d.iconData}" style="width:32px; height:32px; vertical-align:middle; margin-right:10px;">` : '';
+            
             html += `
             <div class="panel-card" style="padding:10px; background:#18181b;">
                 <div class="flex-row">${icon}<div>
@@ -1625,8 +1711,14 @@ async function loadSkillRegistry() {
                         <span style="font-size:0.75rem; color:#aaa;">${d.class} | T${d.tier} | ${d.baseCost} MP</span>
                     </div></div>
                 <div style="font-size:0.8rem; margin-top:5px; color:#ccc;">${d.description}</div>
-                <div style="margin-top:5px; font-size:0.7rem;">${d.damageType ? `<span class="join-code-pill">${d.damageType}</span>` : ''}</div>
-                <button class="btn-danger-small mt-s w-100" onclick="deleteMasterAsset('master_skills', '${doc.id}', loadSkillRegistry)">Delete</button>
+                <div style="margin-top:5px; font-size:0.7rem; color:#71717a;">
+                    ${d.range} ${d.aoe ? `(${d.aoe})` : ''} 
+                    ${d.savingThrow !== 'none' ? `| Save: ${d.savingThrow}` : ''}
+                </div>
+                <div class="flex-row mt-s" style="gap:5px;">
+                    <button class="btn-small w-100" onclick="editMasterSkill('${doc.id}')">Edit</button>
+                    <button class="btn-danger-small w-100" onclick="deleteMasterAsset('master_skills', '${doc.id}', loadSkillRegistry)">Delete</button>
+                </div>
             </div>`;
         });
         html += '</div>';
