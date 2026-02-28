@@ -16,9 +16,8 @@ let lastRealTime = Date.now();
 let currentCampaignId = "global"; 
 let currentCharacterId = null; 
 let activeCharLevel = 1; 
-let characterListener = null; // Firestore Unsubscribe function
+let characterListener = null;
 
-// Stats Buffer (For "Pending" changes before saving)
 let pendingStats = { body: 0, mind: 0, spirit: 0 };
 let originalStats = { body: 0, mind: 0, spirit: 0 };
 let totalAP = 0;
@@ -52,7 +51,6 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Global utility for deleting assets safely
 async function deleteMasterAsset(collection, id, callback) {
     if (!confirm("Permanently remove this asset?")) return;
     try {
@@ -63,7 +61,7 @@ async function deleteMasterAsset(collection, id, callback) {
 
 
 /* ==========================================================================
-   SECTION 3: AUTHENTICATION & SESSION HANDLING
+   SECTION 3: AUTHENTICATION
    ========================================================================== */
 
 function registerUser() {
@@ -84,7 +82,6 @@ function logoutUser() {
     auth.signOut().then(() => location.reload()); 
 }
 
-// --- AUTH LISTENER (The Entry Point) ---
 auth.onAuthStateChanged((user) => {
     const topNav = document.getElementById('top-nav');
     const appBody = document.querySelector('.app-body');
@@ -149,7 +146,7 @@ auth.onAuthStateChanged((user) => {
 
 
 /* ==========================================================================
-   SECTION 4: UI NAVIGATION & TABS
+   SECTION 4: UI NAVIGATION
    ========================================================================== */
 
 function openTab(tabId) {
@@ -169,7 +166,6 @@ function openTab(tabId) {
         localStorage.setItem('activeMainTab', tabId);
     }
     
-    // Master Panel Auto-Load Logic
     if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
         loadInstanceList();
         openMasterPanel();
@@ -200,12 +196,12 @@ function openControlSubTab(evt, subTabId) {
         if (targetBtn) targetBtn.classList.add("active");
     }
 
-    // Refresh specific data based on tab
+    // --- LOADER SWITCHBOARD ---
     if (subTabId === 'sub-instances') loadInstanceList();
     if (subTabId === 'sub-accounts') loadUserList();
     if (subTabId === 'sub-characters') loadGlobalCharacterManager();
-    if (subTabId === 'sub-classes') loadMasterClassList();
-    if (subTabId === 'sub-races') loadMasterRaceList();
+    if (subTabId === 'sub-classes') loadMasterClassList(); // This triggers Section 10.2
+    if (subTabId === 'sub-races') loadMasterRaceList();    // This triggers Section 10.1
     if (subTabId === 'sub-skills') { refreshSkillClassDropdown(); loadSkillRegistry(); }
     if (subTabId === 'sub-traits') loadMasterTraitList();
 }
@@ -217,73 +213,9 @@ function goBackToSelection() {
 
 
 /* ==========================================================================
-   SECTION 5: CALCULATORS & MATH LOGIC (CORE RULES)
+   SECTION 5: GAME ENGINE (CLOCK & CHAT)
    ========================================================================== */
 
-function calculateLevelFromEXP(exp) {
-    // Formula: Level = Floor(EXP / 200). Cap at 60.
-    const calculatedLv = Math.floor(exp / 200);
-    let finalLv = Math.max(1, calculatedLv);
-    return Math.min(finalLv, MAX_CHAR_LEVEL);
-}
-
-// Calculates derived stats (HP/MP) based on Stats + Race + Class + Gear
-async function getFinalMaxStats(charData) {
-    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
-    const raceD = raceSnap.empty ? { hpPerLv: 1, mpPerLv: 1, baseBody: 0 } : raceSnap.docs[0].data();
-
-    // 1. Base Calculation (10 + Level*Growth)
-    let baseHP = 10 + (charData.charLevel * (raceD.hpPerLv || 0));
-    let baseMP = 10 + (charData.charLevel * (raceD.mpPerLv || 0));
-
-    // 2. Class Growth
-    for (const [className, info] of Object.entries(charData.unlockedClasses || {})) {
-        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
-        if (!classSnap.empty) {
-            const classD = classSnap.docs[0].data();
-            baseHP += (info.level * (classD.hpPerLv || 0));
-            baseMP += (info.level * (classD.mpPerLv || 0));
-        }
-    }
-
-    // 3. Stat Contribution (1 Stat = 2 Pool)
-    const totalBody = (charData.body || 0) + (raceD.baseBody || 0);
-    const totalSpirit = (charData.spirit || 0) + (raceD.baseSpirit || 0);
-    
-    baseHP += (totalBody * 2);
-    baseMP += (totalSpirit * 2);
-
-    // 4. Equipment/Magic Bonuses
-    const finalHP = Math.floor((baseHP + (charData.hpBonusFlat || 0)) * (1 + (charData.hpBonusPerc || 0) / 100));
-    const finalMP = Math.floor((baseMP + (charData.mpBonusFlat || 0)) * (1 + (charData.mpBonusPerc || 0) / 100));
-
-    return { finalHP, finalMP };
-}
-
-async function getTotalRegen(charData) {
-    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
-    const raceD = raceSnap.empty ? { hpRegen: 0, mpRegen: 0 } : raceSnap.docs[0].data();
-
-    let totalHPRegen = (charData.hpMax * 0.00208333) + (raceD.hpRegen || 0);
-    let totalMPRegen = (charData.mpMax * 0.00208333) + (raceD.mpRegen || 0);
-
-    for (const className of Object.keys(charData.unlockedClasses || {})) {
-        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
-        if (!classSnap.empty) {
-            const classD = classSnap.docs[0].data();
-            totalHPRegen += (classD.hpRegenBonus || 0);
-            totalMPRegen += (classD.mpRegenBonus || 0);
-        }
-    }
-    return { totalHPRegen, totalMPRegen };
-}
-
-
-/* ==========================================================================
-   SECTION 6: GAME ENGINE (CLOCK, CHAT, DICE)
-   ========================================================================== */
-
-// --- 6.1 CLOCK & SYNC ---
 function initClockListener() {
     rtdb.ref(`instance_clocks`).off(); 
     rtdb.ref(`instance_clocks/${currentCampaignId}`).on('value', (snapshot) => {
@@ -292,7 +224,7 @@ function initClockListener() {
 
         isRunning = data.isRunning;
         speedMultiplier = data.speedMultiplier || 1;
-
+        
         const label = document.getElementById('speed-label');
         if (label) label.innerText = speedMultiplier + "x";
 
@@ -317,7 +249,7 @@ function saveTimeState() {
     rtdb.ref(`instance_clocks/${currentCampaignId}`).update(timeData);
 }
 
-// THE HEARTBEAT LOOP
+// --- TICK LOOP ---
 let lastRegenMinute = 0;
 let syncCounter = 0;
 
@@ -329,14 +261,14 @@ function tick() {
     if (isRunning) {
         totalCustomSeconds += (deltaRealSeconds * speedMultiplier);
         
-        // Passive Regen Trigger
+        // Passive Regen
         let currentMinute = Math.floor(totalCustomSeconds / 60);
         if (currentMinute > lastRegenMinute) {
             applyPassiveRegen();
             lastRegenMinute = currentMinute;
         }
 
-        // Master Auto-Sync (Every 5s)
+        // Master Sync
         if (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin') {
             syncCounter += deltaRealSeconds;
             if (syncCounter > 5) {
@@ -377,7 +309,7 @@ function setSpeed(multiplier) {
     });
 }
 
-// --- 6.2 CHAT & DICE ---
+// --- CHAT LOGIC ---
 function initDiceLogListener() {
     const log = document.getElementById('dice-log');
     if (log) log.innerHTML = '<div class="dice-log-placeholder">Loading history...</div>';
@@ -460,7 +392,65 @@ function renderChatLogEntry(data) {
 
 
 /* ==========================================================================
-   SECTION 7: CHARACTER SYSTEM (CRUD & CORE LOGIC)
+   SECTION 6: CHARACTER LOGIC (MATH & STATS)
+   ========================================================================== */
+
+function calculateLevelFromEXP(exp) {
+    // Formula: Level = Floor(EXP / 200). Cap at 60.
+    const calculatedLv = Math.floor(exp / 200);
+    let finalLv = Math.max(1, calculatedLv);
+    return Math.min(finalLv, MAX_CHAR_LEVEL);
+}
+
+async function getFinalMaxStats(charData) {
+    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
+    const raceD = raceSnap.empty ? { hpPerLv: 1, mpPerLv: 1, baseBody: 0 } : raceSnap.docs[0].data();
+
+    let baseHP = 10 + (charData.charLevel * (raceD.hpPerLv || 0));
+    let baseMP = 10 + (charData.charLevel * (raceD.mpPerLv || 0));
+
+    for (const [className, info] of Object.entries(charData.unlockedClasses || {})) {
+        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
+        if (!classSnap.empty) {
+            const classD = classSnap.docs[0].data();
+            baseHP += (info.level * (classD.hpPerLv || 0));
+            baseMP += (info.level * (classD.mpPerLv || 0));
+        }
+    }
+
+    const totalBody = (charData.body || 0) + (raceD.baseBody || 0);
+    const totalSpirit = (charData.spirit || 0) + (raceD.baseSpirit || 0);
+    
+    baseHP += (totalBody * 2);
+    baseMP += (totalSpirit * 2);
+
+    const finalHP = Math.floor((baseHP + (charData.hpBonusFlat || 0)) * (1 + (charData.hpBonusPerc || 0) / 100));
+    const finalMP = Math.floor((baseMP + (charData.mpBonusFlat || 0)) * (1 + (charData.mpBonusPerc || 0) / 100));
+
+    return { finalHP, finalMP };
+}
+
+async function getTotalRegen(charData) {
+    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
+    const raceD = raceSnap.empty ? { hpRegen: 0, mpRegen: 0 } : raceSnap.docs[0].data();
+
+    let totalHPRegen = (charData.hpMax * 0.00208333) + (raceD.hpRegen || 0);
+    let totalMPRegen = (charData.mpMax * 0.00208333) + (raceD.mpRegen || 0);
+
+    for (const className of Object.keys(charData.unlockedClasses || {})) {
+        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
+        if (!classSnap.empty) {
+            const classD = classSnap.docs[0].data();
+            totalHPRegen += (classD.hpRegenBonus || 0);
+            totalMPRegen += (classD.mpRegenBonus || 0);
+        }
+    }
+    return { totalHPRegen, totalMPRegen };
+}
+
+
+/* ==========================================================================
+   SECTION 7: CHARACTER UI & CRUD
    ========================================================================== */
 
 function createNewCharacter() {
@@ -506,7 +496,6 @@ function loadUserCharacters() {
     });
 }
 
-// --- MAIN CHARACTER LOAD FUNCTION ---
 async function selectCharacter(id) {
     if (characterListener) characterListener(); 
 
@@ -517,44 +506,35 @@ async function selectCharacter(id) {
     const user = auth.currentUser;
     const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
 
-    // Real-time listener for the active character
     characterListener = charRef.onSnapshot(async (doc) => {
         if (doc.exists) {
             const d = doc.data();
-
-            // Sync Instance Clock if changed
             if (currentCampaignId !== (d.instanceId || "global")) {
                 currentCampaignId = d.instanceId || "global"; 
                 initClockListener(); 
                 initDiceLogListener();
             }
-            
-            // Sync Basic Inputs
             if(document.getElementById('char-name')) {
                 document.getElementById('char-name').value = d.name || "";
                 document.getElementById('char-race').value = d.race || "";
                 document.getElementById('char-exp-current').value = d.expCurrent || 0;
             }
 
-            // Sync Level & Caps
             activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
             if(document.getElementById('char-level-display')) {
                 document.getElementById('char-level-display').innerText = `Lv. ${activeCharLevel}`;
             }
             
-            // Sync Stats & AP
             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
             pendingStats = { ...originalStats };
             const spentPoints = (originalStats.body + originalStats.mind + originalStats.spirit);
             totalAP = Math.max(0, activeCharLevel - spentPoints); 
 
-            // Render UI Elements
             renderClassPills(d);
             refreshStatDisplay();
             renderGallery(d.gallery || [], d.portrait || "");
             renderSkills(d);
 
-            // Calculate Max Pools
             const totals = await getFinalMaxStats(d);
             const nextLevelExp = (activeCharLevel + 1) * 200;
 
@@ -572,7 +552,6 @@ async function selectCharacter(id) {
                 mpInput.value = Math.floor(d.mpCurrent || 0);
             }
 
-            // Update Sidebar HUD
             const hudData = { ...d, charLevel: activeCharLevel, hpMax: totals.finalHP, mpMax: totals.finalMP, expMax: nextLevelExp };
             updateHUD(hudData);
             
@@ -660,11 +639,6 @@ async function applyPassiveRegen() {
     
     updateHUD({ ...charData, hpCurrent: newHP, mpCurrent: newMP, hpMax, mpMax });
 }
-
-
-/* ==========================================================================
-   SECTION 8: CHARACTER SHEET UI (RENDERERS)
-   ========================================================================== */
 
 function refreshStatDisplay() {
     let spentAP = (pendingStats.body - originalStats.body) + 
@@ -866,7 +840,6 @@ function renderSkills(charData) {
     });
 }
 
-// --- HUD UPDATE ---
 async function updateHUD(char) {
     const hud = document.getElementById('active-char-hud');
     if (!hud) return;
@@ -917,7 +890,7 @@ async function updateHUD(char) {
 
 
 /* ==========================================================================
-   SECTION 9: MASTER PANEL - CORE LOGIC (Instances, Users, Char Manager)
+   SECTION 9: MASTER PANEL LOGIC
    ========================================================================== */
 
 function openMasterPanel() {
@@ -940,7 +913,7 @@ function openMasterPanel() {
     }
 }
 
-// --- 9.1 INSTANCE MANAGEMENT ---
+// --- INSTANCE MANAGEMENT ---
 async function loadInstanceList() {
     const listContainer = document.getElementById('admin-instance-list');
     const user = auth.currentUser;
@@ -1022,7 +995,7 @@ async function deleteInstance(instanceId, name) {
     } catch (error) { console.error("Delete Error:", error); }
 }
 
-// --- 9.2 USER MANAGEMENT ---
+// --- USER MANAGEMENT ---
 async function loadUserList() {
     const listContainer = document.getElementById('admin-user-list');
     listContainer.innerHTML = '<p style="padding: 20px; text-align: center;">Fetching database...</p>';
@@ -1061,7 +1034,7 @@ async function saveAllUserRoles() {
     } catch (error) { alert("Failed to save changes."); }
 }
 
-// --- 9.3 CHARACTER SUPERVISION ---
+// --- CHARACTER SUPERVISION ---
 async function loadGlobalCharacterManager() {
     const listContainer = document.getElementById('admin-character-list'); 
     if (!listContainer) return;
@@ -1139,7 +1112,7 @@ function filterCharacterTable() {
     }
 }
 
-// --- 9.4 CHARACTER MANAGER MODAL ---
+// --- CHARACTER MANAGER MODAL ---
 async function openCharacterManagerModal(uid, cid) {
     document.getElementById('edit-modal-uid').value = uid;
     document.getElementById('edit-modal-cid').value = cid;
@@ -1312,7 +1285,7 @@ async function respecCharacterAttributes() {
 
 
 /* ==========================================================================
-   SECTION 10: MASTER PANEL - REGISTRY EDITORS (Races, Classes, Skills)
+   SECTION 10: REGISTRY EDITORS (Races, Classes, Skills)
    ========================================================================== */
 
 // --- 10.1 RACE REGISTRY ---
@@ -1340,32 +1313,45 @@ async function createMasterRace() {
 async function loadMasterRaceList() {
     const list = document.getElementById('master-race-list');
     if (!list) return;
-    const snap = await firestore.collection('master_races').orderBy('name').get();
-    list.innerHTML = "";
+    
+    try {
+        const snap = await firestore.collection('master_races').orderBy('name').get();
+        list.innerHTML = "";
 
-    snap.forEach(doc => {
-        const d = doc.data();
-        const card = document.createElement('div');
-        card.className = "panel-card mb-s";
-        card.style.background = "#18181b";
-        card.innerHTML = `
-            <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
-                <div style="flex-grow: 1;">
-                    <div class="flex-row" style="gap: 10px;">
-                        <strong style="color: #10b981; font-size: 1.1rem;">${d.name}</strong>
-                        <span class="join-code-pill">HP/Lv: +${d.hpPerLv || 0}</span>
+        if (snap.empty) {
+            list.innerHTML = '<p class="text-muted text-center" style="padding:20px;">No races registered yet.</p>';
+            return;
+        }
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            const card = document.createElement('div');
+            card.className = "panel-card mb-s";
+            card.style.background = "#18181b";
+            
+            card.innerHTML = `
+                <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
+                    <div style="flex-grow: 1;">
+                        <div class="flex-row" style="gap: 10px;">
+                            <strong style="color: #10b981; font-size: 1.1rem;">${d.name}</strong>
+                            <span class="join-code-pill">HP/Lv: +${d.hpPerLv || 0}</span>
+                            <span class="join-code-pill">MP/Lv: +${d.mpPerLv || 0}</span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #71717a; margin-top: 8px;">
+                            BODY: +${d.baseBody || 0} | MIND: +${d.baseMind || 0} | SPIRIT: +${d.baseSpirit || 0}
+                        </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #71717a; margin-top: 8px;">
-                        BODY: +${d.baseBody || 0} | MIND: +${d.baseMind || 0} | SPIRIT: +${d.baseSpirit || 0}
+                    <div class="flex-row" style="gap: 5px;">
+                        <button class="btn-small" onclick="editRace('${doc.id}')"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-danger-small" onclick="deleteMasterAsset('master_races', '${doc.id}', loadMasterRaceList)"><i class="fa-solid fa-trash"></i></button>
                     </div>
-                </div>
-                <div class="flex-row" style="gap: 5px;">
-                    <button class="btn-small" onclick="editRace('${doc.id}')"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn-danger-small" onclick="deleteMasterAsset('master_races', '${doc.id}', loadMasterRaceList)"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>`;
-        list.appendChild(card);
-    });
+                </div>`;
+            list.appendChild(card);
+        });
+    } catch (e) {
+        console.error("Race Load Error:", e);
+        list.innerHTML = `<p style="color:#ef4444; text-align:center;">Error loading races: ${e.message}</p>`;
+    }
 }
 
 async function editRace(id) {
@@ -1407,7 +1393,6 @@ async function saveMasterRace() {
     const raceId = document.getElementById('m-race-id').value;
     if (!document.getElementById('m-race-name').value.trim()) return alert("Race name required!");
 
-    // Reusing the create logic basically, but separating ID logic
     const raceData = {
         name: document.getElementById('m-race-name').value.trim(),
         hpPerLv: parseInt(document.getElementById('m-race-hp').value) || 0,
@@ -1487,13 +1472,12 @@ async function loadMasterClassList() {
     if (!list) return;
 
     try {
-        // FIX: Removed .orderBy('name') to stop the 400 Error
+        // FIX: Only sort by 'tier' to avoid the 400 Index Error
         const snap = await firestore.collection('master_classes').orderBy('tier').get();
-        
         list.innerHTML = "";
 
         if (snap.empty) {
-            list.innerHTML = '<p class="text-muted text-center">No classes defined.</p>';
+            list.innerHTML = '<p class="text-muted text-center" style="padding:20px;">No classes registered yet.</p>';
             return;
         }
 
@@ -1502,7 +1486,7 @@ async function loadMasterClassList() {
             const card = document.createElement('div');
             card.className = "panel-card mb-s";
             card.style.background = "#18181b";
-            // Color tiers: Gold (3), Purple (2), Grey (1)
+            // Color coding tiers: Gold (3), Indigo (2), Dark Grey (1)
             card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#3f3f46'}`;
             
             const traitTags = (d.traits || []).map(t => 
@@ -1534,7 +1518,7 @@ async function loadMasterClassList() {
         });
     } catch (e) {
         console.error("Class Load Error:", e);
-        list.innerHTML = '<p style="color:#ef4444; text-align:center;">Failed to load classes. Check console.</p>';
+        list.innerHTML = `<p style="color:#ef4444; text-align:center;">Error: ${e.message}</p>`;
     }
 }
 
@@ -1572,66 +1556,154 @@ function resetClassForm() {
     document.getElementById('class-cancel-btn').classList.add('hide-default');
 }
 
-// --- 10.3 SKILL REGISTRY ---
+// ==========================================
+// --- 10.3 SKILL REGISTRY (Refined) ---
+// ==========================================
+
 function openSkillCreator() {
     document.getElementById('skill-creator-form').classList.remove('hide-default');
-    document.getElementById('reg-skill-name').value = '';
-    document.getElementById('reg-skill-desc').value = '';
-    document.getElementById('reg-skill-icon-base64').value = '';
-    document.getElementById('icon-preview').innerHTML = '';
+    resetSkillForm(); // Ensure clean slate
 }
 
-// Image Resizer (64x64)
+function autoSetMpCost() {
+    const tier = parseInt(document.getElementById('reg-skill-tier').value) || 1;
+    // Formula: 10 * 2^(tier-1) -> 10, 20, 40
+    const cost = 10 * Math.pow(2, tier - 1);
+    document.getElementById('reg-skill-cost').value = cost;
+}
+
+// 1. Image Logic
 document.getElementById('reg-skill-icon').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 64; canvas.height = 64;
-            ctx.drawImage(img, 0, 0, 64, 64);
+            canvas.width = 128; canvas.height = 128; // Updated to 128x128
+            ctx.drawImage(img, 0, 0, 128, 128);
             const dataURL = canvas.toDataURL('image/png');
             document.getElementById('reg-skill-icon-base64').value = dataURL;
-            document.getElementById('icon-preview').innerHTML = `<img src="${dataURL}" style="width:40px; height:40px; border-radius:4px;">`;
+            document.getElementById('icon-preview').innerHTML = `<img src="${dataURL}" style="width:100%; height:100%; border-radius:4px;">`;
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 });
 
+// 2. Save / Update Logic
 async function saveSkillToRegistry() {
-    const name = document.getElementById('reg-skill-name').value;
+    const skillId = document.getElementById('ms-skill-id').value; 
+    const name = document.getElementById('reg-skill-name').value.trim();
     const skillClass = document.getElementById('reg-skill-class').value;
     const tier = parseInt(document.getElementById('reg-skill-tier').value);
     
     if (!name || !skillClass) return alert("Name and Class are required.");
-    const baseCost = 10 * Math.pow(2, tier - 1);
 
     const skillData = {
-        name: name, class: skillClass, tier: tier,
-        description: document.getElementById('reg-skill-desc').value,
+        name: name,
+        class: skillClass,
+        tier: tier,
+        baseCost: parseInt(document.getElementById('reg-skill-cost').value) || (10 * Math.pow(2, tier - 1)),
+        description: document.getElementById('reg-skill-desc').value.trim(),
         iconData: document.getElementById('reg-skill-icon-base64').value, 
-        range: document.getElementById('reg-skill-range').value,
+        
+        // Combat Fields
+        range: document.getElementById('reg-skill-range').value, // Now saves "Touch"
+        aoe: document.getElementById('reg-skill-aoe').value.trim(),
         damageType: document.getElementById('reg-skill-dmg-type').value,
         savingThrow: document.getElementById('reg-skill-save').value,
+        
         scalingStat: document.getElementById('reg-skill-stat').value,
         scalingFactor: parseFloat(document.getElementById('reg-skill-factor').value) || 1.0,
-        cap: parseInt(document.getElementById('reg-skill-cap').value) || 110,
-        baseCost: baseCost, castTime: 0, cooldown: 0, targetType: "single", 
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
-        const docId = `${skillClass.toLowerCase()}_${name.replace(/\s+/g, '_').toLowerCase()}_t${tier}`;
-        await firestore.collection('master_skills').doc(docId).set(skillData);
-        alert("Skill Saved to Registry!");
+        if (skillId) {
+            await firestore.collection('master_skills').doc(skillId).update(skillData);
+            alert("Skill Updated!");
+        } else {
+            const newId = `${skillClass.toLowerCase()}_${name.replace(/\s+/g, '_').toLowerCase()}_t${tier}`;
+            skillData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            skillData.castTime = 0; 
+            skillData.cooldown = 0;
+            await firestore.collection('master_skills').doc(newId).set(skillData);
+            alert("New Skill Created!");
+        }
+        
+        resetSkillForm();
         loadSkillRegistry();
-    } catch (e) { console.error(e); alert("Error saving skill."); }
+    } catch (e) {
+        console.error("Error saving skill:", e);
+        alert("Error saving skill.");
+    }
 }
 
+// 3. Edit Mode
+async function editMasterSkill(id) {
+    const doc = await firestore.collection('master_skills').doc(id).get();
+    if (!doc.exists) return;
+    const d = doc.data();
+
+    document.getElementById('ms-skill-id').value = id;
+    document.getElementById('reg-skill-name').value = d.name;
+    document.getElementById('reg-skill-class').value = d.class;
+    document.getElementById('reg-skill-tier').value = d.tier;
+    document.getElementById('reg-skill-cost').value = d.baseCost || 10;
+    document.getElementById('reg-skill-desc').value = d.description || "";
+    document.getElementById('reg-skill-icon-base64').value = d.iconData || "";
+    
+    if (d.iconData) {
+        document.getElementById('icon-preview').innerHTML = `<img src="${d.iconData}" style="width:100%; height:100%; border-radius:4px;">`;
+    } else {
+        document.getElementById('icon-preview').innerHTML = "";
+    }
+
+    document.getElementById('reg-skill-range').value = d.range || "Touch"; // Default to Touch
+    document.getElementById('reg-skill-aoe').value = d.aoe || ""; 
+    document.getElementById('reg-skill-dmg-type').value = d.damageType || "";
+    document.getElementById('reg-skill-save').value = d.savingThrow || "none";
+    document.getElementById('reg-skill-stat').value = d.scalingStat || "none";
+    document.getElementById('reg-skill-factor').value = d.scalingFactor || 1.0;
+
+    document.getElementById('skill-save-btn').innerText = "Update Skill";
+    document.getElementById('skill-save-btn').classList.remove('btn-success');
+    document.getElementById('skill-save-btn').classList.add('btn-primary'); 
+    document.getElementById('skill-cancel-btn').classList.remove('hide-default');
+    
+    document.querySelector('.master-workspace').scrollTop = 0;
+}
+
+// 4. Reset Form
+function resetSkillForm() {
+    document.getElementById('ms-skill-id').value = "";
+    document.getElementById('reg-skill-name').value = "";
+    document.getElementById('reg-skill-desc').value = "";
+    document.getElementById('reg-skill-icon').value = "";
+    document.getElementById('reg-skill-icon-base64').value = "";
+    document.getElementById('icon-preview').innerHTML = "";
+    
+    document.getElementById('reg-skill-tier').value = "1";
+    document.getElementById('reg-skill-cost').value = "10";
+    document.getElementById('reg-skill-range').value = "Touch"; // Updated Default
+    document.getElementById('reg-skill-aoe').value = "";
+    document.getElementById('reg-skill-dmg-type').value = "";
+    document.getElementById('reg-skill-save').value = "none";
+    document.getElementById('reg-skill-stat').value = "body";
+    document.getElementById('reg-skill-factor').value = "1.0";
+
+    document.getElementById('skill-save-btn').innerText = "Save Skill to Library";
+    document.getElementById('skill-save-btn').classList.add('btn-success');
+    document.getElementById('skill-save-btn').classList.remove('btn-primary');
+    document.getElementById('skill-cancel-btn').classList.add('hide-default');
+}
+
+// 5. Load List
 async function loadSkillRegistry() {
     const container = document.getElementById('registry-skill-list');
     container.innerHTML = '<p>Loading...</p>';
@@ -1644,7 +1716,7 @@ async function loadSkillRegistry() {
         
         snap.forEach(doc => {
             const d = doc.data();
-            // 64x64 Icon logic
+            // 64x64 Icon logic (display only)
             const icon = d.iconData ? 
                 `<img src="${d.iconData}" style="width:64px; height:64px; object-fit:cover; border-radius:4px; border:1px solid #333; flex-shrink:0;">` 
                 : `<div style="width:64px; height:64px; background:#222; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#444;"><i class="fa-solid fa-image"></i></div>`;
