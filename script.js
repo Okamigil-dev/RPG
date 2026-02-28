@@ -16,6 +16,8 @@ let totalAP = 0;
 let activeCharLevel = 1;
 let characterListener = null;
 
+const MAX_CHAR_LEVEL = 60;      // Hard Cap for Base Level
+const MAX_ALLOCATED_STAT = 20;  // Hard Cap for Body/Mind/Spirit (Allocated points only)
 
 
 // ==========================================
@@ -720,16 +722,28 @@ function refreshStatDisplay() {
     document.getElementById('attr-confirm-area').classList.toggle('hide-default', !hasChanges);
 }
 
-function adjustPendingStat(stat, amt) {
-    let spentAP = (pendingStats.body - originalStats.body) + 
-                  (pendingStats.mind - originalStats.mind) + 
-                  (pendingStats.spirit - originalStats.spirit);
+function adjustPendingStat(stat, amount) {
+    if (!currentCharacterId) return;
 
-    // 1 AP cost per point
-    if (amt > 0 && spentAP >= totalAP) return; // No AP left
-    if (amt < 0 && pendingStats[stat] <= originalStats[stat]) return; // No respec allowed
+    const currentVal = pendingStats[stat];
+    
+    // CAP CHECK: Prevent increasing if already at 20
+    if (amount > 0 && currentVal >= MAX_ALLOCATED_STAT) {
+        showToast(`Stat Cap Reached! (Max ${MAX_ALLOCATED_STAT})`);
+        return;
+    }
 
-    pendingStats[stat] += amt;
+    // Prevent negative stats
+    if (amount < 0 && currentVal <= 0) return;
+
+    // Check AP availability logic (existing logic)...
+    const cost = amount; 
+    if (amount > 0 && totalAP < cost) return;
+
+    // Apply change
+    pendingStats[stat] += amount;
+    totalAP -= cost;
+    
     refreshStatDisplay();
 }
 
@@ -1139,7 +1153,7 @@ function deleteImage(event, index) {
    ========================================== */
 
 
-
+// --- OPEN MASTER PANEL --- /
 function openMasterPanel() {
     const role = window.currentUserRole;
 
@@ -1170,7 +1184,7 @@ function openMasterPanel() {
 }
 
 
-// Fetches all users from Firestore and displays them in the Admin panel
+// --- LOAD ALL USERS FROM FIRESTORE --- //
 async function loadUserList() {
     const listContainer = document.getElementById('admin-user-list');
     listContainer.innerHTML = '<p style="padding: 20px; text-align: center;">Fetching database...</p>';
@@ -1301,6 +1315,7 @@ async function loadInstanceList() {
     }
 }
 
+// --- CREATE INSTANCE BUTTON --- //
 async function spawnInstance() {
     const nameInput = document.getElementById('new-instance-name');
     const instanceName = nameInput.value.trim();
@@ -1394,7 +1409,7 @@ async function deleteInstance(instanceId, name) {
     }
 }
 
-
+// --- LOAD ALL CHARACTERS FROM FIRESTORE --- //
 async function loadGlobalCharacterManager() {
     const listContainer = document.getElementById('admin-character-list'); 
     if (!listContainer) return;
@@ -1458,6 +1473,7 @@ async function loadGlobalCharacterManager() {
     }
 }
 
+// --- SAVE CHARACTERS INSTANCES BUTTON --- //
 async function saveAllCharacterInstances() {
     // 1. Find all dropdowns we just generated using the exact class
     const selectors = document.querySelectorAll('.realm-assign-select');
@@ -1516,7 +1532,7 @@ async function saveAllCharacterInstances() {
     }
 }
 
-
+// --- CHARACTER MANAGEMENT FILTER --- //
 function filterCharacterTable() {
     const input = document.getElementById('char-search-input');
     const filter = input.value.toLowerCase();
@@ -1543,7 +1559,7 @@ function filterCharacterTable() {
     }
 }
 
-
+// --- CHARACTER MANAGEMENT MODAL UI --- //
 async function openCharacterManagerModal(uid, cid) {
     document.getElementById('edit-modal-uid').value = uid;
     document.getElementById('edit-modal-cid').value = cid;
@@ -1598,6 +1614,7 @@ function closeCharacterManagerModal() {
     modal.classList.add('hide-default');
 }
 
+// --- ADD EXP TO CHARACTER IN MODAL UI --- //
 function addExpQuick(amount) {
     const expInput = document.getElementById('edit-modal-exp');
     let currentExp = parseInt(expInput.value) || 0;
@@ -1636,6 +1653,7 @@ async function assignClassToCharacter() {
     }
 }
 
+// --- LOAD CLASS LIST FROM FIRESTORE --- //
 async function renderModalClassList(uid, cid) {
     const container = document.getElementById('modal-active-classes');
     const charRef = firestore.collection('users').doc(uid).collection('characters').doc(cid);
@@ -1660,6 +1678,7 @@ async function renderModalClassList(uid, cid) {
     });
 }
 
+// --- REMOVE CLASS FROM CHARACTER IN MODAL --- //
 async function removeClassFromCharacter(className) {
     if (!confirm(`Are you sure you want to strip the ${className} class from this character?`)) return;
 
@@ -1676,6 +1695,7 @@ async function removeClassFromCharacter(className) {
     renderModalClassList(uid, cid);
 }
 
+// --- SAVE CHARACTER MODAL UI BUTTON --- //
 async function saveCharacterManagerEdits() {
     const uid = document.getElementById('edit-modal-uid').value;
     const cid = document.getElementById('edit-modal-cid').value;
@@ -2115,6 +2135,154 @@ function getEffectiveMainStat(character, classData) {
     }
 }
 
+// --- SKILL REGISTRY LOGIC ---
+
+// 1. Switch Tabs Helper
+function switchAdminTab(tabName) {
+    document.getElementById('admin-instances-tab').classList.add('hide-default');
+    document.getElementById('admin-skill-registry-tab').classList.add('hide-default');
+    
+    if(tabName === 'instances') {
+        document.getElementById('admin-instances-tab').classList.remove('hide-default');
+        loadInstanceList();
+    } else if (tabName === 'skill-registry') {
+        document.getElementById('admin-skill-registry-tab').classList.remove('hide-default');
+        loadSkillRegistry();
+    }
+}
+
+function openSkillCreator() {
+    document.getElementById('skill-creator-form').classList.remove('hide-default');
+    // Clear inputs...
+    document.getElementById('reg-skill-name').value = '';
+    document.getElementById('reg-skill-desc').value = '';
+    document.getElementById('reg-skill-icon-base64').value = '';
+    document.getElementById('icon-preview').innerHTML = '';
+}
+
+// 2. Image Resizer (The 64x64 Logic)
+document.getElementById('reg-skill-icon').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            // Resize logic
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 64;
+            canvas.height = 64;
+            
+            // Draw image scaled to 64x64
+            ctx.drawImage(img, 0, 0, 64, 64);
+            
+            // Convert to Base64 string
+            const dataURL = canvas.toDataURL('image/png');
+            
+            // Store and Preview
+            document.getElementById('reg-skill-icon-base64').value = dataURL;
+            document.getElementById('icon-preview').innerHTML = `<img src="${dataURL}" style="width:64px; height:64px; border-radius:4px;">`;
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+// 3. Save Skill to Firestore
+async function saveSkillToRegistry() {
+    const name = document.getElementById('reg-skill-name').value;
+    const skillClass = document.getElementById('reg-skill-class').value;
+    const tier = parseInt(document.getElementById('reg-skill-tier').value);
+    
+    if (!name || !skillClass) return alert("Name and Class are required.");
+
+    // Auto-Calculate Base Cost (10 -> 20 -> 40)
+    const baseCost = 10 * Math.pow(2, tier - 1);
+
+    const skillData = {
+        name: name,
+        class: skillClass,
+        tier: tier,
+        description: document.getElementById('reg-skill-desc').value,
+        iconData: document.getElementById('reg-skill-icon-base64').value, // Base64
+        
+        // Combat
+        range: document.getElementById('reg-skill-range').value,
+        damageType: document.getElementById('reg-skill-dmg-type').value,
+        savingThrow: document.getElementById('reg-skill-save').value,
+        
+        // Scaling
+        scalingStat: document.getElementById('reg-skill-stat').value,
+        scalingFactor: parseFloat(document.getElementById('reg-skill-factor').value) || 1.0,
+        cap: parseInt(document.getElementById('reg-skill-cap').value) || 110,
+        
+        // Costs (Calculated)
+        baseCost: baseCost,
+        castTime: 0, // Default for now
+        cooldown: 0, // Default for now
+        
+        targetType: "single", // Default
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        // Create a readable ID: "cleric_fireball_t1"
+        const docId = `${skillClass.toLowerCase()}_${name.replace(/\s+/g, '_').toLowerCase()}_t${tier}`;
+        
+        await firestore.collection('master_skills').doc(docId).set(skillData);
+        alert("Skill Saved to Registry!");
+        document.getElementById('skill-creator-form').classList.add('hide-default');
+        loadSkillRegistry(); // Refresh list
+    } catch (e) {
+        console.error("Error saving skill:", e);
+        alert("Error saving skill.");
+    }
+}
+
+// 4. Load List
+async function loadSkillRegistry() {
+    const container = document.getElementById('registry-skill-list');
+    container.innerHTML = '<p>Loading...</p>';
+    
+    try {
+        const snap = await firestore.collection('master_skills').orderBy('class').get();
+        
+        if(snap.empty) {
+            container.innerHTML = '<p>No skills defined yet.</p>';
+            return;
+        }
+
+        let html = '<div class="grid-3-col">'; // Grid layout for cards
+        snap.forEach(doc => {
+            const d = doc.data();
+            const icon = d.iconData ? `<img src="${d.iconData}" style="width:32px; height:32px; vertical-align:middle; margin-right:10px;">` : '';
+            
+            html += `
+            <div class="panel-dark" style="border:1px solid #333; padding:10px;">
+                <div class="flex-row">
+                    ${icon}
+                    <div>
+                        <strong style="color:#e879f9;">${d.name}</strong> <br>
+                        <span style="font-size:0.75rem; color:#aaa;">${d.class} | T${d.tier} | ${d.baseCost} MP</span>
+                    </div>
+                </div>
+                <div style="font-size:0.8rem; margin-top:5px; color:#ccc;">${d.description}</div>
+                <div style="margin-top:5px; font-size:0.7rem;">
+                    ${d.damageType ? `<span class="join-code-pill">${d.damageType}</span>` : ''}
+                    ${d.range ? `<span class="join-code-pill">${d.range}</span>` : ''}
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+        
+    } catch (e) {
+        console.error("Load Error:", e);
+    }
+}
+
 // --- TRAIT LIBRARY LOGIC ---
 async function ensureTraitExists(traitName) {
     const slug = traitName.toLowerCase().trim().replace(/\s+/g, '-');
@@ -2355,12 +2523,12 @@ function renderSkills(charData) {
 // --- EXP FORMULA --- //
 function calculateLevelFromEXP(exp) {
     // Formula: Threshold = Target Level * 200
-    // Level 1: 0 - 399 XP (Target Lv2 needs 400)
-    // Level 2: 400 - 599 XP (Target Lv3 needs 600)
-    // Level 3: 600+ XP
+    // We floor the result. If it's less than 1, we return 1.
+    const calculatedLv = Math.floor(exp / 200);
+    let finalLv = Math.max(1, calculatedLv);
     
-    if (exp < 400) return 1;
-    return Math.floor(exp / 200);
+    // ENFORCE CAP
+    return Math.min(finalLv, MAX_CHAR_LEVEL);
 }
 
 function adjustModalExp(multiplier) {
