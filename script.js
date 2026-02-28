@@ -514,16 +514,20 @@ async function selectCharacter(id) {
                 initClockListener(); 
                 initDiceLogListener();
             }
-            if(document.getElementById('char-name')) {
-                document.getElementById('char-name').value = d.name || "";
-                document.getElementById('char-race').value = d.race || "";
-                document.getElementById('char-exp-current').value = d.expCurrent || 0;
-            }
+
+            // Fixed: Individual null checks for Identity fields
+            const nameEl = document.getElementById('char-name');
+            if (nameEl) nameEl.value = d.name || "";
+            
+            const raceEl = document.getElementById('char-race');
+            if (raceEl) raceEl.value = d.race || "";
+            
+            const expCurrEl = document.getElementById('char-exp-current');
+            if (expCurrEl) expCurrEl.value = d.expCurrent || 0;
 
             activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
-            if(document.getElementById('char-level-display')) {
-                document.getElementById('char-level-display').innerText = `Lv. ${activeCharLevel}`;
-            }
+            const levelDisp = document.getElementById('char-level-display');
+            if (levelDisp) levelDisp.innerText = `Lv. ${activeCharLevel}`;
             
             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
             pendingStats = { ...originalStats };
@@ -538,16 +542,24 @@ async function selectCharacter(id) {
             const totals = await getFinalMaxStats(d);
             const nextLevelExp = (activeCharLevel + 1) * 200;
 
-            if(document.getElementById('char-hp-max')) {
-                document.getElementById('char-hp-max').value = totals.finalHP;
-                document.getElementById('char-mp-max').value = totals.finalMP;
-                document.getElementById('char-exp-max').value = nextLevelExp;
+            // Fixed: Individual null checks for Resource and EXP displays
+            const hpMaxEl = document.getElementById('char-hp-max');
+            if (hpMaxEl) hpMaxEl.value = totals.finalHP;
+            
+            const mpMaxEl = document.getElementById('char-mp-max');
+            if (mpMaxEl) mpMaxEl.value = totals.finalMP;
+            
+            const expMaxEl = document.getElementById('char-exp-max');
+            if (expMaxEl) expMaxEl.value = nextLevelExp;
                 
-                const hpInput = document.getElementById('char-hp-current');
-                const mpInput = document.getElementById('char-mp-current');
-                
+            const hpInput = document.getElementById('char-hp-current');
+            if (hpInput) {
                 hpInput.dataset.trueValue = d.hpCurrent || 0;
                 hpInput.value = Math.floor(d.hpCurrent || 0);
+            }
+
+            const mpInput = document.getElementById('char-mp-current');
+            if (mpInput) {
                 mpInput.dataset.trueValue = d.mpCurrent || 0;
                 mpInput.value = Math.floor(d.mpCurrent || 0);
             }
@@ -555,8 +567,11 @@ async function selectCharacter(id) {
             const hudData = { ...d, charLevel: activeCharLevel, hpMax: totals.finalHP, mpMax: totals.finalMP, expMax: nextLevelExp };
             updateHUD(hudData);
             
-            document.getElementById('char-selection-view').classList.add('hide-default');
-            document.getElementById('char-sheet-view').classList.remove('hide-default');
+            const selectionView = document.getElementById('char-selection-view');
+            if (selectionView) selectionView.classList.add('hide-default');
+            
+            const sheetView = document.getElementById('char-sheet-view');
+            if (sheetView) sheetView.classList.remove('hide-default');
         }
     });
 
@@ -570,17 +585,23 @@ async function saveCharacter() {
     const doc = await charRef.get();
     const currentData = doc.data();
 
-    const expInput = document.getElementById('char-exp-current');
-    const currentExp = parseInt(expInput.value) || 0;
+    // --- CHANGE STARTS HERE ---
+    // 1. Get EXP from the database directly since the input is gone from the HTML
+    const currentExp = currentData.expCurrent || 0;
     
+    // 2. Calculate levels based on that database value
     activeCharLevel = calculateLevelFromEXP(currentExp); 
     const nextLevelExp = (activeCharLevel + 1) * 200; 
-    document.getElementById('char-exp-max').value = nextLevelExp;
+
+    // 3. Use a guard for the "max" display in case the element is missing
+    const expMaxDisplay = document.getElementById('char-exp-max');
+    if (expMaxDisplay) expMaxDisplay.value = nextLevelExp;
+    // --- CHANGE ENDS HERE ---
 
     const data = {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
-        expCurrent: currentExp,
+        expCurrent: currentExp, // Saves the existing database value back
         charLevel: activeCharLevel,
         body: originalStats.body || 0,
         mind: originalStats.mind || 0,
@@ -862,6 +883,12 @@ async function updateHUD(char) {
     if (!hud) return;
     hud.classList.remove('hide-default');
     
+    // 1. Calculate Percentages FIRST so they are available for all bars
+    const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 1)) * 100, 100);
+    const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 1)) * 100, 100);
+    const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
+
+    // 2. Race Data Calculation
     const raceSnap = await firestore.collection('master_races').where('name', '==', char.race).limit(1).get();
     const raceD = raceSnap.empty ? { baseBody: 0, baseMind: 0, baseSpirit: 0 } : raceSnap.docs[0].data();
 
@@ -874,35 +901,58 @@ async function updateHUD(char) {
         return mod >= 0 ? `+${mod}` : mod;
     };
 
-    document.getElementById('hud-name').innerText = char.name || "Unnamed";
-    const classes = char.unlockedClasses || {}; 
-    const classStrings = Object.keys(classes).map(name => `${name} Lv.${classes[name].level}`);
-    const classText = classStrings.length > 0 ? classStrings.join(', ') : (char.class || "Adventurer");
-    
-    document.getElementById('hud-meta').innerText = `Level ${activeCharLevel}`;
-    document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
-    document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
-    document.getElementById('hud-portrait').style.backgroundImage = char.portrait ? `url(${char.portrait})` : "none";
-    document.getElementById('hud-mod-body').innerText = `BODY ${getMod(totalB)}`;
-    document.getElementById('hud-mod-mind').innerText = `MIND ${getMod(totalM)}`;
-    document.getElementById('hud-mod-spirit').innerText = `SPIRIT ${getMod(totalS)}`;
+    // 3. Update Text Content with Null Checks
+    const nameEl = document.getElementById('hud-name');
+    if (nameEl) nameEl.innerText = char.name || "Unnamed";
 
-    if(document.getElementById('total-body-label')) {
-        document.getElementById('total-body-label').innerText = totalB;
+    const metaEl = document.getElementById('hud-meta');
+    if (metaEl) metaEl.innerText = `Level ${activeCharLevel}`;
+
+    const hpTextEl = document.getElementById('hud-hp-text');
+    if (hpTextEl) hpTextEl.innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
+
+    const mpTextEl = document.getElementById('hud-mp-text');
+    if (mpTextEl) mpTextEl.innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
+
+    const portraitEl = document.getElementById('hud-portrait');
+    if (portraitEl) portraitEl.style.backgroundImage = char.portrait ? `url(${char.portrait})` : "none";
+
+    // 4. Update Modifier Boxes
+    const modB = document.getElementById('hud-mod-body');
+    if (modB) modB.innerText = `BODY ${getMod(totalB)}`;
+    
+    const modM = document.getElementById('hud-mod-mind');
+    if (modM) modM.innerText = `MIND ${getMod(totalM)}`;
+    
+    const modS = document.getElementById('hud-mod-spirit');
+    if (modS) modS.innerText = `SPIRIT ${getMod(totalS)}`;
+
+    // 5. Update Main Sheet Total Labels
+    const labelB = document.getElementById('total-body-label');
+    if (labelB) {
+        labelB.innerText = totalB;
         document.getElementById('total-mind-label').innerText = totalM;
         document.getElementById('total-spirit-label').innerText = totalS;
     }
 
-    const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 1)) * 100, 100);
-    const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 1)) * 100, 100);
-    const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
+    // 6. Update ALL Visual Bars (Sidebar + Main Sheet)
+    const hpFillSidebar = document.getElementById('hud-hp-fill');
+    if (hpFillSidebar) hpFillSidebar.style.width = hpPerc + "%";
 
-    document.getElementById('hud-hp-fill').style.width = hpPerc + "%";
-    document.getElementById('hud-mp-fill').style.width = mpPerc + "%";
-    document.getElementById('hud-exp-fill').style.width = expPerc + "%";
-    if(document.getElementById('hud-exp-text')) {
-        document.getElementById('hud-exp-text').innerText = `${Math.floor(expPerc)}%`;
-    }
+    const mpFillSidebar = document.getElementById('hud-mp-fill');
+    if (mpFillSidebar) mpFillSidebar.style.width = mpPerc + "%";
+
+    const expFillSidebar = document.getElementById('hud-exp-fill');
+    if (expFillSidebar) expFillSidebar.style.width = expPerc + "%";
+
+    const hpFillMain = document.getElementById('char-hp-fill-main');
+    if (hpFillMain) hpFillMain.style.width = hpPerc + "%";
+
+    const mpFillMain = document.getElementById('char-mp-fill-main');
+    if (mpFillMain) mpFillMain.style.width = mpPerc + "%";
+
+    const expText = document.getElementById('hud-exp-text');
+    if (expText) expText.innerText = `${Math.floor(expPerc)}%`;
 }
 
 

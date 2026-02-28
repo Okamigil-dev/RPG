@@ -153,123 +153,105 @@
                 </div>
             
                 <div id="char-sheet-view" class="hide-default">
-                    <div class="flex-row header-spacing" style="align-items: center;">
-                        <button onclick="goBackToSelection()" class="btn-secondary">Back</button>
-                            <div class="flex-row">
-                                <h2 class="tab-title" style="margin:0;">Character</h2>
-                                <div id="char-level-display" class="header-level-badge">Lv. 1</div>
-                            </div>
+                    <div class="flex-row header-spacing" style="margin-bottom: 25px;">
+                        <button onclick="goBackToSelection()" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                        <div class="flex-row">
+                            <h2 class="tab-title" style="margin:0;">Character Sheet</h2>
+                            <div id="char-level-display" class="header-level-badge">Lv. 1</div>
+                        </div>
                     </div>                          
-                    <div class="char-sheet-grid">
-                        <div class="stats-resources-wrapper">
-                           
-                            <!-- 1. MAIN STATS -->
-                            <div class="panel-card">
-                                <div class="flex-row" style="justify-content: space-between; margin-bottom: 15px;">
-                                    <h3>Attributes</h3>
-                                    <div class="sp-indicator">AP Available: <span id="char-ap-rem">0</span></div>
-                                </div>
-                                
-                                <div class="attr-list-grid">
-                                    <div class="attr-row">
-                                        <span>BODY</span>
-                                        <div class="flex-row">
-                                            <button class="btn-small" onclick="adjustPendingStat('body', -1)">-</button>
-                                            <span id="display-body" style="min-width: 30px; text-align: center; font-weight: bold;">0</span>
-                                            <button class="btn-small" onclick="adjustPendingStat('body', 1)">+</button>
-                                            <span id="total-body-label" class="join-code-pill">0</span>
-                                        </div>
-                                    </div>
-                                    <div class="attr-row">
-                                        <span>MIND</span>
-                                        <div class="flex-row">
-                                            <button class="btn-small" onclick="adjustPendingStat('mind', -1)">-</button>
-                                            <span id="display-mind" style="min-width: 30px; text-align: center; font-weight: bold;">0</span>
-                                            <button class="btn-small" onclick="adjustPendingStat('mind', 1)">+</button>
-                                            <span id="total-mind-label" class="join-code-pill">0</span>
-                                        </div>
-                                    </div>
-                                    <div class="attr-row">
-                                        <span>SPIRIT</span>
-                                        <div class="flex-row">
-                                            <button class="btn-small" onclick="adjustPendingStat('spirit', -1)">-</button>
-                                            <span id="display-spirit" style="min-width: 30px; text-align: center; font-weight: bold;">0</span>
-                                            <button class="btn-small" onclick="adjustPendingStat('spirit', 1)">+</button>
-                                            <span id="total-spirit-label" class="join-code-pill">0</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            
-                                <div id="attr-confirm-area" class="mt-m hide-default">
-                                    <button class="btn-primary btn-full" onclick="confirmAttributeChanges()">Confirm Changes</button>
-                                </div>
+                
+                    <div class="stats-resources-wrapper">
+                        <div class="panel-card">
+                            <div class="flex-row" style="justify-content: space-between; margin-bottom: 20px;">
+                                <h3>Attributes</h3>
+                                <div class="sp-indicator">AP Available: <span id="char-ap-rem">0</span></div>
                             </div>
                             
-                            <!-- 2. HP & MP -->
-                            <div class="panel-card">
-                                <h3>Status</h3>
-                                <div class="resources-grid">
-                                    <div class="resource-group">
-                                        <label><i class="fa-solid fa-heart"></i> Health Points</label>
-                                        <div class="resource-inputs display-only">
-                                            <input type="number" id="char-hp-current" onchange="saveCharacter()" class="hp-input">
+                            <div class="attr-list-grid">
+                                <div class="attr-row">
+                                    <span>BODY</span>
+                                    <div class="flex-row">
+                                        <button class="btn-small" onclick="adjustPendingStat('body', -1)">-</button>
+                                        <span id="display-body" style="min-width: 40px; text-align: center; font-size: 1.2rem; font-weight: 900;">0</span>
+                                        <button class="btn-small" onclick="adjustPendingStat('body', 1)">+</button>
+                                        <span id="total-body-label" class="join-code-pill" style="min-width: 25px; text-align: center;">0</span>
+                                    </div>
+                                </div>
+                                <div class="attr-row">
+                                    <span>MIND</span>
+                                    <div class="flex-row">
+                                        <button class="btn-small" onclick="adjustPendingStat('mind', -1)">-</button>
+                                        <span id="display-mind" style="min-width: 40px; text-align: center; font-size: 1.2rem; font-weight: 900;">0</span>
+                                        <button class="btn-small" onclick="adjustPendingStat('mind', 1)">+</button>
+                                        <span id="total-mind-label" class="join-code-pill" style="min-width: 25px; text-align: center;">0</span>
+                                    </div>
+                                </div>
+                                <div class="attr-row">
+                                    <span>SPIRIT</span>
+                                    <div class="flex-row">
+                                        <button class="btn-small" onclick="adjustPendingStat('spirit', -1)">-</button>
+                                        <span id="display-spirit" style="min-width: 40px; text-align: center; font-size: 1.2rem; font-weight: 900;">0</span>
+                                        <button class="btn-small" onclick="adjustPendingStat('spirit', 1)">+</button>
+                                        <span id="total-spirit-label" class="join-code-pill" style="min-width: 25px; text-align: center;">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="attr-confirm-area" class="mt-m hide-default">
+                                <button class="btn-primary btn-full" onclick="confirmAttributeChanges()">Commit Changes</button>
+                            </div>
+                        </div>
+                        
+                        <div class="panel-card">
+                            <h3>Vitals & Status</h3>
+                            <div class="resources-grid">
+                                <div class="field-group">
+                                    <div class="flex-row" style="justify-content: space-between;">
+                                        <label><i class="fa-solid fa-heart" style="color:#ef4444;"></i> Health Points</label>
+                                        <div class="resource-inputs">
+                                            <input type="number" id="char-hp-current" onchange="saveCharacter()" class="hp-input" style="background:transparent; border:none; text-align:right;">
                                             <span class="divider">/</span>
                                             <input type="number" id="char-hp-max" class="hp-input locked-resource" readonly tabindex="-1">
                                         </div>
                                     </div>
-                            
-                                    <div class="resource-group">
-                                        <label><i class="fa-solid fa-droplet"></i> Mana Points</label>
-                                        <div class="resource-inputs display-only">
-                                            <input type="number" id="char-mp-current" onchange="saveCharacter()" class="hp-input">
+                                    <div class="resource-bar-main"><div id="char-hp-fill-main" class="hp-bar-main"></div></div>
+                                </div>
+                                <div class="field-group">
+                                    <div class="flex-row" style="justify-content: space-between;">
+                                        <label><i class="fa-solid fa-droplet" style="color:#3b82f6;"></i> Mana Points</label>
+                                        <div class="resource-inputs">
+                                            <input type="number" id="char-mp-current" onchange="saveCharacter()" class="hp-input" style="background:transparent; border:none; text-align:right;">
                                             <span class="divider">/</span>
                                             <input type="number" id="char-mp-max" class="hp-input locked-resource" readonly tabindex="-1">
                                         </div>
                                     </div>
+                                    <div class="resource-bar-main"><div id="char-mp-fill-main" class="mp-bar-main"></div></div>
                                 </div>
                             </div>
                         </div>
-
-                        
-                        <div class="panel-card">
-                            
-                            <!-- 3. Name, Race & Class -->
-                            <div class="identity-grid">
-                                <div class="field-group">
-                                    <label>Name</label>
-                                    <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
-                                </div>
-                                
-                                <div class="field-group">
-                                    <label>Race</label>
-                                    <select id="char-race" onchange="saveCharacter()" class="form-input">
-                                        <option value="">Select Race</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="field-group">
-                                    <label>Unlocked Classes</label>
-                                    <div id="char-class-list-display" class="flex-row" style="gap: 5px; flex-wrap: wrap;">
-                                        </div>
-                                </div>
+                    </div>
+                
+                    <div class="panel-card">
+                        <h3>Identity</h3>
+                        <div class="identity-grid">
+                            <div class="field-group">
+                                <label class="text-muted">Character Name</label>
+                                <input type="text" id="char-name" onchange="saveCharacter()" class="form-input form-input-clean">
                             </div>
-
-                            <!-- 4. Character Level & Exp -->
-                            <div id="master-exp-controls" class="field-group mt-m hide-default">
-                                <label>Experience (Master Only)</label>
-                                <div class="exp-input-wrapper">
-                                    <input type="number" id="char-exp-current" onchange="saveCharacter()" class="form-input">
-                                    <span class="divider">/</span>
-                                    <input type="number" id="char-exp-max" onchange="saveCharacter()" class="form-input">
-                                </div>
+                            <div class="field-group">
+                                <label class="text-muted">Race</label>
+                                <select id="char-race" onchange="saveCharacter()" class="form-input form-input-clean"></select>
+                            </div>
+                            <div class="field-group">
+                                <label class="text-muted">Current Classes</label>
+                                <div id="char-class-list-display" class="flex-row" style="gap: 8px; flex-wrap: wrap;"></div>
                             </div>
                         </div>
-                    
-                        <div class="panel-card">
-                            <h3>Gallery (Max 10 Slots)</h3>
-                            <input type="file" id="slot-upload" accept="image/*" class="hide-default" onchange="handleSlotUpload(this)">
-                            <div id="char-gallery-grid" class="gallery-grid"></div>
-                        </div>
+                    </div>
+                    <div class="panel-card mt-m">
+                        <h3>Character Gallery</h3>
+                        <div id="char-gallery-grid" class="gallery-grid">
+                            </div>
                     </div>
                 </div>
             </div>
