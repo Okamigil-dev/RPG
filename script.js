@@ -506,7 +506,7 @@ function loadUserCharacters() {
 }
 
 async function selectCharacter(id) {
-    // 0. RESET UI (Clears ghost data)
+    // 0. RESET UI
     const allInputs = document.querySelectorAll('#char-sheet-view input');
     allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
 
@@ -519,25 +519,27 @@ async function selectCharacter(id) {
         if (doc.exists) {
             const d = doc.data();
 
-            // === SWITCH INSTANCE LISTENERS ===
             currentCampaignId = d.instanceId || "global"; 
             initClockListener(); 
             initDiceLogListener();
             
-            // 1. IDENTITY & METADATA
             document.getElementById('char-name').value = d.name || "";
             document.getElementById('char-race').value = d.race || "";
             
-            // --- CRITICAL FIX: Calculate Level from EXP immediately ---
+            // 1. Calculate Level
             const currentLevel = calculateLevelFromEXP(d.expCurrent || 0);
             document.getElementById('char-level-display').innerText = currentLevel;
             
-            // --- CRITICAL FIX: Use calculated level for AP ---
-            totalAP = currentLevel; 
+            // 2. Initialize Stats
             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
             pendingStats = { ...originalStats };
 
-            // Render Multi-Class pills
+            // --- CRITICAL FIX: Calculate Available AP (Level - Spent) ---
+            // If you are Lv.5 and have 2 Body, 2 Mind, 1 Spirit, you have 0 AP left.
+            const spentPoints = (originalStats.body + originalStats.mind + originalStats.spirit);
+            totalAP = Math.max(0, currentLevel - spentPoints); 
+
+            // ... (Rest of function regarding classes, HUD, etc. remains the same)
             const classListContainer = document.getElementById('char-class-list-display');
             classListContainer.innerHTML = "";
             const classes = d.unlockedClasses || {};
@@ -552,15 +554,12 @@ async function selectCharacter(id) {
                 });
             }
 
-            // 2. CORE ATTRIBUTES (Now handled by Pending Stats)
             refreshStatDisplay();
 
-            // 3. RETROACTIVE CALCULATION
             const totals = await getFinalMaxStats(d);
             document.getElementById('char-hp-max').value = totals.finalHP;
             document.getElementById('char-mp-max').value = totals.finalMP;
 
-            // 4. RESOURCES & EXP
             const hpCur = d.hpCurrent || 0;
             const mpCur = d.mpCurrent || 0;
 
@@ -575,15 +574,12 @@ async function selectCharacter(id) {
             document.getElementById('char-exp-current').value = d.expCurrent || 0;
             document.getElementById('char-exp-max').value = d.expMax || 1000;
 
-            // 5. GALLERY & SKILLS
             renderGallery(d.gallery || [], d.portrait || "");
             renderSkills(d);
 
-            // 6. UI NAVIGATION
             document.getElementById('char-selection-view').classList.add('hide-default');
             document.getElementById('char-sheet-view').classList.remove('hide-default');
             
-            // --- CRITICAL FIX: Send calculated level to HUD so it syncs immediately ---
             const hudData = { 
                 ...d, 
                 charLevel: currentLevel, 
@@ -654,6 +650,11 @@ function adjustPendingStat(stat, amt) {
 async function confirmAttributeChanges() {
     if (!currentCharacterId) return;
     
+    // Calculate points spent in this specific transaction
+    let spentInThisBatch = (pendingStats.body - originalStats.body) + 
+                           (pendingStats.mind - originalStats.mind) + 
+                           (pendingStats.spirit - originalStats.spirit);
+
     try {
         await firestore.collection('users').doc(auth.currentUser.uid)
             .collection('characters').doc(currentCharacterId).update({
@@ -662,13 +663,22 @@ async function confirmAttributeChanges() {
                 spirit: pendingStats.spirit
             });
             
-        // Sync local "original" to the new values
-        originalStats = { ...pendingStats };
-        alert("Attributes committed to the soul.");
+        // --- CRITICAL FIXES ---
+        // 1. Deduct from the "Available" pool permanently
+        totalAP -= spentInThisBatch; 
         
-        // Refresh the sheet to update Max HP/MP totals
-        saveCharacter(); 
-    } catch (e) { console.error("Update failed:", e); }
+        // 2. Lock in the new baseline
+        originalStats = { ...pendingStats };
+        
+        // 3. Use Toast instead of Alert
+        if (typeof showToast === "function") showToast("Attributes committed.");
+        
+        refreshStatDisplay(); // Updates the "AP Available" text to 0
+        saveCharacter();      // Recalculates HP/MP Max
+    } catch (e) { 
+        console.error("Update failed:", e); 
+        if (typeof showToast === "function") showToast("Update Failed");
+    }
 }
 
 async function saveCharacter() {
@@ -681,7 +691,6 @@ async function saveCharacter() {
     const currentData = doc.data();
 
     // 2. AUTO-CALCULATE LEVEL based on EXP
-    // This replaces the old "document.getElementById('char-level').value" that was crashing
     const expInput = document.getElementById('char-exp-current');
     const currentExp = parseInt(expInput.value) || 0;
     const automatedLevel = calculateLevelFromEXP(currentExp);
@@ -691,11 +700,14 @@ async function saveCharacter() {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
         expCurrent: currentExp,
-        charLevel: automatedLevel, // Saved automatically
+        charLevel: automatedLevel, 
         
-        body: parseInt(document.getElementById('char-body').value) || 0,
-        mind: parseInt(document.getElementById('char-mind').value) || 0,
-        spirit: parseInt(document.getElementById('char-spirit').value) || 0,
+        // --- CRITICAL FIX START ---
+        // Instead of looking for deleted inputs, use the committed global variables
+        body: originalStats.body || 0,
+        mind: originalStats.mind || 0,
+        spirit: originalStats.spirit || 0,
+        // --- CRITICAL FIX END ---
         
         hpCurrent: parseFloat(document.getElementById('char-hp-current').value) || 0,
         mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0,
@@ -716,10 +728,12 @@ async function saveCharacter() {
         const totals = await getFinalMaxStats(data);
         updateHUD({ ...data, hpMax: totals.finalHP, mpMax: totals.finalMP });
         
-        showToast("Character Saved.");
+        // Ensure showToast exists before calling it
+        if (typeof showToast === "function") showToast("Character Saved.");
+        
     } catch (e) { 
         console.error("Save Error:", e); 
-        showToast("Error: Save Failed");
+        if (typeof showToast === "function") showToast("Error: Save Failed");
     }
 }
 
