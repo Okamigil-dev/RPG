@@ -878,7 +878,13 @@ async function updateHUD(char) {
     const classes = char.unlockedClasses || {}; 
     const classStrings = Object.keys(classes).map(name => `${name} Lv.${classes[name].level}`);
     const classText = classStrings.length > 0 ? classStrings.join(', ') : (char.class || "Adventurer");
-    
+
+    if(document.getElementById('char-hp-fill-main')) {
+        document.getElementById('char-hp-fill-main').style.width = hpPerc + "%";
+    }
+    if(document.getElementById('char-mp-fill-main')) {
+        document.getElementById('char-mp-fill-main').style.width = mpPerc + "%";
+    }
     document.getElementById('hud-meta').innerText = `Level ${activeCharLevel}`;
     document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
     document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
