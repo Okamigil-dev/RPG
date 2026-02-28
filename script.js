@@ -485,10 +485,10 @@ function loadUserCharacters() {
             card.className = 'char-card';
             card.onclick = () => selectCharacter(doc.id);
             card.innerHTML = `
-                <div class="portrait-circle-small" style="background-image: url(${d.portrait || ''}); margin: 0 auto 10px;"></div>
+                <div class="char-card-portrait" style="background-image: url(${d.portrait || ''});"></div>
                 <strong>${d.name || 'New Hero'}</strong>
                 <div class="char-card-meta">Lv.${d.charLevel || 1} ${d.class || ''}</div>
-                <div style="font-size: 0.75rem; color: #a855f7; margin-top: 5px; font-weight: bold;"><i class="fa-solid fa-globe"></i> Realm: ${d.instanceName || 'Global'}</div>
+                <div class="char-realm-tag"><i class="fa-solid fa-globe"></i> ${d.instanceName || 'Global'}</div>
                 <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')"><i class="fa-solid fa-trash"></i> Delete</button>
             `;
             grid.appendChild(card);
