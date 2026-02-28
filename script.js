@@ -771,14 +771,24 @@ function renderGallery(galleryArray, activePortrait) {
     const container = document.getElementById('char-gallery-grid');
     if (!container) return;
     container.innerHTML = "";
+
     const images = galleryArray || [];
+
     for (let i = 0; i < MAX_GALLERY_SLOTS; i++) {
         const slot = document.createElement('div');
         slot.className = 'gallery-item';
+
         if (images[i]) {
-            if (images[i] === activePortrait) slot.classList.add('active-img');
-            slot.innerHTML = `<img src="${images[i]}" onclick="setActivePortrait('${images[i]}')">
-                              <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>`;
+            // Add a neon border to the selected one
+            if (images[i] === activePortrait) {
+                slot.style.borderColor = "#10b981"; // Green for active
+                slot.style.boxShadow = "0 0 10px #10b981";
+            }
+
+            slot.innerHTML = `
+                <img src="${images[i]}" onclick="setActivePortrait('${images[i]}')">
+                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
+            `;
         } else {
             slot.className = 'gallery-item empty-slot';
             slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
