@@ -249,12 +249,7 @@
                             </div>
 
                             <!-- 4. Character Level & Exp -->
-                            <div class="level-exp-grid mt-m">
-                                <div class="field-group">
-                                    <label>Character Level</label>
-                                    <div id="char-level-display" class="join-code-pill level-pill-large">1</div>
-                                </div>
-                            </div>
+                            
 
                             <div id="master-exp-controls" class="field-group mt-m hide-default">
                                 <label>Experience (Master Only)</label>
@@ -734,22 +729,25 @@
             <input type="hidden" id="edit-modal-cid">
 
             <div class="form-group mb-m">
-                <label class="text-muted">Award / Edit EXP</label>
-                <div class="flex-row gap-s">
-                    <input type="number" id="edit-modal-exp" class="form-input flex-grow">
-                    <button class="btn-secondary" onclick="addExpQuick(500)">+500</button> 
+                <label class="text-muted">Award / Remove EXP (Current: <span id="modal-current-exp-display" class="text-highlight">0</span>)</label>
+                <input type="hidden" id="edit-modal-exp">
+
+                <div class="control-box">
+                    <button class="btn-danger-small btn-square" onclick="adjustModalExp(-1)">-</button>
+                    <input type="number" id="exp-adjust-amount" class="form-input text-center" placeholder="Amount" value="100">
+                    <button class="btn-success btn-square" onclick="adjustModalExp(1)">+</button>
                 </div>
             </div>
+
             <div class="panel-header-small mt-l mb-s">
-                <span class="text-muted" style="text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Class Management</span>
+                <span class="section-label">Class Management</span>
             </div>
             <div class="flex-row gap-s mb-m">
-                <select id="modal-class-picker" class="form-input flex-grow">
-                    </select>
+                <select id="modal-class-picker" class="form-input flex-grow"></select>
                 <button class="btn-success" onclick="assignClassToCharacter()">Add Class</button>
             </div>
-            <div id="modal-active-classes" class="master-asset-list">
-                </div>
+            <div id="modal-active-classes" class="master-asset-list"></div>
+
             <div class="flex-row gap-m mb-m">
                 <div class="form-group flex-1">
                     <label class="text-muted">Current HP</label>
@@ -767,8 +765,15 @@
             </div>
 
             <div class="panel-header-small mt-l mb-s">
-                <span class="text-muted" style="text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Core Attributes</span>
+                <span class="section-label">Core Attributes</span>
             </div>
+            
+            <div class="flex-row mb-m flex-end">
+                <button class="btn-danger-small" onclick="respecCharacterAttributes()">
+                    <i class="fa-solid fa-rotate-left"></i> Respec (Reset to 0)
+                </button>
+            </div>
+
             <div class="flex-row gap-m mb-m">
                 <div class="form-group flex-1">
                     <label class="text-muted">Body</label>
@@ -785,7 +790,7 @@
             </div>
 
             <div class="panel-header-small mt-l mb-s">
-                <span class="text-muted" style="text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Equipment Modifiers (Manual)</span>
+                <span class="section-label">Equipment Modifiers (Manual)</span>
             </div>
             <div class="flex-row gap-m mb-m">
                 <div class="form-group flex-1">
@@ -814,6 +819,7 @@
             <button class="btn-primary" onclick="saveCharacterManagerEdits()">Save Changes</button>
         </div>
     </div>
+</div>
 </div>
     
     <script src="script.js"></script>
