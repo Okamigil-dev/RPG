@@ -154,46 +154,43 @@
                         <h3><span class="section-label">Identity</span></h3>
                         <div class="field-group">
                             <label class="text-muted">Name</label>
-                            <input type="text" id="char-name" class="form-input-clean" placeholder="Character Name">
+                            <input type="text" id="name" class="form-input-clean">
                         </div>
                         <div class="field-group mt-m">
                             <label class="text-muted">Race</label>
-                            <input type="text" id="char-race" class="form-input-clean" placeholder="e.g. Elf">
+                            <input type="text" id="race" class="form-input-clean">
                         </div>
                         <div class="field-group mt-m">
                             <label class="text-muted">Unlocked Classes</label>
-                            <div id="unlocked-classes-list" class="flex-row" style="flex-wrap: wrap; gap: 5px;">
-                                </div>
+                            <div id="unlocked-classes" class="flex-row" style="flex-wrap: wrap; gap: 5px;"></div>
                         </div>
                     </div>
             
                     <div class="panel-card">
                         <h3><span class="section-label">Status & Vitals</span></h3>
-                        
                         <div class="vital-row">
                             <div class="bar-label-v2">
-                                <span>Health Points</span>
+                                <span>Health</span>
                                 <div class="val-group">
-                                    <input type="number" id="char-hp-current" class="hp-input-mini"> / <span id="char-hp-max">0</span>
+                                    <input type="number" id="hp-current" class="hp-input-mini"> / <span id="hp-max">0</span>
                                 </div>
                             </div>
-                            <div class="hp-bar-bg-large"><div id="char-hp-fill-main" class="hp-bar-fill"></div></div>
+                            <div class="hp-bar-bg-large"><div id="hp-fill" class="hp-bar-fill"></div></div>
                         </div>
             
                         <div class="vital-row mt-m">
                             <div class="bar-label-v2">
-                                <span>Mana Points</span>
+                                <span>Mana</span>
                                 <div class="val-group">
-                                    <input type="number" id="char-mp-current" class="hp-input-mini" style="color: #3b82f6;"> / <span id="char-mp-max">0</span>
+                                    <input type="number" id="mp-current" class="hp-input-mini" style="color: #3b82f6;"> / <span id="mp-max">0</span>
                                 </div>
                             </div>
-                            <div class="mp-bar-bg-large"><div id="char-mp-fill-main" class="mp-bar-fill" style="background: #3b82f6;"></div></div>
+                            <div class="mp-bar-bg-large"><div id="mp-fill" class="mp-bar-fill" style="background: #3b82f6;"></div></div>
                         </div>
                     </div>
                 </div>
             
                 <div class="panel-card attributes-panel">
-                    <h3><span class="section-label">Core Attributes</span></h3>
                     <div class="attr-grid-3">
                         <div class="attr-card-fancy">
                             <span class="attr-label">BODY</span>
@@ -224,6 +221,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
             
                 <div class="panel-card">
                     <h3><span class="section-label">Portrait Gallery</span></h3>
