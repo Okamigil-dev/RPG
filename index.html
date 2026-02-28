@@ -432,55 +432,117 @@
                         <div id="sub-skills" class="control-sub-content hide-default">
                             <div class="panel-card">
                                 <h3>Create Global Skill</h3>
-                                <div class="skill-creator-form">
-                                    <div class="flex-row gap-m mb-m">
-                                        <div class="form-group flex-2">
+                                <div id="skill-creator-form">
+                                    
+                                    <div class="grid-2-col mb-m">
+                                        <div class="field-group">
                                             <label class="text-muted">Skill Name</label>
-                                            <input type="text" id="ms-name" class="form-input" placeholder="e.g. Fireball">
+                                            <input type="text" id="reg-skill-name" class="form-input" placeholder="e.g. Fireball">
                                         </div>
-                                        <div class="form-group flex-1">
-                                            <label class="text-muted">Pyramid Tier</label>
-                                            <select id="ms-tier" class="form-input">
-                                                <option value="basicSkills">Basic</option>
-                                                <option value="intSkills">Intermediate</option>
-                                                <option value="advSkills">Advanced</option>
+                                        <div class="field-group">
+                                            <label class="text-muted">Class</label>
+                                            <select id="reg-skill-class" class="form-input">
+                                                </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid-2-col mb-m">
+                                        <div class="field-group">
+                                            <label class="text-muted">Tier (Determines Cost)</label>
+                                            <select id="reg-skill-tier" class="form-input">
+                                                <option value="1">Tier 1 (Basic) - 10 MP</option>
+                                                <option value="2">Tier 2 (Int) - 20 MP</option>
+                                                <option value="3">Tier 3 (Adv) - 40 MP</option>
+                                            </select>
+                                        </div>
+                                        <div class="field-group">
+                                            <label class="text-muted">Icon (Auto-resizes)</label>
+                                            <div class="flex-row">
+                                                <input type="file" id="reg-skill-icon" accept="image/*" class="form-input" style="padding: 6px;">
+                                                <input type="hidden" id="reg-skill-icon-base64">
+                                                <div id="icon-preview" style="width: 40px; height: 40px; border: 1px dashed #555; display:flex; align-items:center; justify-content:center;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="field-group mb-m">
+                                        <label class="text-muted">Description</label>
+                                        <textarea id="reg-skill-desc" class="form-input" rows="2" placeholder="Describe the effect..."></textarea>
+                                    </div>
+
+                                    <!-- HARDCODED DROP DOWNS RANGE & DAMAGE TYPE -->
+                                    <div class="panel-header-small mt-l mb-s"><span class="section-label">Combat Data</span></div>
+                                    <div class="grid-3-col mb-m">
+                                        <div class="field-group">
+                                            <label class="text-muted">Range</label>
+                                            <select id="reg-skill-range" class="form-input">
+                                                <option value="Melee">Melee</option>
+                                                <option value="Touch">Touch</option>
+                                                <option value="Reach">Reach</option>
+                                                <option value="Sight">Sight</option>
+                                                <option value="10m">10m</option>
+                                                <option value="30m">30m</option>
+                                                <option value="Self">Self</option>
+                                            </select>
+                                        </div>
+                                        <div class="field-group">
+                                            <label class="text-muted">Damage Type</label>
+                                            <select id="reg-skill-dmg-type" class="form-input">
+                                                <option value="">None</option>
+                                                <option value="Physical">Physical</option>
+                                                <option value="Fire">Fire</option>
+                                                <option value="Ice">Ice</option>
+                                                <option value="Lightning">Lightning</option>
+                                                <option value="Holy">Holy</option>
+                                                <option value="Shadow">Shadow</option>
+                                                <option value="Poison">Poison</option>
+                                                <option value="Psychic">Psychic</option>
+                                            </select>
+                                        </div>
+                                        <div class="field-group">
+                                            <!-- SAVING THROWS -->
+                                            <label class="text-muted">Save Throw</label>
+                                            <select id="reg-skill-save" class="form-input">
+                                                <option value="none">None</option>
+                                                <option value="BodyST">BODY</option>
+                                                <option value="MindST">MIND</option>
+                                                <option value="SpiritST">SPIRIT</option>
                                             </select>
                                         </div>
                                     </div>
-                        
-                                    <div class="flex-row gap-m mb-m">
-                                        <div class="form-group flex-1">
-                                            <label class="text-muted">Required Class</label>
-                                            <select id="ms-class-tag" class="form-input">
-                                            <option value="All">All Classes</option>
+
+                                    <div class="panel-header-small mt-l mb-s"><span class="section-label">Scaling Formula</span></div>
+                                    <div class="grid-3-col mb-m">
+                                        <div class="field-group">
+                                            <label class="text-muted">Stat Source</label>
+                                            <select id="reg-skill-stat" class="form-input">
+                                                <option value="body">Body Mod</option>
+                                                <option value="mind">Mind Mod</option>
+                                                <option value="spirit">Spirit Mod</option>
+                                                <option value="none">Flat Value</option>
                                             </select>
                                         </div>
-                                        <div class="form-group flex-1">
-                                            <label class="text-muted">Min. Class Lv</label>
-                                            <input type="number" id="ms-class-lv-req" class="form-input" value="1">
+                                        <div class="field-group">
+                                            <label class="text-muted">Factor (x Stat)</label>
+                                            <input type="number" id="reg-skill-factor" class="form-input" step="0.1" value="1.0">
                                         </div>
-                                        <div class="form-group flex-1">
-                                            <label class="text-muted">Scaling Stat</label>
-                                            <select id="ms-scaling-stat" class="form-input">
-                                                <option value="BODY">BODY</option>
-                                                <option value="MIND">MIND</option>
-                                                <option value="SPIRIT">SPIRIT</option>
-                                                <option value="NONE">None (Flat)</option>
-                                            </select>
+                                         <div class="field-group">
+                                            <label class="text-muted">Hard Cap</label>
+                                            <input type="number" id="reg-skill-cap" class="form-input" value="110">
                                         </div>
                                     </div>
-                        
-                                    <div class="form-group mb-m">
-                                        <label class="text-muted">Description & Effect</label>
-                                        <textarea id="ms-desc" class="form-input" style="height: 60px;" placeholder="What does this skill do?"></textarea>
+
+                                    <div class="flex-row mt-m" style="justify-content: flex-end;">
+                                        <button onclick="saveSkillToRegistry()" class="btn-success">Save Skill to Library</button>
                                     </div>
-                                    <button onclick="createMasterSkill()" class="btn-success">Add to Global Registry</button>
                                 </div>
                             </div>
-                        
+
                             <div class="panel-card">
                                 <h3>Global Skill Registry</h3>
-                                <div id="master-skill-list" class="master-asset-list"></div>
+                                <div id="registry-skill-list" class="master-asset-list">
+                                    <p class="text-muted text-center">Loading...</p>
+                                </div>
                             </div>
                         </div>
 
