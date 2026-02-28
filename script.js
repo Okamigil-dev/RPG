@@ -514,16 +514,20 @@ async function selectCharacter(id) {
                 initClockListener(); 
                 initDiceLogListener();
             }
-            if(document.getElementById('char-name')) {
-                document.getElementById('char-name').value = d.name || "";
-                document.getElementById('char-race').value = d.race || "";
-                document.getElementById('char-exp-current').value = d.expCurrent || 0;
-            }
+
+            // Fixed: Individual null checks for Identity fields
+            const nameEl = document.getElementById('char-name');
+            if (nameEl) nameEl.value = d.name || "";
+            
+            const raceEl = document.getElementById('char-race');
+            if (raceEl) raceEl.value = d.race || "";
+            
+            const expCurrEl = document.getElementById('char-exp-current');
+            if (expCurrEl) expCurrEl.value = d.expCurrent || 0;
 
             activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
-            if(document.getElementById('char-level-display')) {
-                document.getElementById('char-level-display').innerText = `Lv. ${activeCharLevel}`;
-            }
+            const levelDisp = document.getElementById('char-level-display');
+            if (levelDisp) levelDisp.innerText = `Lv. ${activeCharLevel}`;
             
             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
             pendingStats = { ...originalStats };
@@ -538,16 +542,24 @@ async function selectCharacter(id) {
             const totals = await getFinalMaxStats(d);
             const nextLevelExp = (activeCharLevel + 1) * 200;
 
-            if(document.getElementById('char-hp-max')) {
-                document.getElementById('char-hp-max').value = totals.finalHP;
-                document.getElementById('char-mp-max').value = totals.finalMP;
-                document.getElementById('char-exp-max').value = nextLevelExp;
+            // Fixed: Individual null checks for Resource and EXP displays
+            const hpMaxEl = document.getElementById('char-hp-max');
+            if (hpMaxEl) hpMaxEl.value = totals.finalHP;
+            
+            const mpMaxEl = document.getElementById('char-mp-max');
+            if (mpMaxEl) mpMaxEl.value = totals.finalMP;
+            
+            const expMaxEl = document.getElementById('char-exp-max');
+            if (expMaxEl) expMaxEl.value = nextLevelExp;
                 
-                const hpInput = document.getElementById('char-hp-current');
-                const mpInput = document.getElementById('char-mp-current');
-                
+            const hpInput = document.getElementById('char-hp-current');
+            if (hpInput) {
                 hpInput.dataset.trueValue = d.hpCurrent || 0;
                 hpInput.value = Math.floor(d.hpCurrent || 0);
+            }
+
+            const mpInput = document.getElementById('char-mp-current');
+            if (mpInput) {
                 mpInput.dataset.trueValue = d.mpCurrent || 0;
                 mpInput.value = Math.floor(d.mpCurrent || 0);
             }
@@ -555,8 +567,11 @@ async function selectCharacter(id) {
             const hudData = { ...d, charLevel: activeCharLevel, hpMax: totals.finalHP, mpMax: totals.finalMP, expMax: nextLevelExp };
             updateHUD(hudData);
             
-            document.getElementById('char-selection-view').classList.add('hide-default');
-            document.getElementById('char-sheet-view').classList.remove('hide-default');
+            const selectionView = document.getElementById('char-selection-view');
+            if (selectionView) selectionView.classList.add('hide-default');
+            
+            const sheetView = document.getElementById('char-sheet-view');
+            if (sheetView) sheetView.classList.remove('hide-default');
         }
     });
 
