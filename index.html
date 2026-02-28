@@ -234,22 +234,27 @@
                         </div>
                     </div>
                 
-                    <div class="panel-card">
-                        <h3>Identity</h3>
-                        <div class="identity-grid">
+                    <div class="panel-card mt-m">
+                        <h3 class="panel-subtitle">Identity & Heritage</h3>
+                        <div class="identity-grid-v2">
                             <div class="field-group">
                                 <label class="text-muted">Character Name</label>
-                                <input type="text" id="char-name" onchange="saveCharacter()" class="form-input form-input-clean">
+                                <input type="text" id="char-name" onchange="saveCharacter()" class="form-input-clean">
                             </div>
                             <div class="field-group">
                                 <label class="text-muted">Race</label>
-                                <select id="char-race" onchange="saveCharacter()" class="form-input form-input-clean"></select>
+                                <select id="char-race" onchange="saveCharacter()" class="form-input-clean"></select>
                             </div>
                             <div class="field-group">
-                                <label class="text-muted">Current Classes</label>
-                                <div id="char-class-list-display" class="flex-row" style="gap: 8px; flex-wrap: wrap;"></div>
+                                <label class="text-muted">Combat Speed</label>
+                                <div id="char-speed-display" class="stat-badge-large">0m</div>
                             </div>
                         </div>
+                    
+                        <div class="section-divider"></div>
+                        <label class="text-muted">Inherent Traits</label>
+                        <div id="char-traits-container" class="traits-flex-wrap">
+                            </div>
                     </div>
                     <div class="panel-card mt-m">
                         <h3>Character Gallery</h3>
