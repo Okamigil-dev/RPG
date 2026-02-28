@@ -1340,32 +1340,45 @@ async function createMasterRace() {
 async function loadMasterRaceList() {
     const list = document.getElementById('master-race-list');
     if (!list) return;
-    const snap = await firestore.collection('master_races').orderBy('name').get();
-    list.innerHTML = "";
+    
+    try {
+        const snap = await firestore.collection('master_races').orderBy('name').get();
+        list.innerHTML = "";
 
-    snap.forEach(doc => {
-        const d = doc.data();
-        const card = document.createElement('div');
-        card.className = "panel-card mb-s";
-        card.style.background = "#18181b";
-        card.innerHTML = `
-            <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
-                <div style="flex-grow: 1;">
-                    <div class="flex-row" style="gap: 10px;">
-                        <strong style="color: #10b981; font-size: 1.1rem;">${d.name}</strong>
-                        <span class="join-code-pill">HP/Lv: +${d.hpPerLv || 0}</span>
+        if (snap.empty) {
+            list.innerHTML = '<p class="text-muted text-center" style="padding:20px;">No races registered yet.</p>';
+            return;
+        }
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            const card = document.createElement('div');
+            card.className = "panel-card mb-s";
+            card.style.background = "#18181b";
+            
+            card.innerHTML = `
+                <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
+                    <div style="flex-grow: 1;">
+                        <div class="flex-row" style="gap: 10px;">
+                            <strong style="color: #10b981; font-size: 1.1rem;">${d.name}</strong>
+                            <span class="join-code-pill">HP/Lv: +${d.hpPerLv || 0}</span>
+                            <span class="join-code-pill">MP/Lv: +${d.mpPerLv || 0}</span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #71717a; margin-top: 8px;">
+                            BODY: +${d.baseBody || 0} | MIND: +${d.baseMind || 0} | SPIRIT: +${d.baseSpirit || 0}
+                        </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #71717a; margin-top: 8px;">
-                        BODY: +${d.baseBody || 0} | MIND: +${d.baseMind || 0} | SPIRIT: +${d.baseSpirit || 0}
+                    <div class="flex-row" style="gap: 5px;">
+                        <button class="btn-small" onclick="editRace('${doc.id}')"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-danger-small" onclick="deleteMasterAsset('master_races', '${doc.id}', loadMasterRaceList)"><i class="fa-solid fa-trash"></i></button>
                     </div>
-                </div>
-                <div class="flex-row" style="gap: 5px;">
-                    <button class="btn-small" onclick="editRace('${doc.id}')"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn-danger-small" onclick="deleteMasterAsset('master_races', '${doc.id}', loadMasterRaceList)"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>`;
-        list.appendChild(card);
-    });
+                </div>`;
+            list.appendChild(card);
+        });
+    } catch (e) {
+        console.error("Race Load Error:", e);
+        list.innerHTML = `<p style="color:#ef4444; text-align:center;">Error loading races: ${e.message}</p>`;
+    }
 }
 
 async function editRace(id) {
@@ -1485,32 +1498,56 @@ async function saveMasterClass() {
 async function loadMasterClassList() {
     const list = document.getElementById('master-class-list');
     if (!list) return;
-    const snap = await firestore.collection('master_classes').orderBy('tier').orderBy('name').get();
-    list.innerHTML = "";
 
-    snap.forEach(doc => {
-        const d = doc.data();
-        const card = document.createElement('div');
-        card.className = "panel-card mb-s";
-        card.style.background = "#18181b";
-        card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#3f3f46'}`;
-        card.innerHTML = `
-            <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
-                <div style="flex: 1;">
-                    <div class="flex-row" style="gap:10px;">
-                        <strong>${d.name}</strong> <span style="font-size:0.7rem; opacity:0.6;">T${d.tier}</span>
+    try {
+        // FIX: Only sort by 'tier' to avoid the 400 Index Error
+        const snap = await firestore.collection('master_classes').orderBy('tier').get();
+        list.innerHTML = "";
+
+        if (snap.empty) {
+            list.innerHTML = '<p class="text-muted text-center" style="padding:20px;">No classes registered yet.</p>';
+            return;
+        }
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            const card = document.createElement('div');
+            card.className = "panel-card mb-s";
+            card.style.background = "#18181b";
+            // Color coding tiers: Gold (3), Indigo (2), Dark Grey (1)
+            card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#3f3f46'}`;
+            
+            const traitTags = (d.traits || []).map(t => 
+                `<span style="background:#312e81; color:#c7d2fe; padding:2px 6px; border-radius:4px; font-size:0.7rem; margin-right:4px;">${t}</span>`
+            ).join('');
+
+            card.innerHTML = `
+                <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
+                    <div style="flex: 1;">
+                        <div class="flex-row" style="gap:10px;">
+                            <strong style="color:white;">${d.name}</strong> 
+                            <span class="join-code-pill" style="opacity:0.6;">T${d.tier}</span>
+                            <span class="join-code-pill" style="color:#a855f7;">${d.mainStat}</span>
+                        </div>
+                        <div class="mt-s" style="margin-bottom:8px;">${traitTags}</div>
+                        <div style="font-size: 0.7rem; color: #71717a;">
+                            HP/Lv: +${d.hpPerLv} | MP/Lv: +${d.mpPerLv}
+                        </div>
                     </div>
-                    <div style="font-size: 0.7rem; color: #71717a;">
-                        HP/Lv: +${d.hpPerLv} | MP/Lv: +${d.mpPerLv}
+                    <div class="flex-row" style="gap: 5px;">
+                        <button class="btn-small" onclick="editClass('${doc.id}')" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)" title="Delete">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
                     </div>
                 </div>
-                <div class="flex-row" style="gap: 5px;">
-                    <button class="btn-small" onclick="editClass('${doc.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
-                    <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>`;
-        list.appendChild(card);
-    });
+            `;
+            list.appendChild(card);
+        });
+    } catch (e) {
+        console.error("Class Load Error:", e);
+        list.innerHTML = `<p style="color:#ef4444; text-align:center;">Error: ${e.message}</p>`;
+    }
 }
 
 async function editClass(id) {
