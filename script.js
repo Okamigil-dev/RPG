@@ -726,18 +726,25 @@ function renderClassPills(charData) {
 function handleSlotUpload(input) {
     const file = input.files[0];
     if (!file || !currentCharacterId) return;
+
     const reader = new FileReader();
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            let w = img.width, h = img.height, max = 800;
-            if (w > h) { if (w > max) { h *= max / w; w = max; } } 
-            else { if (h > max) { w *= max / h; h = max; } }
-            canvas.width = w; canvas.height = h;
-            ctx.drawImage(img, 0, 0, w, h);
-            saveImageToNextSlot(canvas.toDataURL('image/jpeg', 0.7));
+            const size = 256; // High quality portrait size
+            canvas.width = size;
+            canvas.height = size;
+
+            let sourceSize = Math.min(img.width, img.height);
+            let sourceX = (img.width - sourceSize) / 2;
+            let sourceY = (img.height - sourceSize) / 2;
+
+            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
+            
+            // WebP + 0.8 Quality = Perfect balance of size, transparency, and clarity
+            saveImageToNextSlot(canvas.toDataURL('image/webp', 0.8)); 
         };
         img.src = e.target.result;
     };
@@ -1583,11 +1590,19 @@ document.getElementById('reg-skill-icon').addEventListener('change', function(ev
         img.onload = function() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 128; canvas.height = 128; // Updated to 128x128
-            ctx.drawImage(img, 0, 0, 128, 128);
-            const dataURL = canvas.toDataURL('image/png');
+            const size = 128; // The final output size
+            canvas.width = size;
+            canvas.height = size;
+
+            let sourceX = 0, sourceY = 0, sourceSize = Math.min(img.width, img.height);
+            sourceX = (img.width - sourceSize) / 2;
+            sourceY = (img.height - sourceSize) / 2;
+
+            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
+            
+            const dataURL = canvas.toDataURL('image/webp', 0.8);
             document.getElementById('reg-skill-icon-base64').value = dataURL;
-            document.getElementById('icon-preview').innerHTML = `<img src="${dataURL}" style="width:100%; height:100%; border-radius:4px;">`;
+            document.getElementById('icon-preview').innerHTML = `<img src="${dataURL}" style="width:64px; height:64px; border-radius:4px;">`;
         };
         img.src = e.target.result;
     };
