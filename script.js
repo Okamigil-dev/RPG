@@ -879,7 +879,7 @@ async function updateHUD(char) {
     const classStrings = Object.keys(classes).map(name => `${name} Lv.${classes[name].level}`);
     const classText = classStrings.length > 0 ? classStrings.join(', ') : (char.class || "Adventurer");
     
-    document.getElementById('hud-meta').innerText = `Lv.${activeCharLevel} (${classText})`;
+    document.getElementById('hud-meta').innerText = `Level ${activeCharLevel}`;
     document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
     document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
     document.getElementById('hud-portrait').style.backgroundImage = char.portrait ? `url(${char.portrait})` : "none";
