@@ -836,6 +836,64 @@ select.form-input {
 .gap-s { gap: 10px; }
 .gap-m { gap: 15px; }
 
+/* --- NEW ADDITIONS FOR MODAL & HEADER --- */
+
+/* 1. The Header Level Badge */
+.header-level-badge {
+    background: #27272a;
+    color: #a855f7;
+    padding: 5px 15px;
+    border-radius: 99px;
+    font-size: 1rem;
+    font-weight: bold;
+    border: 1px solid #3f3f46;
+    margin-left: 15px;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+}
+
+/* 2. Modal Section Headers (Replaces the uppercase inline style) */
+.section-label {
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #aaa; /* Matches text-muted */
+    display: block;
+}
+
+/* 3. The EXP Calculator Box */
+.control-box {
+    background: #111;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #27272a;
+    display: flex;
+    gap: 10px;
+}
+
+/* 4. Square Buttons for +/- */
+.btn-square {
+    font-size: 1.2rem;
+    width: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 5. Highlight Text (The Purple EXP Number) */
+.text-highlight {
+    color: #a855f7;
+    font-weight: bold;
+}
+
+/* 6. Utility Alignment Helpers */
+.flex-end {
+    justify-content: flex-end;
+}
+
+.text-center {
+    text-align: center;
+}
 
 
 /* ==========================================
