@@ -415,23 +415,22 @@
                         -------------------------->
                         <div id="sub-skills" class="control-sub-content hide-default">
                             <div class="panel-card">
-                                <h3>Create Global Skill</h3>
+                                <h3 id="skill-editor-label">Create Global Skill</h3>
                                 <div id="skill-creator-form">
                                     <input type="hidden" id="ms-skill-id"> 
                                     
-                                    <div class="grid-2-col mb-m">
+                                    <div class="skill-form-grid">
                                         <div class="field-group">
                                             <label class="text-muted">Skill Name</label>
                                             <input type="text" id="reg-skill-name" class="form-input" placeholder="e.g. Sonic Boom">
                                         </div>
                                         <div class="field-group">
-                                            <label class="text-muted">Class</label>
-                                            <select id="reg-skill-class" class="form-input">
-                                                </select>
+                                            <label class="text-muted">Class Association</label>
+                                            <select id="reg-skill-class" class="form-input"></select>
                                         </div>
                                     </div>
                         
-                                    <div class="grid-3-col mb-m">
+                                    <div class="skill-form-triple">
                                         <div class="field-group">
                                             <label class="text-muted">Tier</label>
                                             <select id="reg-skill-tier" class="form-input" onchange="autoSetMpCost()">
@@ -444,13 +443,12 @@
                                             <label class="text-muted">MP Cost</label>
                                             <input type="number" id="reg-skill-cost" class="form-input" value="10">
                                         </div>
-                                        
                                         <div class="field-group">
-                                            <label class="text-muted">Icon (64x64)</label>
-                                            <div class="flex-row" style="gap:5px;">
-                                                <input type="file" id="reg-skill-icon" accept="image/*" class="form-input" style="padding: 6px; font-size:0.7rem;">
+                                            <label class="text-muted">Icon (128x128)</label>
+                                            <div class="icon-upload-wrapper">
+                                                <input type="file" id="reg-skill-icon" accept="image/*" class="form-input">
                                                 <input type="hidden" id="reg-skill-icon-base64">
-                                                <div id="icon-preview" style="width: 64px; height: 64px; border: 1px dashed #555; display:flex; align-items:center; justify-content:center; flex-shrink:0;"></div>
+                                                <div id="icon-preview" class="icon-preview-box"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -460,8 +458,8 @@
                                         <textarea id="reg-skill-desc" class="form-input" rows="2" placeholder="Describe the effect..."></textarea>
                                     </div>
                         
-                                    <div class="panel-header-small mt-l mb-s"><span class="section-label">Combat Data</span></div>
-                                    <div class="grid-2-col mb-m">
+                                    <div class="section-divider"><span class="section-label">Combat & Timing</span></div>
+                                    <div class="skill-form-triple">
                                         <div class="field-group">
                                             <label class="text-muted">Range</label>
                                             <select id="reg-skill-range" class="form-input">
@@ -472,65 +470,50 @@
                                             </select>
                                         </div>
                                         <div class="field-group">
-                                            <label class="text-muted">Area of Effect (AoE)</label>
-                                            <input type="text" id="reg-skill-aoe" class="form-input" placeholder="e.g. 5m Radius, Single Target">
+                                            <label class="text-muted">Cast Time (Sec)</label>
+                                            <input type="number" id="reg-skill-cast" class="form-input" value="0">
+                                        </div>
+                                        <div class="field-group">
+                                            <label class="text-muted">Cooldown (Sec)</label>
+                                            <input type="number" id="reg-skill-cooldown" class="form-input" value="0">
                                         </div>
                                     </div>
                                     
-                                    <div class="grid-2-col mb-m">
+                                    <div class="skill-form-grid">
+                                        <div class="field-group">
+                                            <label class="text-muted">Area of Effect (AoE)</label>
+                                            <input type="text" id="reg-skill-aoe" class="form-input" placeholder="e.g. 5m Radius">
+                                        </div>
                                         <div class="field-group">
                                             <label class="text-muted">Damage Type</label>
                                             <select id="reg-skill-dmg-type" class="form-input">
-                                                <option value="">None (Utility)</option>
+                                                <option value="">Utility</option>
                                                 <option value="Physical">Physical</option>
                                                 <option value="Fire">Fire</option>
                                                 <option value="Ice">Ice</option>
                                                 <option value="Lightning">Lightning</option>
-                                                <option value="Holy">Holy</option>
-                                                <option value="Shadow">Shadow</option>
-                                                <option value="Poison">Poison</option>
-                                                <option value="Psychic">Psychic</option>
-                                            </select>
-                                        </div>
-                                        <div class="field-group">
-                                            <label class="text-muted">Saving Throw</label>
-                                            <select id="reg-skill-save" class="form-input">
-                                                <option value="none">None</option>
-                                                <option value="Body">Body</option>
-                                                <option value="Mind">Mind</option>
-                                                <option value="Spirit">Spirit</option>
                                             </select>
                                         </div>
                                     </div>
                         
-                                    <div class="panel-header-small mt-l mb-s"><span class="section-label">Scaling Formula</span></div>
-                                    <div class="grid-3-col mb-m">
+                                    <div class="section-divider"><span class="section-label">Scaling Formula</span></div>
+                                    <div class="skill-form-grid">
                                         <div class="field-group">
                                             <label class="text-muted">Stat Source</label>
                                             <select id="reg-skill-stat" class="form-input">
-                                                <option value="body">Body Modifier</option>
-                                                <option value="mind">Mind Modifier</option>
-                                                <option value="spirit">Spirit Modifier</option>
-                                                
-                                                <option value="body_mind">Hybrid: Body + Mind</option>
-                                                <option value="body_spirit">Hybrid: Body + Spirit</option>
-                                                <option value="mind_spirit">Hybrid: Mind + Spirit</option>
-                                                <option value="body_mind_spirit">Hybrid: All Stats</option>
-                                                
-                                                <option value="none">Flat Value (No Scaling)</option>
+                                                <option value="body">Body</option>
+                                                <option value="mind">Mind</option>
+                                                <option value="spirit">Spirit</option>
+                                                <option value="none">Flat Value</option>
                                             </select>
                                         </div>
                                         <div class="field-group">
-                                            <label class="text-muted">Factor (x Stat)</label>
+                                            <label class="text-muted">Multiplier (Factor)</label>
                                             <input type="number" id="reg-skill-factor" class="form-input" step="0.1" value="1.0">
-                                        </div>
-                                        <div class="field-group">
-                                            <label class="text-muted">Hard Cap</label>
-                                            <input type="number" id="reg-skill-cap" class="form-input" value="110">
                                         </div>
                                     </div>
                         
-                                    <div class="flex-row mt-m" style="justify-content: flex-end; gap: 10px;">
+                                    <div class="flex-row flex-end mt-m">
                                         <button id="skill-cancel-btn" onclick="resetSkillForm()" class="btn-secondary hide-default">Cancel Edit</button>
                                         <button id="skill-save-btn" onclick="saveSkillToRegistry()" class="btn-success">Save Skill to Library</button>
                                     </div>
