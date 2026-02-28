@@ -2174,6 +2174,51 @@ async function deleteMasterAsset(collection, id, callback) {
     } catch (e) { console.error(e); }
 }
 
+async function respecCharacterAttributes() {
+    const uid = document.getElementById('edit-modal-uid').value;
+    const cid = document.getElementById('edit-modal-cid').value;
+    
+    if (!confirm("WARNING: This will reset BODY, MIND, and SPIRIT to 0.\nThe player will regain all AP based on their current Level.\n\nContinue?")) return;
+
+    try {
+        const charRef = firestore.collection('users').doc(uid).collection('characters').doc(cid);
+        
+        // 1. Reset Stats to 0
+        await charRef.update({
+            body: 0,
+            mind: 0,
+            spirit: 0
+        });
+
+        // 2. Refresh the inputs in the modal so the Master sees the change immediately
+        document.getElementById('edit-modal-body').value = 0;
+        document.getElementById('edit-modal-mind').value = 0;
+        document.getElementById('edit-modal-spirit').value = 0;
+
+        // 3. Recalculate derived stats (Max HP/MP will drop)
+        const doc = await charRef.get();
+        const data = doc.data();
+        const totals = await getFinalMaxStats(data);
+        
+        await charRef.update({
+            hpMax: totals.finalHP,
+            mpMax: totals.finalMP
+        });
+
+        // 4. Update the inputs again to show new Max HP/MP
+        document.getElementById('edit-modal-hp').value = Math.min(data.hpCurrent, totals.finalHP); // Clamp current if needed
+        document.getElementById('edit-modal-mp').value = Math.min(data.mpCurrent, totals.finalMP);
+
+        alert("Character attributes have been reset!");
+        
+    } catch (e) {
+        console.error("Respec failed:", e);
+        alert("Error resetting attributes.");
+    }
+}
+
+
+
 /* ==========================================
    --- 14. SKILLS ---
    ========================================== */
