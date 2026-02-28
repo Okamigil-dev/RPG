@@ -1610,28 +1610,61 @@ async function saveSkillToRegistry() {
 async function loadSkillRegistry() {
     const container = document.getElementById('registry-skill-list');
     container.innerHTML = '<p>Loading...</p>';
+    
     try {
         const snap = await firestore.collection('master_skills').orderBy('class').get();
-        if(snap.empty) { container.innerHTML = '<p>No skills defined yet.</p>'; return; }
+        if(snap.empty) { container.innerHTML = '<p class="text-center opacity-50">No skills defined yet.</p>'; return; }
 
-        let html = '<div class="grid-3-col">'; 
+        let html = ''; // Using standard rows, not grid, for cleaner "Manager" look
+        
         snap.forEach(doc => {
             const d = doc.data();
-            const icon = d.iconData ? `<img src="${d.iconData}" style="width:32px; height:32px; vertical-align:middle; margin-right:10px;">` : '';
+            const icon = d.iconData ? 
+                `<img src="${d.iconData}" style="width:64px; height:64px; object-fit:cover; border-radius:4px; border:1px solid #333; flex-shrink:0;">` 
+                : `<div style="width:64px; height:64px; background:#222; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#444;"><i class="fa-solid fa-image"></i></div>`;
+            
             html += `
-            <div class="panel-card" style="padding:10px; background:#18181b;">
-                <div class="flex-row">${icon}<div>
-                        <strong style="color:#e879f9;">${d.name}</strong> <br>
-                        <span style="font-size:0.75rem; color:#aaa;">${d.class} | T${d.tier} | ${d.baseCost} MP</span>
-                    </div></div>
-                <div style="font-size:0.8rem; margin-top:5px; color:#ccc;">${d.description}</div>
-                <div style="margin-top:5px; font-size:0.7rem;">${d.damageType ? `<span class="join-code-pill">${d.damageType}</span>` : ''}</div>
-                <button class="btn-danger-small mt-s w-100" onclick="deleteMasterAsset('master_skills', '${doc.id}', loadSkillRegistry)">Delete</button>
+            <div class="panel-card mb-s" style="padding:10px; background:#18181b;">
+                <div class="flex-row" style="align-items: flex-start; justify-content: space-between;">
+                    
+                    <div class="flex-row" style="gap: 15px; align-items: flex-start; flex-grow: 1;">
+                        ${icon}
+                        <div>
+                            <div class="flex-row" style="gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                                <strong style="color:#e879f9; font-size: 1.1rem;">${d.name}</strong>
+                                <span class="join-code-pill" style="opacity:0.8;">${d.class}</span>
+                                <span class="join-code-pill" style="opacity:0.8;">T${d.tier}</span>
+                                <span class="join-code-pill" style="opacity:0.8;">${d.baseCost} MP</span>
+                            </div>
+                            
+                            <div style="font-size:0.85rem; color:#ccc; margin-bottom: 6px;">${d.description}</div>
+                            
+                            <div style="font-size:0.75rem; color:#71717a; display:flex; gap:10px; flex-wrap:wrap;">
+                                <span><i class="fa-solid fa-ruler-combined"></i> ${d.range} ${d.aoe ? `(${d.aoe})` : ''}</span>
+                                <span><i class="fa-solid fa-burst"></i> ${d.damageType || 'Utility'}</span>
+                                ${d.savingThrow !== 'none' ? `<span><i class="fa-solid fa-shield-halved"></i> Save: ${d.savingThrow}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-row" style="gap: 5px;">
+                        <button class="btn-small" onclick="editMasterSkill('${doc.id}')" title="Edit">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn-danger-small" onclick="deleteMasterAsset('master_skills', '${doc.id}', loadSkillRegistry)" title="Delete">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+
+                </div>
             </div>`;
         });
-        html += '</div>';
+        
         container.innerHTML = html;
-    } catch (e) { console.error("Load Error:", e); }
+        
+    } catch (e) {
+        console.error("Load Error:", e);
+    }
 }
 
 async function refreshSkillClassDropdown() {
