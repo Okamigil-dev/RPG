@@ -13,6 +13,8 @@ let currentCharacterId = null;
 let pendingStats = { body: 0, mind: 0, spirit: 0 };
 let originalStats = { body: 0, mind: 0, spirit: 0 };
 let totalAP = 0;
+let activeCharLevel = 1;
+
 
 
 // ==========================================
@@ -506,7 +508,7 @@ function loadUserCharacters() {
 }
 
 async function selectCharacter(id) {
-    // 0. RESET UI
+    // 0. RESET UI (Clears ghost data)
     const allInputs = document.querySelectorAll('#char-sheet-view input');
     allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
 
@@ -519,27 +521,31 @@ async function selectCharacter(id) {
         if (doc.exists) {
             const d = doc.data();
 
+            // === SWITCH INSTANCE LISTENERS ===
             currentCampaignId = d.instanceId || "global"; 
             initClockListener(); 
             initDiceLogListener();
             
+            // 1. IDENTITY & METADATA
             document.getElementById('char-name').value = d.name || "";
             document.getElementById('char-race').value = d.race || "";
             
-            // 1. Calculate Level
-            const currentLevel = calculateLevelFromEXP(d.expCurrent || 0);
-            document.getElementById('char-level-display').innerText = `Lv. ${currentLevel}`;
+            // --- GLOBAL UPDATE: Set the global level immediately ---
+            // We calculate it fresh from the EXP to ensure it's always accurate
+            activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
             
-            // 2. Initialize Stats
+            // Update UI using the Global
+            document.getElementById('char-level-display').innerText = `Lv. ${activeCharLevel}`;
+            
+            // 2. Initialize Stats & AP using the Global
             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
             pendingStats = { ...originalStats };
 
-            // --- CRITICAL FIX: Calculate Available AP (Level - Spent) ---
-            // If you are Lv.5 and have 2 Body, 2 Mind, 1 Spirit, you have 0 AP left.
+            // Calculate Available AP: (Current Level - Total Points Spent)
             const spentPoints = (originalStats.body + originalStats.mind + originalStats.spirit);
-            totalAP = Math.max(0, currentLevel - spentPoints); 
+            totalAP = Math.max(0, activeCharLevel - spentPoints); 
 
-            // ... (Rest of function regarding classes, HUD, etc. remains the same)
+            // Render Multi-Class pills
             const classListContainer = document.getElementById('char-class-list-display');
             classListContainer.innerHTML = "";
             const classes = d.unlockedClasses || {};
@@ -554,12 +560,15 @@ async function selectCharacter(id) {
                 });
             }
 
+            // 2. CORE ATTRIBUTES (Now handled by Pending Stats)
             refreshStatDisplay();
 
+            // 3. RETROACTIVE CALCULATION
             const totals = await getFinalMaxStats(d);
             document.getElementById('char-hp-max').value = totals.finalHP;
             document.getElementById('char-mp-max').value = totals.finalMP;
 
+            // 4. RESOURCES & EXP
             const hpCur = d.hpCurrent || 0;
             const mpCur = d.mpCurrent || 0;
 
@@ -574,15 +583,18 @@ async function selectCharacter(id) {
             document.getElementById('char-exp-current').value = d.expCurrent || 0;
             document.getElementById('char-exp-max').value = d.expMax || 1000;
 
+            // 5. GALLERY & SKILLS
             renderGallery(d.gallery || [], d.portrait || "");
             renderSkills(d);
 
+            // 6. UI NAVIGATION
             document.getElementById('char-selection-view').classList.add('hide-default');
             document.getElementById('char-sheet-view').classList.remove('hide-default');
             
+            // --- Update HUD using Global ---
             const hudData = { 
                 ...d, 
-                charLevel: currentLevel, 
+                charLevel: activeCharLevel, // Pass global variable
                 hpMax: totals.finalHP, 
                 mpMax: totals.finalMP 
             };
@@ -592,6 +604,61 @@ async function selectCharacter(id) {
         }
     } catch (error) {
         console.error("Error selecting character:", error);
+    }
+}
+
+async function saveCharacter() {
+    if (!currentCharacterId) return;
+
+    const charRef = firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId);
+    
+    // 1. Get current data to preserve protected fields (like portrait)
+    const doc = await charRef.get();
+    const currentData = doc.data();
+
+    // --- GLOBAL UPDATE: Recalculate Global based on Input EXP ---
+    const expInput = document.getElementById('char-exp-current');
+    const currentExp = parseInt(expInput.value) || 0;
+    
+    // Update the global variable
+    activeCharLevel = calculateLevelFromEXP(currentExp); 
+
+    // 3. Prepare the data packet
+    const data = {
+        name: document.getElementById('char-name').value,
+        race: document.getElementById('char-race').value,
+        expCurrent: currentExp,
+        charLevel: activeCharLevel, // Save the global level to DB
+        
+        // Use global stats variables
+        body: originalStats.body || 0,
+        mind: originalStats.mind || 0,
+        spirit: originalStats.spirit || 0,
+        
+        hpCurrent: parseFloat(document.getElementById('char-hp-current').value) || 0,
+        mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0,
+        
+        // Preserve existing data
+        portrait: currentData.portrait || "", 
+        gallery: currentData.gallery || [],
+        unlockedClasses: currentData.unlockedClasses || {}
+    };
+
+    try {
+        await charRef.update(data);
+        
+        // Update UI using Global
+        document.getElementById('char-level-display').innerText = `Lv. ${activeCharLevel}`;
+        
+        // 5. Update the Sidebar HUD immediately
+        const totals = await getFinalMaxStats(data);
+        updateHUD({ ...data, hpMax: totals.finalHP, mpMax: totals.finalMP });
+        
+        if (typeof showToast === "function") showToast("Character Saved.");
+        
+    } catch (e) { 
+        console.error("Save Error:", e); 
+        if (typeof showToast === "function") showToast("Error: Save Failed");
     }
 }
 
@@ -681,61 +748,7 @@ async function confirmAttributeChanges() {
     }
 }
 
-async function saveCharacter() {
-    if (!currentCharacterId) return;
 
-    const charRef = firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId);
-    
-    // 1. Get current data to preserve protected fields (like portrait)
-    const doc = await charRef.get();
-    const currentData = doc.data();
-
-    // 2. AUTO-CALCULATE LEVEL based on EXP
-    const expInput = document.getElementById('char-exp-current');
-    const currentExp = parseInt(expInput.value) || 0;
-    const automatedLevel = calculateLevelFromEXP(currentExp);
-
-    // 3. Prepare the data packet
-    const data = {
-        name: document.getElementById('char-name').value,
-        race: document.getElementById('char-race').value,
-        expCurrent: currentExp,
-        charLevel: automatedLevel, 
-        
-        // --- CRITICAL FIX START ---
-        // Instead of looking for deleted inputs, use the committed global variables
-        body: originalStats.body || 0,
-        mind: originalStats.mind || 0,
-        spirit: originalStats.spirit || 0,
-        // --- CRITICAL FIX END ---
-        
-        hpCurrent: parseFloat(document.getElementById('char-hp-current').value) || 0,
-        mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0,
-        
-        // Preserve existing data
-        portrait: currentData.portrait || "", 
-        gallery: currentData.gallery || [],
-        unlockedClasses: currentData.unlockedClasses || {}
-    };
-
-    try {
-        await charRef.update(data);
-        
-        // 4. Update the visual displays instantly
-        document.getElementById('char-level-display').innerText = `Lv. ${automatedLevel}`;
-        
-        // 5. Update the Sidebar HUD immediately
-        const totals = await getFinalMaxStats(data);
-        updateHUD({ ...data, hpMax: totals.finalHP, mpMax: totals.finalMP });
-        
-        // Ensure showToast exists before calling it
-        if (typeof showToast === "function") showToast("Character Saved.");
-        
-    } catch (e) { 
-        console.error("Save Error:", e); 
-        if (typeof showToast === "function") showToast("Error: Save Failed");
-    }
-}
 
 
 
@@ -788,17 +801,15 @@ async function updateHUD(char) {
         return mod >= 0 ? `+${mod}` : mod;
     };
 
-    // 3. Identity and Metadata (Handles Multi-Class listing)
+    // 3. Identity and Metadata
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
     
     const classes = char.unlockedClasses || {}; 
     const classStrings = Object.keys(classes).map(name => `${name} Lv.${classes[name].level}`);
     const classText = classStrings.length > 0 ? classStrings.join(', ') : (char.class || "Adventurer");
     
-    // --- CRITICAL FIX: Calculate level from EXP if available, otherwise fallback ---
-    const trueLevel = char.expCurrent ? calculateLevelFromEXP(char.expCurrent) : (char.charLevel || 1);
-    
-    document.getElementById('hud-meta').innerText = `Lv.${trueLevel} (${classText})`;
+    // --- GLOBAL USE: Just use the global variable for the sidebar ---
+    document.getElementById('hud-meta').innerText = `Lv.${activeCharLevel} (${classText})`;
 
     // 4. Text Resources (Floored for visual clarity)
     document.getElementById('hud-hp-text').innerText = 
@@ -810,7 +821,7 @@ async function updateHUD(char) {
     const portraitEl = document.getElementById('hud-portrait');
     portraitEl.style.backgroundImage = char.portrait ? `url(${char.portrait})` : "none";
     
-    // 6. Sidebar Modifiers (Fixed: No double text, adds prefix + calculated mod)
+    // 6. Sidebar Modifiers
     document.getElementById('hud-mod-body').innerText = `BODY ${getMod(totalB)}`;
     document.getElementById('hud-mod-mind').innerText = `MIND ${getMod(totalM)}`;
     document.getElementById('hud-mod-spirit').innerText = `SPIRIT ${getMod(totalS)}`;
