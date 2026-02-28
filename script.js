@@ -529,13 +529,14 @@ async function selectCharacter(id) {
             // 1. IDENTITY & METADATA
             document.getElementById('char-name').value = d.name || "";
             document.getElementById('char-race').value = d.race || "";
-            
-            // --- GLOBAL UPDATE: Set the global level immediately ---
-            // We calculate it fresh from the EXP to ensure it's always accurate
+
+            // Calculate Level & Max EXP
             activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
+            const nextLevelExp = (activeCharLevel + 1) * 200;
             
             // Update UI using the Global
             document.getElementById('char-level-display').innerText = `Lv. ${activeCharLevel}`;
+            document.getElementById('char-exp-max').value = nextLevelExp; // Auto-set the Max
             
             // 2. Initialize Stats & AP using the Global
             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
@@ -594,9 +595,10 @@ async function selectCharacter(id) {
             // --- Update HUD using Global ---
             const hudData = { 
                 ...d, 
-                charLevel: activeCharLevel, // Pass global variable
+                charLevel: activeCharLevel, 
                 hpMax: totals.finalHP, 
-                mpMax: totals.finalMP 
+                mpMax: totals.finalMP,
+                expMax: nextLevelExp // <--- Overrides the old database value
             };
             updateHUD(hudData);
             
@@ -616,19 +618,21 @@ async function saveCharacter() {
     const doc = await charRef.get();
     const currentData = doc.data();
 
-    // --- GLOBAL UPDATE: Recalculate Global based on Input EXP ---
+// 1. Recalculate Level & Target based on new Input
     const expInput = document.getElementById('char-exp-current');
     const currentExp = parseInt(expInput.value) || 0;
     
-    // Update the global variable
     activeCharLevel = calculateLevelFromEXP(currentExp); 
+    const nextLevelExp = (activeCharLevel + 1) * 200; // New Target
 
-    // 3. Prepare the data packet
+    // 2. Update the "Max" display immediately
+    document.getElementById('char-exp-max').value = nextLevelExp;
+
     const data = {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
         expCurrent: currentExp,
-        charLevel: activeCharLevel, // Save the global level to DB
+        charLevel: activeCharLevel,
         
         // Use global stats variables
         body: originalStats.body || 0,
@@ -652,7 +656,12 @@ async function saveCharacter() {
         
         // 5. Update the Sidebar HUD immediately
         const totals = await getFinalMaxStats(data);
-        updateHUD({ ...data, hpMax: totals.finalHP, mpMax: totals.finalMP });
+        updateHUD({ 
+            ...data, 
+            hpMax: totals.finalHP, 
+            mpMax: totals.finalMP,
+            expMax: nextLevelExp // <--- Ensures sidebar bar fills correctly
+        });
         
         if (typeof showToast === "function") showToast("Character Saved.");
         
@@ -2279,15 +2288,17 @@ function renderSkills(charData) {
 /* ==========================================
    --- 15. PURE MATH ---
    ========================================== */
-// --- TEMPORARY LEVEL EXP RULE --- //
+
+// --- EXP FORMULA --- //
 function calculateLevelFromEXP(exp) {
-    // Formula: Level = (EXP / 100) + 1
-    // 0 EXP = Level 1
-    // 100 EXP = Level 2
-    // 200 EXP = Level 3
-    return Math.floor(exp / 100) + 1;
+    // Formula: Threshold = Target Level * 200
+    // Level 1: 0 - 399 XP (Target Lv2 needs 400)
+    // Level 2: 400 - 599 XP (Target Lv3 needs 600)
+    // Level 3: 600+ XP
+    
+    if (exp < 400) return 1;
+    return Math.floor(exp / 200);
 }
-// --- TEMPORARY LEVEL EXP RULE --- //
 
 function adjustModalExp(multiplier) {
     // 1. Get the amount to change (e.g., 100)
