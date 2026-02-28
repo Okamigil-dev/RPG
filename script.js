@@ -1240,14 +1240,22 @@ async function loadInstanceList() {
     const user = auth.currentUser;
     if (!listContainer || !user) return;
 
+    const isAdmin = (window.currentUserRole === 'Admin');
+
     try {
-        // Fetch only instances where YOU are a Master
-        const snapshot = await firestore.collection('instances')
-            .where('masters', 'array-contains', user.uid)
-            .get();
+        let snapshot;
+
+        // 1. Fetch Logic: Admins see ALL, Masters see THEIRS
+        if (isAdmin) {
+            snapshot = await firestore.collection('instances').get();
+        } else {
+            snapshot = await firestore.collection('instances')
+                .where('masters', 'array-contains', user.uid)
+                .get();
+        }
 
         if (snapshot.empty) {
-            listContainer.innerHTML = `<p class="text-center" style="opacity: 0.5; padding: 20px;">No active instances found for this Master.</p>`;
+            listContainer.innerHTML = `<p class="text-center" style="opacity: 0.5; padding: 20px;">No active instances found.</p>`;
             return;
         }
 
@@ -1257,15 +1265,26 @@ async function loadInstanceList() {
 
         snapshot.forEach(doc => {
             const data = doc.data();
-            const id = doc.id; // Added this variable back in
+            const id = doc.id;
+            
+            // Check if I am ALREADY a master (for UI styling)
+            const isMyWorld = data.masters && data.masters.includes(user.uid);
+            
+            // Visual tweak: Darker background if it's an "Admin View" row
+            const rowStyle = (isAdmin && !isMyWorld) ? 'style="background: #1e1e24;"' : '';
+
             html += `
-                <tr>
-                    <td><strong>${data.name || 'Unnamed World'}</strong></td>
+                <tr ${rowStyle}>
+                    <td>
+                        <strong>${data.name || 'Unnamed World'}</strong>
+                        ${(isAdmin && !isMyWorld) ? '<span style="font-size:0.6rem; color:#facc15; margin-left:5px;">(ADMIN VIEW)</span>' : ''}
+                    </td>
                     <td><code class="join-code-pill">${data.joinCode || 'N/A'}</code></td>
                     <td>${data.masters ? data.masters.length : 1}</td>
                     <td>
                         <div class="flex-row" style="gap: 5px;">
                             <button class="btn-small" onclick="viewInstanceDetails('${id}')">Manage</button>
+                            
                             <button class="btn-danger-small" onclick="deleteInstance('${id}', '${data.name}')">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
@@ -1278,7 +1297,7 @@ async function loadInstanceList() {
         listContainer.innerHTML = html;
     } catch (error) {
         console.error("Registry Error:", error);
-        listContainer.innerHTML = `<p class="text-center" style="color: #ef4444; padding: 20px;">Database error. Check Firestore Index.</p>`;
+        listContainer.innerHTML = `<p class="text-center" style="color: #ef4444; padding: 20px;">Database error.</p>`;
     }
 }
 
@@ -1319,10 +1338,41 @@ async function spawnInstance() {
     }
 }
 
-function viewInstanceDetails(instanceId) {
-    currentCampaignId = instanceId; // Update the ID
-    initClockListener();           // REBOOT THE BRAIN
-    alert("Controls now synced to Instance: " + instanceId);
+/* === SHOW ALL INSTANCES === */
+async function viewInstanceDetails(instanceId) {
+    const user = auth.currentUser;
+    const role = window.currentUserRole;
+
+    // --- ADMIN AUTO-JOIN LOGIC ---
+    // If I am an Admin, I force the door open.
+    if (role === 'Admin') {
+        try {
+            // "arrayUnion" is smart: It only adds the ID if it isn't already there.
+            // This prevents duplicates and saves database writes.
+            await firestore.collection('instances').doc(instanceId).update({
+                masters: firebase.firestore.FieldValue.arrayUnion(user.uid)
+            });
+            console.log("Admin privileges: Access granted to instance.");
+        } catch (e) {
+            console.error("Auto-join failed:", e);
+            // We don't stop the function; we try to load anyway in case we were already a master
+        }
+    }
+
+    // 2. Load the Controls
+    currentCampaignId = instanceId; 
+    initClockListener();
+    
+    // Update the UI label so you know which world you are controlling
+    const label = document.getElementById('current-instance-name');
+    if(label) label.innerText = instanceId; 
+
+    // Show confirmation
+    if (typeof showToast === "function") {
+        showToast(`Controls synced to: ${instanceId}`);
+    } else {
+        alert(`Controls synced to: ${instanceId}`);
+    }
 }
 
 // Deletes an instance from both Firestore and Realtime Database
