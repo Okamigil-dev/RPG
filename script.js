@@ -1523,4 +1523,156 @@ async function editClass(id) {
     document.getElementById('m-class-main-stat').value = d.mainStat;
     document.getElementById('m-class-hp').value = d.hpPerLv;
     document.getElementById('m-class-mp').value = d.mpPerLv;
-    document.getElementById('m
+    document.getElementById('m-class-hp-regen').value = d.hpRegenBonus || 0;
+    document.getElementById('m-class-mp-regen').value = d.mpRegenBonus || 0;
+    document.getElementById('m-class-crit').value = d.critMultiplier || 2.0;
+    document.getElementById('m-class-crit-chance').value = d.critChanceBonus || 0;
+    document.getElementById('m-class-accuracy').value = d.accuracyBonus || 0;
+    document.getElementById('m-class-ac').value = d.armorClassBonus || 0;
+    document.getElementById('m-class-speed-bonus').value = d.speedBonus || 0;
+    document.getElementById('m-class-reqs').value = d.requirements || "";
+    document.getElementById('m-class-desc').value = d.description || "";
+    document.getElementById('m-class-traits').value = (d.traits || []).join(", ");
+
+    document.getElementById('class-editor-title').innerText = "Editing Class: " + d.name;
+    document.getElementById('class-cancel-btn').classList.remove('hide-default');
+    document.querySelector('.master-workspace').scrollTop = 0;
+}
+
+function resetClassForm() {
+    document.getElementById('m-class-id').value = "";
+    document.querySelectorAll('#sub-classes input').forEach(i => i.value = (i.type === "number" ? 0 : ""));
+    document.getElementById('m-class-desc').value = "";
+    document.getElementById('class-editor-title').innerText = "Register New Class Archetype";
+    document.getElementById('class-cancel-btn').classList.add('hide-default');
+}
+
+// --- 10.3 SKILL REGISTRY ---
+function openSkillCreator() {
+    document.getElementById('skill-creator-form').classList.remove('hide-default');
+    document.getElementById('reg-skill-name').value = '';
+    document.getElementById('reg-skill-desc').value = '';
+    document.getElementById('reg-skill-icon-base64').value = '';
+    document.getElementById('icon-preview').innerHTML = '';
+}
+
+// Image Resizer (64x64)
+document.getElementById('reg-skill-icon').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 64; canvas.height = 64;
+            ctx.drawImage(img, 0, 0, 64, 64);
+            const dataURL = canvas.toDataURL('image/png');
+            document.getElementById('reg-skill-icon-base64').value = dataURL;
+            document.getElementById('icon-preview').innerHTML = `<img src="${dataURL}" style="width:40px; height:40px; border-radius:4px;">`;
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+async function saveSkillToRegistry() {
+    const name = document.getElementById('reg-skill-name').value;
+    const skillClass = document.getElementById('reg-skill-class').value;
+    const tier = parseInt(document.getElementById('reg-skill-tier').value);
+    
+    if (!name || !skillClass) return alert("Name and Class are required.");
+    const baseCost = 10 * Math.pow(2, tier - 1);
+
+    const skillData = {
+        name: name, class: skillClass, tier: tier,
+        description: document.getElementById('reg-skill-desc').value,
+        iconData: document.getElementById('reg-skill-icon-base64').value, 
+        range: document.getElementById('reg-skill-range').value,
+        damageType: document.getElementById('reg-skill-dmg-type').value,
+        savingThrow: document.getElementById('reg-skill-save').value,
+        scalingStat: document.getElementById('reg-skill-stat').value,
+        scalingFactor: parseFloat(document.getElementById('reg-skill-factor').value) || 1.0,
+        cap: parseInt(document.getElementById('reg-skill-cap').value) || 110,
+        baseCost: baseCost, castTime: 0, cooldown: 0, targetType: "single", 
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        const docId = `${skillClass.toLowerCase()}_${name.replace(/\s+/g, '_').toLowerCase()}_t${tier}`;
+        await firestore.collection('master_skills').doc(docId).set(skillData);
+        alert("Skill Saved to Registry!");
+        loadSkillRegistry();
+    } catch (e) { console.error(e); alert("Error saving skill."); }
+}
+
+async function loadSkillRegistry() {
+    const container = document.getElementById('registry-skill-list');
+    container.innerHTML = '<p>Loading...</p>';
+    try {
+        const snap = await firestore.collection('master_skills').orderBy('class').get();
+        if(snap.empty) { container.innerHTML = '<p>No skills defined yet.</p>'; return; }
+
+        let html = '<div class="grid-3-col">'; 
+        snap.forEach(doc => {
+            const d = doc.data();
+            const icon = d.iconData ? `<img src="${d.iconData}" style="width:32px; height:32px; vertical-align:middle; margin-right:10px;">` : '';
+            html += `
+            <div class="panel-card" style="padding:10px; background:#18181b;">
+                <div class="flex-row">${icon}<div>
+                        <strong style="color:#e879f9;">${d.name}</strong> <br>
+                        <span style="font-size:0.75rem; color:#aaa;">${d.class} | T${d.tier} | ${d.baseCost} MP</span>
+                    </div></div>
+                <div style="font-size:0.8rem; margin-top:5px; color:#ccc;">${d.description}</div>
+                <div style="margin-top:5px; font-size:0.7rem;">${d.damageType ? `<span class="join-code-pill">${d.damageType}</span>` : ''}</div>
+                <button class="btn-danger-small mt-s w-100" onclick="deleteMasterAsset('master_skills', '${doc.id}', loadSkillRegistry)">Delete</button>
+            </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    } catch (e) { console.error("Load Error:", e); }
+}
+
+async function refreshSkillClassDropdown() {
+    const dropdown = document.getElementById('reg-skill-class');
+    if (!dropdown) return;
+    try {
+        const snap = await firestore.collection('master_classes').orderBy('name').get();
+        let html = ``;
+        snap.forEach(doc => { html += `<option value="${doc.data().name}">${doc.data().name}</option>`; });
+        dropdown.innerHTML = html;
+    } catch (e) { console.error(e); }
+}
+
+// --- 10.4 TRAIT LIBRARY ---
+async function ensureTraitExists(traitName) {
+    const slug = traitName.toLowerCase().trim().replace(/\s+/g, '-');
+    const traitRef = firestore.collection('master_traits').doc(slug);
+    const doc = await traitRef.get();
+    if (!doc.exists) {
+        await traitRef.set({ name: traitName, description: "Detailed mechanics needed.", createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    }
+}
+
+async function loadMasterTraitList() {
+    const list = document.getElementById('master-trait-list');
+    if (!list) return;
+    const snap = await firestore.collection('master_traits').orderBy('name').get();
+    list.innerHTML = "";
+    snap.forEach(doc => {
+        const t = doc.data();
+        const card = document.createElement('div');
+        card.className = "panel-card mb-s";
+        card.style.background = "#121214";
+        card.innerHTML = `<div class="form-group"><strong style="color: #00ff88;">${t.name}</strong>
+                <textarea class="form-input w-100 mt-s" style="height: 60px;" 
+                    onchange="updateTraitDescription('${doc.id}', this.value)">${t.description}</textarea>
+            </div>`;
+        list.appendChild(card);
+    });
+}
+
+async function updateTraitDescription(id, val) {
+    await firestore.collection('master_traits').doc(id).update({ description: val });
+}
