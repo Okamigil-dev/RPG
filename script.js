@@ -14,6 +14,7 @@ let pendingStats = { body: 0, mind: 0, spirit: 0 };
 let originalStats = { body: 0, mind: 0, spirit: 0 };
 let totalAP = 0;
 let activeCharLevel = 1;
+let characterListener = null;
 
 
 
@@ -508,105 +509,114 @@ function loadUserCharacters() {
 }
 
 async function selectCharacter(id) {
-    // 0. RESET UI (Clears ghost data)
+    // 0. CLEANUP: Unsubscribe from previous character updates
+    if (characterListener) characterListener(); 
+
+    // 1. RESET UI
     const allInputs = document.querySelectorAll('#char-sheet-view input');
     allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
 
     currentCharacterId = id;
     const user = auth.currentUser;
-    
-    try {
-        const doc = await firestore.collection('users').doc(user.uid).collection('characters').doc(id).get();
-        
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
+
+    // 2. START LISTENING (Real-Time Connection)
+    characterListener = charRef.onSnapshot(async (doc) => {
         if (doc.exists) {
             const d = doc.data();
 
-            // === SWITCH INSTANCE LISTENERS ===
-            currentCampaignId = d.instanceId || "global"; 
-            initClockListener(); 
-            initDiceLogListener();
+            // === SWITCH INSTANCE LISTENERS (Only if changed) ===
+            if (currentCampaignId !== (d.instanceId || "global")) {
+                currentCampaignId = d.instanceId || "global"; 
+                initClockListener(); 
+                initDiceLogListener();
+            }
             
-            // 1. IDENTITY & METADATA
-            document.getElementById('char-name').value = d.name || "";
-            document.getElementById('char-race').value = d.race || "";
+            // 3. SYNC INPUTS (This updates your sheet if the Master edits it!)
+            // We verify elements exist to prevent errors during tab switching
+            if(document.getElementById('char-name')) {
+                document.getElementById('char-name').value = d.name || "";
+                document.getElementById('char-race').value = d.race || "";
+                document.getElementById('char-exp-current').value = d.expCurrent || 0;
+            }
 
-            // Calculate Level & Max EXP
+            // 4. CALCULATE LEVEL & STATS
             activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
-            const nextLevelExp = (activeCharLevel + 1) * 200;
             
-            // Update UI using the Global
-            document.getElementById('char-level-display').innerText = `Lv. ${activeCharLevel}`;
-            document.getElementById('char-exp-max').value = nextLevelExp; // Auto-set the Max
+            if(document.getElementById('char-level-display')) {
+                document.getElementById('char-level-display').innerText = `Lv. ${activeCharLevel}`;
+            }
             
-            // 2. Initialize Stats & AP using the Global
+            // Initialize Stats & AP
             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
             pendingStats = { ...originalStats };
 
-            // Calculate Available AP: (Current Level - Total Points Spent)
             const spentPoints = (originalStats.body + originalStats.mind + originalStats.spirit);
             totalAP = Math.max(0, activeCharLevel - spentPoints); 
 
-            // Render Multi-Class pills
+            // 5. CLASS PILLS
             const classListContainer = document.getElementById('char-class-list-display');
-            classListContainer.innerHTML = "";
-            const classes = d.unlockedClasses || {};
-            if (Object.keys(classes).length === 0) {
-                classListContainer.innerHTML = '<span class="text-muted" style="font-size: 0.8rem;">No classes unlocked</span>';
-            } else {
-                Object.keys(classes).forEach(className => {
-                    const pill = document.createElement('span');
-                    pill.className = 'join-code-pill';
-                    pill.innerText = `${className} Lv.${classes[className].level}`;
-                    classListContainer.appendChild(pill);
-                });
+            if(classListContainer) {
+                classListContainer.innerHTML = "";
+                const classes = d.unlockedClasses || {};
+                if (Object.keys(classes).length === 0) {
+                    classListContainer.innerHTML = '<span class="text-muted" style="font-size: 0.8rem;">No classes unlocked</span>';
+                } else {
+                    Object.keys(classes).forEach(className => {
+                        const pill = document.createElement('span');
+                        pill.className = 'join-code-pill';
+                        pill.innerText = `${className} Lv.${classes[className].level}`;
+                        classListContainer.appendChild(pill);
+                    });
+                }
             }
 
-            // 2. CORE ATTRIBUTES (Now handled by Pending Stats)
             refreshStatDisplay();
 
-            // 3. RETROACTIVE CALCULATION
+            // 6. CALCULATE TOTALS (Async calculation)
             const totals = await getFinalMaxStats(d);
-            document.getElementById('char-hp-max').value = totals.finalHP;
-            document.getElementById('char-mp-max').value = totals.finalMP;
+            const nextLevelExp = (activeCharLevel + 1) * 200;
 
-            // 4. RESOURCES & EXP
-            const hpCur = d.hpCurrent || 0;
-            const mpCur = d.mpCurrent || 0;
+            if(document.getElementById('char-hp-max')) {
+                document.getElementById('char-hp-max').value = totals.finalHP;
+                document.getElementById('char-mp-max').value = totals.finalMP;
+                document.getElementById('char-exp-max').value = nextLevelExp;
+                
+                // Sync Current Values
+                const hpInput = document.getElementById('char-hp-current');
+                const mpInput = document.getElementById('char-mp-current');
+                
+                // Only update inputs if they are not currently being typed in (optional polish)
+                // For now, we force update to ensure sync
+                hpInput.dataset.trueValue = d.hpCurrent || 0;
+                hpInput.value = Math.floor(d.hpCurrent || 0);
+                
+                mpInput.dataset.trueValue = d.mpCurrent || 0;
+                mpInput.value = Math.floor(d.mpCurrent || 0);
+            }
 
-            const hpInput = document.getElementById('char-hp-current');
-            hpInput.dataset.trueValue = hpCur;
-            hpInput.value = Math.floor(hpCur);
-
-            const mpInput = document.getElementById('char-mp-current');
-            mpInput.dataset.trueValue = mpCur;
-            mpInput.value = Math.floor(mpCur);
-            
-            document.getElementById('char-exp-current').value = d.expCurrent || 0;
-            document.getElementById('char-exp-max').value = d.expMax || 1000;
-
-            // 5. GALLERY & SKILLS
+            // 7. RENDER GALLERY & SKILLS
             renderGallery(d.gallery || [], d.portrait || "");
             renderSkills(d);
 
-            // 6. UI NAVIGATION
-            document.getElementById('char-selection-view').classList.add('hide-default');
-            document.getElementById('char-sheet-view').classList.remove('hide-default');
-            
-            // --- Update HUD using Global ---
+            // 8. UPDATE HUD (This creates the "Real-Time Bar" effect)
             const hudData = { 
                 ...d, 
                 charLevel: activeCharLevel, 
                 hpMax: totals.finalHP, 
                 mpMax: totals.finalMP,
-                expMax: nextLevelExp // <--- Overrides the old database value
+                expMax: nextLevelExp
             };
             updateHUD(hudData);
             
-            firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
+            // Show the sheet if hidden
+            document.getElementById('char-selection-view').classList.add('hide-default');
+            document.getElementById('char-sheet-view').classList.remove('hide-default');
         }
-    } catch (error) {
-        console.error("Error selecting character:", error);
-    }
+    });
+
+    // Update "Last Active" without triggering a full reload
+    firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
 }
 
 async function saveCharacter() {
