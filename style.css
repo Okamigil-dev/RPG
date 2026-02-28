@@ -91,82 +91,84 @@ body {
    --- 5. SIDEBAR HUD (CHARACTER WRAP) ---
    ========================================================================== */
 .active-char-hud { 
-    padding: 18px; 
-    background: rgba(17, 17, 17, 0.7); 
-    backdrop-filter: blur(10px);
-    border-radius: 16px; 
-    border: 1px solid rgba(168, 85, 247, 0.3); 
-    margin-bottom: 25px; 
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    padding: 0; 
+    background: #111; 
+    border-radius: 12px; 
+    border: 1px solid #27272a; 
+    margin-bottom: 20px; 
+    overflow: hidden; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
-.hud-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.portrait-circle-small {
-    width: 60px !important;
-    height: 60px !important;
-    border-radius: 12px;
+/* Character Portrait: Full width of the sidebar card */
+.portrait-main-hud {
+    width: 100%;
+    aspect-ratio: 1 / 1.1;
     background-size: cover;
     background-position: center;
-    border: 2px solid #a855f7;
-    box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
-    flex-shrink: 0;
+    border-bottom: 2px solid #a855f7;
 }
 
-.hud-name { margin: 0; font-size: 1.1rem; color: #fafafa; letter-spacing: 0.5px; }
-.hud-meta { font-size: 0.75rem; color: #a1a1aa; text-transform: uppercase; font-weight: 600; }
+.hud-identity-block {
+    padding: 15px 15px 10px;
+    text-align: center;
+}
+
+.hud-name { margin: 0; font-size: 1.2rem; color: #fafafa; }
+.hud-meta { font-size: 0.8rem; color: #a855f7; font-weight: bold; }
 
 /* Resource HUD Styles */
-.hud-resource { margin-bottom: 12px; }
+.hud-resource { padding: 0 15px; margin-bottom: 10px; }
 .bar-label { 
     display: flex; 
     justify-content: space-between; 
-    font-size: 0.7rem; 
-    font-weight: 800; 
-    margin-bottom: 5px; 
-    color: #d4d4d8;
-    text-transform: uppercase;
+    font-size: 0.75rem; 
+    font-weight: bold; 
+    margin-bottom: 4px; 
+    color: #a1a1aa;
 }
 
-.hp-bar-bg, .mp-bar-bg { 
-    width: 100%; height: 8px; background: #09090b; border-radius: 4px; overflow: hidden; 
-    border: 1px solid rgba(255,255,255,0.05);
-}
-.hp-bar-fill { height: 100%; background: linear-gradient(90deg, #ef4444, #dc2626); transition: width 0.4s ease; }
-.mp-bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #2563eb); transition: width 0.4s ease; }
+.hp-bar-bg { width: 100%; height: 10px; background: #09090b; border-radius: 4px; overflow: hidden; border: 1px solid #27272a; }
+.hp-bar-fill { height: 100%; background: #ef4444; transition: width 0.3s; }
 
-/* EXP Progress HUD */
+.mp-bar-bg { width: 100%; height: 10px; background: #09090b; border-radius: 4px; overflow: hidden; border: 1px solid #27272a; }
+.mp-bar-fill { height: 100%; background: #3b82f6; transition: width 0.3s; }
+
+/* EXP Bar Style */
 .exp-bar-thick-bg {
-    width: 100%; height: 16px; background: #09090b; border-radius: 4px; overflow: hidden;
-    position: relative; border: 1px solid #27272a;
+    width: 100%; height: 12px; background: #09090b; border-radius: 4px; overflow: hidden;
+    position: relative; border: 1px solid #27272a; margin-top: 5px;
 }
 
 .exp-bar-thick-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #a855f7, #7e22ce);
-    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%; background: linear-gradient(180deg, #a855f7, #7e22ce);
+    width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .exp-overlay-grid {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.65rem; font-weight: 900; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    font-size: 0.6rem; font-weight: 800; color: white; text-shadow: 0 1px 2px black;
     pointer-events: none;
 }
 
-/* Sidebar Stat Icons */
-.hud-stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 15px; }
-.hud-stat-box {
-    background: rgba(39, 39, 42, 0.5); 
-    padding: 6px; text-align: center; border-radius: 6px; 
-    border: 1px solid rgba(255,255,255,0.05); 
-    font-size: 0.7rem; color: #e4e4e7; font-weight: 800;
+/* Sidebar Stats Grid */
+.hud-stats-row { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr 1fr; 
+    gap: 1px;
+    background: #27272a; 
+    margin-top: 10px;
+    border-top: 1px solid #27272a;
 }
+
+.hud-stat-box {
+    background: #111; padding: 10px 5px; text-align: center; 
+    font-size: 0.7rem; color: #e4e4e7; font-weight: bold;
+}
+
+
+
 /* ==========================================================================
    --- 6. WORLD CLOCK & UI ---
    ========================================================================== */
