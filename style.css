@@ -121,8 +121,65 @@ body {
 .mp-bar-bg { width: 100%; height: 8px; background: #1e1e21; border-radius: 4px; overflow: hidden; margin: 5px 0; }
 .mp-bar-fill { height: 100%; background: #3b82f6; transition: width 0.3s; }
 
+/* just in case this is necessary still.
 .exp-bar-bg { width: 100%; height: 4px; background: #27272a; border-radius: 2px; overflow: hidden; margin-top: 4px; }
 .exp-bar-fill { height: 100%; background: #a855f7; width: 0%; transition: width 0.3s; }
+*/
+
+/* === EXP BAR STYLE ===*/
+/* 1. Thinner container (Closer to HP/MP look) */
+.exp-bar-thick-bg {
+    width: 100%;
+    height: 12px; /* Reduced from 22px to match HP/MP bars better */
+    background: #09090b;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 5px;
+    position: relative; 
+    border: 1px solid #27272a;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* 2. Purple Gradient Fill */
+.exp-bar-thick-fill {
+    height: 100%;
+    background: linear-gradient(180deg, #a855f7, #7e22ce);
+    width: 0%;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 3. The "Grid" & Text Overlay */
+.exp-overlay-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* 10% Tick Marks */
+    background-image: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent calc(10% - 1px),
+        rgba(0, 0, 0, 0.3) calc(10% - 1px),
+        rgba(0, 0, 0, 0.3) 10%
+    );
+    
+    /* Text Styling - Scaled down to fit 12px height */
+    font-size: 0.6rem; 
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px black;
+    font-family: monospace;
+    letter-spacing: 0.5px;
+    pointer-events: none; /* Allows clicking through the text */
+}
+
+
 
 .hud-stats-row {
     display: flex;
