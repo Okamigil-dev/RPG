@@ -570,17 +570,23 @@ async function saveCharacter() {
     const doc = await charRef.get();
     const currentData = doc.data();
 
-    const expInput = document.getElementById('char-exp-current');
-    const currentExp = parseInt(expInput.value) || 0;
+    // --- CHANGE STARTS HERE ---
+    // 1. Get EXP from the database directly since the input is gone from the HTML
+    const currentExp = currentData.expCurrent || 0;
     
+    // 2. Calculate levels based on that database value
     activeCharLevel = calculateLevelFromEXP(currentExp); 
     const nextLevelExp = (activeCharLevel + 1) * 200; 
-    document.getElementById('char-exp-max').value = nextLevelExp;
+
+    // 3. Use a guard for the "max" display in case the element is missing
+    const expMaxDisplay = document.getElementById('char-exp-max');
+    if (expMaxDisplay) expMaxDisplay.value = nextLevelExp;
+    // --- CHANGE ENDS HERE ---
 
     const data = {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
-        expCurrent: currentExp,
+        expCurrent: currentExp, // Saves the existing database value back
         charLevel: activeCharLevel,
         body: originalStats.body || 0,
         mind: originalStats.mind || 0,
