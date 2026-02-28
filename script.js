@@ -894,7 +894,7 @@ async function updateHUD(char) {
     if (!hud) return;
     hud.classList.remove('hide-default');
     
-    // 1. Calculate Percentages FIRST so they are available for all bars
+    // 1. Calculate Percentages FIRST
     const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 1)) * 100, 100);
     const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 1)) * 100, 100);
     const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
@@ -912,12 +912,12 @@ async function updateHUD(char) {
         return mod >= 0 ? `+${mod}` : mod;
     };
 
-    // 3. Update Text Content with Null Checks
+    // 3. Update Sidebar Text
     const nameEl = document.getElementById('hud-name');
     if (nameEl) nameEl.innerText = char.name || "Unnamed";
 
     const metaEl = document.getElementById('hud-meta');
-    if (metaEl) metaEl.innerText = `Level ${activeCharLevel}`;
+    if (metaEl) metaEl.innerText = `Level ${char.charLevel || 1}`;
 
     const hpTextEl = document.getElementById('hud-hp-text');
     if (hpTextEl) hpTextEl.innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
@@ -928,7 +928,7 @@ async function updateHUD(char) {
     const portraitEl = document.getElementById('hud-portrait');
     if (portraitEl) portraitEl.style.backgroundImage = char.portrait ? `url(${char.portrait})` : "none";
 
-    // 4. Update Modifier Boxes
+    // 4. Update Sidebar Modifier Boxes (Fixed Null Checks)
     const modB = document.getElementById('hud-mod-body');
     if (modB) modB.innerText = `BOD ${getMod(totalB)}`;
     
@@ -938,29 +938,31 @@ async function updateHUD(char) {
     const modS = document.getElementById('hud-mod-spirit');
     if (modS) modS.innerText = `SPI ${getMod(totalS)}`;
 
-    // 5. Update Main Sheet Total Labels
+    // 5. Update Main Sheet Total Labels (Fixed Individual Null Checks)
     const labelB = document.getElementById('total-body-label');
-    if (labelB) {
-        labelB.innerText = totalB;
-        document.getElementById('total-mind-label').innerText = totalM;
-        document.getElementById('total-spirit-label').innerText = totalS;
-    }
+    if (labelB) labelB.innerText = totalB;
 
-    // 6. Update ALL Visual Bars (Sidebar + Main Sheet)
-    const hpFillSidebar = document.getElementById('hud-hp-fill');
-    if (hpFillSidebar) hpFillSidebar.style.width = hpPerc + "%";
+    const labelM = document.getElementById('total-mind-label');
+    if (labelM) labelM.innerText = totalM;
 
-    const mpFillSidebar = document.getElementById('hud-mp-fill');
-    if (mpFillSidebar) mpFillSidebar.style.width = mpPerc + "%";
+    const labelS = document.getElementById('total-spirit-label');
+    if (labelS) labelS.innerText = totalS;
 
-    const expFillSidebar = document.getElementById('hud-exp-fill');
-    if (expFillSidebar) expFillSidebar.style.width = expPerc + "%";
+    // 6. Update Visual Bars (Sidebar + Main Sheet Dashboard)
+    const hpSidebar = document.getElementById('hud-hp-fill');
+    if (hpSidebar) hpSidebar.style.width = hpPerc + "%";
 
-    const hpFillMain = document.getElementById('char-hp-fill-main');
-    if (hpFillMain) hpFillMain.style.width = hpPerc + "%";
+    const mpSidebar = document.getElementById('hud-mp-fill');
+    if (mpSidebar) mpSidebar.style.width = mpPerc + "%";
 
-    const mpFillMain = document.getElementById('char-mp-fill-main');
-    if (mpFillMain) mpFillMain.style.width = mpPerc + "%";
+    const expSidebar = document.getElementById('hud-exp-fill');
+    if (expSidebar) expSidebar.style.width = expPerc + "%";
+
+    const hpMain = document.getElementById('char-hp-fill-main');
+    if (hpMain) hpMain.style.width = hpPerc + "%";
+
+    const mpMain = document.getElementById('char-mp-fill-main');
+    if (mpMain) mpMain.style.width = mpPerc + "%";
 
     const expText = document.getElementById('hud-exp-text');
     if (expText) expText.innerText = `${Math.floor(expPerc)}%`;
