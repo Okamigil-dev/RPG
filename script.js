@@ -528,7 +528,7 @@ async function selectCharacter(id) {
             
             // 1. Calculate Level
             const currentLevel = calculateLevelFromEXP(d.expCurrent || 0);
-            document.getElementById('char-level-display').innerText = currentLevel;
+            document.getElementById('char-level-display').innerText = `Lv. ${currentLevel}`;
             
             // 2. Initialize Stats
             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
@@ -722,7 +722,7 @@ async function saveCharacter() {
         await charRef.update(data);
         
         // 4. Update the visual displays instantly
-        document.getElementById('char-level-display').innerText = automatedLevel;
+        document.getElementById('char-level-display').innerText = `Lv. ${automatedLevel}`;
         
         // 5. Update the Sidebar HUD immediately
         const totals = await getFinalMaxStats(data);
@@ -1473,9 +1473,11 @@ async function openCharacterManagerModal(uid, cid) {
             const data = doc.data();
             
             // 1. Fill standard inputs
+            
             document.getElementById('edit-modal-title').innerText = `Editing: ${data.name}`;
-            document.getElementById('edit-modal-exp').value = data.expCurrent || 0; // Fixed field name
-            document.getElementById('edit-modal-hp').value = data.hpCurrent || 0;
+            document.getElementById('edit-modal-exp').value = data.expCurrent || 0;
+            document.getElementById('modal-current-exp-display').innerText = data.expCurrent || 0;
+            document.getElementById('exp-adjust-amount').value = 100; 
             document.getElementById('edit-modal-mp').value = data.mpCurrent || 0;
             document.getElementById('edit-modal-gold').value = data.gold || 0;
             document.getElementById('edit-modal-body').value = data.body || 0;
@@ -2190,7 +2192,7 @@ async function respecCharacterAttributes() {
             spirit: 0
         });
 
-        // 2. Refresh the inputs in the modal so the Master sees the change immediately
+        // 2. Refresh the inputs in the modal immediately
         document.getElementById('edit-modal-body').value = 0;
         document.getElementById('edit-modal-mind').value = 0;
         document.getElementById('edit-modal-spirit').value = 0;
@@ -2205,8 +2207,9 @@ async function respecCharacterAttributes() {
             mpMax: totals.finalMP
         });
 
-        // 4. Update the inputs again to show new Max HP/MP
-        document.getElementById('edit-modal-hp').value = Math.min(data.hpCurrent, totals.finalHP); // Clamp current if needed
+        // 4. Update the Max HP/MP inputs in the modal to reflect the drop
+        // We clamp current HP so it doesn't exceed the new Max
+        document.getElementById('edit-modal-hp').value = Math.min(data.hpCurrent, totals.finalHP);
         document.getElementById('edit-modal-mp').value = Math.min(data.mpCurrent, totals.finalMP);
 
         alert("Character attributes have been reset!");
@@ -2275,6 +2278,21 @@ function calculateLevelFromEXP(exp) {
 }
 // --- TEMPORARY LEVEL EXP RULE --- //
 
+function adjustModalExp(multiplier) {
+    // 1. Get the amount to change (e.g., 100)
+    const amount = parseInt(document.getElementById('exp-adjust-amount').value) || 0;
+    
+    // 2. Get the current total from the hidden input
+    const hiddenInput = document.getElementById('edit-modal-exp');
+    let currentTotal = parseInt(hiddenInput.value) || 0;
+    
+    // 3. Calculate new total (prevent negative EXP)
+    const newTotal = Math.max(0, currentTotal + (amount * multiplier));
+    
+    // 4. Update the hidden input (for saving) and the label (for display)
+    hiddenInput.value = newTotal;
+    document.getElementById('modal-current-exp-display').innerText = newTotal;
+}
 
 async function getFinalMaxStats(charData) {
     // 1. Fetch live Registry data (Retroactive part)
