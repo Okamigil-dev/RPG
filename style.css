@@ -110,33 +110,12 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
-/* Resource Bars (Sidebar & Main Sheet) */
+/* Resource Bars */
 .hp-bar-bg { width: 100%; height: 10px; background: #27272a; border-radius: 4px; overflow: hidden; margin: 5px 0; }
 .hp-bar-fill { height: 100%; background: #ef4444; transition: width 0.3s; }
 
 .mp-bar-bg { width: 100%; height: 10px; background: #1e1e21; border-radius: 4px; overflow: hidden; margin: 5px 0; }
 .mp-bar-fill { height: 100%; background: #3b82f6; transition: width 0.3s; }
-
-/* Main Sheet Vitals (Larger Version) */
-.hp-bar-bg-large, .mp-bar-bg-large {
-    width: 100%; 
-    height: 24px; 
-    background: #09090b; 
-    border-radius: 6px; 
-    overflow: hidden;
-    border: 1px solid #27272a; 
-    margin-top: 8px;
-}
-
-.hp-input-mini { 
-    background: transparent; 
-    border: none; 
-    color: #ef4444; 
-    width: 40px; 
-    text-align: right; 
-    font-weight: 800; 
-    font-size: 1.1rem; 
-}
 
 /* EXP Bar Specialized Style */
 .exp-bar-thick-bg {
@@ -359,33 +338,6 @@ body {
     text-transform: uppercase; letter-spacing: 1px;
 }
 
-/* Fancy Attribute Cards */
-.attributes-panel { margin-top: 20px; }
-.attr-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-
-.attr-card-fancy {
-    background: #111;
-    border: 1px solid #27272a;
-    padding: 20px;
-    border-radius: 12px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.attr-label { font-size: 0.7rem; color: #a1a1aa; letter-spacing: 2px; margin-bottom: 10px; }
-.attr-value { font-size: 2.5rem; font-weight: 900; color: #fafafa; margin: 0 15px; }
-.attr-controls { display: flex; align-items: center; justify-content: center; }
-
-.btn-attr {
-    background: #27272a; color: white; border: none; width: 32px; height: 32px;
-    border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
-}
-.btn-attr:hover { background: #3f3f46; }
-.attr-mod { font-size: 0.8rem; color: #a855f7; margin-top: 10px; font-weight: bold; }
-
-/* Existing Form Logic */
 .field-group { display: flex; flex-direction: column; gap: 5px; }
 .resource-group { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .resource-inputs, .exp-input-wrapper { display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center; }
@@ -465,38 +417,6 @@ body {
 .form-input:focus, .attr-input:focus { border-color: #3b82f6; outline: none; }
 .form-input { width: 100%; }
 .attr-input, .hp-input { width: 80px; text-align: center; }
-
-/* Dashboard Layout Grids */
-.identity-vitals-grid {
-    display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 20px;
-}
-
-/* Fancy/Clean Identity Inputs */
-.form-input-clean {
-    background: rgba(0,0,0,0.3);
-    border: none;
-    border-bottom: 2px solid #27272a;
-    color: white;
-    padding: 8px 0;
-    width: 100%;
-    font-size: 1rem;
-    transition: border-color 0.3s;
-}
-.form-input-clean:focus { outline: none; border-color: #a855f7; }
-
-/* Vitals Labeling & Formatting */
-.bar-label-v2 { 
-    display: flex; 
-    justify-content: space-between; 
-    font-weight: bold; 
-    align-items: flex-end;
-    font-size: 0.8rem;
-    color: #a1a1aa;
-}
-
-.val-group { color: #52525b; font-size: 0.9rem; }
 
 select.form-input {
     cursor: pointer; appearance: none; 
