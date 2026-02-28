@@ -150,41 +150,50 @@
             <div id="tab-character" class="tab-content main-content-padding">
                 <div class="identity-vitals-grid">
                     
-                    <div class="panel-card identity-panel">
-                        <div class="panel-header-small"><span class="section-label">Identity</span></div>
+                    <div class="panel-card">
+                        <h3><span class="section-label">Identity</span></h3>
                         <div class="field-group">
                             <label class="text-muted">Name</label>
                             <input type="text" id="char-name" class="form-input-clean" placeholder="Character Name">
                         </div>
-                        <div class="field-group mt-s">
+                        <div class="field-group mt-m">
                             <label class="text-muted">Race</label>
                             <input type="text" id="char-race" class="form-input-clean" placeholder="e.g. Elf">
                         </div>
-                        <div class="field-group mt-s">
+                        <div class="field-group mt-m">
                             <label class="text-muted">Unlocked Classes</label>
-                            <div id="unlocked-classes-list" class="classes-pill-container">
-                                <span class="text-muted" style="font-size: 0.8rem;">No classes unlocked</span>
-                            </div>
+                            <div id="unlocked-classes-list" class="flex-row" style="flex-wrap: wrap; gap: 5px;">
+                                </div>
                         </div>
                     </div>
             
-                    <div class="panel-card vitals-panel">
-                        <div class="panel-header-small"><span class="section-label">Status & Vitals</span></div>
+                    <div class="panel-card">
+                        <h3><span class="section-label">Status & Vitals</span></h3>
                         
                         <div class="vital-row">
-                            <div class="bar-label-v2"><span>Health Points</span><div class="val-group"><input type="number" id="char-hp-current" class="hp-input-mini"> / <span id="char-hp-max-val">11</span></div></div>
+                            <div class="bar-label-v2">
+                                <span>Health Points</span>
+                                <div class="val-group">
+                                    <input type="number" id="char-hp-current" class="hp-input-mini"> / <span id="char-hp-max">0</span>
+                                </div>
+                            </div>
                             <div class="hp-bar-bg-large"><div id="char-hp-fill-main" class="hp-bar-fill"></div></div>
                         </div>
             
                         <div class="vital-row mt-m">
-                            <div class="bar-label-v2"><span>Mana Points</span><div class="val-group"><input type="number" id="char-mp-current" class="mp-input-mini"> / <span id="char-mp-max-val">15</span></div></div>
-                            <div class="mp-bar-bg-large"><div id="char-mp-fill-main" class="mp-bar-fill"></div></div>
+                            <div class="bar-label-v2">
+                                <span>Mana Points</span>
+                                <div class="val-group">
+                                    <input type="number" id="char-mp-current" class="hp-input-mini" style="color: #3b82f6;"> / <span id="char-mp-max">0</span>
+                                </div>
+                            </div>
+                            <div class="mp-bar-bg-large"><div id="char-mp-fill-main" class="mp-bar-fill" style="background: #3b82f6;"></div></div>
                         </div>
                     </div>
                 </div>
             
-                <div class="panel-card attributes-panel mt-m">
-                    <div class="panel-header-small"><span class="section-label">Core Attributes</span></div>
+                <div class="panel-card attributes-panel">
+                    <h3><span class="section-label">Core Attributes</span></h3>
                     <div class="attr-grid-3">
                         <div class="attr-card-fancy">
                             <span class="attr-label">BODY</span>
@@ -216,8 +225,8 @@
                     </div>
                 </div>
             
-                <div class="panel-card mt-m">
-                    <div class="panel-header-small"><span class="section-label">Portrait Gallery (Max 10 Slots)</span></div>
+                <div class="panel-card">
+                    <h3><span class="section-label">Portrait Gallery</span></h3>
                     <div id="char-gallery-grid" class="gallery-grid">
                         </div>
                     <input type="file" id="slot-upload" class="hide-default" onchange="handleSlotUpload(this)">
