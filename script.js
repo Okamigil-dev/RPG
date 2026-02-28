@@ -930,13 +930,13 @@ async function updateHUD(char) {
 
     // 4. Update Modifier Boxes
     const modB = document.getElementById('hud-mod-body');
-    if (modB) modB.innerText = `BODY ${getMod(totalB)}`;
+    if (modB) modB.innerText = `BOD ${getMod(totalB)}`;
     
     const modM = document.getElementById('hud-mod-mind');
-    if (modM) modM.innerText = `MIND ${getMod(totalM)}`;
+    if (modM) modM.innerText = `MIN ${getMod(totalM)}`;
     
     const modS = document.getElementById('hud-mod-spirit');
-    if (modS) modS.innerText = `SPIRIT ${getMod(totalS)}`;
+    if (modS) modS.innerText = `SPI ${getMod(totalS)}`;
 
     // 5. Update Main Sheet Total Labels
     const labelB = document.getElementById('total-body-label');
