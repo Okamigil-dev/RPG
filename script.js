@@ -860,6 +860,9 @@ async function updateHUD(char) {
     document.getElementById('hud-hp-fill').style.width = hpPerc + "%";
     document.getElementById('hud-mp-fill').style.width = mpPerc + "%";
     document.getElementById('hud-exp-fill').style.width = expPerc + "%";
+    if(document.getElementById('hud-exp-text')) {
+        document.getElementById('hud-exp-text').innerText = `${Math.floor(expPerc)}%`;
+    }
 }
 
 
