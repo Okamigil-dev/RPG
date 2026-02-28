@@ -662,19 +662,30 @@ async function applyPassiveRegen() {
 }
 
 function refreshStatDisplay() {
-    let spentAP = (pendingStats.body - originalStats.body) + 
-                  (pendingStats.mind - originalStats.mind) + 
-                  (pendingStats.spirit - originalStats.spirit);
-    
-    let remAP = totalAP - spentAP;
-    document.getElementById('char-ap-rem').innerText = remAP;
-    
-    document.getElementById('display-body').innerText = pendingStats.body;
-    document.getElementById('display-mind').innerText = pendingStats.mind;
-    document.getElementById('display-spirit').innerText = pendingStats.spirit;
+    // 1. Update the "Pending" numbers (the ones between the - and + buttons)
+    const displayBody = document.getElementById('display-body');
+    if (displayBody) displayBody.innerText = pendingStats.body;
 
-    const hasChanges = spentAP !== 0;
-    document.getElementById('attr-confirm-area').classList.toggle('hide-default', !hasChanges);
+    const displayMind = document.getElementById('display-mind');
+    if (displayMind) displayMind.innerText = pendingStats.mind;
+
+    const displaySpirit = document.getElementById('display-spirit');
+    if (displaySpirit) displaySpirit.innerText = pendingStats.spirit;
+
+    // 2. Update the "AP Available" badge
+    const apRem = document.getElementById('char-ap-rem');
+    if (apRem) apRem.innerText = `AP: ${totalAP}`;
+
+    // 3. Show or Hide the "Commit Changes" area based on AP spent
+    const confirmArea = document.getElementById('attr-confirm-area');
+    if (confirmArea) {
+        const hasChanges = JSON.stringify(pendingStats) !== JSON.stringify(originalStats);
+        if (hasChanges) {
+            confirmArea.classList.remove('hide-default');
+        } else {
+            confirmArea.classList.add('hide-default');
+        }
+    }
 }
 
 function adjustPendingStat(stat, amount) {
