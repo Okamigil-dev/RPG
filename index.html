@@ -580,15 +580,17 @@
                                 
                                 <div class="flex-row gap-m mb-m">
                                     <div class="form-group flex-1">
-                                        <label class="text-muted">Main Stat</label>
+                                        <label class="text-muted">Main Stat (Used for Scaling)</label>
                                         <select id="m-class-main-stat" class="form-input">
-                                            <option value="BODY">BODY</option>
-                                            <option value="MIND">MIND</option>
-                                            <option value="SPIRIT">SPIRIT</option>
-                                            <option value="BODY_OR_MIND">BODY or MIND (Highest)</option>
-                                            <option value="BODY_OR_SPIRIT">BODY or SPIRIT (Highest)</option>
-                                            <option value="MIND_OR_SPIRIT">MIND or SPIRIT (Highest)</option>
-                                            <option value="ANY">Any Stat (Highest of 3)</option>
+                                            <option value="body">Body</option>
+                                            <option value="mind">Mind</option>
+                                            <option value="spirit">Spirit</option>
+                                            
+                                            <option value="body_mind">Hybrid: Body + Mind</option>
+                                            <option value="body_spirit">Hybrid: Body + Spirit</option>
+                                            <option value="mind_spirit">Hybrid: Mind + Spirit</option>
+                                            
+                                            <option value="any">Any (Highest of 3)</option>
                                         </select>
                                     </div>
                                     <div class="form-group flex-1">
