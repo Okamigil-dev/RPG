@@ -1548,18 +1548,22 @@ function resetClassForm() {
 }
 
 // ==========================================
-// --- 10.3 SKILL REGISTRY (Refined) ---
+// --- 10.3 SKILL REGISTRY (Final Polish) ---
 // ==========================================
+
+function openSkillCreator() {
+    document.getElementById('skill-creator-form').classList.remove('hide-default');
+    resetSkillForm(); // Ensure clean slate
+}
 
 function autoSetMpCost() {
     const tier = parseInt(document.getElementById('reg-skill-tier').value) || 1;
-    // Tier 1=10, Tier 2=20, Tier 3=40
+    // Formula: 10 * 2^(tier-1) -> 10, 20, 40
     const cost = 10 * Math.pow(2, tier - 1);
     document.getElementById('reg-skill-cost').value = cost;
 }
 
 // 1. Image Logic
-// No extra buttons needed; selecting a new file simply overwrites the previous one.
 document.getElementById('reg-skill-icon').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1581,7 +1585,7 @@ document.getElementById('reg-skill-icon').addEventListener('change', function(ev
     reader.readAsDataURL(file);
 });
 
-// 2. Save / Update
+// 2. Save / Update Logic
 async function saveSkillToRegistry() {
     const skillId = document.getElementById('ms-skill-id').value; 
     const name = document.getElementById('reg-skill-name').value.trim();
@@ -1598,9 +1602,9 @@ async function saveSkillToRegistry() {
         description: document.getElementById('reg-skill-desc').value.trim(),
         iconData: document.getElementById('reg-skill-icon-base64').value, 
         
-        // Updated Combat Fields
-        range: document.getElementById('reg-skill-range').value,
-        aoe: document.getElementById('reg-skill-aoe').value.trim(), // NEW
+        // Combat Fields
+        range: document.getElementById('reg-skill-range').value, 
+        aoe: document.getElementById('reg-skill-aoe').value.trim(),
         damageType: document.getElementById('reg-skill-dmg-type').value,
         savingThrow: document.getElementById('reg-skill-save').value,
         
@@ -1651,8 +1655,8 @@ async function editMasterSkill(id) {
         document.getElementById('icon-preview').innerHTML = "";
     }
 
-    document.getElementById('reg-skill-range').value = d.range || "Melee";
-    document.getElementById('reg-skill-aoe').value = d.aoe || ""; // NEW
+    document.getElementById('reg-skill-range').value = d.range || "Touch"; 
+    document.getElementById('reg-skill-aoe').value = d.aoe || ""; 
     document.getElementById('reg-skill-dmg-type').value = d.damageType || "";
     document.getElementById('reg-skill-save').value = d.savingThrow || "none";
     document.getElementById('reg-skill-stat').value = d.scalingStat || "none";
@@ -1677,7 +1681,7 @@ function resetSkillForm() {
     
     document.getElementById('reg-skill-tier').value = "1";
     document.getElementById('reg-skill-cost').value = "10";
-    document.getElementById('reg-skill-range').value = "Melee";
+    document.getElementById('reg-skill-range').value = "Touch"; 
     document.getElementById('reg-skill-aoe').value = "";
     document.getElementById('reg-skill-dmg-type').value = "";
     document.getElementById('reg-skill-save').value = "none";
