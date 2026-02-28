@@ -889,83 +889,77 @@ function renderSkills(charData) {
     });
 }
 
+/** * MAIN CONTROLLER: Calculates data once and delegates to specific UI sections.
+ */
 async function updateHUD(char) {
-    const hud = document.getElementById('active-char-hud');
-    if (!hud) return;
-    hud.classList.remove('hide-default');
-    
-    // 1. Calculate Percentages FIRST
+    if (!char) return;
+
+    // 1. Core Data Calculations (Shared)
     const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 1)) * 100, 100);
     const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 1)) * 100, 100);
     const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
 
-    // 2. Race Data Calculation
     const raceSnap = await firestore.collection('master_races').where('name', '==', char.race).limit(1).get();
     const raceD = raceSnap.empty ? { baseBody: 0, baseMind: 0, baseSpirit: 0 } : raceSnap.docs[0].data();
-
-    const totalB = (char.body || 0) + (raceD.baseBody || 0);
-    const totalM = (char.mind || 0) + (raceD.baseMind || 0);
-    const totalS = (char.spirit || 0) + (raceD.baseSpirit || 0);
-
-    const getMod = (totalVal) => {
-        const mod = Math.floor(totalVal / 2);
-        return mod >= 0 ? `+${mod}` : mod;
+    
+    const totals = {
+        body: (char.body || 0) + (raceD.baseBody || 0),
+        mind: (char.mind || 0) + (raceD.baseMind || 0),
+        spirit: (char.spirit || 0) + (raceD.baseSpirit || 0)
     };
 
-    // 3. Update Sidebar Text
-    const nameEl = document.getElementById('hud-name');
-    if (nameEl) nameEl.innerText = char.name || "Unnamed";
+    // 2. Sidebar Sync: Only runs if the HUD container exists
+    const sidebarHUD = document.getElementById('active-char-hud');
+    if (sidebarHUD) {
+        sidebarHUD.classList.remove('hide-default');
+        syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
+    }
 
-    const metaEl = document.getElementById('hud-meta');
-    if (metaEl) metaEl.innerText = `Level ${char.charLevel || 1}`;
+    // 3. Sheet Dashboard Sync: Only runs if the Character Sheet tab is actually visible
+    const sheetView = document.getElementById('char-sheet-view');
+    if (sheetView && !sheetView.classList.contains('hide-default')) {
+        syncSheetDashboardUI(char, totals, hpPerc, mpPerc);
+    }
+}
 
-    const hpTextEl = document.getElementById('hud-hp-text');
-    if (hpTextEl) hpTextEl.innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
+/** * SIDEBAR UI: Manages the IDs starting with "hud-"
+ */
+function syncSidebarUI(char, totals, hpP, mpP, expP) {
+    const getMod = (val) => {
+        const m = Math.floor(val / 2);
+        return m >= 0 ? `+${m}` : m;
+    };
 
-    const mpTextEl = document.getElementById('hud-mp-text');
-    if (mpTextEl) mpTextEl.innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
-
-    const portraitEl = document.getElementById('hud-portrait');
-    if (portraitEl) portraitEl.style.backgroundImage = char.portrait ? `url(${char.portrait})` : "none";
-
-    // 4. Update Sidebar Modifier Boxes (Fixed Null Checks)
-    const modB = document.getElementById('hud-mod-body');
-    if (modB) modB.innerText = `BOD ${getMod(totalB)}`;
+    document.getElementById('hud-name').innerText = char.name || "Unnamed";
+    document.getElementById('hud-meta').innerText = `Level ${char.charLevel || 1}`;
+    document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
+    document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
+    document.getElementById('hud-portrait').style.backgroundImage = char.portrait ? `url(${char.portrait})` : "none";
     
-    const modM = document.getElementById('hud-mod-mind');
-    if (modM) modM.innerText = `MIN ${getMod(totalM)}`;
+    document.getElementById('hud-mod-body').innerText = `BOD ${getMod(totals.body)}`;
+    document.getElementById('hud-mod-mind').innerText = `MIN ${getMod(totals.mind)}`;
+    document.getElementById('hud-mod-spirit').innerText = `SPI ${getMod(totals.spirit)}`;
+
+    document.getElementById('hud-hp-fill').style.width = hpP + "%";
+    document.getElementById('hud-mp-fill').style.width = mpP + "%";
+    document.getElementById('hud-exp-fill').style.width = expP + "%";
     
-    const modS = document.getElementById('hud-mod-spirit');
-    if (modS) modS.innerText = `SPI ${getMod(totalS)}`;
+    if (document.getElementById('hud-exp-text')) {
+        document.getElementById('hud-exp-text').innerText = `${Math.floor(expP)}%`;
+    }
+}
 
-    // 5. Update Main Sheet Total Labels (Fixed Individual Null Checks)
-    const labelB = document.getElementById('total-body-label');
-    if (labelB) labelB.innerText = totalB;
+/** * SHEET DASHBOARD: Manages IDs specific to the Character Sheet tab
+ */
+function syncSheetDashboardUI(char, totals, hpP, mpP) {
+    // Stat Labels
+    document.getElementById('total-body-label').innerText = totals.body;
+    document.getElementById('total-mind-label').innerText = totals.mind;
+    document.getElementById('total-spirit-label').innerText = totals.spirit;
 
-    const labelM = document.getElementById('total-mind-label');
-    if (labelM) labelM.innerText = totalM;
-
-    const labelS = document.getElementById('total-spirit-label');
-    if (labelS) labelS.innerText = totalS;
-
-    // 6. Update Visual Bars (Sidebar + Main Sheet Dashboard)
-    const hpSidebar = document.getElementById('hud-hp-fill');
-    if (hpSidebar) hpSidebar.style.width = hpPerc + "%";
-
-    const mpSidebar = document.getElementById('hud-mp-fill');
-    if (mpSidebar) mpSidebar.style.width = mpPerc + "%";
-
-    const expSidebar = document.getElementById('hud-exp-fill');
-    if (expSidebar) expSidebar.style.width = expPerc + "%";
-
-    const hpMain = document.getElementById('char-hp-fill-main');
-    if (hpMain) hpMain.style.width = hpPerc + "%";
-
-    const mpMain = document.getElementById('char-mp-fill-main');
-    if (mpMain) mpMain.style.width = mpPerc + "%";
-
-    const expText = document.getElementById('hud-exp-text');
-    if (expText) expText.innerText = `${Math.floor(expPerc)}%`;
+    // Dashboard Bars
+    document.getElementById('char-hp-fill-main').style.width = hpP + "%";
+    document.getElementById('char-mp-fill-main').style.width = mpP + "%";
 }
 
 
