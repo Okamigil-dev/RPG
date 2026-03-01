@@ -288,17 +288,31 @@
                     </div>
 
 
+
+                    <div class="panel-card mt-m">
+                        <h3 class="panel-subtitle">Adventurer's Notes</h3>
+                        <textarea 
+                            id="char-notes" 
+                            class="notes-textarea" 
+                            placeholder="Quest logs, inventory, or secrets..." 
+                            onchange="saveCharacter()"></textarea>
+                    </div>
                     
                     <!-- Gallery Box -->
                     <div class="panel-card mt-m">
-                        <h3>Character Gallery</h3>
-                        
+                        <div class="panel-header-row">
+                            <h3 class="panel-subtitle" style="margin:0;">Character Gallery</h3>
+                            <button onclick="document.getElementById('slot-upload').click()" class="btn-small">
+                                <i class="fa-solid fa-plus"></i> Add Image
+                            </button>
+                        </div>
+                    
                         <input 
                             type="file" 
                             id="slot-upload" 
                             accept="image/*" 
                             style="display: none;" 
-                            onchange="handleWebPUpload(this, saveImageToNextSlot, 256)"
+                            onchange="handleWebPUpload(this, saveImageToNextSlot, 256, 0.6)"
                         >
                     
                         <div id="char-gallery-grid" class="gallery-grid">
