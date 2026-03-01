@@ -250,6 +250,7 @@ function openControlSubTab(evt, subTabId) {
     if (subTabId === 'sub-races') loadMasterRaceList();    // This triggers Section 10.1
     if (subTabId === 'sub-skills') { refreshSkillClassDropdown(); loadSkillRegistry(); }
     if (subTabId === 'sub-traits') loadMasterTraitList();
+    if (subTabId === 'sub-attributes') loadAttributeList();
 }
 
 function goBackToSelection() {
