@@ -593,7 +593,8 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    image-rendering: pixelated; /* Keeps 64x64 icons sharp */
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 
 
