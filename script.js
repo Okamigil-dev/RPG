@@ -1713,8 +1713,11 @@ function autoSetMpCost() {
 
 // 1. Process Skill Icon
 function processSkillIcon(base64) {
+    // Save string for database
     document.getElementById('reg-skill-icon-base64').value = base64;
-    document.getElementById('icon-preview').innerHTML = `<img src="${base64}" style="width:64px; height:64px;">`;
+    
+    // Replace the '+' icon with the actual image
+    document.getElementById('icon-preview').innerHTML = `<img src="${base64}">`;
 }
 
 // 2. Save / Update Logic
