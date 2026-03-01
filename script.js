@@ -1654,58 +1654,16 @@ async function saveTraitToRegistry() {
     try {
         if (traitId) {
             await firestore.collection('master_traits').doc(traitId).update(traitData);
-            alert(`Updated: ${name}`);
         } else {
             await firestore.collection('master_traits').add(traitData);
-            alert(`Created: ${name}`);
         }
 
         resetTraitForm();
-        loadTraitLibrary(); // FIXED: Matches function name below
-    } catch (error) {
-        console.error("Error saving trait:", error);
-    }
+        loadMasterTraitList(); // CHANGE: from loadTraitLibrary
+    } catch (error) { console.error(error); }
 }
 
-async function loadTraitLibrary() {
-    const listContainer = document.getElementById('registry-trait-list');
-    if (!listContainer) return;
 
-    try {
-        const snapshot = await firestore.collection('master_traits').orderBy('name').get();
-        if (snapshot.empty) {
-            listContainer.innerHTML = `<p class="text-muted text-center">No traits defined yet.</p>`;
-            return;
-        }
-
-        let html = '';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const modInfo = data.statTarget && data.statTarget !== 'none' 
-                ? `<span style="color: #00ff88; font-size: 0.7rem;">[${data.statTarget} +${data.statValue}${data.logicType === 'percent' ? '%' : ''}]</span>` 
-                : '';
-
-            html += `
-                <div class="trait-entry-card" style="border-bottom: 1px solid #27272a; padding: 10px 0;">
-                    <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
-                        <div>
-                            <span class="trait-source-badge">${data.sourceType}</span>
-                            <strong style="display: block; margin-top: 5px; color: #fff;">${data.name} ${modInfo}</strong>
-                        </div>
-                        <div class="flex-row gap-s">
-                            <button class="btn-icon-small" onclick="prepTraitEdit('${doc.id}')"><i class="fa-solid fa-pen"></i></button>
-                            <button class="btn-icon-small btn-danger" onclick="deleteTrait('${doc.id}')"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                    <p class="text-muted" style="font-size: 0.8rem; margin-top: 8px;">${data.description}</p>
-                </div>
-            `;
-        });
-        listContainer.innerHTML = html;
-    } catch (error) {
-        console.error("Error loading library:", error);
-    }
-}
 
 async function prepTraitEdit(id) {
     const doc = await firestore.collection('master_traits').doc(id).get();
@@ -2189,55 +2147,22 @@ async function refreshSkillClassDropdown() {
 }
 
 // --- 10.4 TRAIT LIBRARY ---
-async function editTraitInRegistry(id) {
-    const doc = await firestore.collection('master_traits').doc(id).get();
-    if (!doc.exists) return;
-
-    const data = doc.data();
-    
-    // Fill hidden ID so the save function knows we are updating
-    document.getElementById('m-trait-id').value = id;
-    
-    // Fill core info
-    document.getElementById('reg-trait-name').value = data.name || "";
-    document.getElementById('reg-trait-source').value = data.sourceType || "General";
-    document.getElementById('reg-trait-desc').value = data.description || "";
-
-    // Fill modifiers (so you don't lose the math when you edit)
-    document.getElementById('reg-trait-stat-target').value = data.statTarget || "none";
-    document.getElementById('reg-trait-stat-value').value = data.statValue || 0;
-    document.getElementById('reg-trait-logic').value = data.logicType || "additive";
-
-    document.getElementById('trait-editor-title').innerText = "Editing Trait: " + (data.name || "Unknown");
-    document.getElementById('trait-cancel-btn').classList.remove('hide-default');
-    
-    // Scroll to top of the form
-    const subTraitsTab = document.getElementById('sub-traits');
-    if(subTraitsTab) subTraitsTab.scrollTop = 0;
-}
 
 
 
 async function deleteTrait(id) {
-    if (!confirm("Are you sure you want to delete this trait from the global library?")) return;
-    
+    if (!confirm("Are you sure?")) return;
     try {
         await firestore.collection('master_traits').doc(id).delete();
-        // Call whichever load function you are currently using for the UI
-        if (typeof loadTraitLibrary === "function") loadTraitLibrary();
-    } catch (error) {
-        console.error("Error deleting trait:", error);
-    }
+        loadMasterTraitList(); // CHANGE: from loadTraitLibrary
+    } catch (error) { console.error(error); }
 }
 
 
 
 async function ensureTraitExists(traitName) {
     if (!traitName) return;
-
-    // Check if a trait with this name already exists in the collection
     const query = await firestore.collection('master_traits').where("name", "==", traitName).get();
-    
     if (query.empty) {
         console.log(`Auto-registering placeholder for: ${traitName}`);
         await firestore.collection('master_traits').add({ 
@@ -2248,7 +2173,7 @@ async function ensureTraitExists(traitName) {
             createdAt: firebase.firestore.FieldValue.serverTimestamp() 
         });
         
-        if (typeof loadTraitLibrary === "function") loadTraitLibrary();
+        loadMasterTraitList();
     }
 }
 
