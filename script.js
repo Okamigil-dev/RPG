@@ -1,47 +1,3 @@
-/*/ --- REUSABLE PNG UPLOADER FUNCTION ---
-function handleIconUpload(inputElement) {
-    const file = inputElement.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Configuration: 64x64 PNG
-            const size = 64; 
-            canvas.width = size;
-            canvas.height = size;
-
-            // Center and Crop Logic
-            let sourceSize = Math.min(img.width, img.height);
-            let sourceX = (img.width - sourceSize) / 2;
-            let sourceY = (img.height - sourceSize) / 2;
-
-            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
-            
-            // Output: Base64 PNG
-            const dataURL = canvas.toDataURL('image/png'); 
-
-            // Update UI
-            document.getElementById('reg-skill-icon-base64').value = dataURL;
-            const preview = document.getElementById('icon-preview');
-            if (preview) {
-                preview.innerHTML = `<img src="${dataURL}" style="width:64px; height:64px; border: 1px solid #333; image-rendering: pixelated;">`;
-            }
-            
-            console.log("PNG Processed. Size:", Math.round(dataURL.length / 1024) + " KB");
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-*/
-
-
-
 /* ==========================================================================
    SECTION 1: CONFIGURATION, STATE & FIREBASE
    ========================================================================== */
@@ -49,7 +5,7 @@ function handleIconUpload(inputElement) {
 // --- 1.1 CONSTANTS ---
 const MAX_CHAR_LEVEL = 60;      
 const MAX_ALLOCATED_STAT = 20;  
-const MAX_GALLERY_SLOTS = 10;
+const MAX_GALLERY_SLOTS = 16;
 const STAT_RESOURCE_MULT = 5;
 
 // --- 1.2 STATE VARIABLES ---
@@ -104,15 +60,8 @@ async function deleteMasterAsset(collection, id, callback) {
     } catch (e) { console.error(e); }
 }
 
-/**
- * HANDLES COMPRESSED UPLOADS (WebP)
- * Best for: Portraits, Gallery Images.
- */
-/**
- * UNIVERSAL WEBP HANDLER (100% QUALITY)
- * Processes any image into a sharp, transparent WebP square.
- */
-function handleWebPUpload(inputElement, callback, size) {
+/* === UNIVERSAL WEBP HANDLER (100% QUALITY) === */
+function handleWebPUpload(inputElement, callback, size = 128, quality = 1) {
     const file = inputElement.files[0];
     if (!file) return;
 
@@ -133,50 +82,14 @@ function handleWebPUpload(inputElement, callback, size) {
 
             ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
             
-            // WebP + 1.0 = No compression artifacts + Transparency support
-            const dataURL = canvas.toDataURL('image/webp', 1.0); 
-
-            if (callback) callback(dataURL);
+            // Generate the WebP string
+            const optimizedBase64 = canvas.toDataURL('image/webp', quality);
             
-            console.log(`WebP ${size}x${size} Processed. Size:`, Math.round(dataURL.length / 1024) + " KB");
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-
-/**
- * HANDLES LOSSLESS UPLOADS (PNG)
- * Best for: Icons, Items, Map Tokens.
- */
-// Change 1: Add 'callback' to the arguments
-function handlePNGUpload(inputElement, callback, size) {
-    const file = inputElement.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+            // FIX: Changed dataURL.length to optimizedBase64.length
+            const kbSize = Math.round(optimizedBase64.length / 1024);
+            console.log(`WebP ${size}x${size} Processed. Size: ${kbSize} KB | Qual: ${quality}`);
             
-            canvas.width = size;
-            canvas.height = size;
-
-            let sourceSize = Math.min(img.width, img.height);
-            let sourceX = (img.width - sourceSize) / 2;
-            let sourceY = (img.height - sourceSize) / 2;
-
-            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
-            
-            const dataURL = canvas.toDataURL('image/png'); 
-
-            // Change 2: Instead of hard-coded IDs, we run the callback
-            if (callback) callback(dataURL);
-            
-            console.log("PNG Processed. Size:", Math.round(dataURL.length / 1024) + " KB");
+            callback(optimizedBase64);
         };
         img.src = e.target.result;
     };
@@ -469,7 +382,7 @@ function sendSystemMessage(text) {
     });
 }
 
-function rollDice(sides, btn) {
+function rollDice(sides, btn, modifier = 0, label = "Roll") {
     const numDisplay = btn.querySelector('.roll-number');
     if (btn.rollInterval) clearInterval(btn.rollInterval);
     if (btn.resetTimeout) clearTimeout(btn.resetTimeout);
@@ -478,19 +391,39 @@ function rollDice(sides, btn) {
     
     let rolls = 0;
     btn.rollInterval = setInterval(() => {
+        // Animation spinning
         numDisplay.innerText = Math.floor(Math.random() * sides) + 1;
+        
         if (++rolls > 12) {
             clearInterval(btn.rollInterval);
-            const finalRoll = Math.floor(Math.random() * sides) + 1;
-            numDisplay.innerText = finalRoll;
+            const naturalRoll = Math.floor(Math.random() * sides) + 1;
+            const finalTotal = naturalRoll + modifier;
             
+            numDisplay.innerText = finalTotal;
+            
+            // Database Sync
             if (currentCharacterId) {
                 const charName = document.getElementById('hud-name').innerText || "Unknown";
+                
+                // Format the result: "21 (18 +3)" or just "18"
+                const sign = modifier >= 0 ? '+' : '';
+                const resultText = modifier !== 0 ? 
+                    `${finalTotal} (${naturalRoll} ${sign}${modifier})` : 
+                    `${finalTotal}`;
+
                 rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).push({
-                    type: 'roll', name: charName, sides: sides, result: finalRoll, timestamp: firebase.database.ServerValue.TIMESTAMP
+                    type: 'roll', 
+                    name: charName, 
+                    sides: sides,       // Required to prevent "dundefined" in chat
+                    rollLabel: label,   // Uses the label (e.g., "Initiative")
+                    result: resultText, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
             }
-            btn.resetTimeout = setTimeout(() => { btn.classList.remove('active-roll'); }, 3000);
+            
+            btn.resetTimeout = setTimeout(() => { 
+                btn.classList.remove('active-roll'); 
+            }, 3000);
         }
     }, 40);
 }
@@ -520,16 +453,45 @@ function renderChatLogEntry(data) {
     if (log.children.length > 50) log.removeChild(log.lastChild);
 }
 
+function triggerInitiative(btn) {
+    // Pull the already-calculated bonus from the UI
+    const displayVal = document.getElementById('char-init-display').innerText;
+    // Remove the "+" and convert to integer
+    const modifier = parseInt(displayVal.replace('+', '')) || 0;
+    
+    // Call your rollDice: (sides, element, modifier, label)
+    rollDice(20, btn, modifier, "Initiative");
+}
 
 /* ==========================================================================
    SECTION 6: CHARACTER LOGIC (MATH & STATS)
    ========================================================================== */
-
+// Calculate Level from exp
 function calculateLevelFromEXP(exp) {
     // Formula: Level = Floor(EXP / 200). Cap at 60.
     const calculatedLv = Math.floor(exp / 200);
     let finalLv = Math.max(1, calculatedLv);
     return Math.min(finalLv, MAX_CHAR_LEVEL);
+}
+
+//Calculates Initiative, Speed, Armor Class
+async function getFinalCombatStats(charData) {
+    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
+    const raceD = raceSnap.empty ? { acBonus: 0, speed: 5 } : raceSnap.docs[0].data();
+
+    // 1. INITIATIVE: Higher of Body or Mind
+    // Using the same logic as your stat calculation for consistency
+    const body = (charData.body || 0) + (raceD.baseBody || 0);
+    const mind = (charData.mind || 0) + (raceD.baseMind || 0);
+    const initBonus = Math.max(body, mind);
+
+    // 2. ARMOR CLASS: Base 10 + Race Bonus (need armor bonus after making items)
+    const finalAC = 10 + (raceD.acBonus || 0);
+
+    // 3. SPEED: Taken directly from race
+    const finalSpeed = raceD.speed || 5;
+
+    return { initBonus, finalAC, finalSpeed };
 }
 
 async function getFinalMaxStats(charData) {
@@ -594,7 +556,7 @@ function createNewCharacter() {
         hpMaxBonus: 0, mpMaxBonus: 0,
         hpCurrent: 10, hpMax: 10, mpCurrent: 10, mpMax: 10,
         expCurrent: 0, expMax: 400, 
-        gallery: [], portrait: "",
+        gallery: [], portrait: 0,
         instanceId: "global", instanceName: "Global",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -611,15 +573,25 @@ function loadUserCharacters() {
         
         snap.forEach(doc => {
             const d = doc.data();
+            
+            // --- NEW: Resolve Portrait from Gallery Index ---
+            const gallery = d.gallery || [];
+            const activeIdx = d.portrait !== undefined ? d.portrait : 0;
+            const displayImg = gallery[activeIdx] || ''; 
+
             const card = document.createElement('div');
             card.className = 'char-card';
             card.onclick = () => selectCharacter(doc.id);
             card.innerHTML = `
-                <div class="char-card-portrait" style="background-image: url(${d.portrait || ''});"></div>
+                <div class="char-card-portrait" style="background-image: url('${displayImg}');">
+                    ${!displayImg ? '<i class="fa-solid fa-user"></i>' : ''}
+                </div>
                 <strong>${d.name || 'New Hero'}</strong>
                 <div class="char-card-meta">Lv.${d.charLevel || 1} ${d.class || ''}</div>
                 <div class="char-realm-tag"><i class="fa-solid fa-globe"></i> ${d.instanceName || 'Global'}</div>
-                <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')"><i class="fa-solid fa-trash"></i> Delete</button>
+                <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
             `;
             grid.appendChild(card);
         });
@@ -885,24 +857,170 @@ function renderClassPills(charData) {
 }
 
 // --- GALLERY LOGIC ---
-
-
 function saveImageToNextSlot(base64Data) {
     const user = auth.currentUser;
     const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
+
     charRef.get().then(doc => {
-        let gallery = doc.data().gallery || [];
+        const data = doc.data();
+        let gallery = data.gallery || [];
+        
         if (gallery.length >= MAX_GALLERY_SLOTS) return alert("Gallery Full!");
+
+        // 1. Add the new high-res WebP to the gallery array
         gallery.push(base64Data);
+
         const updateData = { gallery: gallery };
-        if (!doc.data().portrait) updateData.portrait = base64Data;
+
+        // 2. If it's the very first image, make sure portrait points to index 0
+        // We check if portrait is currently "" or undefined
+        if (data.portrait === "" || data.portrait === undefined) {
+            updateData.portrait = 0; 
+        }
+
         charRef.update(updateData).then(() => {
-            renderGallery(gallery, doc.data().portrait || base64Data);
-            if (updateData.portrait) document.getElementById('hud-portrait').style.backgroundImage = `url(${base64Data})`;
+            // 3. Refresh UI using the (potentially new) portrait index
+            const activeIndex = updateData.portrait !== undefined ? updateData.portrait : data.portrait;
+            
+            renderGallery(gallery, activeIndex);
+            
+            // 4. Update HUD immediately
+            document.getElementById('hud-portrait').style.backgroundImage = `url(${base64Data})`;
         });
     });
 }
 
+function renderGallery(galleryArray, activeIndex) {
+    const container = document.getElementById('char-gallery-grid');
+    if (!container) return;
+    container.innerHTML = "";
+
+    const images = galleryArray || [];
+
+    for (let i = 0; i < MAX_GALLERY_SLOTS; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'gallery-item';
+
+        if (images[i]) {
+            // Compare the Index (Numbers), not the Strings!
+            if (i === activeIndex) {
+                slot.style.borderColor = "#10b981"; 
+                slot.style.boxShadow = "0 0 10px #10b981";
+            }
+
+            slot.innerHTML = `
+                <img src="${images[i]}" onclick="setActivePortrait(${i})">
+                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
+            `;
+        } else {
+            slot.className = 'gallery-item empty-slot';
+            slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
+            slot.onclick = () => document.getElementById('slot-upload').click();
+        }
+        container.appendChild(slot);
+    }
+}
+
+function setActivePortrait(index) {
+    const user = auth.currentUser;
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
+    
+    charRef.update({ portrait: index }).then(() => {
+        charRef.get().then(doc => {
+            const data = doc.data();
+            const imgData = data.gallery[index];
+            document.getElementById('hud-portrait').style.backgroundImage = `url(${imgData})`;
+            loadUserCharacters(); 
+            renderGallery(data.gallery, index);
+        });
+    });
+}
+
+function deleteImage(event, index) {
+    event.stopPropagation();
+    if (!confirm("Delete this image?")) return;
+    const user = auth.currentUser;
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
+
+    charRef.get().then(doc => {
+        let gallery = doc.data().gallery || [];
+        let activeIdx = doc.data().portrait;
+
+        gallery.splice(index, 1);
+        const updateData = { gallery: gallery };
+
+        // Adjust index logic after a deletion
+        if (activeIdx === index) {
+            // If we deleted the active one, default to the first image or nothing
+            updateData.portrait = gallery.length > 0 ? 0 : -1;
+        } else if (index < activeIdx) {
+            // If we deleted an image BEFORE the active one, shift the index down
+            updateData.portrait = activeIdx - 1;
+        }
+
+        charRef.update(updateData).then(() => {
+            const finalIdx = updateData.portrait !== undefined ? updateData.portrait : activeIdx;
+            const finalImg = gallery[finalIdx] || '';
+            
+            renderGallery(gallery, finalIdx);
+            document.getElementById('hud-portrait').style.backgroundImage = `url(${finalImg})`;
+            loadUserCharacters();
+        });
+    });
+}
+
+function renderSkills(charData) {
+    const container = document.getElementById('skills-container');
+    if (!container) return;
+    container.innerHTML = ""; 
+    
+    const tiers = [
+        { key: 'basicSkills', label: 'Basic Skills' }, 
+        { key: 'intSkills', label: 'Intermediate Skills' }, 
+        { key: 'advSkills', label: 'Advanced Skills' }
+    ];
+
+    tiers.forEach(tier => {
+        const section = document.createElement('div');
+        section.className = 'skill-tier-section';
+        section.innerHTML = `<h4 class="mt-m mb-s">${tier.label}</h4>`;
+        
+        const skills = charData[tier.key] || [];
+        if (skills.length === 0) {
+            section.innerHTML += `<div class="text-muted" style="width:100%; text-align:center; font-size:0.8rem;">Empty</div>`;
+        }
+
+        skills.forEach((s) => {
+            const perc = Math.min((s.exp / (s.expMax || 10)) * 100, 100);
+            const slot = document.createElement('div');
+            slot.className = 'skill-slot-card';
+            
+            // Added img support here in case the skill has an icon
+            const iconHtml = s.icon ? `<img src="${s.icon}" class="registry-icon" style="width:32px; height:32px; margin-right:10px;">` : '';
+
+            slot.innerHTML = `
+                <div class="flex-row" style="align-items: center;">
+                    ${iconHtml}
+                    <div style="flex-grow: 1;">
+                        <div class="flex-row" style="justify-content: space-between;">
+                            <strong>${s.name || '---'}</strong>
+                            <span style="font-size: 0.8rem; opacity: 0.7;">Lv.${s.level}</span>
+                        </div>
+                        <div class="skill-exp-bg" style="height: 4px; background: #27272a; margin-top: 5px; border-radius: 2px;">
+                            <div class="skill-exp-fill" style="width: ${perc}%; height: 100%; background: #a855f7; border-radius: 2px;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            section.appendChild(slot);
+        });
+        container.appendChild(section);
+    });
+}
+
+
+
+/* Render Gallery backup
 function renderGallery(galleryArray, activePortrait) {
     const container = document.getElementById('char-gallery-grid');
     if (!container) return;
@@ -933,7 +1051,8 @@ function renderGallery(galleryArray, activePortrait) {
         container.appendChild(slot);
     }
 }
-
+*/
+/* set active portrait backup
 function setActivePortrait(imgData) {
     const user = auth.currentUser;
     const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
@@ -943,7 +1062,8 @@ function setActivePortrait(imgData) {
         charRef.get().then(doc => renderGallery(doc.data().gallery, imgData));
     });
 }
-
+*/
+/* delete image backup
 function deleteImage(event, index) {
     event.stopPropagation();
     if (!confirm("Delete this image?")) return;
@@ -962,7 +1082,8 @@ function deleteImage(event, index) {
         });
     });
 }
-
+*/
+/* render skills backup
 function renderSkills(charData) {
     const container = document.getElementById('skills-container');
     if (!container) return;
@@ -992,7 +1113,7 @@ function renderSkills(charData) {
         container.appendChild(section);
     });
 }
-
+*/
 
 
 /** * MAIN CONTROLLER: Calculates data once and delegates to specific UI sections.
@@ -1029,19 +1150,25 @@ async function updateHUD(char) {
    syncSheetDashboardUI(char, totals, hpPerc, mpPerc, raceD);
 }
 
-/** * SIDEBAR UI: Manages the IDs starting with "hud-"
- */
+/* Sync Sidebar UI */
 function syncSidebarUI(char, totals, hpP, mpP, expP) {
     const getMod = (val) => {
         const m = Math.floor(val / 2);
         return m >= 0 ? `+${m}` : m;
     };
 
+    // --- NEW: Resolve Active Portrait ---
+    const gallery = char.gallery || [];
+    const activeIdx = char.portrait !== undefined ? char.portrait : 0;
+    const activeImg = gallery[activeIdx] || "";
+
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
     document.getElementById('hud-meta').innerText = `Level ${char.charLevel || 1}`;
     document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
     document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
-    document.getElementById('hud-portrait').style.backgroundImage = char.portrait ? `url(${char.portrait})` : "none";
+    
+    // Updated to use activeImg resolved from the index
+    document.getElementById('hud-portrait').style.backgroundImage = activeImg ? `url(${activeImg})` : "none";
     
     document.getElementById('hud-mod-body').innerText = `BOD ${getMod(totals.body)}`;
     document.getElementById('hud-mod-mind').innerText = `MIN ${getMod(totals.mind)}`;
@@ -1051,29 +1178,45 @@ function syncSidebarUI(char, totals, hpP, mpP, expP) {
     document.getElementById('hud-mp-fill').style.width = mpP + "%";
     document.getElementById('hud-exp-fill').style.width = expP + "%";
     document.getElementById('hud-exp-text').innerText = `${Math.floor(expP)}%`;
-    
 }
 
 /** * SHEET DASHBOARD: Manages IDs specific to the Character Sheet tab
  */
 function syncSheetDashboardUI(char, totals, hpP, mpP, raceData) {
-    // Attributes & Status
+    // --- Attributes & Status ---
     const bodyEl = document.getElementById('total-body-label');
     if (bodyEl) {
         bodyEl.innerText = totals.body;
         document.getElementById('total-mind-label').innerText = totals.mind;
         document.getElementById('total-spirit-label').innerText = totals.spirit;
     }
+    
     const hpBar = document.getElementById('char-hp-fill-main');
     if (hpBar) {
         hpBar.style.width = hpP + "%";
         document.getElementById('char-mp-fill-main').style.width = mpP + "%";
     }
 
-    // NEW: Speed & Traits
+    // --- NEW: Combat Trio (Speed, AC, Initiative) ---
+    
+    // 1. Speed: Defaulting to 5 if no race data exists
     const speedEl = document.getElementById('char-speed-display');
-    if (speedEl) speedEl.innerText = (raceData.speed || 30) + "m";
+    if (speedEl) speedEl.innerText = (raceData.speed || 5) + "m";
 
+    // 2. Armor Class: 10 + Racial Bonus (No Body Mod)
+    const acEl = document.getElementById('char-ac-display');
+    if (acEl) acEl.innerText = 10 + (raceData.acBonus || 0);
+
+    // 3. Initiative: Higher of Body/Mind Mods
+    const initEl = document.getElementById('char-init-display');
+    if (initEl) {
+        const bodyMod = Math.floor(totals.body / 2);
+        const mindMod = Math.floor(totals.mind / 2);
+        const bestMod = Math.max(bodyMod, mindMod);
+        initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
+    }
+
+    // --- Traits Display ---
     const traitContainer = document.getElementById('char-traits-container');
     if (traitContainer) {
         traitContainer.innerHTML = "";
@@ -1081,11 +1224,10 @@ function syncSheetDashboardUI(char, totals, hpP, mpP, raceData) {
             const tag = document.createElement('span');
             tag.className = 'trait-tag';
             tag.innerText = t;
-            tag.title = "Trait"; 
             traitContainer.appendChild(tag);
         });
     }
-    renderClassPills(char); // Ensures class pills update
+    renderClassPills(char);
 }
 
 
@@ -1234,7 +1376,7 @@ async function saveAllUserRoles() {
     } catch (error) { alert("Failed to save changes."); }
 }
 
-// --- CHARACTER SUPERVISION ---
+// --- CHARACTER MANAGEMENT ---
 async function loadGlobalCharacterManager() {
     const listContainer = document.getElementById('admin-character-list'); 
     if (!listContainer) return;
@@ -1482,6 +1624,77 @@ async function respecCharacterAttributes() {
         alert("Character attributes reset!");
     } catch (e) { alert("Error resetting attributes."); }
 }
+
+// --- TRAIT MANAGEMENT --- //
+async function saveTraitToRegistry() {
+    const name = document.getElementById('reg-trait-name').value.trim();
+    const source = document.getElementById('reg-trait-source').value;
+    const desc = document.getElementById('reg-trait-desc').value.trim();
+    const traitId = document.getElementById('m-trait-id').value; 
+
+    if (!name || !desc) {
+        alert("Name and Description are required.");
+        return;
+    }
+
+    const traitData = {
+        name: name,
+        sourceType: source,
+        description: desc,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        if (traitId) {
+            await firestore.collection('master_traits').doc(traitId).update(traitData);
+        } else {
+            await firestore.collection('master_traits').add(traitData);
+        }
+        
+        resetTraitForm();
+        loadMasterTraitList();
+        closeTraitModal();
+    } catch (error) { console.error(error); }
+}
+
+
+async function prepTraitEdit(id) {
+    const doc = await firestore.collection('master_traits').doc(id).get();
+    if (!doc.exists) return;
+    const data = doc.data();
+
+    document.getElementById('m-trait-id').value = id;
+    document.getElementById('reg-trait-name').value = data.name || "";
+    document.getElementById('reg-trait-source').value = data.sourceType || "General";
+    document.getElementById('reg-trait-desc').value = data.description || "";
+    
+    // Open Modal
+    document.getElementById('trait-modal-title').innerText = "Editing: " + data.name;
+    document.getElementById('trait-modal').classList.remove('hide-default');
+}
+
+function resetTraitForm() {
+    document.getElementById('m-trait-id').value = "";
+    document.getElementById('reg-trait-name').value = "";
+    document.getElementById('reg-trait-desc').value = "";
+    document.getElementById('reg-trait-source').value = "General";
+    
+    // Correct ID for the modal title
+    const title = document.getElementById('trait-modal-title');
+    if (title) title.innerText = "Define Global Trait";
+}
+
+// --- Modal Trait UI --- //
+function openTraitModal() {
+    resetTraitForm(); // Use your existing reset function
+    document.getElementById('trait-modal-title').innerText = "Define Global Trait";
+    document.getElementById('trait-modal').classList.remove('hide-default');
+}
+
+function closeTraitModal() {
+    document.getElementById('trait-modal').classList.add('hide-default');
+}
+
 
 
 /* ==========================================================================
@@ -1757,7 +1970,7 @@ function resetClassForm() {
 }
 
 // ==========================================
-// --- 10.3 SKILL REGISTRY (Refined) ---
+// --- 10.3 SKILL REGISTRY ---
 // ==========================================
 
 function openSkillCreator() {
@@ -1928,32 +2141,121 @@ async function refreshSkillClassDropdown() {
 }
 
 // --- 10.4 TRAIT LIBRARY ---
+
+
+
+async function deleteTrait(id) {
+    if (!confirm("Are you sure?")) return;
+    try {
+        await firestore.collection('master_traits').doc(id).delete();
+        loadMasterTraitList(); // CHANGE: from loadTraitLibrary
+    } catch (error) { console.error(error); }
+}
+
+
+
 async function ensureTraitExists(traitName) {
-    const slug = traitName.toLowerCase().trim().replace(/\s+/g, '-');
-    const traitRef = firestore.collection('master_traits').doc(slug);
-    const doc = await traitRef.get();
-    if (!doc.exists) {
-        await traitRef.set({ name: traitName, description: "Detailed mechanics needed.", createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    if (!traitName) return;
+    const query = await firestore.collection('master_traits').where("name", "==", traitName).get();
+    if (query.empty) {
+        console.log(`Auto-registering placeholder for: ${traitName}`);
+        await firestore.collection('master_traits').add({ 
+            name: traitName, 
+            sourceType: "General",
+            description: "Mechanical details needed.", 
+            statTarget: "none",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+        });
+        
+        loadMasterTraitList();
     }
 }
 
-async function loadMasterTraitList() {
-    const list = document.getElementById('master-trait-list');
-    if (!list) return;
-    const snap = await firestore.collection('master_traits').orderBy('name').get();
-    list.innerHTML = "";
-    snap.forEach(doc => {
-        const t = doc.data();
-        const card = document.createElement('div');
-        card.className = "panel-card mb-s";
-        card.style.background = "#121214";
-        card.innerHTML = `<div class="form-group"><strong style="color: #00ff88;">${t.name}</strong>
-                <textarea class="form-input w-100 mt-s" style="height: 60px;" 
-                    onchange="updateTraitDescription('${doc.id}', this.value)">${t.description}</textarea>
-            </div>`;
-        list.appendChild(card);
-    });
+
+
+let traitSortMode = 'alpha'; // Global toggle state: 'alpha' or 'newest'
+
+function toggleTraitSort() {
+    traitSortMode = traitSortMode === 'alpha' ? 'newest' : 'alpha';
+    const icon = document.getElementById('trait-sort-icon');
+    icon.className = traitSortMode === 'alpha' ? 'fa-solid fa-sort-alpha-down' : 'fa-solid fa-clock';
+    loadMasterTraitList();
 }
+
+async function loadMasterTraitList() {
+    // 1. Target the INNER list div, NOT the whole panel
+    const list = document.getElementById('master-trait-list'); 
+    if (!list) return;
+
+    const searchTerm = document.getElementById('trait-search-input').value.toLowerCase();
+    const filterSource = document.getElementById('trait-filter-source').value;
+
+    try {
+        let query = firestore.collection('master_traits');
+        query = (traitSortMode === 'alpha') ? query.orderBy('name', 'asc') : query.orderBy('updatedAt', 'desc');
+
+        const snap = await query.get();
+        
+        // 2. This clears the CARDS only. It leaves the Header and Button alone.
+        list.innerHTML = ""; 
+
+        snap.forEach(doc => {
+            const t = doc.data();
+            if (t.name.toLowerCase().includes(searchTerm) && (filterSource === "All" || t.sourceType === filterSource)) {
+                const card = document.createElement('div');
+                card.className = "panel-card mb-s trait-item-border"; 
+                card.style.borderLeftColor = getSourceColor(t.sourceType);
+
+                // Added logic fallback to fix the "(undefined)" labels
+                const sourceDisplay = t.sourceType || "General";
+
+                card.innerHTML = `
+                    <div class="trait-card-header mb-s">
+                        <div>
+                            <strong class="text-success">${t.name}</strong>
+                            <span class="text-muted ml-s" style="font-size: 0.7rem;">(${sourceDisplay})</span>
+                        </div>
+                        <div class="flex-row gap-s">
+                            <button class="btn-icon-tiny" onclick="prepTraitEdit('${doc.id}')">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn-icon-tiny btn-danger" onclick="deleteTrait('${doc.id}')">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea class="form-input w-100" style="height: 50px; font-size: 0.8rem;" 
+                        onchange="updateTraitDescription('${doc.id}', this.value)" 
+                        placeholder="Add mechanical description...">${t.description || ""}</textarea>
+                `;
+                list.appendChild(card);
+            }
+        });
+    } catch (err) { console.error("Load Error:", err); }
+}
+
+// Helper for color coding the left border
+function getSourceColor(source) {
+    switch(source) {
+        case 'Race': return '#ef4444';      // Red
+        case 'Class': return '#3b82f6';     // Blue
+        case 'Backstory': return '#10b981'; // Green
+        default: return '#3f3f46';          // Gray
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function updateTraitDescription(id, val) {
     await firestore.collection('master_traits').doc(id).update({ description: val });
