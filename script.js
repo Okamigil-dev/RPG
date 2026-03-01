@@ -60,10 +60,8 @@ async function deleteMasterAsset(collection, id, callback) {
     } catch (e) { console.error(e); }
 }
 
-/* =============================================
-   === UNIVERSAL WEBP HANDLER (100% QUALITY) ===
-   ============================================= */
-function handleWebPUpload(inputElement, callback, size) {
+/* === UNIVERSAL WEBP HANDLER (100% QUALITY) === */
+function handleWebPUpload(inputElement, callback, size = 128, quality = 1) {
     const file = inputElement.files[0];
     if (!file) return;
 
@@ -84,10 +82,12 @@ function handleWebPUpload(inputElement, callback, size) {
 
             ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
             
-            // WebP + 1.0 = No compression artifacts + Transparency support
-            const dataURL = canvas.toDataURL('image/webp', 1.0); 
-
-            if (callback) callback(dataURL);
+            // Using the dynamic quality variable passed into the function
+            const optimizedBase64 = canvas.toDataURL('image/webp', quality);
+            
+            console.log(`Size: ${Math.round(optimizedBase64.length / 1024)}KB | Res: ${size}px | Qual: ${quality}`);
+            
+            callback(optimizedBase64);
             
             console.log(`WebP ${size}x${size} Processed. Size:`, Math.round(dataURL.length / 1024) + " KB");
         };
