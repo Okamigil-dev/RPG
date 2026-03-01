@@ -1,4 +1,4 @@
-// --- REUSABLE PNG UPLOADER FUNCTION ---
+/*/ --- REUSABLE PNG UPLOADER FUNCTION ---
 function handleIconUpload(inputElement) {
     const file = inputElement.files[0];
     if (!file) return;
@@ -38,7 +38,7 @@ function handleIconUpload(inputElement) {
     };
     reader.readAsDataURL(file);
 }
-//IN TESTING
+*/
 
 
 
@@ -108,9 +108,12 @@ async function deleteMasterAsset(collection, id, callback) {
  * HANDLES COMPRESSED UPLOADS (WebP)
  * Best for: Portraits, Gallery Images.
  */
-function handleWebPUpload(input, callback, targetSize) {
-    if (!targetSize) { console.error("handleWebPUpload: Missing targetSize!"); return; }
-    const file = input.files[0];
+/**
+ * UNIVERSAL WEBP HANDLER (100% QUALITY)
+ * Processes any image into a sharp, transparent WebP square.
+ */
+function handleWebPUpload(inputElement, callback, size) {
+    const file = inputElement.files[0];
     if (!file) return;
 
     const reader = new FileReader();
@@ -119,21 +122,29 @@ function handleWebPUpload(input, callback, targetSize) {
         img.onload = function() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = targetSize;
-            canvas.height = targetSize;
+            
+            canvas.width = size;
+            canvas.height = size;
 
-            const minDim = Math.min(img.width, img.height);
-            const sx = (img.width - minDim) / 2;
-            const sy = (img.height - minDim) / 2;
+            // Your proven crop math
+            let sourceSize = Math.min(img.width, img.height);
+            let sourceX = (img.width - sourceSize) / 2;
+            let sourceY = (img.height - sourceSize) / 2;
 
-            ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetSize, targetSize);
-            const base64String = canvas.toDataURL('image/webp', 0.8);
-            callback(base64String);
+            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
+            
+            // WebP + 1.0 = No compression artifacts + Transparency support
+            const dataURL = canvas.toDataURL('image/webp', 1.0); 
+
+            if (callback) callback(dataURL);
+            
+            console.log(`WebP ${size}x${size} Processed. Size:`, Math.round(dataURL.length / 1024) + " KB");
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
+
 
 /**
  * HANDLES LOSSLESS UPLOADS (PNG)
@@ -1763,12 +1774,11 @@ function autoSetMpCost() {
 
 // 1. Process Skill Icon
 function processSkillIcon(base64) {
-    // 1. Store for database
     document.getElementById('reg-skill-icon-base64').value = base64;
     
-    // 2. Update Preview with your specific style string
     const preview = document.getElementById('icon-preview');
     if (preview) {
+        // We use your existing registry-icon class for the look
         preview.innerHTML = `<img src="${base64}" class="registry-icon">`;
     }
 }
