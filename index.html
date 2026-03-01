@@ -274,6 +274,15 @@
                     <!-- Gallery Box -->
                     <div class="panel-card mt-m">
                         <h3>Character Gallery</h3>
+                        
+                        <input 
+                            type="file" 
+                            id="slot-upload" 
+                            accept="image/*" 
+                            style="display: none;" 
+                            onchange="handleWebPUpload(this, saveImageToNextSlot, 128)"
+                        >
+                    
                         <div id="char-gallery-grid" class="gallery-grid">
                             </div>
                     </div>
@@ -469,12 +478,17 @@
                                             <div class="icon-upload-wrapper">
 
                                                 
-                                            <!-- Restore Here
-                                                <input type="file" id="reg-skill-icon" accept="image/*" class="form-input">
-                                            -->
-
-                                                <!--remove this-->
-                                                <input type="file" id="reg-skill-icon" accept="image/*" onchange="handleIconUpload(this)">
+                                            <input 
+                                                type="file" 
+                                                id="reg-skill-icon" 
+                                                accept="image/*" 
+                                                style="display: none;" 
+                                                onchange="handlePNGUpload(this, processSkillIcon, 64)"
+                                            >
+                                            
+                                            <div id="icon-preview" class="icon-upload-box" onclick="triggerInput('reg-skill-icon')">
+                                                <span class="placeholder-text">Click to Upload Icon</span>
+                                            </div>
 
                                                 
                                                 <input type="hidden" id="reg-skill-icon-base64">
