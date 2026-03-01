@@ -507,7 +507,7 @@ function createNewCharacter() {
         hpMaxBonus: 0, mpMaxBonus: 0,
         hpCurrent: 10, hpMax: 10, mpCurrent: 10, mpMax: 10,
         expCurrent: 0, expMax: 400, 
-        gallery: [], portrait: "",
+        gallery: [], portrait: 0,
         instanceId: "global", instanceName: "Global",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -527,7 +527,7 @@ function loadUserCharacters() {
             
             // --- NEW: Resolve Portrait from Gallery Index ---
             const gallery = d.gallery || [];
-            const activeIdx = d.activePortraitIndex !== undefined ? d.activePortraitIndex : 0;
+            const activeIdx = d.portrait !== undefined ? d.portrait : 0;
             const displayImg = gallery[activeIdx] || ''; 
 
             const card = document.createElement('div');
@@ -873,7 +873,7 @@ function setActivePortrait(index) {
     const user = auth.currentUser;
     const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
     
-    charRef.update({ activePortraitIndex: index }).then(() => {
+    charRef.update({ portrait: index }).then(() => {
         charRef.get().then(doc => {
             const data = doc.data();
             const imgData = data.gallery[index];
@@ -892,7 +892,7 @@ function deleteImage(event, index) {
 
     charRef.get().then(doc => {
         let gallery = doc.data().gallery || [];
-        let activeIdx = doc.data().activePortraitIndex;
+        let activeIdx = doc.data().portrait;
 
         gallery.splice(index, 1);
         const updateData = { gallery: gallery };
@@ -900,14 +900,14 @@ function deleteImage(event, index) {
         // Adjust index logic after a deletion
         if (activeIdx === index) {
             // If we deleted the active one, default to the first image or nothing
-            updateData.activePortraitIndex = gallery.length > 0 ? 0 : -1;
+            updateData.portrait = gallery.length > 0 ? 0 : -1;
         } else if (index < activeIdx) {
             // If we deleted an image BEFORE the active one, shift the index down
-            updateData.activePortraitIndex = activeIdx - 1;
+            updateData.portrait = activeIdx - 1;
         }
 
         charRef.update(updateData).then(() => {
-            const finalIdx = updateData.activePortraitIndex !== undefined ? updateData.activePortraitIndex : activeIdx;
+            const finalIdx = updateData.portrait !== undefined ? updateData.portrait : activeIdx;
             const finalImg = gallery[finalIdx] || '';
             
             renderGallery(gallery, finalIdx);
@@ -1123,7 +1123,7 @@ function syncSidebarUI(char, totals, hpP, mpP, expP) {
 
     // --- NEW: Resolve Active Portrait ---
     const gallery = char.gallery || [];
-    const activeIdx = char.activePortraitIndex !== undefined ? char.activePortraitIndex : 0;
+    const activeIdx = char.portrait !== undefined ? char.portrait : 0;
     const activeImg = gallery[activeIdx] || "";
 
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
