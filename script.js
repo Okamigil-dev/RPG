@@ -107,23 +107,24 @@ function handlePNGUpload(input, callback, targetSize) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
+            // Configuration: Uses the passed targetSize (e.g., 64 or 128)
             canvas.width = targetSize;
             canvas.height = targetSize;
 
-            // This stops the Canvas from blurring the image during the resize
-            ctx.imageSmoothingEnabled = false;
-            ctx.webkitImageSmoothingEnabled = false;
-            ctx.mozImageSmoothingEnabled = false;
-
+            // Your Center and Crop Logic
             let sourceSize = Math.min(img.width, img.height);
             let sourceX = (img.width - sourceSize) / 2;
             let sourceY = (img.height - sourceSize) / 2;
 
             ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, targetSize, targetSize);
             
-            // Output pure PNG
+            // Output: Base64 PNG
             const dataURL = canvas.toDataURL('image/png'); 
+            
+            // Run the callback (the logic for wherever this was called from)
             callback(dataURL);
+            
+            console.log("PNG Processed. Size:", Math.round(dataURL.length / 1024) + " KB");
         };
         img.src = e.target.result;
     };
@@ -1721,14 +1722,14 @@ function autoSetMpCost() {
 
 // 1. Process Skill Icon
 function processSkillIcon(base64) {
-    // 1. Store the string for the database save
+    // 1. Store for database
     document.getElementById('reg-skill-icon-base64').value = base64;
     
-    // 2. Wipe the "+" and put the image in its place
-    // The box itself is still clickable because the 'onclick' is on the DIV
-    document.getElementById('icon-preview').innerHTML = `<img src="${base64}">`;
-    
-    console.log("Skill icon updated.");
+    // 2. Update Preview with your specific style string
+    const preview = document.getElementById('icon-preview');
+    if (preview) {
+        preview.innerHTML = `<img src="${base64}" style="width:64px; height:64px; border: 1px solid #333; image-rendering: pixelated;">`;
+    }
 }
 
 // 2. Save / Update Logic
