@@ -18,7 +18,9 @@ let currentCampaignId = "global";
 let currentCharacterId = null; 
 let activeCharLevel = 1; 
 let characterListener = null;
-let currentRaceTraits = [];
+let currentRaceTraits = [];      // Stores selected traits (e.g. ["Darkvision"])
+let currentRaceAttributes = {};  // Stores attributes (e.g. { "body": 2, "speed": 30 })
+let attributeDefinitions = {};   // Maps keys to names (e.g. { "body": "Body" })
 
 let pendingStats = { body: 0, mind: 0, spirit: 0 };
 let originalStats = { body: 0, mind: 0, spirit: 0 };
@@ -1609,7 +1611,8 @@ function closeTraitModal() {
 // --- 1. MODAL CONTROLS ---
 function openRaceModal() {
     resetRaceForm();
-    populateRaceTraitChecklist(); // Load the checklist fresh
+    populateRaceAttrPicker();     // <--- ADD THIS
+    populateRaceTraitChecklist(); 
     document.getElementById('race-modal-title').innerText = "Register New Race";
     document.getElementById('race-modal').classList.remove('hide-default');
 }
@@ -1619,7 +1622,9 @@ function closeRaceModal() {
 }
 
 
-// --- 2. TRAIT CHECKLIST LOGIC ---
+// --- 2. TRAIT & ATTRIBUTE LOGIC ---
+
+// --- A. TRAIT HELPERS ---
 async function populateRaceTraitChecklist() {
     const container = document.getElementById('trait-checklist-container');
     container.innerHTML = '<p class="text-muted small">Loading traits...</p>';
@@ -1693,22 +1698,100 @@ function renderRaceTraitTags() {
 }
 
 
+// --- B. ATTRIBUTE HELPERS ---
+
+// 1. Populate the "Add Attribute" dropdown from your Library
+async function populateRaceAttrPicker() {
+    const select = document.getElementById('race-attr-picker');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">Select stat...</option>';
+    
+    try {
+        const snap = await firestore.collection('master_attributes').orderBy('name').get();
+        attributeDefinitions = {}; // Reset cache
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            attributeDefinitions[d.key] = d.name; // Store for display later
+            
+            // Only show in dropdown if not already added to the race
+            if (!currentRaceAttributes.hasOwnProperty(d.key)) {
+                const opt = document.createElement('option');
+                opt.value = d.key;
+                opt.innerText = d.name;
+                select.appendChild(opt);
+            }
+        });
+    } catch (e) { console.error("Attr Load Error:", e); }
+}
+
+// 2. Add selected attribute to the race
+function addAttrToRace() {
+    const select = document.getElementById('race-attr-picker');
+    const key = select.value;
+    if (!key) return;
+
+    // Add with default value 0
+    currentRaceAttributes[key] = 0;
+    
+    renderRaceAttributes();
+    populateRaceAttrPicker(); // Refresh dropdown to hide the one we just picked
+}
+
+// 3. Remove attribute
+function removeAttrFromRace(key) {
+    delete currentRaceAttributes[key];
+    renderRaceAttributes();
+    populateRaceAttrPicker(); // Put it back in the dropdown
+}
+
+// 4. Update the value in memory when you type numbers
+function updateAttrValue(key, val) {
+    currentRaceAttributes[key] = parseInt(val) || 0;
+}
+
+// 5. Render the list of inputs
+function renderRaceAttributes() {
+    const container = document.getElementById('race-dynamic-attributes');
+    container.innerHTML = "";
+
+    for (const [key, value] of Object.entries(currentRaceAttributes)) {
+        const name = attributeDefinitions[key] || key; // Use nice name if available
+        
+        const div = document.createElement('div');
+        div.className = "flex-row space-between p-s trait-item-border mb-s";
+        div.style.background = "#27272a";
+        div.innerHTML = `
+            <strong class="text-muted" style="width: 120px;">${name}</strong>
+            <input type="number" class="form-input" style="width: 80px; text-align: right;" 
+                   value="${value}" onchange="updateAttrValue('${key}', this.value)">
+            <button class="btn-icon-tiny btn-danger" onclick="removeAttrFromRace('${key}')">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        `;
+        container.appendChild(div);
+    }
+}
+
 // --- 3. RESET FORM ---
 function resetRaceForm() {
+    // 1. Clear Basic Text
     document.getElementById('m-race-id').value = "";
     document.getElementById('m-race-name').value = "";
     document.getElementById('m-race-desc').value = "";
     document.getElementById('trait-checklist-search').value = "";
-    
-    // Reset all number inputs to 0
-    const numInputs = ['m-race-body','m-race-mind','m-race-spirit','m-race-hp','m-race-mp',
-                       'm-race-exp-bonus','m-race-hp-regen','m-race-mp-regen',
-                       'm-race-accuracy','m-race-ac','m-race-crit-chance'];
-    numInputs.forEach(id => document.getElementById(id).value = 0);
-    document.getElementById('m-race-speed').value = 30;
 
-    currentRaceTraits = []; // Clear global array
+    // 2. Clear Attributes (The Fix)
+    currentRaceAttributes = {}; 
+    document.getElementById('race-dynamic-attributes').innerHTML = "";
+    
+    // 3. Clear Traits
+    currentRaceTraits = [];
     document.getElementById('race-active-traits').innerHTML = "";
+    
+    // 4. Reset Title
+    document.getElementById('race-modal-title').innerText = "Register New Race";
 }
 
 
@@ -1719,29 +1802,27 @@ async function prepRaceEdit(id) {
     if (!doc.exists) return;
     const d = doc.data();
 
+    // 1. Basic Info
     document.getElementById('m-race-id').value = id;
     document.getElementById('m-race-name').value = d.name || "";
     document.getElementById('m-race-desc').value = d.description || "";
-    
-    // Fill Stats
-    document.getElementById('m-race-body').value = d.baseBody || 0;
-    document.getElementById('m-race-mind').value = d.baseMind || 0;
-    document.getElementById('m-race-spirit').value = d.baseSpirit || 0;
-    document.getElementById('m-race-hp').value = d.hpPerLv || 0;
-    document.getElementById('m-race-mp').value = d.mpPerLv || 0;
-    document.getElementById('m-race-exp-bonus').value = d.expBonus || 0;
-    document.getElementById('m-race-hp-regen').value = d.hpRegen || 0;
-    document.getElementById('m-race-mp-regen').value = d.mpRegen || 0;
-    document.getElementById('m-race-speed').value = d.speed || 30;
-    document.getElementById('m-race-accuracy').value = d.accuracy || 0;
-    document.getElementById('m-race-ac').value = d.acBonus || 0;
-    document.getElementById('m-race-crit-chance').value = d.critChance || 0;
 
-    // Load Traits
-    currentRaceTraits = d.traits || [];
+    // 2. Load Attributes (The Fix)
+    currentRaceAttributes = d.attributes || {}; 
     
-    // Open Modal and Check Boxes
-    populateRaceTraitChecklist(); 
+    // (Legacy Support: If you have old data like 'baseBody', you might want to manually map it here, 
+    // but for now we assume you are starting fresh with the new system)
+    
+    // 3. Load Traits
+    currentRaceTraits = d.traits || [];
+
+    // 4. Render Everything
+    await populateRaceAttrPicker(); // Load library definitions first so names show up
+    renderRaceAttributes();         // Draw the stat inputs
+    populateRaceTraitChecklist();   // Draw the trait checkboxes
+    renderRaceTraitTags();          // Draw green trait badges
+
+    // 5. Open Modal
     document.getElementById('race-modal-title').innerText = "Editing: " + d.name;
     document.getElementById('race-modal').classList.remove('hide-default');
 }
@@ -1758,19 +1839,13 @@ async function saveMasterRace() {
     const raceData = {
         name: name,
         description: document.getElementById('m-race-desc').value.trim(),
-        baseBody: parseInt(document.getElementById('m-race-body').value) || 0,
-        baseMind: parseInt(document.getElementById('m-race-mind').value) || 0,
-        baseSpirit: parseInt(document.getElementById('m-race-spirit').value) || 0,
-        hpPerLv: parseInt(document.getElementById('m-race-hp').value) || 0,
-        mpPerLv: parseInt(document.getElementById('m-race-mp').value) || 0,
-        expBonus: parseInt(document.getElementById('m-race-exp-bonus').value) || 0,
-        hpRegen: parseFloat(document.getElementById('m-race-hp-regen').value) || 0,
-        mpRegen: parseFloat(document.getElementById('m-race-mp-regen').value) || 0,
-        speed: parseInt(document.getElementById('m-race-speed').value) || 30,
-        accuracy: parseInt(document.getElementById('m-race-accuracy').value) || 0,
-        acBonus: parseInt(document.getElementById('m-race-ac').value) || 0,
-        critChance: parseInt(document.getElementById('m-race-crit-chance').value) || 0,
-        traits: currentRaceTraits, // Saves the array from the checklist
+        
+        // SAVE THE DYNAMIC MAP
+        attributes: currentRaceAttributes, 
+        
+        // SAVE THE TRAIT ARRAY
+        traits: currentRaceTraits,
+        
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
