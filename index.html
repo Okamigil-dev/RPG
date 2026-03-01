@@ -473,28 +473,21 @@
                                             <label class="text-muted">MP Cost</label>
                                             <input type="number" id="reg-skill-cost" class="form-input" value="10">
                                         </div>
-                                        <div class="field-group">
-                                            <label class="text-muted">Icon (128x128)</label>
-                                            <div class="icon-upload-wrapper">
-
-                                                
-                                            <input 
-                                                type="file" 
-                                                id="reg-skill-icon" 
-                                                accept="image/*" 
-                                                style="display: none;" 
-                                                onchange="handlePNGUpload(this, processSkillIcon, 64)"
-                                            >
+                                        
+                                        <!-- Skill Icon Upload -->
+                                        <div class="form-group">
+                                            <label class="text-muted">Skill Icon (64x64 PNG)</label>
                                             
+                                            <input type="file" id="reg-skill-icon" accept="image/*" style="display: none;" 
+                                                   onchange="handlePNGUpload(this, processSkillIcon, 64)">
+                                        
                                             <div id="icon-preview" class="icon-upload-box" onclick="triggerInput('reg-skill-icon')">
-                                                <span class="placeholder-text">Click to Upload Icon</span>
+                                                <i class="fa-solid fa-plus"></i>
                                             </div>
-
-                                                
-                                                <input type="hidden" id="reg-skill-icon-base64">
-                                                <div id="icon-preview" class="icon-preview-box"></div>
-                                            </div>
+                                            
+                                            <input type="hidden" id="reg-skill-icon-base64">
                                         </div>
+
                                     </div>
                         
                                     <div class="field-group mb-m">
@@ -565,7 +558,7 @@
                             </div>
                         
                             <div class="panel-card">
-                                <h3>Global Skill Registry</h3>
+                                <h3>Skill Manager</h3>
                                 <div id="registry-skill-list" class="master-asset-list">
                                     <p class="text-muted text-center">Loading...</p>
                                 </div>
