@@ -449,6 +449,15 @@ function renderChatLogEntry(data) {
     if (log.children.length > 50) log.removeChild(log.lastChild);
 }
 
+function triggerInitiative(btnElement) {
+    // 1. Calculate the bonus based on your high-attribute rule
+    const bodyMod = parseInt(document.getElementById('display-body').innerText) || 0;
+    const mindMod = parseInt(document.getElementById('display-mind').innerText) || 0;
+    const bestMod = Math.max(bodyMod, mindMod);
+
+    // 2. Pass everything to the master roller
+    rollDice(20, btnElement, bestMod, "Initiative");
+}
 
 /* ==========================================================================
    SECTION 6: CHARACTER LOGIC (MATH & STATS)
