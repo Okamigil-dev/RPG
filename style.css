@@ -509,6 +509,19 @@ body {
     border-color: #4338ca;
 }
 
+.trait-panel-layout {
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh; /* Limits height so scrollbar appears */
+}
+
+.master-asset-list-scroll-area {
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.space-between { justify-content: space-between; }
+
 /* Container for the three buttons */
 .combat-stats-row {
     display: grid;
