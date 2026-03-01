@@ -18,6 +18,7 @@ let currentCampaignId = "global";
 let currentCharacterId = null; 
 let activeCharLevel = 1; 
 let characterListener = null;
+let currentRaceTraits = [];
 
 let pendingStats = { body: 0, mind: 0, spirit: 0 };
 let originalStats = { body: 0, mind: 0, spirit: 0 };
@@ -1019,103 +1020,6 @@ function renderSkills(charData) {
 }
 
 
-
-/* Render Gallery backup
-function renderGallery(galleryArray, activePortrait) {
-    const container = document.getElementById('char-gallery-grid');
-    if (!container) return;
-    container.innerHTML = "";
-
-    const images = galleryArray || [];
-
-    for (let i = 0; i < MAX_GALLERY_SLOTS; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'gallery-item';
-
-        if (images[i]) {
-            // Add a neon border to the selected one
-            if (images[i] === activePortrait) {
-                slot.style.borderColor = "#10b981"; // Green for active
-                slot.style.boxShadow = "0 0 10px #10b981";
-            }
-
-            slot.innerHTML = `
-                <img src="${images[i]}" onclick="setActivePortrait('${images[i]}')">
-                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
-            `;
-        } else {
-            slot.className = 'gallery-item empty-slot';
-            slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
-            slot.onclick = () => document.getElementById('slot-upload').click();
-        }
-        container.appendChild(slot);
-    }
-}
-*/
-/* set active portrait backup
-function setActivePortrait(imgData) {
-    const user = auth.currentUser;
-    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
-    charRef.update({ portrait: imgData }).then(() => {
-        document.getElementById('hud-portrait').style.backgroundImage = `url(${imgData})`;
-        loadUserCharacters(); 
-        charRef.get().then(doc => renderGallery(doc.data().gallery, imgData));
-    });
-}
-*/
-/* delete image backup
-function deleteImage(event, index) {
-    event.stopPropagation();
-    if (!confirm("Delete this image?")) return;
-    const user = auth.currentUser;
-    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
-    charRef.get().then(doc => {
-        let gallery = doc.data().gallery || [];
-        const deletedImg = gallery[index];
-        gallery.splice(index, 1);
-        const updateData = { gallery: gallery };
-        if (doc.data().portrait === deletedImg) updateData.portrait = gallery.length > 0 ? gallery[0] : "";
-        charRef.update(updateData).then(() => {
-            renderGallery(gallery, updateData.portrait);
-            document.getElementById('hud-portrait').style.backgroundImage = `url(${updateData.portrait || ''})`;
-            loadUserCharacters();
-        });
-    });
-}
-*/
-/* render skills backup
-function renderSkills(charData) {
-    const container = document.getElementById('skills-container');
-    if (!container) return;
-    container.innerHTML = ""; 
-    const tiers = [{ key: 'basicSkills', label: 'Basic Skills' }, { key: 'intSkills', label: 'Intermediate Skills' }, { key: 'advSkills', label: 'Advanced Skills' }];
-    tiers.forEach(tier => {
-        const section = document.createElement('div');
-        section.className = 'skill-tier-section';
-        section.innerHTML = `<h4 class="mt-m mb-s">${tier.label}</h4>`;
-        const skills = charData[tier.key] || [];
-        if (skills.length === 0) section.innerHTML += `<div class="text-muted" style="width:100%; text-align:center; font-size:0.8rem;">Empty</div>`;
-        skills.forEach((s) => {
-            const perc = Math.min((s.exp / (s.expMax || 10)) * 100, 100);
-            const slot = document.createElement('div');
-            slot.className = 'skill-slot-card';
-            slot.innerHTML = `
-                <div class="flex-row" style="justify-content: space-between;">
-                    <strong>${s.name || '---'}</strong>
-                    <span style="font-size: 0.8rem; opacity: 0.7;">Lv.${s.level}</span>
-                </div>
-                <div class="skill-exp-bg" style="height: 4px; background: #27272a; margin-top: 5px; border-radius: 2px;">
-                    <div class="skill-exp-fill" style="width: ${perc}%; height: 100%; background: #a855f7; border-radius: 2px;"></div>
-                </div>
-            `;
-            section.appendChild(slot);
-        });
-        container.appendChild(section);
-    });
-}
-*/
-
-
 /** * MAIN CONTROLLER: Calculates data once and delegates to specific UI sections.
  */
 async function updateHUD(char) {
@@ -1702,82 +1606,129 @@ function closeTraitModal() {
    ========================================================================== */
 
 // --- 10.1 RACE REGISTRY ---
-async function createMasterRace() {
-    const name = document.getElementById('m-race-name').value.trim();
-    if (!name) return alert("Race name required!");
-    const traitsArray = document.getElementById('m-race-traits').value.split(',').map(t => t.trim()).filter(t => t !== "");
-
-    try {
-        await firestore.collection('master_races').add({
-            name, 
-            bodyMod: parseInt(document.getElementById('m-race-body').value) || 0, 
-            mindMod: parseInt(document.getElementById('m-race-mind').value) || 0, 
-            spiritMod: parseInt(document.getElementById('m-race-spirit').value) || 0, 
-            baseSpeed: parseInt(document.getElementById('m-race-speed').value) || 30, 
-            description: document.getElementById('m-race-desc').value.trim(), 
-            traits: traitsArray,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        resetRaceForm();
-        loadMasterRaceList();
-    } catch (e) { console.error(e); }
+// --- 1. MODAL CONTROLS ---
+function openRaceModal() {
+    resetRaceForm();
+    populateRaceTraitChecklist(); // Load the checklist fresh
+    document.getElementById('race-modal-title').innerText = "Register New Race";
+    document.getElementById('race-modal').classList.remove('hide-default');
 }
 
-async function loadMasterRaceList() {
-    const list = document.getElementById('master-race-list');
-    if (!list) return;
+function closeRaceModal() {
+    document.getElementById('race-modal').classList.add('hide-default');
+}
+
+
+// --- 2. TRAIT CHECKLIST LOGIC ---
+async function populateRaceTraitChecklist() {
+    const container = document.getElementById('trait-checklist-container');
+    container.innerHTML = '<p class="text-muted small">Loading traits...</p>';
     
     try {
-        const snap = await firestore.collection('master_races').orderBy('name').get();
-        list.innerHTML = "";
-
-        if (snap.empty) {
-            list.innerHTML = '<p class="text-muted text-center" style="padding:20px;">No races registered yet.</p>';
-            return;
-        }
+        // Fetch all traits sorted by name
+        const snap = await firestore.collection('master_traits').orderBy('name').get();
+        container.innerHTML = "";
 
         snap.forEach(doc => {
-            const d = doc.data();
-            const card = document.createElement('div');
-            card.className = "panel-card mb-s";
-            card.style.background = "#18181b";
+            const t = doc.data();
             
-            card.innerHTML = `
-                <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
-                    <div style="flex-grow: 1;">
-                        <div class="flex-row" style="gap: 10px;">
-                            <strong style="color: #10b981; font-size: 1.1rem;">${d.name}</strong>
-                            <span class="join-code-pill">HP/Lv: +${d.hpPerLv || 0}</span>
-                            <span class="join-code-pill">MP/Lv: +${d.mpPerLv || 0}</span>
-                        </div>
-                        <div style="font-size: 0.8rem; color: #71717a; margin-top: 8px;">
-                            BODY: +${d.baseBody || 0} | MIND: +${d.baseMind || 0} | SPIRIT: +${d.baseSpirit || 0}
-                        </div>
-                    </div>
-                    <div class="flex-row" style="gap: 5px;">
-                        <button class="btn-small" onclick="editRace('${doc.id}')"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn-danger-small" onclick="deleteMasterAsset('master_races', '${doc.id}', loadMasterRaceList)"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </div>`;
-            list.appendChild(card);
+            // Create the row
+            const div = document.createElement('div');
+            div.className = "checklist-item";
+            
+            // Create Checkbox
+            const checkbox = document.createElement('input');
+            checkbox.type = "checkbox";
+            checkbox.id = `trait-check-${doc.id}`;
+            checkbox.value = t.name;
+            checkbox.checked = currentRaceTraits.includes(t.name); // Check if already selected
+            
+            // Click Event: Update global array immediately
+            checkbox.onchange = function() {
+                if (this.checked) {
+                    if (!currentRaceTraits.includes(t.name)) currentRaceTraits.push(t.name);
+                } else {
+                    currentRaceTraits = currentRaceTraits.filter(item => item !== t.name);
+                }
+                renderRaceTraitTags();
+            };
+
+            // Create Label
+            const label = document.createElement('label');
+            label.htmlFor = `trait-check-${doc.id}`;
+            label.innerText = t.name;
+
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            container.appendChild(div);
         });
-    } catch (e) {
-        console.error("Race Load Error:", e);
-        list.innerHTML = `<p style="color:#ef4444; text-align:center;">Error loading races: ${e.message}</p>`;
-    }
+        
+        renderRaceTraitTags(); // Update visual summary
+    } catch (e) { console.error("Trait Load Error:", e); }
 }
 
-async function editRace(id) {
-    const d = (await firestore.collection('master_races').doc(id).get()).data();
-    if (!d) return;
+function filterTraitChecklist() {
+    const filter = document.getElementById('trait-checklist-search').value.toLowerCase();
+    const items = document.querySelectorAll('.checklist-item');
+    items.forEach(div => {
+        const text = div.innerText.toLowerCase();
+        div.style.display = text.includes(filter) ? "flex" : "none";
+    });
+}
+
+function renderRaceTraitTags() {
+    const container = document.getElementById('race-active-traits');
+    container.innerHTML = "";
+    if(currentRaceTraits.length === 0) {
+        container.innerHTML = "<span class='text-muted small'>No traits selected</span>";
+        return;
+    }
+    
+    currentRaceTraits.forEach(t => {
+        const tag = document.createElement('span');
+        tag.className = "badge-stat";
+        tag.innerText = t;
+        container.appendChild(tag);
+    });
+}
+
+
+// --- 3. RESET FORM ---
+function resetRaceForm() {
+    document.getElementById('m-race-id').value = "";
+    document.getElementById('m-race-name').value = "";
+    document.getElementById('m-race-desc').value = "";
+    document.getElementById('trait-checklist-search').value = "";
+    
+    // Reset all number inputs to 0
+    const numInputs = ['m-race-body','m-race-mind','m-race-spirit','m-race-hp','m-race-mp',
+                       'm-race-exp-bonus','m-race-hp-regen','m-race-mp-regen',
+                       'm-race-accuracy','m-race-ac','m-race-crit-chance'];
+    numInputs.forEach(id => document.getElementById(id).value = 0);
+    document.getElementById('m-race-speed').value = 30;
+
+    currentRaceTraits = []; // Clear global array
+    document.getElementById('race-active-traits').innerHTML = "";
+}
+
+
+
+// --- 4. PREP EDIT (Load data into Modal) ---
+async function prepRaceEdit(id) {
+    const doc = await firestore.collection('master_races').doc(id).get();
+    if (!doc.exists) return;
+    const d = doc.data();
 
     document.getElementById('m-race-id').value = id;
     document.getElementById('m-race-name').value = d.name || "";
-    document.getElementById('m-race-hp').value = d.hpPerLv || 0;
-    document.getElementById('m-race-mp').value = d.mpPerLv || 0;
+    document.getElementById('m-race-desc').value = d.description || "";
+    
+    // Fill Stats
     document.getElementById('m-race-body').value = d.baseBody || 0;
     document.getElementById('m-race-mind').value = d.baseMind || 0;
     document.getElementById('m-race-spirit').value = d.baseSpirit || 0;
+    document.getElementById('m-race-hp').value = d.hpPerLv || 0;
+    document.getElementById('m-race-mp').value = d.mpPerLv || 0;
     document.getElementById('m-race-exp-bonus').value = d.expBonus || 0;
     document.getElementById('m-race-hp-regen').value = d.hpRegen || 0;
     document.getElementById('m-race-mp-regen').value = d.mpRegen || 0;
@@ -1785,34 +1736,33 @@ async function editRace(id) {
     document.getElementById('m-race-accuracy').value = d.accuracy || 0;
     document.getElementById('m-race-ac').value = d.acBonus || 0;
     document.getElementById('m-race-crit-chance').value = d.critChance || 0;
-    document.getElementById('m-race-traits').value = (d.traits || []).join(", ");
-    document.getElementById('m-race-desc').value = d.description || "";
 
-    document.getElementById('race-editor-title').innerText = "Editing Race: " + (d.name || "Unknown");
-    document.getElementById('race-cancel-btn').classList.remove('hide-default');
-    document.querySelector('.master-workspace').scrollTop = 0;
+    // Load Traits
+    currentRaceTraits = d.traits || [];
+    
+    // Open Modal and Check Boxes
+    populateRaceTraitChecklist(); 
+    document.getElementById('race-modal-title').innerText = "Editing: " + d.name;
+    document.getElementById('race-modal').classList.remove('hide-default');
 }
 
-function resetRaceForm() {
-    document.getElementById('m-race-id').value = "";
-    document.querySelectorAll('#sub-races input').forEach(i => i.value = (i.type === "number" ? 0 : ""));
-    document.getElementById('m-race-desc').value = "";
-    document.getElementById('m-race-speed').value = 30;
-    document.getElementById('race-editor-title').innerText = "Register New Race";
-    document.getElementById('race-cancel-btn').classList.add('hide-default');
-}
 
+
+
+// --- 5. SAVE RACE (Unified) ---
 async function saveMasterRace() {
-    const raceId = document.getElementById('m-race-id').value;
-    if (!document.getElementById('m-race-name').value.trim()) return alert("Race name required!");
+    const id = document.getElementById('m-race-id').value;
+    const name = document.getElementById('m-race-name').value.trim();
+    if (!name) return alert("Race Name is required.");
 
     const raceData = {
-        name: document.getElementById('m-race-name').value.trim(),
-        hpPerLv: parseInt(document.getElementById('m-race-hp').value) || 0,
-        mpPerLv: parseInt(document.getElementById('m-race-mp').value) || 0,
+        name: name,
+        description: document.getElementById('m-race-desc').value.trim(),
         baseBody: parseInt(document.getElementById('m-race-body').value) || 0,
         baseMind: parseInt(document.getElementById('m-race-mind').value) || 0,
         baseSpirit: parseInt(document.getElementById('m-race-spirit').value) || 0,
+        hpPerLv: parseInt(document.getElementById('m-race-hp').value) || 0,
+        mpPerLv: parseInt(document.getElementById('m-race-mp').value) || 0,
         expBonus: parseInt(document.getElementById('m-race-exp-bonus').value) || 0,
         hpRegen: parseFloat(document.getElementById('m-race-hp-regen').value) || 0,
         mpRegen: parseFloat(document.getElementById('m-race-mp-regen').value) || 0,
@@ -1820,23 +1770,58 @@ async function saveMasterRace() {
         accuracy: parseInt(document.getElementById('m-race-accuracy').value) || 0,
         acBonus: parseInt(document.getElementById('m-race-ac').value) || 0,
         critChance: parseInt(document.getElementById('m-race-crit-chance').value) || 0,
-        traits: document.getElementById('m-race-traits').value.split(',').map(t => t.trim()).filter(t => t !== ""),
-        description: document.getElementById('m-race-desc').value.trim(),
+        traits: currentRaceTraits, // Saves the array from the checklist
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
-        if (raceId) {
-            await firestore.collection('master_races').doc(raceId).update(raceData);
-            alert("Race updated!");
+        if (id) {
+            await firestore.collection('master_races').doc(id).update(raceData);
         } else {
             raceData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             await firestore.collection('master_races').add(raceData);
-            alert("Race created!");
         }
-        resetRaceForm();
         loadMasterRaceList();
-    } catch (e) { alert("Error saving race."); }
+        closeRaceModal();
+    } catch (e) { console.error(e); }
+}
+
+// --- 6. LOAD LIST ---
+async function loadMasterRaceList() {
+    const list = document.getElementById('master-race-list');
+    if(!list) return;
+
+    const searchTerm = document.getElementById('race-search-input') ? document.getElementById('race-search-input').value.toLowerCase() : "";
+    
+    const snap = await firestore.collection('master_races').orderBy('name').get();
+    list.innerHTML = "";
+
+    snap.forEach(doc => {
+        const r = doc.data();
+        if (r.name.toLowerCase().includes(searchTerm)) {
+            const card = document.createElement('div');
+            card.className = "panel-card mb-s trait-item-border";
+            
+            // Create badges for traits
+            const traitBadges = (r.traits || []).map(t => `<span class="badge-stat" style="font-size:0.7rem; margin-right:4px;">${t}</span>`).join("");
+
+            card.innerHTML = `
+                <div class="flex-row space-between mb-s">
+                    <strong class="text-success">${r.name}</strong>
+                    <div>
+                        <button class="btn-icon-tiny" onclick="prepRaceEdit('${doc.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn-icon-tiny btn-danger" onclick="deleteMasterAsset('master_races', '${doc.id}', loadMasterRaceList)"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="text-muted mb-s" style="font-size: 0.8rem;">
+                    B:${r.baseBody} M:${r.baseMind} S:${r.baseSpirit} | HP+${r.hpPerLv} MP+${r.mpPerLv} | Spd ${r.speed}m
+                </div>
+                <div class="flex-row flex-wrap mb-s">${traitBadges}</div>
+                <div class="text-muted" style="font-size: 0.8rem;">${r.description || ""}</div>
+            `;
+            list.appendChild(card);
+        }
+    });
 }
 
 // --- 10.2 CLASS REGISTRY ---
