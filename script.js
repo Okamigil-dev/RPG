@@ -2252,41 +2252,6 @@ async function ensureTraitExists(traitName) {
     }
 }
 
-async function loadMasterTraitList() {
-    const list = document.getElementById('master-trait-list');
-    if (!list) return;
-    
-    const snap = await firestore.collection('master_traits').orderBy('name').get();
-    list.innerHTML = "";
-    
-    snap.forEach(doc => {
-        const t = doc.data();
-        const card = document.createElement('div');
-        card.className = "panel-card mb-s";
-        card.style.background = "#121214";
-        
-        // Logic to show a small badge if there is a stat bonus
-        const statPreview = (t.statTarget && t.statTarget !== 'none') 
-            ? `<span style="color: #3b82f6; font-size: 0.7rem; margin-left: 10px;">[${t.statTarget} +${t.statValue}${t.logicType === 'percent' ? '%' : ''}]</span>`
-            : '';
-
-        card.innerHTML = `
-            <div class="form-group">
-                <div class="flex-row" style="justify-content: space-between;">
-                    <span>
-                        <strong style="color: #00ff88;">${t.name}</strong>
-                        ${statPreview}
-                    </span>
-                    <span class="text-muted" style="font-size: 0.65rem; text-transform: uppercase;">${t.sourceType || 'General'}</span>
-                </div>
-                <textarea class="form-input w-100 mt-s" style="height: 60px; font-size: 0.85rem;" 
-                    onchange="updateTraitDescription('${doc.id}', this.value)" 
-                    placeholder="Describe mechanics...">${t.description || ""}</textarea>
-            </div>`;
-        list.appendChild(card);
-    });
-}
-
 
 
 let traitSortMode = 'alpha'; // Global toggle state: 'alpha' or 'newest'
