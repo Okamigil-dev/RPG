@@ -1,47 +1,3 @@
-/*/ --- REUSABLE PNG UPLOADER FUNCTION ---
-function handleIconUpload(inputElement) {
-    const file = inputElement.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Configuration: 64x64 PNG
-            const size = 64; 
-            canvas.width = size;
-            canvas.height = size;
-
-            // Center and Crop Logic
-            let sourceSize = Math.min(img.width, img.height);
-            let sourceX = (img.width - sourceSize) / 2;
-            let sourceY = (img.height - sourceSize) / 2;
-
-            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
-            
-            // Output: Base64 PNG
-            const dataURL = canvas.toDataURL('image/png'); 
-
-            // Update UI
-            document.getElementById('reg-skill-icon-base64').value = dataURL;
-            const preview = document.getElementById('icon-preview');
-            if (preview) {
-                preview.innerHTML = `<img src="${dataURL}" style="width:64px; height:64px; border: 1px solid #333; image-rendering: pixelated;">`;
-            }
-            
-            console.log("PNG Processed. Size:", Math.round(dataURL.length / 1024) + " KB");
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-*/
-
-
-
 /* ==========================================================================
    SECTION 1: CONFIGURATION, STATE & FIREBASE
    ========================================================================== */
@@ -104,14 +60,9 @@ async function deleteMasterAsset(collection, id, callback) {
     } catch (e) { console.error(e); }
 }
 
-/**
- * HANDLES COMPRESSED UPLOADS (WebP)
- * Best for: Portraits, Gallery Images.
- */
-/**
- * UNIVERSAL WEBP HANDLER (100% QUALITY)
- * Processes any image into a sharp, transparent WebP square.
- */
+/* =============================================
+   === UNIVERSAL WEBP HANDLER (100% QUALITY) ===
+   ============================================= */
 function handleWebPUpload(inputElement, callback, size) {
     const file = inputElement.files[0];
     if (!file) return;
@@ -139,44 +90,6 @@ function handleWebPUpload(inputElement, callback, size) {
             if (callback) callback(dataURL);
             
             console.log(`WebP ${size}x${size} Processed. Size:`, Math.round(dataURL.length / 1024) + " KB");
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-
-/**
- * HANDLES LOSSLESS UPLOADS (PNG)
- * Best for: Icons, Items, Map Tokens.
- */
-// Change 1: Add 'callback' to the arguments
-function handlePNGUpload(inputElement, callback, size) {
-    const file = inputElement.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            canvas.width = size;
-            canvas.height = size;
-
-            let sourceSize = Math.min(img.width, img.height);
-            let sourceX = (img.width - sourceSize) / 2;
-            let sourceY = (img.height - sourceSize) / 2;
-
-            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
-            
-            const dataURL = canvas.toDataURL('image/png'); 
-
-            // Change 2: Instead of hard-coded IDs, we run the callback
-            if (callback) callback(dataURL);
-            
-            console.log("PNG Processed. Size:", Math.round(dataURL.length / 1024) + " KB");
         };
         img.src = e.target.result;
     };
@@ -885,8 +798,165 @@ function renderClassPills(charData) {
 }
 
 // --- GALLERY LOGIC ---
+function renderGallery(galleryArray, activeIndex) {
+    const container = document.getElementById('char-gallery-grid');
+    if (!container) return;
+    container.innerHTML = "";
+    const images = galleryArray || [];
 
+    for (let i = 0; i < MAX_GALLERY_SLOTS; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'gallery-item';
 
+        if (images[i]) {
+            // Compare the number (index) instead of the string
+            if (i === activeIndex) {
+                slot.style.borderColor = "#10b981"; 
+                slot.style.boxShadow = "0 0 10px #10b981";
+            }
+
+            slot.innerHTML = `
+                <img src="${images[i]}" onclick="setActivePortrait(${i})">
+                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
+            `;
+        } else {
+            slot.className = 'gallery-item empty-slot';
+            slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
+            slot.onclick = () => document.getElementById('slot-upload').click();
+        }
+        container.appendChild(slot);
+    }
+}
+
+function renderGallery(galleryArray, activeIndex) {
+    const container = document.getElementById('char-gallery-grid');
+    if (!container) return;
+    container.innerHTML = "";
+
+    const images = galleryArray || [];
+
+    for (let i = 0; i < MAX_GALLERY_SLOTS; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'gallery-item';
+
+        if (images[i]) {
+            // Compare the Index (Numbers), not the Strings!
+            if (i === activeIndex) {
+                slot.style.borderColor = "#10b981"; 
+                slot.style.boxShadow = "0 0 10px #10b981";
+            }
+
+            slot.innerHTML = `
+                <img src="${images[i]}" onclick="setActivePortrait(${i})">
+                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
+            `;
+        } else {
+            slot.className = 'gallery-item empty-slot';
+            slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
+            slot.onclick = () => document.getElementById('slot-upload').click();
+        }
+        container.appendChild(slot);
+    }
+}
+
+function setActivePortrait(index) {
+    const user = auth.currentUser;
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
+    
+    charRef.update({ activePortraitIndex: index }).then(() => {
+        charRef.get().then(doc => {
+            const data = doc.data();
+            const imgData = data.gallery[index];
+            document.getElementById('hud-portrait').style.backgroundImage = `url(${imgData})`;
+            loadUserCharacters(); 
+            renderGallery(data.gallery, index);
+        });
+    });
+}
+
+function deleteImage(event, index) {
+    event.stopPropagation();
+    if (!confirm("Delete this image?")) return;
+    const user = auth.currentUser;
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
+
+    charRef.get().then(doc => {
+        let gallery = doc.data().gallery || [];
+        let activeIdx = doc.data().activePortraitIndex;
+
+        gallery.splice(index, 1);
+        const updateData = { gallery: gallery };
+
+        // Adjust index logic after a deletion
+        if (activeIdx === index) {
+            // If we deleted the active one, default to the first image or nothing
+            updateData.activePortraitIndex = gallery.length > 0 ? 0 : -1;
+        } else if (index < activeIdx) {
+            // If we deleted an image BEFORE the active one, shift the index down
+            updateData.activePortraitIndex = activeIdx - 1;
+        }
+
+        charRef.update(updateData).then(() => {
+            const finalIdx = updateData.activePortraitIndex !== undefined ? updateData.activePortraitIndex : activeIdx;
+            const finalImg = gallery[finalIdx] || '';
+            
+            renderGallery(gallery, finalIdx);
+            document.getElementById('hud-portrait').style.backgroundImage = `url(${finalImg})`;
+            loadUserCharacters();
+        });
+    });
+}
+
+function renderSkills(charData) {
+    const container = document.getElementById('skills-container');
+    if (!container) return;
+    container.innerHTML = ""; 
+    
+    const tiers = [
+        { key: 'basicSkills', label: 'Basic Skills' }, 
+        { key: 'intSkills', label: 'Intermediate Skills' }, 
+        { key: 'advSkills', label: 'Advanced Skills' }
+    ];
+
+    tiers.forEach(tier => {
+        const section = document.createElement('div');
+        section.className = 'skill-tier-section';
+        section.innerHTML = `<h4 class="mt-m mb-s">${tier.label}</h4>`;
+        
+        const skills = charData[tier.key] || [];
+        if (skills.length === 0) {
+            section.innerHTML += `<div class="text-muted" style="width:100%; text-align:center; font-size:0.8rem;">Empty</div>`;
+        }
+
+        skills.forEach((s) => {
+            const perc = Math.min((s.exp / (s.expMax || 10)) * 100, 100);
+            const slot = document.createElement('div');
+            slot.className = 'skill-slot-card';
+            
+            // Added img support here in case the skill has an icon
+            const iconHtml = s.icon ? `<img src="${s.icon}" class="registry-icon" style="width:32px; height:32px; margin-right:10px;">` : '';
+
+            slot.innerHTML = `
+                <div class="flex-row" style="align-items: center;">
+                    ${iconHtml}
+                    <div style="flex-grow: 1;">
+                        <div class="flex-row" style="justify-content: space-between;">
+                            <strong>${s.name || '---'}</strong>
+                            <span style="font-size: 0.8rem; opacity: 0.7;">Lv.${s.level}</span>
+                        </div>
+                        <div class="skill-exp-bg" style="height: 4px; background: #27272a; margin-top: 5px; border-radius: 2px;">
+                            <div class="skill-exp-fill" style="width: ${perc}%; height: 100%; background: #a855f7; border-radius: 2px;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            section.appendChild(slot);
+        });
+        container.appendChild(section);
+    });
+}
+
+/* Save image to next slot backup 
 function saveImageToNextSlot(base64Data) {
     const user = auth.currentUser;
     const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
@@ -902,7 +972,9 @@ function saveImageToNextSlot(base64Data) {
         });
     });
 }
+*/
 
+/* Render Gallery backup
 function renderGallery(galleryArray, activePortrait) {
     const container = document.getElementById('char-gallery-grid');
     if (!container) return;
@@ -933,7 +1005,8 @@ function renderGallery(galleryArray, activePortrait) {
         container.appendChild(slot);
     }
 }
-
+*/
+/* set active portrait backup
 function setActivePortrait(imgData) {
     const user = auth.currentUser;
     const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
@@ -943,7 +1016,8 @@ function setActivePortrait(imgData) {
         charRef.get().then(doc => renderGallery(doc.data().gallery, imgData));
     });
 }
-
+*/
+/* delete image backup
 function deleteImage(event, index) {
     event.stopPropagation();
     if (!confirm("Delete this image?")) return;
@@ -962,7 +1036,8 @@ function deleteImage(event, index) {
         });
     });
 }
-
+*/
+/* render skills backup
 function renderSkills(charData) {
     const container = document.getElementById('skills-container');
     if (!container) return;
@@ -992,7 +1067,7 @@ function renderSkills(charData) {
         container.appendChild(section);
     });
 }
-
+*/
 
 
 /** * MAIN CONTROLLER: Calculates data once and delegates to specific UI sections.
