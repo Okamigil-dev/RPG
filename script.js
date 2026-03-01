@@ -808,34 +808,37 @@ function renderClassPills(charData) {
 }
 
 // --- GALLERY LOGIC ---
-function renderGallery(galleryArray, activeIndex) {
-    const container = document.getElementById('char-gallery-grid');
-    if (!container) return;
-    container.innerHTML = "";
-    const images = galleryArray || [];
+function saveImageToNextSlot(base64Data) {
+    const user = auth.currentUser;
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
 
-    for (let i = 0; i < MAX_GALLERY_SLOTS; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'gallery-item';
+    charRef.get().then(doc => {
+        const data = doc.data();
+        let gallery = data.gallery || [];
+        
+        if (gallery.length >= MAX_GALLERY_SLOTS) return alert("Gallery Full!");
 
-        if (images[i]) {
-            // Compare the number (index) instead of the string
-            if (i === activeIndex) {
-                slot.style.borderColor = "#10b981"; 
-                slot.style.boxShadow = "0 0 10px #10b981";
-            }
+        // 1. Add the new high-res WebP to the gallery array
+        gallery.push(base64Data);
 
-            slot.innerHTML = `
-                <img src="${images[i]}" onclick="setActivePortrait(${i})">
-                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
-            `;
-        } else {
-            slot.className = 'gallery-item empty-slot';
-            slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
-            slot.onclick = () => document.getElementById('slot-upload').click();
+        const updateData = { gallery: gallery };
+
+        // 2. If it's the very first image, make sure portrait points to index 0
+        // We check if portrait is currently "" or undefined
+        if (data.portrait === "" || data.portrait === undefined) {
+            updateData.portrait = 0; 
         }
-        container.appendChild(slot);
-    }
+
+        charRef.update(updateData).then(() => {
+            // 3. Refresh UI using the (potentially new) portrait index
+            const activeIndex = updateData.portrait !== undefined ? updateData.portrait : data.portrait;
+            
+            renderGallery(gallery, activeIndex);
+            
+            // 4. Update HUD immediately
+            document.getElementById('hud-portrait').style.backgroundImage = `url(${base64Data})`;
+        });
+    });
 }
 
 function renderGallery(galleryArray, activeIndex) {
@@ -966,23 +969,7 @@ function renderSkills(charData) {
     });
 }
 
-/* Save image to next slot backup 
-function saveImageToNextSlot(base64Data) {
-    const user = auth.currentUser;
-    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
-    charRef.get().then(doc => {
-        let gallery = doc.data().gallery || [];
-        if (gallery.length >= MAX_GALLERY_SLOTS) return alert("Gallery Full!");
-        gallery.push(base64Data);
-        const updateData = { gallery: gallery };
-        if (!doc.data().portrait) updateData.portrait = base64Data;
-        charRef.update(updateData).then(() => {
-            renderGallery(gallery, doc.data().portrait || base64Data);
-            if (updateData.portrait) document.getElementById('hud-portrait').style.backgroundImage = `url(${base64Data})`;
-        });
-    });
-}
-*/
+
 
 /* Render Gallery backup
 function renderGallery(galleryArray, activePortrait) {
