@@ -496,6 +496,53 @@ body {
 .sub-nav-btn:hover { background: #18181b; color: white; }
 .sub-nav-btn.active { background: #27272a; color: #00ff88; border-color: #3f3f46; box-shadow: none; }
 
+/* --- Skill Creator Layout --- */
+.skill-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.skill-form-triple {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.icon-upload-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.icon-preview-box {
+    width: 64px;
+    height: 64px;
+    border: 1px dashed #3f3f46;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #09090b;
+}
+
+.icon-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.section-divider {
+    border-top: 1px solid #27272a;
+    padding-top: 15px;
+    margin-top: 20px;
+    margin-bottom: 15px;
+}
+
 /* ==========================================================================
    --- 12. INPUTS & SELECTS ---
    ========================================================================== */

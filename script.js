@@ -1681,49 +1681,37 @@ async function saveSkillToRegistry() {
     const skillId = document.getElementById('ms-skill-id').value; 
     const name = document.getElementById('reg-skill-name').value.trim();
     const skillClass = document.getElementById('reg-skill-class').value;
-    const tier = parseInt(document.getElementById('reg-skill-tier').value);
     
     if (!name || !skillClass) return alert("Name and Class are required.");
 
     const skillData = {
-        name: name,
+        name,
         class: skillClass,
-        tier: tier,
-        baseCost: parseInt(document.getElementById('reg-skill-cost').value) || (10 * Math.pow(2, tier - 1)),
+        tier: parseInt(document.getElementById('reg-skill-tier').value),
+        baseCost: parseInt(document.getElementById('reg-skill-cost').value) || 0,
         description: document.getElementById('reg-skill-desc').value.trim(),
-        iconData: document.getElementById('reg-skill-icon-base64').value, 
-        
-        // Combat Fields
-        range: document.getElementById('reg-skill-range').value, // Now saves "Touch"
+        iconData: document.getElementById('reg-skill-icon-base64').value,
+        range: document.getElementById('reg-skill-range').value,
+        castTime: parseFloat(document.getElementById('reg-skill-cast').value) || 0,
+        cooldown: parseFloat(document.getElementById('reg-skill-cooldown').value) || 0,
         aoe: document.getElementById('reg-skill-aoe').value.trim(),
         damageType: document.getElementById('reg-skill-dmg-type').value,
-        savingThrow: document.getElementById('reg-skill-save').value,
-        
         scalingStat: document.getElementById('reg-skill-stat').value,
         scalingFactor: parseFloat(document.getElementById('reg-skill-factor').value) || 1.0,
-        
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
         if (skillId) {
             await firestore.collection('master_skills').doc(skillId).update(skillData);
-            alert("Skill Updated!");
         } else {
-            const newId = `${skillClass.toLowerCase()}_${name.replace(/\s+/g, '_').toLowerCase()}_t${tier}`;
+            const newId = `${skillClass.toLowerCase()}_${name.replace(/\s+/g, '_').toLowerCase()}`;
             skillData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-            skillData.castTime = 0; 
-            skillData.cooldown = 0;
             await firestore.collection('master_skills').doc(newId).set(skillData);
-            alert("New Skill Created!");
         }
-        
         resetSkillForm();
         loadSkillRegistry();
-    } catch (e) {
-        console.error("Error saving skill:", e);
-        alert("Error saving skill.");
-    }
+    } catch (e) { console.error(e); }
 }
 
 // 3. Edit Mode
@@ -1739,49 +1727,35 @@ async function editMasterSkill(id) {
     document.getElementById('reg-skill-cost').value = d.baseCost || 10;
     document.getElementById('reg-skill-desc').value = d.description || "";
     document.getElementById('reg-skill-icon-base64').value = d.iconData || "";
-    
-    if (d.iconData) {
-        document.getElementById('icon-preview').innerHTML = `<img src="${d.iconData}" style="width:100%; height:100%; border-radius:4px;">`;
-    } else {
-        document.getElementById('icon-preview').innerHTML = "";
-    }
-
-    document.getElementById('reg-skill-range').value = d.range || "Touch"; // Default to Touch
+    document.getElementById('reg-skill-cast').value = d.castTime || 0;
+    document.getElementById('reg-skill-cooldown').value = d.cooldown || 0;
+    document.getElementById('reg-skill-range').value = d.range || "Touch";
     document.getElementById('reg-skill-aoe').value = d.aoe || ""; 
     document.getElementById('reg-skill-dmg-type').value = d.damageType || "";
-    document.getElementById('reg-skill-save').value = d.savingThrow || "none";
     document.getElementById('reg-skill-stat').value = d.scalingStat || "none";
     document.getElementById('reg-skill-factor').value = d.scalingFactor || 1.0;
 
+    if (d.iconData) {
+        document.getElementById('icon-preview').innerHTML = `<img src="${d.iconData}">`;
+    }
+
     document.getElementById('skill-save-btn').innerText = "Update Skill";
-    document.getElementById('skill-save-btn').classList.remove('btn-success');
-    document.getElementById('skill-save-btn').classList.add('btn-primary'); 
     document.getElementById('skill-cancel-btn').classList.remove('hide-default');
-    
     document.querySelector('.master-workspace').scrollTop = 0;
 }
 
 // 4. Reset Form
 function resetSkillForm() {
     document.getElementById('ms-skill-id').value = "";
-    document.getElementById('reg-skill-name').value = "";
-    document.getElementById('reg-skill-desc').value = "";
-    document.getElementById('reg-skill-icon').value = "";
     document.getElementById('reg-skill-icon-base64').value = "";
     document.getElementById('icon-preview').innerHTML = "";
-    
+    document.querySelectorAll('#sub-skills input').forEach(i => {
+        if(i.type === "number") i.value = 0;
+        else if(i.type !== "hidden") i.value = "";
+    });
     document.getElementById('reg-skill-tier').value = "1";
     document.getElementById('reg-skill-cost').value = "10";
-    document.getElementById('reg-skill-range').value = "Touch"; // Updated Default
-    document.getElementById('reg-skill-aoe').value = "";
-    document.getElementById('reg-skill-dmg-type').value = "";
-    document.getElementById('reg-skill-save').value = "none";
-    document.getElementById('reg-skill-stat').value = "body";
-    document.getElementById('reg-skill-factor').value = "1.0";
-
     document.getElementById('skill-save-btn').innerText = "Save Skill to Library";
-    document.getElementById('skill-save-btn').classList.add('btn-success');
-    document.getElementById('skill-save-btn').classList.remove('btn-primary');
     document.getElementById('skill-cancel-btn').classList.add('hide-default');
 }
 
@@ -1791,7 +1765,11 @@ async function loadSkillRegistry() {
     container.innerHTML = '<p>Loading...</p>';
     
     try {
-        const snap = await firestore.collection('master_skills').orderBy('class').get();
+        const snap = await firestore.collection('master_skills')
+          .orderBy('class')
+          .orderBy('tier')
+          .orderBy('name')
+          .get();
         if(snap.empty) { container.innerHTML = '<p class="text-center opacity-50">No skills defined yet.</p>'; return; }
 
         let html = ''; 
