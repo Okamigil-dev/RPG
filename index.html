@@ -160,7 +160,10 @@
                             <div id="char-level-display" class="header-level-badge">Lv. 1</div>
                         </div>
                     </div>                          
-                
+
+
+
+                    <!-- Attribute Box -->
                     <div class="stats-resources-wrapper">
                         <div class="panel-card">
                             <div class="panel-header-row">
@@ -204,7 +207,10 @@
                                 <button class="btn-primary btn-full" onclick="confirmAttributeChanges()">Commit Changes</button>
                             </div>
                         </div>
-                    
+
+
+                        
+                        <!-- HP Bar, MP Bar -->
                         <div class="panel-card">
                             <h3 class="panel-subtitle">Vitals & Status</h3>
                             
@@ -233,24 +239,39 @@
                             </div>
                         </div>
                     </div>
-                
-                    <div class="panel-card">
-                        <h3>Identity</h3>
-                        <div class="identity-grid">
+
+
+                    
+                    <!-- NAME, RACE, CLASSES, TRAITS -->
+                    <div class="panel-card mt-m">
+                        <h3 class="panel-subtitle">Identity & Heritage</h3>
+                        <div class="identity-grid-v2">
                             <div class="field-group">
                                 <label class="text-muted">Character Name</label>
-                                <input type="text" id="char-name" onchange="saveCharacter()" class="form-input form-input-clean">
+                                <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
                             </div>
                             <div class="field-group">
                                 <label class="text-muted">Race</label>
-                                <select id="char-race" onchange="saveCharacter()" class="form-input form-input-clean"></select>
+                                <select id="char-race" onchange="saveCharacter()" class="form-input"></select>
                             </div>
                             <div class="field-group">
-                                <label class="text-muted">Current Classes</label>
-                                <div id="char-class-list-display" class="flex-row" style="gap: 8px; flex-wrap: wrap;"></div>
+                                <label class="text-muted">Movement Speed</label>
+                                <div id="char-speed-display" class="stat-badge-large">0m</div>
                             </div>
                         </div>
+                    
+                        <div class="section-divider"></div>
+                        <label class="text-muted">Classes</label>
+                        <div id="char-class-list-display" class="traits-flex-wrap"></div>
+                    
+                        <div class="section-divider"></div>
+                        <label class="text-muted">Traits</label>
+                        <div id="char-traits-container" class="traits-flex-wrap"></div>
                     </div>
+
+
+                    
+                    <!-- Gallery Box -->
                     <div class="panel-card mt-m">
                         <h3>Character Gallery</h3>
                         <div id="char-gallery-grid" class="gallery-grid">

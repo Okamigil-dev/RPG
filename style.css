@@ -376,7 +376,7 @@ body {
 }
 
 /* ==========================================================================
-   --- 10. CHARACTER SHEET (DASHBOARD LAYOUT) ---
+   --- 10. CHARACTER SHEET (Inside Dashboard) ---
    ========================================================================== */
 .stats-resources-wrapper {
     display: grid;
@@ -447,6 +447,58 @@ body {
 }
 .hp-bar-main { height: 100%; background: linear-gradient(90deg, #ef4444, #b91c1c); transition: width 0.3s; }
 .mp-bar-main { height: 100%; background: linear-gradient(90deg, #3b82f6, #1d4ed8); transition: width 0.3s; }
+
+
+
+
+
+
+
+.identity-grid-v2 {
+    display: grid;
+    grid-template-columns: 2fr 1fr 120px;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.stat-badge-large {
+    background: #09090b;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #00ff88;
+    font-size: 1.1rem;
+}
+
+.traits-flex-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.trait-tag {
+    background: #1e1b4b;
+    color: #a5b4fc;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #312e81;
+    font-size: 0.75rem;
+    font-weight: bold;
+    cursor: help; /* Indicates tooltip on hover */
+    transition: 0.2s;
+}
+
+.trait-tag:hover {
+    background: #312e81;
+    border-color: #4338ca;
+}
+
+
 
 
 
@@ -542,6 +594,30 @@ body {
     margin-top: 20px;
     margin-bottom: 15px;
 }
+
+
+
+
+
+
+
+/* don't know what this is yet */
+.registry-skill-card { background: #18181b !important; padding: 12px !important; }
+.registry-icon { width: 64px; height: 64px; border-radius: 4px; border: 1px solid #333; object-fit: cover; flex-shrink: 0; }
+.registry-icon-placeholder { width: 64px; height: 64px; background: #222; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #444; flex-shrink: 0; }
+.skill-title-text { color: #e879f9; font-size: 1.1rem; }
+.skill-desc-text { font-size: 0.85rem; color: #ccc; margin: 6px 0; }
+.skill-meta-tags { font-size: 0.75rem; color: #71717a; display: flex; gap: 12px; flex-wrap: wrap; }
+.MP-pill { border-color: #3b82f6 !important; color: #3b82f6 !important; }
+.align-start { align-items: flex-start; }
+.space-between { justify-content: space-between; }
+.wrap { flex-wrap: wrap; }
+
+
+
+
+
+
 
 /* ==========================================================================
    --- 12. INPUTS & SELECTS ---
