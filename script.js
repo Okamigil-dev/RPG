@@ -1,3 +1,47 @@
+// --- REUSABLE PNG UPLOADER FUNCTION ---
+function handleIconUpload(inputElement) {
+    const file = inputElement.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Configuration: 64x64 PNG
+            const size = 64; 
+            canvas.width = size;
+            canvas.height = size;
+
+            // Center and Crop Logic
+            let sourceSize = Math.min(img.width, img.height);
+            let sourceX = (img.width - sourceSize) / 2;
+            let sourceY = (img.height - sourceSize) / 2;
+
+            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
+            
+            // Output: Base64 PNG
+            const dataURL = canvas.toDataURL('image/png'); 
+
+            // Update UI
+            document.getElementById('reg-skill-icon-base64').value = dataURL;
+            const preview = document.getElementById('icon-preview');
+            if (preview) {
+                preview.innerHTML = `<img src="${dataURL}" style="width:64px; height:64px; border: 1px solid #333; image-rendering: pixelated;">`;
+            }
+            
+            console.log("PNG Processed. Size:", Math.round(dataURL.length / 1024) + " KB");
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+//IN TESTING
+
+
+
 /* ==========================================================================
    SECTION 1: CONFIGURATION, STATE & FIREBASE
    ========================================================================== */
