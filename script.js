@@ -6,6 +6,7 @@
 const MAX_CHAR_LEVEL = 60;      
 const MAX_ALLOCATED_STAT = 20;  
 const MAX_GALLERY_SLOTS = 10;
+const STAT_RESOURCE_MULT = 5;
 
 // --- 1.2 STATE VARIABLES ---
 let totalCustomSeconds = 0; 
@@ -421,8 +422,8 @@ async function getFinalMaxStats(charData) {
     const totalBody = (charData.body || 0) + (raceD.baseBody || 0);
     const totalSpirit = (charData.spirit || 0) + (raceD.baseSpirit || 0);
     
-    baseHP += (totalBody * 2);
-    baseMP += (totalSpirit * 2);
+    baseHP += (totalBody * STAT_RESOURCE_MULT);
+    baseMP += (totalSpirit * STAT_RESOURCE_MULT);
 
     const finalHP = Math.floor((baseHP + (charData.hpBonusFlat || 0)) * (1 + (charData.hpBonusPerc || 0) / 100));
     const finalMP = Math.floor((baseMP + (charData.mpBonusFlat || 0)) * (1 + (charData.mpBonusPerc || 0) / 100));
@@ -908,16 +909,19 @@ async function updateHUD(char) {
         spirit: (char.spirit || 0) + (raceD.baseSpirit || 0)
     };
 
-    // 2. Sidebar Sync
-    if (document.getElementById('active-char-hud')) {
-        syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
-    }
+   
+   // 2. Sidebar and Sheet Syncs
+   // Declaring Variables (not really needed extra step)
+   const sidebar = document.getElementById('active-char-hud');
+   const sheet = document.getElementById('char-sheet-view');
+   
+   // Unhides both 
+   sidebar.classList.remove('hide-default'); 
+   sheet.classList.contains('hide-default');
 
-    // 3. Sheet Sync (Only runs if sheet is active)
-    const sheet = document.getElementById('char-sheet-view');
-    if (sheet && !sheet.classList.contains('hide-default')) {
-        syncSheetDashboardUI(char, totals, hpPerc, mpPerc, raceD);
-    }
+   // Runs Syncfunctions
+   syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
+   syncSheetDashboardUI(char, totals, hpPerc, mpPerc, raceD);
 }
 
 /** * SIDEBAR UI: Manages the IDs starting with "hud-"
@@ -1323,8 +1327,8 @@ async function saveCharacterManagerEdits() {
         // Recalculate Max
         const hpBonus = oldData.hpMaxBonus || 0;
         const mpBonus = oldData.mpMaxBonus || 0;
-        const calcHpMax = (newBody * 5) + hpBonus + 10;
-        const calcMpMax = (newSpirit * 5) + mpBonus + 10;
+        const calcHpMax = (newBody * STAT_RESOURCE_MULT) + hpBonus + 10;
+        const calcMpMax = (newSpirit * STAT_RESOURCE_MULT) + mpBonus + 10;
 
         await charRef.update({
             expCurrent: newExp,
