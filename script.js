@@ -5,7 +5,7 @@
 // --- 1.1 CONSTANTS ---
 const MAX_CHAR_LEVEL = 60;      
 const MAX_ALLOCATED_STAT = 20;  
-const MAX_GALLERY_SLOTS = 10;
+const MAX_GALLERY_SLOTS = 16;
 const STAT_RESOURCE_MULT = 5;
 
 // --- 1.2 STATE VARIABLES ---
