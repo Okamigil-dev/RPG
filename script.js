@@ -2289,6 +2289,89 @@ async function loadMasterTraitList() {
 
 
 
+let traitSortMode = 'alpha'; // Global toggle state: 'alpha' or 'newest'
+
+function toggleTraitSort() {
+    traitSortMode = traitSortMode === 'alpha' ? 'newest' : 'alpha';
+    const icon = document.getElementById('trait-sort-icon');
+    icon.className = traitSortMode === 'alpha' ? 'fa-solid fa-sort-alpha-down' : 'fa-solid fa-clock';
+    loadMasterTraitList();
+}
+
+async function loadMasterTraitList() {
+    const list = document.getElementById('master-trait-list');
+    if (!list) return;
+
+    // Get UI values
+    const searchTerm = document.getElementById('trait-search-input').value.toLowerCase();
+    const filterSource = document.getElementById('trait-filter-source').value;
+
+    try {
+        // 1. Fetch data (Sorted by name by default)
+        let query = firestore.collection('master_traits');
+        
+        if (traitSortMode === 'alpha') {
+            query = query.orderBy('name', 'asc');
+        } else {
+            query = query.orderBy('updatedAt', 'desc');
+        }
+
+        const snap = await query.get();
+        list.innerHTML = "";
+
+        // 2. Filter and Render
+        snap.forEach(doc => {
+            const t = doc.data();
+            
+            // Apply Search & Source Filters
+            const matchesSearch = t.name.toLowerCase().includes(searchTerm);
+            const matchesSource = filterSource === "All" || t.sourceType === filterSource;
+
+            if (matchesSearch && matchesSource) {
+                const card = document.createElement('div');
+                card.className = "panel-card mb-s";
+                card.style.background = "#121214";
+                card.style.borderLeft = `3px solid ${getSourceColor(t.sourceType)}`;
+
+                const statPreview = (t.statTarget && t.statTarget !== 'none') 
+                    ? `<span style="color: #3b82f6; font-size: 0.7rem; margin-left: 8px;">[${t.statTarget} +${t.statValue}${t.logicType === 'percent' ? '%' : ''}]</span>`
+                    : '';
+
+                card.innerHTML = `
+                    <div class="form-group">
+                        <div class="flex-row" style="justify-content: space-between;">
+                            <span>
+                                <strong style="color: #00ff88;">${t.name}</strong>
+                                ${statPreview}
+                            </span>
+                            <div class="flex-row gap-s">
+                                <span class="text-muted" style="font-size: 0.65rem;">${t.sourceType || 'General'}</span>
+                                <button class="btn-icon-tiny" onclick="prepTraitEdit('${doc.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button class="btn-icon-tiny btn-danger" onclick="deleteTrait('${doc.id}')"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <textarea class="form-input w-100 mt-s" style="height: 50px; font-size: 0.8rem;" 
+                            onchange="updateTraitDescription('${doc.id}', this.value)" 
+                            placeholder="Description...">${t.description || ""}</textarea>
+                    </div>`;
+                list.appendChild(card);
+            }
+        });
+    } catch (err) {
+        console.error("Library load error:", err);
+    }
+}
+
+// Helper for color coding the left border
+function getSourceColor(source) {
+    switch(source) {
+        case 'Race': return '#ef4444';      // Red
+        case 'Class': return '#3b82f6';     // Blue
+        case 'Backstory': return '#10b981'; // Green
+        default: return '#3f3f46';          // Gray
+    }
+}
+
 
 
 
