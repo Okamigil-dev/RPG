@@ -1630,13 +1630,10 @@ async function saveTraitToRegistry() {
     const name = document.getElementById('reg-trait-name').value.trim();
     const source = document.getElementById('reg-trait-source').value;
     const desc = document.getElementById('reg-trait-desc').value.trim();
-    const statTarget = document.getElementById('reg-trait-stat-target').value;
-    const statValue = parseFloat(document.getElementById('reg-trait-stat-value').value) || 0;
-    const logicType = document.getElementById('reg-trait-logic').value;
     const traitId = document.getElementById('m-trait-id').value; 
 
     if (!name || !desc) {
-        alert("Trait Name and Description are mandatory.");
+        alert("Name and Description are required.");
         return;
     }
 
@@ -1644,9 +1641,6 @@ async function saveTraitToRegistry() {
         name: name,
         sourceType: source,
         description: desc,
-        statTarget: statTarget,
-        statValue: statValue,
-        logicType: logicType,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -1656,15 +1650,12 @@ async function saveTraitToRegistry() {
         } else {
             await firestore.collection('master_traits').add(traitData);
         }
-
-        resetTraitForm();
-        loadMasterTraitList(); 
         
-        // ADD THIS: Closes the modal window after saving
-        closeTraitModal(); 
+        resetTraitForm();
+        loadMasterTraitList();
+        closeTraitModal();
     } catch (error) { console.error(error); }
 }
-
 
 
 async function prepTraitEdit(id) {
@@ -1672,16 +1663,12 @@ async function prepTraitEdit(id) {
     if (!doc.exists) return;
     const data = doc.data();
 
-    // 1. Fill the inputs inside the modal
     document.getElementById('m-trait-id').value = id;
     document.getElementById('reg-trait-name').value = data.name || "";
     document.getElementById('reg-trait-source').value = data.sourceType || "General";
     document.getElementById('reg-trait-desc').value = data.description || "";
-    document.getElementById('reg-trait-stat-target').value = data.statTarget || "none";
-    document.getElementById('reg-trait-stat-value').value = data.statValue || 0;
-    document.getElementById('reg-trait-logic').value = data.logicType || "additive";
-
-    // 2. Update UI and Open Modal
+    
+    // Open Modal
     document.getElementById('trait-modal-title').innerText = "Editing: " + data.name;
     document.getElementById('trait-modal').classList.remove('hide-default');
 }
@@ -1692,11 +1679,7 @@ function resetTraitForm() {
     document.getElementById('reg-trait-desc').value = "";
     document.getElementById('reg-trait-source').value = "General";
     
-    // FIXED: Clear the modifier fields too
-    document.getElementById('reg-trait-stat-target').value = "none";
-    document.getElementById('reg-trait-stat-value').value = 0;
-    document.getElementById('reg-trait-logic').value = "additive";
-
+    // Correct ID for the modal title
     const title = document.getElementById('trait-modal-title');
     if (title) title.innerText = "Define Global Trait";
 }
@@ -2225,9 +2208,6 @@ async function loadMasterTraitList() {
 
                 // Added logic fallback to fix the "(undefined)" labels
                 const sourceDisplay = t.sourceType || "General";
-                const modBadge = (t.statTarget && t.statTarget !== 'none') 
-                    ? `<span class="badge-stat">${t.statTarget.replace('_', ' ')}: +${t.statValue}${t.logicType === 'percent' ? '%' : ''}</span>` 
-                    : '';
 
                 card.innerHTML = `
                     <div class="trait-card-header mb-s">
@@ -2236,7 +2216,6 @@ async function loadMasterTraitList() {
                             <span class="text-muted ml-s" style="font-size: 0.7rem;">(${sourceDisplay})</span>
                         </div>
                         <div class="flex-row gap-s">
-                            ${modBadge}
                             <button class="btn-icon-tiny" onclick="prepTraitEdit('${doc.id}')">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
