@@ -2200,49 +2200,32 @@ function toggleTraitSort() {
 }
 
 async function loadMasterTraitList() {
-    const list = document.getElementById('master-trait-list');
+    // 1. Target the INNER list div, NOT the whole panel
+    const list = document.getElementById('master-trait-list'); 
     if (!list) return;
 
-    // Get current UI filter/search values
     const searchTerm = document.getElementById('trait-search-input').value.toLowerCase();
     const filterSource = document.getElementById('trait-filter-source').value;
 
     try {
-        // 1. Fetch data with the chosen sort order
         let query = firestore.collection('master_traits');
-        
-        if (traitSortMode === 'alpha') {
-            query = query.orderBy('name', 'asc');
-        } else {
-            query = query.orderBy('updatedAt', 'desc');
-        }
+        query = (traitSortMode === 'alpha') ? query.orderBy('name', 'asc') : query.orderBy('updatedAt', 'desc');
 
         const snap = await query.get();
-        list.innerHTML = "";
+        
+        // 2. This clears the CARDS only. It leaves the Header and Button alone.
+        list.innerHTML = ""; 
 
-        if (snap.empty) {
-            list.innerHTML = `<p class="text-muted text-center">No traits found in the library.</p>`;
-            return;
-        }
-
-        // 2. Loop and Filter
         snap.forEach(doc => {
             const t = doc.data();
-            
-            const matchesSearch = t.name.toLowerCase().includes(searchTerm);
-            const matchesSource = filterSource === "All" || t.sourceType === filterSource;
-
-            if (matchesSearch && matchesSource) {
+            if (t.name.toLowerCase().includes(searchTerm) && (filterSource === "All" || t.sourceType === filterSource)) {
                 const card = document.createElement('div');
-                // Use a standard panel-card or a specific trait-item class
                 card.className = "panel-card mb-s trait-item-border"; 
-                
-                // Color coding the border based on source via JS variable
                 card.style.borderLeftColor = getSourceColor(t.sourceType);
 
-                // Format the modifier badge if it exists
-                const hasModifier = t.statTarget && t.statTarget !== 'none';
-                const modBadge = hasModifier 
+                // Added logic fallback to fix the "(undefined)" labels
+                const sourceDisplay = t.sourceType || "General";
+                const modBadge = (t.statTarget && t.statTarget !== 'none') 
                     ? `<span class="badge-stat">${t.statTarget.replace('_', ' ')}: +${t.statValue}${t.logicType === 'percent' ? '%' : ''}</span>` 
                     : '';
 
@@ -2250,31 +2233,26 @@ async function loadMasterTraitList() {
                     <div class="trait-card-header mb-s">
                         <div>
                             <strong class="text-success">${t.name}</strong>
-                            <span class="text-muted ml-s" style="font-size: 0.7rem;">(${t.sourceType})</span>
+                            <span class="text-muted ml-s" style="font-size: 0.7rem;">(${sourceDisplay})</span>
                         </div>
                         <div class="flex-row gap-s">
                             ${modBadge}
-                            <button class="btn-icon-tiny" onclick="prepTraitEdit('${doc.id}')" title="Edit">
+                            <button class="btn-icon-tiny" onclick="prepTraitEdit('${doc.id}')">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <button class="btn-icon-tiny btn-danger" onclick="deleteTrait('${doc.id}')" title="Delete">
+                            <button class="btn-icon-tiny btn-danger" onclick="deleteTrait('${doc.id}')">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </div>
                     </div>
-                    
-                    <div class="field-group">
-                        <textarea class="form-input w-100" style="height: 50px; font-size: 0.8rem; line-height: 1.4;" 
-                            onchange="updateTraitDescription('${doc.id}', this.value)" 
-                            placeholder="Add mechanical description...">${t.description || ""}</textarea>
-                    </div>
+                    <textarea class="form-input w-100" style="height: 50px; font-size: 0.8rem;" 
+                        onchange="updateTraitDescription('${doc.id}', this.value)" 
+                        placeholder="Add mechanical description...">${t.description || ""}</textarea>
                 `;
                 list.appendChild(card);
             }
         });
-    } catch (err) {
-        console.error("Failed to load trait library:", err);
-    }
+    } catch (err) { console.error("Load Error:", err); }
 }
 
 // Helper for color coding the left border
