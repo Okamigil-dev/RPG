@@ -157,11 +157,27 @@
                         <button onclick="goBackToSelection()" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</button>
                         <div class="flex-row">
                             <h2 class="tab-title" style="margin:0;">Character Sheet</h2>
-                            <div id="char-level-display" class="header-level-badge">Lv. 1</div>
                         </div>
-                    </div>                          
+                    </div>                        
 
-
+                    <!-- Name, Race, Level Box -->
+                    <div class="panel-card mt-m">
+                        <h3 class="panel-subtitle">Identity</h3>
+                        <div class="identity-grid">
+                            <div class="field-group">
+                                <label class="text-muted">Character Name</label>
+                                <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
+                            </div>
+                            <div class="field-group">
+                                <label class="text-muted">Race</label>
+                                <select id="char-race" onchange="saveCharacter()" class="form-input"></select>
+                            </div>
+                            <div class="field-group">
+                                <label class="text-muted">Current Level</label>
+                                <div id="char-level-display" class="stat-badge-display">Lv. 1</div>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Attribute Box -->
                     <div class="stats-resources-wrapper">
@@ -225,7 +241,7 @@
                                 </div>
                                 <div class="resource-bar-main"><div id="char-hp-fill-main" class="hp-bar-main"></div></div>
                             </div>
-                    
+                        
                             <div class="status-unit">
                                 <div class="status-header">
                                     <div class="status-label"><i class="fa-solid fa-droplet icon-mp"></i> Mana</div>
@@ -237,36 +253,37 @@
                                 </div>
                                 <div class="resource-bar-main"><div id="char-mp-fill-main" class="mp-bar-main"></div></div>
                             </div>
+                        
+                            <div class="attr-list-grid" style="margin-top: 20px; border-top: 1px solid #27272a; padding-top: 15px;">
+                                <div class="field-group">
+                                    <label class="text-muted" style="font-size: 10px; text-transform: uppercase;">Speed</label>
+                                    <div id="char-speed-display" class="join-code-pill" style="width: 100%; text-align: center; font-size: 1.1rem;">0m</div>
+                                </div>
+                                <div class="field-group">
+                                    <label class="text-muted" style="font-size: 10px; text-transform: uppercase;">Armor Class</label>
+                                    <div id="char-ac-display" class="join-code-pill" style="width: 100%; text-align: center; font-size: 1.1rem;">10</div>
+                                </div>
+                                <div class="field-group">
+                                    <label class="text-muted" style="font-size: 10px; text-transform: uppercase;">Initiative</label>
+                                    <div id="char-init-display" class="join-code-pill" style="width: 100%; text-align: center; font-size: 1.1rem;">+0</div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
 
                     
-                    <!-- NAME, RACE, CLASSES, TRAITS -->
+                    <!-- CLASSES, TRAITS -->
                     <div class="panel-card mt-m">
-                        <h3 class="panel-subtitle">Identity & Heritage</h3>
-                        <div class="identity-grid-v2">
+                        <div class="identity-grid">
                             <div class="field-group">
-                                <label class="text-muted">Character Name</label>
-                                <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
+                                <label class="text-muted">Classes</label>
+                                <div id="char-class-list-display" class="traits-flex-wrap"></div>
                             </div>
                             <div class="field-group">
-                                <label class="text-muted">Race</label>
-                                <select id="char-race" onchange="saveCharacter()" class="form-input"></select>
-                            </div>
-                            <div class="field-group">
-                                <label class="text-muted">Movement Speed</label>
-                                <div id="char-speed-display" class="stat-badge-large">0m</div>
+                                <label class="text-muted">Traits</label>
+                                <div id="char-traits-container" class="traits-flex-wrap"></div>
                             </div>
                         </div>
-                    
-                        <div class="section-divider"></div>
-                        <label class="text-muted">Classes</label>
-                        <div id="char-class-list-display" class="traits-flex-wrap"></div>
-                    
-                        <div class="section-divider"></div>
-                        <label class="text-muted">Traits</label>
-                        <div id="char-traits-container" class="traits-flex-wrap"></div>
                     </div>
 
 
