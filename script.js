@@ -96,7 +96,7 @@ function handleWebPUpload(input, callback, targetSize) {
  * Best for: Icons, Items, Map Tokens.
  */
 function handlePNGUpload(input, callback, targetSize) {
-    if (!targetSize) { console.error("handlePNGUpload: Missing targetSize!"); return; }
+    if (!targetSize) return;
     const file = input.files[0];
     if (!file) return;
 
@@ -106,16 +106,23 @@ function handlePNGUpload(input, callback, targetSize) {
         img.onload = function() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
+            
+            // Match your test's size logic exactly
             canvas.width = targetSize;
             canvas.height = targetSize;
 
-            const minDim = Math.min(img.width, img.height);
-            const sx = (img.width - minDim) / 2;
-            const sy = (img.height - minDim) / 2;
+            // Turn off image smoothing on the canvas itself
+            ctx.imageSmoothingEnabled = false;
 
-            ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetSize, targetSize);
-            const base64String = canvas.toDataURL('image/png'); 
-            callback(base64String);
+            let sourceSize = Math.min(img.width, img.height);
+            let sourceX = (img.width - sourceSize) / 2;
+            let sourceY = (img.height - sourceSize) / 2;
+
+            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, targetSize, targetSize);
+            
+            // Output 100% Lossless PNG
+            const dataURL = canvas.toDataURL('image/png'); 
+            callback(dataURL);
         };
         img.src = e.target.result;
     };
