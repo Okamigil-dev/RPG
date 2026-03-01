@@ -1626,54 +1626,53 @@ async function respecCharacterAttributes() {
 }
 
 // --- TRAIT MANAGEMENT --- //
-/**
- * SAVE TRAIT: Pushes the form data to the 'master_traits' collection.
- */
+
 async function saveTraitToRegistry() {
-    // 1. Grab values from the new Trait Library form IDs
     const name = document.getElementById('reg-trait-name').value.trim();
     const source = document.getElementById('reg-trait-source').value;
     const desc = document.getElementById('reg-trait-desc').value.trim();
-    const traitId = document.getElementById('m-trait-id').value; // Hidden field for edits
+    const statTarget = document.getElementById('reg-trait-stat-target').value;
+    const statValue = parseFloat(document.getElementById('reg-trait-stat-value').value) || 0;
+    const logicType = document.getElementById('reg-trait-logic').value;
+    const traitId = document.getElementById('m-trait-id').value; 
 
     if (!name || !desc) {
-        alert("Wait! You need a Name and a Description to save a trait.");
+        alert("Trait Name and Description are mandatory.");
         return;
     }
 
-    // 2. Use the Name as the Document ID (The "Warehouse" approach)
-    const docId = traitId || name;
+    const traitData = {
+        name: name,
+        sourceType: source,
+        description: desc,
+        statTarget: statTarget,
+        statValue: statValue,
+        logicType: logicType,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
 
     try {
-        await firestore.collection('master_traits').doc(docId).set({
-            name: name,
-            sourceType: source,
-            description: desc,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        console.log(`Trait "${name}" successfully saved to Master Library.`);
-        
-        // 3. Cleanup
-        resetTraitForm(); // Clears the inputs
-        if (typeof loadMasterTraitList === "function") {
-            loadMasterTraitList(); // Refreshes the list below the form
+        if (traitId) {
+            await firestore.collection('master_traits').doc(traitId).update(traitData);
+            alert(`Updated: ${name}`);
+        } else {
+            await firestore.collection('master_traits').add(traitData);
+            alert(`Created: ${name}`);
         }
+
+        resetTraitForm();
+        loadTraitLibrary(); // FIXED: Matches function name below
     } catch (error) {
-        console.error("Error saving to Trait Library:", error);
+        console.error("Error saving trait:", error);
     }
 }
 
-/**
- * LOAD LIBRARY: Fetches all traits and renders them into the scrollable list.
- */
 async function loadTraitLibrary() {
     const listContainer = document.getElementById('registry-trait-list');
     if (!listContainer) return;
 
     try {
         const snapshot = await firestore.collection('master_traits').orderBy('name').get();
-        
         if (snapshot.empty) {
             listContainer.innerHTML = `<p class="text-muted text-center">No traits defined yet.</p>`;
             return;
@@ -1682,19 +1681,23 @@ async function loadTraitLibrary() {
         let html = '';
         snapshot.forEach(doc => {
             const data = doc.data();
+            const modInfo = data.statTarget && data.statTarget !== 'none' 
+                ? `<span style="color: #00ff88; font-size: 0.7rem;">[${data.statTarget} +${data.statValue}${data.logicType === 'percent' ? '%' : ''}]</span>` 
+                : '';
+
             html += `
-                <div class="trait-entry-card">
+                <div class="trait-entry-card" style="border-bottom: 1px solid #27272a; padding: 10px 0;">
                     <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
                         <div>
                             <span class="trait-source-badge">${data.sourceType}</span>
-                            <strong style="display: block; margin-top: 5px; color: #fff;">${data.name}</strong>
+                            <strong style="display: block; margin-top: 5px; color: #fff;">${data.name} ${modInfo}</strong>
                         </div>
                         <div class="flex-row gap-s">
-                            <button class="btn-icon-small" onclick="editTraitInRegistry('${doc.id}')"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn-icon-small" onclick="prepTraitEdit('${doc.id}')"><i class="fa-solid fa-pen"></i></button>
                             <button class="btn-icon-small btn-danger" onclick="deleteTrait('${doc.id}')"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
-                    <p class="text-muted" style="font-size: 0.8rem; margin-top: 8px; line-height: 1.4;">${data.description}</p>
+                    <p class="text-muted" style="font-size: 0.8rem; margin-top: 8px;">${data.description}</p>
                 </div>
             `;
         });
@@ -1704,19 +1707,40 @@ async function loadTraitLibrary() {
     }
 }
 
-/**
- * RESET FORM: Clears all inputs and resets the button state.
- */
+async function prepTraitEdit(id) {
+    const doc = await firestore.collection('master_traits').doc(id).get();
+    if (!doc.exists) return;
+    const data = doc.data();
+
+    document.getElementById('m-trait-id').value = id;
+    document.getElementById('reg-trait-name').value = data.name || "";
+    document.getElementById('reg-trait-source').value = data.sourceType || "General";
+    document.getElementById('reg-trait-desc').value = data.description || "";
+    
+    // Fill modifiers
+    document.getElementById('reg-trait-stat-target').value = data.statTarget || "none";
+    document.getElementById('reg-trait-stat-value').value = data.statValue || 0;
+    document.getElementById('reg-trait-logic').value = data.logicType || "additive";
+
+    document.getElementById('trait-editor-title').innerText = "Editing: " + data.name;
+    document.getElementById('trait-cancel-btn').classList.remove('hide-default');
+    document.getElementById('sub-traits').scrollTop = 0;
+}
+
 function resetTraitForm() {
     document.getElementById('m-trait-id').value = "";
     document.getElementById('reg-trait-name').value = "";
     document.getElementById('reg-trait-desc').value = "";
     document.getElementById('reg-trait-source').value = "General";
     
+    // FIXED: Clear the modifier fields too
+    document.getElementById('reg-trait-stat-target').value = "none";
+    document.getElementById('reg-trait-stat-value').value = 0;
+    document.getElementById('reg-trait-logic').value = "additive";
+    
     document.getElementById('trait-editor-title').innerText = "Define Global Trait";
     document.getElementById('trait-cancel-btn').classList.add('hide-default');
 }
-
 
 
 
@@ -2170,51 +2194,113 @@ async function editTraitInRegistry(id) {
     if (!doc.exists) return;
 
     const data = doc.data();
+    
+    // Fill hidden ID so the save function knows we are updating
     document.getElementById('m-trait-id').value = id;
-    document.getElementById('reg-trait-name').value = data.name;
-    document.getElementById('reg-trait-source').value = data.sourceType;
-    document.getElementById('reg-trait-desc').value = data.description;
+    
+    // Fill core info
+    document.getElementById('reg-trait-name').value = data.name || "";
+    document.getElementById('reg-trait-source').value = data.sourceType || "General";
+    document.getElementById('reg-trait-desc').value = data.description || "";
 
-    document.getElementById('trait-editor-title').innerText = "Editing Trait: " + data.name;
+    // Fill modifiers (so you don't lose the math when you edit)
+    document.getElementById('reg-trait-stat-target').value = data.statTarget || "none";
+    document.getElementById('reg-trait-stat-value').value = data.statValue || 0;
+    document.getElementById('reg-trait-logic').value = data.logicType || "additive";
+
+    document.getElementById('trait-editor-title').innerText = "Editing Trait: " + (data.name || "Unknown");
     document.getElementById('trait-cancel-btn').classList.remove('hide-default');
     
     // Scroll to top of the form
-    document.getElementById('sub-traits').scrollTop = 0;
+    const subTraitsTab = document.getElementById('sub-traits');
+    if(subTraitsTab) subTraitsTab.scrollTop = 0;
 }
+
+
 
 async function deleteTrait(id) {
     if (!confirm("Are you sure you want to delete this trait from the global library?")) return;
-    await firestore.collection('master_traits').doc(id).delete();
-    loadTraitLibrary();
+    
+    try {
+        await firestore.collection('master_traits').doc(id).delete();
+        // Call whichever load function you are currently using for the UI
+        if (typeof loadTraitLibrary === "function") loadTraitLibrary();
+    } catch (error) {
+        console.error("Error deleting trait:", error);
+    }
 }
 
 
+
 async function ensureTraitExists(traitName) {
-    const slug = traitName.toLowerCase().trim().replace(/\s+/g, '-');
-    const traitRef = firestore.collection('master_traits').doc(slug);
-    const doc = await traitRef.get();
-    if (!doc.exists) {
-        await traitRef.set({ name: traitName, description: "Detailed mechanics needed.", createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    if (!traitName) return;
+
+    // Check if a trait with this name already exists in the collection
+    const query = await firestore.collection('master_traits').where("name", "==", traitName).get();
+    
+    if (query.empty) {
+        console.log(`Auto-registering placeholder for: ${traitName}`);
+        await firestore.collection('master_traits').add({ 
+            name: traitName, 
+            sourceType: "General",
+            description: "Mechanical details needed.", 
+            statTarget: "none",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+        });
+        
+        if (typeof loadTraitLibrary === "function") loadTraitLibrary();
     }
 }
 
 async function loadMasterTraitList() {
     const list = document.getElementById('master-trait-list');
     if (!list) return;
+    
     const snap = await firestore.collection('master_traits').orderBy('name').get();
     list.innerHTML = "";
+    
     snap.forEach(doc => {
         const t = doc.data();
         const card = document.createElement('div');
         card.className = "panel-card mb-s";
         card.style.background = "#121214";
-        card.innerHTML = `<div class="form-group"><strong style="color: #00ff88;">${t.name}</strong>
-                <textarea class="form-input w-100 mt-s" style="height: 60px;" 
-                    onchange="updateTraitDescription('${doc.id}', this.value)">${t.description}</textarea>
+        
+        // Logic to show a small badge if there is a stat bonus
+        const statPreview = (t.statTarget && t.statTarget !== 'none') 
+            ? `<span style="color: #3b82f6; font-size: 0.7rem; margin-left: 10px;">[${t.statTarget} +${t.statValue}${t.logicType === 'percent' ? '%' : ''}]</span>`
+            : '';
+
+        card.innerHTML = `
+            <div class="form-group">
+                <div class="flex-row" style="justify-content: space-between;">
+                    <span>
+                        <strong style="color: #00ff88;">${t.name}</strong>
+                        ${statPreview}
+                    </span>
+                    <span class="text-muted" style="font-size: 0.65rem; text-transform: uppercase;">${t.sourceType || 'General'}</span>
+                </div>
+                <textarea class="form-input w-100 mt-s" style="height: 60px; font-size: 0.85rem;" 
+                    onchange="updateTraitDescription('${doc.id}', this.value)" 
+                    placeholder="Describe mechanics...">${t.description || ""}</textarea>
             </div>`;
         list.appendChild(card);
     });
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function updateTraitDescription(id, val) {
     await firestore.collection('master_traits').doc(id).update({ description: val });
