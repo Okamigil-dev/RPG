@@ -894,13 +894,14 @@ function renderSkills(charData) {
 async function updateHUD(char) {
     if (!char) return;
 
-    // 1. Core Data Calculations (Shared)
+    // 1. Shared Calculations
     const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 1)) * 100, 100);
     const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 1)) * 100, 100);
     const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
 
+    // Fetch Race Data for Totals, Speed, and Traits
     const raceSnap = await firestore.collection('master_races').where('name', '==', char.race).limit(1).get();
-    const raceD = raceSnap.empty ? { baseBody: 0, baseMind: 0, baseSpirit: 0 } : raceSnap.docs[0].data();
+    const raceD = raceSnap.empty ? { baseBody: 0, baseMind: 0, baseSpirit: 0, speed: 30, traits: [] } : raceSnap.docs[0].data();
     
     const totals = {
         body: (char.body || 0) + (raceD.baseBody || 0),
@@ -908,17 +909,15 @@ async function updateHUD(char) {
         spirit: (char.spirit || 0) + (raceD.baseSpirit || 0)
     };
 
-    // 2. Sidebar Sync: Only runs if the HUD container exists
-    const sidebarHUD = document.getElementById('active-char-hud');
-    if (sidebarHUD) {
-        sidebarHUD.classList.remove('hide-default');
+    // 2. Sidebar Sync: Only runs if the HUD container is in the DOM
+    if (document.getElementById('active-char-hud')) {
         syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
     }
 
-    // 3. Sheet Dashboard Sync: Only runs if the Character Sheet tab is actually visible
+    // 3. Sheet Dashboard Sync: Only runs if the Sheet tab is active
     const sheetView = document.getElementById('char-sheet-view');
     if (sheetView && !sheetView.classList.contains('hide-default')) {
-        syncSheetDashboardUI(char, totals, hpPerc, mpPerc);
+        syncSheetDashboardUI(char, totals, hpPerc, mpPerc, raceD);
     }
 }
 
@@ -951,15 +950,37 @@ function syncSidebarUI(char, totals, hpP, mpP, expP) {
 
 /** * SHEET DASHBOARD: Manages IDs specific to the Character Sheet tab
  */
-function syncSheetDashboardUI(char, totals, hpP, mpP) {
-    // Stat Labels
-    document.getElementById('total-body-label').innerText = totals.body;
-    document.getElementById('total-mind-label').innerText = totals.mind;
-    document.getElementById('total-spirit-label').innerText = totals.spirit;
+function syncSheetDashboardUI(char, totals, hpP, mpP, raceData) {
+    // Attributes (Only if the labels exist)
+    const bodyLabel = document.getElementById('total-body-label');
+    if (bodyLabel) {
+        bodyLabel.innerText = totals.body;
+        document.getElementById('total-mind-label').innerText = totals.mind;
+        document.getElementById('total-spirit-label').innerText = totals.spirit;
+    }
 
-    // Dashboard Bars
-    document.getElementById('char-hp-fill-main').style.width = hpP + "%";
-    document.getElementById('char-mp-fill-main').style.width = mpP + "%";
+    // Big Resource Bars
+    const hpBar = document.getElementById('char-hp-fill-main');
+    if (hpBar) {
+        hpBar.style.width = hpP + "%";
+        document.getElementById('char-mp-fill-main').style.width = mpP + "%";
+    }
+
+    // NEW: Racial Stats & Traits
+    const speedEl = document.getElementById('char-speed-display');
+    if (speedEl) speedEl.innerText = (raceData.speed || 30) + "m";
+
+    const traitContainer = document.getElementById('char-traits-container');
+    if (traitContainer) {
+        traitContainer.innerHTML = "";
+        (raceData.traits || []).forEach(traitName => {
+            const tag = document.createElement('span');
+            tag.className = 'trait-tag';
+            tag.innerText = traitName;
+            tag.title = "Racial Trait: " + traitName; // Basic tooltip
+            traitContainer.appendChild(tag);
+        });
+    }
 }
 
 
