@@ -563,6 +563,30 @@ body {
     margin-bottom: 20px;
 }
 
+
+
+
+.icon-upload-box:hover {
+    border-color: #a855f7; /* Purple glow on hover */
+    background: #18181b;
+}
+
+.icon-upload-box i {
+    font-size: 1.2rem;
+    color: #52525b;
+}
+
+/* Style for when the image is actually inside the box */
+.icon-upload-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated; /* Keeps 64x64 icons sharp */
+}
+
+
+
+/*
 .icon-upload-wrapper {
     display: flex;
     gap: 10px;
@@ -587,6 +611,8 @@ body {
     height: 100%;
     object-fit: cover;
 }
+testing*/
+
 
 .section-divider {
     border-top: 1px solid #27272a;
