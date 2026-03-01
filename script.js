@@ -60,6 +60,74 @@ async function deleteMasterAsset(collection, id, callback) {
     } catch (e) { console.error(e); }
 }
 
+/**
+ * HANDLES COMPRESSED UPLOADS (WebP)
+ * Best for: Portraits, Gallery Images.
+ */
+function handleWebPUpload(input, callback, targetSize) {
+    if (!targetSize) { console.error("handleWebPUpload: Missing targetSize!"); return; }
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = targetSize;
+            canvas.height = targetSize;
+
+            const minDim = Math.min(img.width, img.height);
+            const sx = (img.width - minDim) / 2;
+            const sy = (img.height - minDim) / 2;
+
+            ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetSize, targetSize);
+            const base64String = canvas.toDataURL('image/webp', 0.8);
+            callback(base64String);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+/**
+ * HANDLES LOSSLESS UPLOADS (PNG)
+ * Best for: Icons, Items, Map Tokens.
+ */
+function handlePNGUpload(input, callback, targetSize) {
+    if (!targetSize) { console.error("handlePNGUpload: Missing targetSize!"); return; }
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = targetSize;
+            canvas.height = targetSize;
+
+            const minDim = Math.min(img.width, img.height);
+            const sx = (img.width - minDim) / 2;
+            const sy = (img.height - minDim) / 2;
+
+            ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetSize, targetSize);
+            const base64String = canvas.toDataURL('image/png'); 
+            callback(base64String);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+// --- The "Proxy Click"
+function triggerInput(inputId) {
+    const input = document.getElementById(inputId);
+    if (input) input.click();
+}
+
 
 /* ==========================================================================
    SECTION 3: AUTHENTICATION
@@ -756,33 +824,7 @@ function renderClassPills(charData) {
 }
 
 // --- GALLERY LOGIC ---
-function handleSlotUpload(input) {
-    const file = input.files[0];
-    if (!file || !currentCharacterId) return;
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const size = 256; // High quality portrait size
-            canvas.width = size;
-            canvas.height = size;
-
-            let sourceSize = Math.min(img.width, img.height);
-            let sourceX = (img.width - sourceSize) / 2;
-            let sourceY = (img.height - sourceSize) / 2;
-
-            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
-            
-            // WebP + 0.8 Quality = Perfect balance of size, transparency, and clarity
-            saveImageToNextSlot(canvas.toDataURL('image/webp', 0.8)); 
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
 
 function saveImageToNextSlot(base64Data) {
     const user = auth.currentUser;
@@ -889,65 +931,6 @@ function renderSkills(charData) {
         container.appendChild(section);
     });
 }
-
-
-
-
-
-
-
-
-
-
-// TA AQUI
-// --- REUSABLE PNG UPLOADER FUNCTION ---
-function handleIconUpload(inputElement) {
-    const file = inputElement.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Configuration: 64x64 PNG
-            const size = 64; 
-            canvas.width = size;
-            canvas.height = size;
-
-            // Center and Crop Logic
-            let sourceSize = Math.min(img.width, img.height);
-            let sourceX = (img.width - sourceSize) / 2;
-            let sourceY = (img.height - sourceSize) / 2;
-
-            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
-            
-            // Output: Base64 PNG
-            const dataURL = canvas.toDataURL('image/png'); 
-
-            // Update UI
-            document.getElementById('reg-skill-icon-base64').value = dataURL;
-            const preview = document.getElementById('icon-preview');
-            if (preview) {
-                preview.innerHTML = `<img src="${dataURL}" style="width:64px; height:64px; border: 1px solid #333; image-rendering: pixelated;">`;
-            }
-            
-            console.log("PNG Processed. Size:", Math.round(dataURL.length / 1024) + " KB");
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-
-
-
-
-
-
-
 
 
 
@@ -1728,35 +1711,11 @@ function autoSetMpCost() {
     document.getElementById('reg-skill-cost').value = cost;
 }
 
-// 1. Image Logic
-document.getElementById('reg-skill-icon').addEventListener('change', function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const size = 128; // The final output size
-            canvas.width = size;
-            canvas.height = size;
-
-            let sourceX = 0, sourceY = 0, sourceSize = Math.min(img.width, img.height);
-            sourceX = (img.width - sourceSize) / 2;
-            sourceY = (img.height - sourceSize) / 2;
-
-            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
-            
-            const dataURL = canvas.toDataURL('image/webp', 0.8);
-            document.getElementById('reg-skill-icon-base64').value = dataURL;
-            document.getElementById('icon-preview').innerHTML = `<img src="${dataURL}" style="width:64px; height:64px; border-radius:4px;">`;
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-});
+// 1. Process Skill Icon
+function processSkillIcon(base64) {
+    document.getElementById('reg-skill-icon-base64').value = base64;
+    document.getElementById('icon-preview').innerHTML = `<img src="${base64}" style="width:64px; height:64px;">`;
+}
 
 // 2. Save / Update Logic
 async function saveSkillToRegistry() {
