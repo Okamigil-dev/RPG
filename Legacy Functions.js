@@ -95,3 +95,29 @@ function loadUserCharacters() {
         });
     });
 }
+
+function rollDice(sides, btn) {
+    const numDisplay = btn.querySelector('.roll-number');
+    if (btn.rollInterval) clearInterval(btn.rollInterval);
+    if (btn.resetTimeout) clearTimeout(btn.resetTimeout);
+    
+    btn.classList.add('active-roll');
+    
+    let rolls = 0;
+    btn.rollInterval = setInterval(() => {
+        numDisplay.innerText = Math.floor(Math.random() * sides) + 1;
+        if (++rolls > 12) {
+            clearInterval(btn.rollInterval);
+            const finalRoll = Math.floor(Math.random() * sides) + 1;
+            numDisplay.innerText = finalRoll;
+            
+            if (currentCharacterId) {
+                const charName = document.getElementById('hud-name').innerText || "Unknown";
+                rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).push({
+                    type: 'roll', name: charName, sides: sides, result: finalRoll, timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
+            btn.resetTimeout = setTimeout(() => { btn.classList.remove('active-roll'); }, 3000);
+        }
+    }, 40);
+}
