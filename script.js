@@ -1725,7 +1725,7 @@ function processSkillIcon(base64) {
     // 2. Update Preview with your specific style string
     const preview = document.getElementById('icon-preview');
     if (preview) {
-        preview.innerHTML = `<img src="${base64}" class="preview-img">`;
+        preview.innerHTML = `<img src="${base64}" class="registry-icon">`;
     }
 }
 
