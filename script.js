@@ -404,14 +404,18 @@ function rollDice(sides, btn, modifier = 0, label = "Roll") {
             // Database Sync
             if (currentCharacterId) {
                 const charName = document.getElementById('hud-name').innerText || "Unknown";
+                
+                // Format the result: "21 (18 +3)" or just "18"
+                const sign = modifier >= 0 ? '+' : '';
                 const resultText = modifier !== 0 ? 
-                    `${finalTotal} (${naturalRoll} ${modifier >= 0 ? '+' : ''}${modifier})` : 
+                    `${finalTotal} (${naturalRoll} ${sign}${modifier})` : 
                     `${finalTotal}`;
 
                 rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).push({
                     type: 'roll', 
                     name: charName, 
-                    rollLabel: label, 
+                    sides: sides,       // Required to prevent "dundefined" in chat
+                    rollLabel: label,   // Uses the label (e.g., "Initiative")
                     result: resultText, 
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
@@ -449,25 +453,45 @@ function renderChatLogEntry(data) {
     if (log.children.length > 50) log.removeChild(log.lastChild);
 }
 
-function triggerInitiative(btnElement) {
-    // 1. Calculate the bonus based on your high-attribute rule
-    const bodyMod = parseInt(document.getElementById('display-body').innerText) || 0;
-    const mindMod = parseInt(document.getElementById('display-mind').innerText) || 0;
-    const bestMod = Math.max(bodyMod, mindMod);
-
-    // 2. Pass everything to the master roller
-    rollDice(20, btnElement, bestMod, "Initiative");
+function triggerInitiative(btn) {
+    // Pull the already-calculated bonus from the UI
+    const displayVal = document.getElementById('char-init-display').innerText;
+    // Remove the "+" and convert to integer
+    const modifier = parseInt(displayVal.replace('+', '')) || 0;
+    
+    // Call your rollDice: (sides, element, modifier, label)
+    rollDice(20, btn, modifier, "Initiative");
 }
 
 /* ==========================================================================
    SECTION 6: CHARACTER LOGIC (MATH & STATS)
    ========================================================================== */
-
+// Calculate Level from exp
 function calculateLevelFromEXP(exp) {
     // Formula: Level = Floor(EXP / 200). Cap at 60.
     const calculatedLv = Math.floor(exp / 200);
     let finalLv = Math.max(1, calculatedLv);
     return Math.min(finalLv, MAX_CHAR_LEVEL);
+}
+
+//Calculates Initiative, Speed, Armor Class
+async function getFinalCombatStats(charData) {
+    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
+    const raceD = raceSnap.empty ? { acBonus: 0, speed: 5 } : raceSnap.docs[0].data();
+
+    // 1. INITIATIVE: Higher of Body or Mind
+    // Using the same logic as your stat calculation for consistency
+    const body = (charData.body || 0) + (raceD.baseBody || 0);
+    const mind = (charData.mind || 0) + (raceD.baseMind || 0);
+    const initBonus = Math.max(body, mind);
+
+    // 2. ARMOR CLASS: Base 10 + Race Bonus (need armor bonus after making items)
+    const finalAC = 10 + (raceD.acBonus || 0);
+
+    // 3. SPEED: Taken directly from race
+    const finalSpeed = raceD.speed || 5;
+
+    return { initBonus, finalAC, finalSpeed };
 }
 
 async function getFinalMaxStats(charData) {
@@ -1159,23 +1183,40 @@ function syncSidebarUI(char, totals, hpP, mpP, expP) {
 /** * SHEET DASHBOARD: Manages IDs specific to the Character Sheet tab
  */
 function syncSheetDashboardUI(char, totals, hpP, mpP, raceData) {
-    // Attributes & Status
+    // --- Attributes & Status ---
     const bodyEl = document.getElementById('total-body-label');
     if (bodyEl) {
         bodyEl.innerText = totals.body;
         document.getElementById('total-mind-label').innerText = totals.mind;
         document.getElementById('total-spirit-label').innerText = totals.spirit;
     }
+    
     const hpBar = document.getElementById('char-hp-fill-main');
     if (hpBar) {
         hpBar.style.width = hpP + "%";
         document.getElementById('char-mp-fill-main').style.width = mpP + "%";
     }
 
-    // NEW: Speed & Traits
+    // --- NEW: Combat Trio (Speed, AC, Initiative) ---
+    
+    // 1. Speed: Defaulting to 5 if no race data exists
     const speedEl = document.getElementById('char-speed-display');
-    if (speedEl) speedEl.innerText = (raceData.speed || 30) + "m";
+    if (speedEl) speedEl.innerText = (raceData.speed || 5) + "m";
 
+    // 2. Armor Class: 10 + Racial Bonus (No Body Mod)
+    const acEl = document.getElementById('char-ac-display');
+    if (acEl) acEl.innerText = 10 + (raceData.acBonus || 0);
+
+    // 3. Initiative: Higher of Body/Mind Mods
+    const initEl = document.getElementById('char-init-display');
+    if (initEl) {
+        const bodyMod = Math.floor(totals.body / 2);
+        const mindMod = Math.floor(totals.mind / 2);
+        const bestMod = Math.max(bodyMod, mindMod);
+        initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
+    }
+
+    // --- Traits Display ---
     const traitContainer = document.getElementById('char-traits-container');
     if (traitContainer) {
         traitContainer.innerHTML = "";
@@ -1183,11 +1224,10 @@ function syncSheetDashboardUI(char, totals, hpP, mpP, raceData) {
             const tag = document.createElement('span');
             tag.className = 'trait-tag';
             tag.innerText = t;
-            tag.title = "Trait"; 
             traitContainer.appendChild(tag);
         });
     }
-    renderClassPills(char); // Ensures class pills update
+    renderClassPills(char);
 }
 
 
