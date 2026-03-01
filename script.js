@@ -82,14 +82,14 @@ function handleWebPUpload(inputElement, callback, size = 128, quality = 1) {
 
             ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
             
-            // Using the dynamic quality variable passed into the function
+            // Generate the WebP string
             const optimizedBase64 = canvas.toDataURL('image/webp', quality);
             
-            console.log(`Size: ${Math.round(optimizedBase64.length / 1024)}KB | Res: ${size}px | Qual: ${quality}`);
+            // FIX: Changed dataURL.length to optimizedBase64.length
+            const kbSize = Math.round(optimizedBase64.length / 1024);
+            console.log(`WebP ${size}x${size} Processed. Size: ${kbSize} KB | Qual: ${quality}`);
             
             callback(optimizedBase64);
-            
-            console.log(`WebP ${size}x${size} Processed. Size:`, Math.round(dataURL.length / 1024) + " KB");
         };
         img.src = e.target.result;
     };
