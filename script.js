@@ -2302,12 +2302,12 @@ async function loadMasterTraitList() {
     const list = document.getElementById('master-trait-list');
     if (!list) return;
 
-    // Get UI values
+    // Get current UI filter/search values
     const searchTerm = document.getElementById('trait-search-input').value.toLowerCase();
     const filterSource = document.getElementById('trait-filter-source').value;
 
     try {
-        // 1. Fetch data (Sorted by name by default)
+        // 1. Fetch data with the chosen sort order
         let query = firestore.collection('master_traits');
         
         if (traitSortMode === 'alpha') {
@@ -2319,46 +2319,60 @@ async function loadMasterTraitList() {
         const snap = await query.get();
         list.innerHTML = "";
 
-        // 2. Filter and Render
+        if (snap.empty) {
+            list.innerHTML = `<p class="text-muted text-center">No traits found in the library.</p>`;
+            return;
+        }
+
+        // 2. Loop and Filter
         snap.forEach(doc => {
             const t = doc.data();
             
-            // Apply Search & Source Filters
             const matchesSearch = t.name.toLowerCase().includes(searchTerm);
             const matchesSource = filterSource === "All" || t.sourceType === filterSource;
 
             if (matchesSearch && matchesSource) {
                 const card = document.createElement('div');
-                card.className = "panel-card mb-s";
-                card.style.background = "#121214";
-                card.style.borderLeft = `3px solid ${getSourceColor(t.sourceType)}`;
+                // Use a standard panel-card or a specific trait-item class
+                card.className = "panel-card mb-s trait-item-border"; 
+                
+                // Color coding the border based on source via JS variable
+                card.style.borderLeftColor = getSourceColor(t.sourceType);
 
-                const statPreview = (t.statTarget && t.statTarget !== 'none') 
-                    ? `<span style="color: #3b82f6; font-size: 0.7rem; margin-left: 8px;">[${t.statTarget} +${t.statValue}${t.logicType === 'percent' ? '%' : ''}]</span>`
+                // Format the modifier badge if it exists
+                const hasModifier = t.statTarget && t.statTarget !== 'none';
+                const modBadge = hasModifier 
+                    ? `<span class="badge-stat">${t.statTarget.replace('_', ' ')}: +${t.statValue}${t.logicType === 'percent' ? '%' : ''}</span>` 
                     : '';
 
                 card.innerHTML = `
-                    <div class="form-group">
-                        <div class="flex-row" style="justify-content: space-between;">
-                            <span>
-                                <strong style="color: #00ff88;">${t.name}</strong>
-                                ${statPreview}
-                            </span>
-                            <div class="flex-row gap-s">
-                                <span class="text-muted" style="font-size: 0.65rem;">${t.sourceType || 'General'}</span>
-                                <button class="btn-icon-tiny" onclick="prepTraitEdit('${doc.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
-                                <button class="btn-icon-tiny btn-danger" onclick="deleteTrait('${doc.id}')"><i class="fa-solid fa-trash"></i></button>
-                            </div>
+                    <div class="trait-card-header mb-s">
+                        <div>
+                            <strong class="text-success">${t.name}</strong>
+                            <span class="text-muted ml-s" style="font-size: 0.7rem;">(${t.sourceType})</span>
                         </div>
-                        <textarea class="form-input w-100 mt-s" style="height: 50px; font-size: 0.8rem;" 
+                        <div class="flex-row gap-s">
+                            ${modBadge}
+                            <button class="btn-icon-tiny" onclick="prepTraitEdit('${doc.id}')" title="Edit">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn-icon-tiny btn-danger" onclick="deleteTrait('${doc.id}')" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="field-group">
+                        <textarea class="form-input w-100" style="height: 50px; font-size: 0.8rem; line-height: 1.4;" 
                             onchange="updateTraitDescription('${doc.id}', this.value)" 
-                            placeholder="Description...">${t.description || ""}</textarea>
-                    </div>`;
+                            placeholder="Add mechanical description...">${t.description || ""}</textarea>
+                    </div>
+                `;
                 list.appendChild(card);
             }
         });
     } catch (err) {
-        console.error("Library load error:", err);
+        console.error("Failed to load trait library:", err);
     }
 }
 
