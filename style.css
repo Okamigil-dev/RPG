@@ -376,7 +376,7 @@ body {
 }
 
 /* ==========================================================================
-   --- 10. CHARACTER SHEET (DASHBOARD LAYOUT) ---
+   --- 10. CHARACTER SHEET (Inside Dashboard) ---
    ========================================================================== */
 .stats-resources-wrapper {
     display: grid;
@@ -594,6 +594,30 @@ body {
     margin-top: 20px;
     margin-bottom: 15px;
 }
+
+
+
+
+
+
+
+/* don't know what this is yet */
+.registry-skill-card { background: #18181b !important; padding: 12px !important; }
+.registry-icon { width: 64px; height: 64px; border-radius: 4px; border: 1px solid #333; object-fit: cover; flex-shrink: 0; }
+.registry-icon-placeholder { width: 64px; height: 64px; background: #222; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #444; flex-shrink: 0; }
+.skill-title-text { color: #e879f9; font-size: 1.1rem; }
+.skill-desc-text { font-size: 0.85rem; color: #ccc; margin: 6px 0; }
+.skill-meta-tags { font-size: 0.75rem; color: #71717a; display: flex; gap: 12px; flex-wrap: wrap; }
+.MP-pill { border-color: #3b82f6 !important; color: #3b82f6 !important; }
+.align-start { align-items: flex-start; }
+.space-between { justify-content: space-between; }
+.wrap { flex-wrap: wrap; }
+
+
+
+
+
+
 
 /* ==========================================================================
    --- 12. INPUTS & SELECTS ---
