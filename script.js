@@ -95,9 +95,9 @@ function handleWebPUpload(input, callback, targetSize) {
  * HANDLES LOSSLESS UPLOADS (PNG)
  * Best for: Icons, Items, Map Tokens.
  */
-function handlePNGUpload(input, callback, targetSize) {
-    if (!targetSize) return;
-    const file = input.files[0];
+// Change 1: Add 'callback' to the arguments
+function handlePNGUpload(inputElement, callback, size) {
+    const file = inputElement.files[0];
     if (!file) return;
 
     const reader = new FileReader();
@@ -107,22 +107,19 @@ function handlePNGUpload(input, callback, targetSize) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Configuration: Uses the passed targetSize (e.g., 64 or 128)
-            canvas.width = targetSize;
-            canvas.height = targetSize;
+            canvas.width = size;
+            canvas.height = size;
 
-            // Your Center and Crop Logic
             let sourceSize = Math.min(img.width, img.height);
             let sourceX = (img.width - sourceSize) / 2;
             let sourceY = (img.height - sourceSize) / 2;
 
-            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, targetSize, targetSize);
+            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
             
-            // Output: Base64 PNG
             const dataURL = canvas.toDataURL('image/png'); 
-            
-            // Run the callback (the logic for wherever this was called from)
-            callback(dataURL);
+
+            // Change 2: Instead of hard-coded IDs, we run the callback
+            if (callback) callback(dataURL);
             
             console.log("PNG Processed. Size:", Math.round(dataURL.length / 1024) + " KB");
         };
@@ -1728,7 +1725,7 @@ function processSkillIcon(base64) {
     // 2. Update Preview with your specific style string
     const preview = document.getElementById('icon-preview');
     if (preview) {
-        preview.innerHTML = `<img src="${base64}" style="width:64px; height:64px; border: 1px solid #333; image-rendering: pixelated;">`;
+        preview.innerHTML = `<img src="${base64}" class="preview-img">`;
     }
 }
 
