@@ -1696,9 +1696,9 @@ function resetTraitForm() {
     document.getElementById('reg-trait-stat-target').value = "none";
     document.getElementById('reg-trait-stat-value').value = 0;
     document.getElementById('reg-trait-logic').value = "additive";
-    
-    document.getElementById('trait-editor-title').innerText = "Define Global Trait";
-    document.getElementById('trait-cancel-btn').classList.add('hide-default');
+
+    const title = document.getElementById('trait-modal-title');
+    if (title) title.innerText = "Define Global Trait";
 }
 
 // --- Modal Trait UI --- //
