@@ -689,23 +689,45 @@ body {
     margin-bottom: 15px;
 }
 
-
-.trait-entry-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid #27272a;
-    border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 10px;
+/* Trait Library Specific Styles */
+.trait-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
 }
 
-.trait-source-badge {
-    font-size: 0.65rem;
+.trait-controls-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.search-input {
+    width: 180px;
+}
+
+.source-select {
+    width: 120px;
+}
+
+/* For the dynamic cards generated in JS */
+.trait-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.badge-stat {
+    color: #00ff88;
+    font-size: 0.75rem;
+    font-weight: bold;
+    background: rgba(0, 255, 136, 0.1);
     padding: 2px 6px;
     border-radius: 4px;
-    background: #27272a;
-    color: #a1a1aa;
-    text-transform: uppercase;
 }
+
+
 
 
 
