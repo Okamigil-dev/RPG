@@ -393,6 +393,10 @@
                             <i class="fa-solid fa-dna"></i> Races
                         </button>
                         
+                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-traits')">
+                            <i class="fa-solid fa-book-sparkles"></i> Traits
+                        </button>
+                        
                         <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-items')">
                             <i class="fa-solid fa-box-open"></i> Items
                         </button>
@@ -819,7 +823,60 @@
                             </div>
                         </div>
                         
-                        <!-- 8. ??? Management -->
+                        <!-- 8. Trait Management -->
+                        <div id="sub-traits" class="control-sub-content hide-default">
+                            <div class="panel-card">
+                                <h3 id="trait-editor-title">Define Global Trait</h3>
+                                <div id="trait-creator-form">
+                                    <input type="hidden" id="m-trait-id"> 
+                        
+                                    <div class="skill-form-grid">
+                                        <div class="field-group">
+                                            <label class="text-muted">Trait Name</label>
+                                            <input type="text" id="reg-trait-name" class="form-input" placeholder="e.g. Stone Blood">
+                                        </div>
+                                        <div class="field-group">
+                                            <label class="text-muted">Primary Source</label>
+                                            <select id="reg-trait-source" class="form-input">
+                                                <option value="Race">Race Only</option>
+                                                <option value="Class">Class Only</option>
+                                                <option value="Backstory">Backstory Only</option>
+                                                <option value="General">General / Multi-Source</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                        
+                                    <div class="field-group mb-m">
+                                        <label class="text-muted">Mechanical Description</label>
+                                        <textarea id="reg-trait-desc" class="form-input" rows="3" placeholder="Describe exactly what this trait does..."></textarea>
+                                    </div>
+                        
+                                    <div class="flex-row flex-end">
+                                        <button id="trait-cancel-btn" onclick="resetTraitForm()" class="btn-secondary hide-default">Cancel Edit</button>
+                                        <button id="trait-save-btn" onclick="saveTraitToRegistry()" class="btn-success">Save Trait to Library</button>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                            <div class="panel-card">
+                                <div class="flex-row" style="justify-content: space-between; margin-bottom: 15px;">
+                                    <h3>Master Trait Library</h3>
+                                    <input type="text" id="trait-library-search" class="form-input" style="width: 200px;" placeholder="Search traits..." onkeyup="filterTraitLibrary()">
+                                </div>
+                                <div id="registry-trait-list" class="master-asset-list">
+                                    <p class="text-muted text-center">Loading Library...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <!-- 9. ??? Management -->
+                        <!-- 9. ??? Management -->
+                        <!-- 9. ??? Management -->
+                        <!-- 9. ??? Management -->
+                        <!-- 9. ??? Management -->
+                        <!-- 9. ??? Management -->
+                        
                         
                     </div>
                 </div>
