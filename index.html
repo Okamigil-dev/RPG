@@ -475,24 +475,17 @@
                                         </div>
                                         
                                         <!-- Skill Icon Upload -->
+
                                         <div class="form-group">
                                             <label class="text-muted">Skill Icon (64x64 PNG)</label>
                                             
-                                            <input type="file" id="reg-skill-icon" accept="image/*" style="display: none;" 
-                                                   onchange="handleIconUpload(this)">
-                                        
-                                            <div id="icon-preview" class="icon-upload-box" onclick="document.getElementById('reg-skill-icon').click()">
-                                                <i class="fa-solid fa-plus"></i>
-                                            </div>
-                                            
-                                            <input type="hidden" id="reg-skill-icon-base64">
-                                        </div>
-                                        <!-- IN TESTING
-                                        <div class="form-group">
-                                            <label class="text-muted">Skill Icon (64x64 PNG)</label>
-                                            
-                                            <input type="file" id="reg-skill-icon" accept="image/*" style="display: none;" 
-                                                   onchange="handlePNGUpload(this, processSkillIcon, 64)">
+                                            <input 
+                                                type="file" 
+                                                id="reg-skill-icon" 
+                                                accept="image/*" 
+                                                style="display: none;" 
+                                                onchange="handleWebPUpload(this, processSkillIcon, 128)"
+                                            >
                                         
                                             <div id="icon-preview" class="icon-upload-box" onclick="triggerInput('reg-skill-icon')">
                                                 <i class="fa-solid fa-plus"></i>
@@ -500,7 +493,6 @@
                                             
                                             <input type="hidden" id="reg-skill-icon-base64">
                                         </div>
--->
                                         
                                     </div>
                         
