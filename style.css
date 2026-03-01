@@ -501,6 +501,36 @@ body {
     border-color: #4338ca;
 }
 
+.combat-stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #27272a; /* Creates the separation line from the bars */
+}
+
+.combat-item {
+    text-align: center;
+}
+
+.combat-item label {
+    display: block;
+    font-size: 0.7rem;
+    color: #71717a;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+.combat-val {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: white;
+}
+
+
+
 .notes-textarea {
     width: 100%;
     min-height: 180px; /* Slightly taller for better writing room */
