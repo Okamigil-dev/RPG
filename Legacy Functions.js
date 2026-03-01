@@ -1,0 +1,97 @@
+/* =============================================
+   === REUSABLE PNG UPLOADER FUNCTION Backup ===
+   ============================================= */
+// ---  ---
+function handleIconUpload(inputElement) {
+    const file = inputElement.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Configuration: 64x64 PNG
+            const size = 64; 
+            canvas.width = size;
+            canvas.height = size;
+
+            // Center and Crop Logic
+            let sourceSize = Math.min(img.width, img.height);
+            let sourceX = (img.width - sourceSize) / 2;
+            let sourceY = (img.height - sourceSize) / 2;
+
+            ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
+            
+            // Output: Base64 PNG
+            const dataURL = canvas.toDataURL('image/png'); 
+
+            // Update UI
+            document.getElementById('reg-skill-icon-base64').value = dataURL;
+            const preview = document.getElementById('icon-preview');
+            if (preview) {
+                preview.innerHTML = `<img src="${dataURL}" style="width:64px; height:64px; border: 1px solid #333; image-rendering: pixelated;">`;
+            }
+            
+            console.log("PNG Processed. Size:", Math.round(dataURL.length / 1024) + " KB");
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+/* ==========================
+   === SIDEBAR UI Backup ===
+   ========================== */
+function syncSidebarUI(char, totals, hpP, mpP, expP) {
+    const getMod = (val) => {
+        const m = Math.floor(val / 2);
+        return m >= 0 ? `+${m}` : m;
+    };
+
+    document.getElementById('hud-name').innerText = char.name || "Unnamed";
+    document.getElementById('hud-meta').innerText = `Level ${char.charLevel || 1}`;
+    document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
+    document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
+    document.getElementById('hud-portrait').style.backgroundImage = char.portrait ? `url(${char.portrait})` : "none";
+    
+    document.getElementById('hud-mod-body').innerText = `BOD ${getMod(totals.body)}`;
+    document.getElementById('hud-mod-mind').innerText = `MIN ${getMod(totals.mind)}`;
+    document.getElementById('hud-mod-spirit').innerText = `SPI ${getMod(totals.spirit)}`;
+
+    document.getElementById('hud-hp-fill').style.width = hpP + "%";
+    document.getElementById('hud-mp-fill').style.width = mpP + "%";
+    document.getElementById('hud-exp-fill').style.width = expP + "%";
+    document.getElementById('hud-exp-text').innerText = `${Math.floor(expP)}%`;
+    
+}
+
+/* ===================================
+   === Load User Characters Backup ===
+   =================================== */
+function loadUserCharacters() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    firestore.collection('users').doc(user.uid).collection('characters').get().then(snap => {
+        const grid = document.getElementById('char-list-grid');
+        grid.innerHTML = "";
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            const card = document.createElement('div');
+            card.className = 'char-card';
+            card.onclick = () => selectCharacter(doc.id);
+            card.innerHTML = `
+                <div class="char-card-portrait" style="background-image: url(${d.portrait || ''});"></div>
+                <strong>${d.name || 'New Hero'}</strong>
+                <div class="char-card-meta">Lv.${d.charLevel || 1} ${d.class || ''}</div>
+                <div class="char-realm-tag"><i class="fa-solid fa-globe"></i> ${d.instanceName || 'Global'}</div>
+                <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')"><i class="fa-solid fa-trash"></i> Delete</button>
+            `;
+            grid.appendChild(card);
+        });
+    });
+}
