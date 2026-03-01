@@ -1376,7 +1376,7 @@ async function saveAllUserRoles() {
     } catch (error) { alert("Failed to save changes."); }
 }
 
-// --- CHARACTER SUPERVISION ---
+// --- CHARACTER MANAGEMENT ---
 async function loadGlobalCharacterManager() {
     const listContainer = document.getElementById('admin-character-list'); 
     if (!listContainer) return;
@@ -1624,6 +1624,97 @@ async function respecCharacterAttributes() {
         alert("Character attributes reset!");
     } catch (e) { alert("Error resetting attributes."); }
 }
+
+// --- TRAIT MANAGEMENT --- //
+/**
+ * SAVE TRAIT: Pushes the form data to the 'master_traits' collection.
+ */
+async function saveTraitToRegistry() {
+    const name = document.getElementById('reg-trait-name').value.trim();
+    const source = document.getElementById('reg-trait-source').value;
+    const desc = document.getElementById('reg-trait-desc').value.trim();
+    const traitId = document.getElementById('m-trait-id').value; // For editing existing
+
+    if (!name || !desc) {
+        alert("Please provide both a Name and a Description for the trait.");
+        return;
+    }
+
+    // Use name as ID if no specific ID exists (Warehouse logic)
+    const docId = traitId || name;
+
+    try {
+        await firestore.collection('master_traits').doc(docId).set({
+            name: name,
+            sourceType: source,
+            description: desc,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        alert(`Trait "${name}" saved to library.`);
+        resetTraitForm();
+        loadTraitLibrary(); // Refresh the list
+    } catch (error) {
+        console.error("Error saving trait:", error);
+        alert("Failed to save trait. Check console.");
+    }
+}
+
+/**
+ * LOAD LIBRARY: Fetches all traits and renders them into the scrollable list.
+ */
+async function loadTraitLibrary() {
+    const listContainer = document.getElementById('registry-trait-list');
+    if (!listContainer) return;
+
+    try {
+        const snapshot = await firestore.collection('master_traits').orderBy('name').get();
+        
+        if (snapshot.empty) {
+            listContainer.innerHTML = `<p class="text-muted text-center">No traits defined yet.</p>`;
+            return;
+        }
+
+        let html = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            html += `
+                <div class="trait-entry-card">
+                    <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <span class="trait-source-badge">${data.sourceType}</span>
+                            <strong style="display: block; margin-top: 5px; color: #fff;">${data.name}</strong>
+                        </div>
+                        <div class="flex-row gap-s">
+                            <button class="btn-icon-small" onclick="editTraitInRegistry('${doc.id}')"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn-icon-small btn-danger" onclick="deleteTrait('${doc.id}')"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <p class="text-muted" style="font-size: 0.8rem; margin-top: 8px; line-height: 1.4;">${data.description}</p>
+                </div>
+            `;
+        });
+        listContainer.innerHTML = html;
+    } catch (error) {
+        console.error("Error loading library:", error);
+    }
+}
+
+/**
+ * RESET FORM: Clears all inputs and resets the button state.
+ */
+function resetTraitForm() {
+    document.getElementById('m-trait-id').value = "";
+    document.getElementById('reg-trait-name').value = "";
+    document.getElementById('reg-trait-desc').value = "";
+    document.getElementById('reg-trait-source').value = "General";
+    
+    document.getElementById('trait-editor-title').innerText = "Define Global Trait";
+    document.getElementById('trait-cancel-btn').classList.add('hide-default');
+}
+
+
+
 
 
 /* ==========================================================================
@@ -1899,7 +1990,7 @@ function resetClassForm() {
 }
 
 // ==========================================
-// --- 10.3 SKILL REGISTRY (Refined) ---
+// --- 10.3 SKILL REGISTRY ---
 // ==========================================
 
 function openSkillCreator() {
@@ -2070,6 +2161,30 @@ async function refreshSkillClassDropdown() {
 }
 
 // --- 10.4 TRAIT LIBRARY ---
+async function editTraitInRegistry(id) {
+    const doc = await firestore.collection('master_traits').doc(id).get();
+    if (!doc.exists) return;
+
+    const data = doc.data();
+    document.getElementById('m-trait-id').value = id;
+    document.getElementById('reg-trait-name').value = data.name;
+    document.getElementById('reg-trait-source').value = data.sourceType;
+    document.getElementById('reg-trait-desc').value = data.description;
+
+    document.getElementById('trait-editor-title').innerText = "Editing Trait: " + data.name;
+    document.getElementById('trait-cancel-btn').classList.remove('hide-default');
+    
+    // Scroll to top of the form
+    document.getElementById('sub-traits').scrollTop = 0;
+}
+
+async function deleteTrait(id) {
+    if (!confirm("Are you sure you want to delete this trait from the global library?")) return;
+    await firestore.collection('master_traits').doc(id).delete();
+    loadTraitLibrary();
+}
+
+
 async function ensureTraitExists(traitName) {
     const slug = traitName.toLowerCase().trim().replace(/\s+/g, '-');
     const traitRef = firestore.collection('master_traits').doc(slug);
