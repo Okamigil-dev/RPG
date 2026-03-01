@@ -703,6 +703,11 @@ body {
     align-items: center;
 }
 
+.trait-item-border {
+    border-left: 4px solid #3f3f46; /* Default gray */
+    transition: border-color 0.2s ease;
+}
+
 .search-input {
     width: 180px;
 }
@@ -720,15 +725,16 @@ body {
 
 .badge-stat {
     color: #00ff88;
-    font-size: 0.75rem;
-    font-weight: bold;
+    font-size: 0.7rem;
+    font-weight: 600;
     background: rgba(0, 255, 136, 0.1);
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 4px;
+    text-transform: uppercase;
 }
 
-
-
+.ml-s { margin-left: 8px; }
+.mb-s { margin-bottom: 8px; }
 
 
 
