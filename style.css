@@ -281,13 +281,13 @@ body {
 /* --- 8. RESTORED GALLERY STYLES --- */
 .gallery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 100px); /* Grid of 100px squares */
-    gap: 12px;
-    justify-content: center;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
     margin-top: 15px;
-    min-height: 110px; /* Ensures the container doesn't collapse when empty */
+   justify-content: center;
+   min-height: 110px;
 }
-
+    
 .gallery-item {
     width: 100px;
     height: 100px;
