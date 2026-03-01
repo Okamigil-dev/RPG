@@ -894,12 +894,11 @@ function renderSkills(charData) {
 async function updateHUD(char) {
     if (!char) return;
 
-    // 1. Shared Calculations
+    // 1. Calculate Core Data
     const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 1)) * 100, 100);
     const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 1)) * 100, 100);
     const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
 
-    // Fetch Race Data for Totals, Speed, and Traits
     const raceSnap = await firestore.collection('master_races').where('name', '==', char.race).limit(1).get();
     const raceD = raceSnap.empty ? { baseBody: 0, baseMind: 0, baseSpirit: 0, speed: 30, traits: [] } : raceSnap.docs[0].data();
     
@@ -909,14 +908,14 @@ async function updateHUD(char) {
         spirit: (char.spirit || 0) + (raceD.baseSpirit || 0)
     };
 
-    // 2. Sidebar Sync: Only runs if the HUD container is in the DOM
+    // 2. Sidebar Sync
     if (document.getElementById('active-char-hud')) {
         syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
     }
 
-    // 3. Sheet Dashboard Sync: Only runs if the Sheet tab is active
-    const sheetView = document.getElementById('char-sheet-view');
-    if (sheetView && !sheetView.classList.contains('hide-default')) {
+    // 3. Sheet Sync (Only runs if sheet is active)
+    const sheet = document.getElementById('char-sheet-view');
+    if (sheet && !sheet.classList.contains('hide-default')) {
         syncSheetDashboardUI(char, totals, hpPerc, mpPerc, raceD);
     }
 }
@@ -942,45 +941,42 @@ function syncSidebarUI(char, totals, hpP, mpP, expP) {
     document.getElementById('hud-hp-fill').style.width = hpP + "%";
     document.getElementById('hud-mp-fill').style.width = mpP + "%";
     document.getElementById('hud-exp-fill').style.width = expP + "%";
+    document.getElementById('hud-exp-text').innerText = `${Math.floor(expP)}%`;
     
-    if (document.getElementById('hud-exp-text')) {
-        document.getElementById('hud-exp-text').innerText = `${Math.floor(expP)}%`;
-    }
 }
 
 /** * SHEET DASHBOARD: Manages IDs specific to the Character Sheet tab
  */
 function syncSheetDashboardUI(char, totals, hpP, mpP, raceData) {
-    // Attributes (Only if the labels exist)
-    const bodyLabel = document.getElementById('total-body-label');
-    if (bodyLabel) {
-        bodyLabel.innerText = totals.body;
+    // Attributes & Status
+    const bodyEl = document.getElementById('total-body-label');
+    if (bodyEl) {
+        bodyEl.innerText = totals.body;
         document.getElementById('total-mind-label').innerText = totals.mind;
         document.getElementById('total-spirit-label').innerText = totals.spirit;
     }
-
-    // Big Resource Bars
     const hpBar = document.getElementById('char-hp-fill-main');
     if (hpBar) {
         hpBar.style.width = hpP + "%";
         document.getElementById('char-mp-fill-main').style.width = mpP + "%";
     }
 
-    // NEW: Racial Stats & Traits
+    // NEW: Speed & Traits
     const speedEl = document.getElementById('char-speed-display');
     if (speedEl) speedEl.innerText = (raceData.speed || 30) + "m";
 
     const traitContainer = document.getElementById('char-traits-container');
     if (traitContainer) {
         traitContainer.innerHTML = "";
-        (raceData.traits || []).forEach(traitName => {
+        (raceData.traits || []).forEach(t => {
             const tag = document.createElement('span');
             tag.className = 'trait-tag';
-            tag.innerText = traitName;
-            tag.title = "Racial Trait: " + traitName; // Basic tooltip
+            tag.innerText = t;
+            tag.title = "Trait"; 
             traitContainer.appendChild(tag);
         });
     }
+    renderClassPills(char); // Ensures class pills update
 }
 
 
@@ -1783,67 +1779,51 @@ function resetSkillForm() {
 // 5. Load List
 async function loadSkillRegistry() {
     const container = document.getElementById('registry-skill-list');
-    container.innerHTML = '<p>Loading...</p>';
-    
+    if (!container) return;
+    container.innerHTML = '<p class="text-center">Loading Library...</p>';
     try {
+        // THIS MATCHES YOUR NEW INDEX EXACTLY
         const snap = await firestore.collection('master_skills')
-          .orderBy('class')
-          .orderBy('tier')
-          .orderBy('name')
-          .get();
+            .orderBy('class')
+            .orderBy('tier')
+            .orderBy('name')
+            .get();
+            
         if(snap.empty) { container.innerHTML = '<p class="text-center opacity-50">No skills defined yet.</p>'; return; }
-
-        let html = ''; 
         
+        let html = ''; 
         snap.forEach(doc => {
             const d = doc.data();
-            // 64x64 Icon logic (display only)
-            const icon = d.iconData ? 
-                `<img src="${d.iconData}" style="width:64px; height:64px; object-fit:cover; border-radius:4px; border:1px solid #333; flex-shrink:0;">` 
-                : `<div style="width:64px; height:64px; background:#222; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#444;"><i class="fa-solid fa-image"></i></div>`;
-            
+            const icon = d.iconData ? `<img src="${d.iconData}" class="registry-icon">` : `<div class="registry-icon-placeholder"><i class="fa-solid fa-image"></i></div>`;
             html += `
-            <div class="panel-card mb-s" style="padding:10px; background:#18181b;">
-                <div class="flex-row" style="align-items: flex-start; justify-content: space-between;">
-                    
-                    <div class="flex-row" style="gap: 15px; align-items: flex-start; flex-grow: 1;">
+            <div class="panel-card mb-s registry-skill-card">
+                <div class="flex-row align-start space-between">
+                    <div class="flex-row align-start gap-m">
                         ${icon}
-                        <div>
-                            <div class="flex-row" style="gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                                <strong style="color:#e879f9; font-size: 1.1rem;">${d.name}</strong>
-                                <span class="join-code-pill" style="opacity:0.8;">${d.class}</span>
-                                <span class="join-code-pill" style="opacity:0.8;">T${d.tier}</span>
-                                <span class="join-code-pill" style="opacity:0.8;">${d.baseCost} MP</span>
+                        <div class="skill-info-block">
+                            <div class="flex-row gap-s wrap">
+                                <strong class="skill-title-text">${d.name}</strong>
+                                <span class="join-code-pill">${d.class}</span>
+                                <span class="join-code-pill">T${d.tier}</span>
+                                <span class="join-code-pill MP-pill">${d.baseCost} MP</span>
                             </div>
-                            
-                            <div style="font-size:0.85rem; color:#ccc; margin-bottom: 6px;">${d.description}</div>
-                            
-                            <div style="font-size:0.75rem; color:#71717a; display:flex; gap:10px; flex-wrap:wrap;">
-                                <span><i class="fa-solid fa-ruler-combined"></i> ${d.range} ${d.aoe ? `(${d.aoe})` : ''}</span>
+                            <p class="skill-desc-text">${d.description}</p>
+                            <div class="skill-meta-tags">
+                                <span><i class="fa-solid fa-clock"></i> ${d.castTime || 0}s / ${d.cooldown || 0}s</span>
+                                <span><i class="fa-solid fa-ruler-combined"></i> ${d.range}</span>
                                 <span><i class="fa-solid fa-burst"></i> ${d.damageType || 'Utility'}</span>
-                                ${d.savingThrow !== 'none' ? `<span><i class="fa-solid fa-shield-halved"></i> Save: ${d.savingThrow}</span>` : ''}
                             </div>
                         </div>
                     </div>
-
-                    <div class="flex-row" style="gap: 5px;">
-                        <button class="btn-small" onclick="editMasterSkill('${doc.id}')" title="Edit">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button class="btn-danger-small" onclick="deleteMasterAsset('master_skills', '${doc.id}', loadSkillRegistry)" title="Delete">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                    <div class="flex-row gap-s">
+                        <button class="btn-small" onclick="editMasterSkill('${doc.id}')"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-danger-small" onclick="deleteMasterAsset('master_skills', '${doc.id}', loadSkillRegistry)"><i class="fa-solid fa-trash"></i></button>
                     </div>
-
                 </div>
             </div>`;
         });
-        
         container.innerHTML = html;
-        
-    } catch (e) {
-        console.error("Load Error:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
 async function refreshSkillClassDropdown() {
