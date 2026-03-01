@@ -988,61 +988,37 @@
                 <div class="modal-content">
                     <div class="modal-header flex-row">
                         <h3 id="trait-modal-title">Define Global Trait</h3>
-                        <button class="btn-danger-small" onclick="closeTraitModal()"><i class="fa-solid fa-xmark"></i></button>
+                        <button class="btn-danger-small" onclick="closeTraitModal()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
                     
                     <div class="modal-body">
                         <input type="hidden" id="m-trait-id">
+                        
                         <div class="field-group mb-m">
                             <label class="text-muted">Trait Name</label>
-                            <input type="text" id="reg-trait-name" class="form-input" placeholder="e.g. Stone Blood">
-                        </div>
-            
-                        <div class="flex-row gap-m mb-m">
-                            <div class="field-group flex-1">
-                                <label class="text-muted">Primary Source</label>
-                                <select id="reg-trait-source" class="form-input">
-                                    <option value="General">General</option>
-                                    <option value="Race">Race</option>
-                                    <option value="Class">Class</option>
-                                    <option value="Backstory">Backstory</option>
-                                </select>
-                            </div>
-                            <div class="field-group flex-1">
-                                <label class="text-muted">Logic Type</label>
-                                <select id="reg-trait-logic" class="form-input">
-                                    <option value="additive">Additive (+)</option>
-                                    <option value="percent">Percentage (%)</option>
-                                </select>
-                            </div>
-                        </div>
-            
-                        <div class="flex-row gap-m mb-m">
-                            <div class="field-group flex-2">
-                                <label class="text-muted">Stat to Affect</label>
-                                <select id="reg-trait-stat-target" class="form-input">
-                                    <option value="none">None (Flavor Only)</option>
-                                    <option value="exp_mod">EXP Bonus</option>
-                                    <option value="hp_regen">HP Regen</option>
-                                    <option value="mp_regen">MP Regen</option>
-                                    <option value="accuracy">Accuracy</option>
-                                    <option value="ac">Armor Class</option>
-                                </select>
-                            </div>
-                            <div class="field-group flex-1">
-                                <label class="text-muted">Value</label>
-                                <input type="number" id="reg-trait-stat-value" class="form-input" placeholder="0" step="0.1">
-                            </div>
+                            <input type="text" id="reg-trait-name" class="form-input" placeholder="e.g. Darkvision">
                         </div>
             
                         <div class="field-group mb-m">
-                            <label class="text-muted">Mechanical Description</label>
-                            <textarea id="reg-trait-desc" class="form-input" rows="4"></textarea>
+                            <label class="text-muted">Primary Source</label>
+                            <select id="reg-trait-source" class="form-input">
+                                <option value="General">General</option>
+                                <option value="Race">Race</option>
+                                <option value="Class">Class</option>
+                                <option value="Backstory">Backstory</option>
+                            </select>
+                        </div>
+            
+                        <div class="field-group mb-m">
+                            <label class="text-muted">Description</label>
+                            <textarea id="reg-trait-desc" class="form-input" rows="6" placeholder="Describe the effect..."></textarea>
                         </div>
                     </div>
             
                     <div class="modal-footer text-right">
-                        <button class="btn-success" onclick="saveTraitToRegistry()">Save Trait to Library</button>
+                        <button class="btn-success" onclick="saveTraitToRegistry()">Save Trait</button>
                     </div>
                 </div>
             </div>
