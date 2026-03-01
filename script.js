@@ -1765,7 +1765,11 @@ async function loadSkillRegistry() {
     container.innerHTML = '<p>Loading...</p>';
     
     try {
-        const snap = await firestore.collection('master_skills').orderBy('class').get();
+        const snap = await firestore.collection('master_skills')
+          .orderBy('class')
+          .orderBy('tier')
+          .orderBy('name')
+          .get();
         if(snap.empty) { container.innerHTML = '<p class="text-center opacity-50">No skills defined yet.</p>'; return; }
 
         let html = ''; 
