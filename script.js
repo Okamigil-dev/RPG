@@ -107,12 +107,13 @@ function handlePNGUpload(input, callback, targetSize) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Match your test's size logic exactly
             canvas.width = targetSize;
             canvas.height = targetSize;
 
-            // Turn off image smoothing on the canvas itself
+            // This stops the Canvas from blurring the image during the resize
             ctx.imageSmoothingEnabled = false;
+            ctx.webkitImageSmoothingEnabled = false;
+            ctx.mozImageSmoothingEnabled = false;
 
             let sourceSize = Math.min(img.width, img.height);
             let sourceX = (img.width - sourceSize) / 2;
@@ -120,7 +121,7 @@ function handlePNGUpload(input, callback, targetSize) {
 
             ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, targetSize, targetSize);
             
-            // Output 100% Lossless PNG
+            // Output pure PNG
             const dataURL = canvas.toDataURL('image/png'); 
             callback(dataURL);
         };
