@@ -467,7 +467,16 @@
                                         <div class="field-group">
                                             <label class="text-muted">Icon (128x128)</label>
                                             <div class="icon-upload-wrapper">
+
+                                                
+                                            <!-- Restore Here
                                                 <input type="file" id="reg-skill-icon" accept="image/*" class="form-input">
+                                            -->
+
+                                                <!--remove this-->
+                                                <input type="file" id="reg-skill-icon" accept="image/*" onchange="handleIconUpload(this)">
+
+                                                
                                                 <input type="hidden" id="reg-skill-icon-base64">
                                                 <div id="icon-preview" class="icon-preview-box"></div>
                                             </div>
