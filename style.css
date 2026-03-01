@@ -563,11 +563,23 @@ body {
     margin-bottom: 20px;
 }
 
-
+.icon-upload-box {
+    width: 64px;
+    height: 64px;
+    background: #09090b;
+    border: 2px dashed #3f3f46; /* Dashed border looks like a "slot" */
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
 
 
 .icon-upload-box:hover {
-    border-color: #a855f7; /* Purple glow on hover */
+    border-color: #10b981; /* Green glow to show it's active */
     background: #18181b;
 }
 
