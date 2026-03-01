@@ -524,15 +524,25 @@ function loadUserCharacters() {
         
         snap.forEach(doc => {
             const d = doc.data();
+            
+            // --- NEW: Resolve Portrait from Gallery Index ---
+            const gallery = d.gallery || [];
+            const activeIdx = d.activePortraitIndex !== undefined ? d.activePortraitIndex : 0;
+            const displayImg = gallery[activeIdx] || ''; 
+
             const card = document.createElement('div');
             card.className = 'char-card';
             card.onclick = () => selectCharacter(doc.id);
             card.innerHTML = `
-                <div class="char-card-portrait" style="background-image: url(${d.portrait || ''});"></div>
+                <div class="char-card-portrait" style="background-image: url('${displayImg}');">
+                    ${!displayImg ? '<i class="fa-solid fa-user"></i>' : ''}
+                </div>
                 <strong>${d.name || 'New Hero'}</strong>
                 <div class="char-card-meta">Lv.${d.charLevel || 1} ${d.class || ''}</div>
                 <div class="char-realm-tag"><i class="fa-solid fa-globe"></i> ${d.instanceName || 'Global'}</div>
-                <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')"><i class="fa-solid fa-trash"></i> Delete</button>
+                <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
             `;
             grid.appendChild(card);
         });
@@ -1104,19 +1114,25 @@ async function updateHUD(char) {
    syncSheetDashboardUI(char, totals, hpPerc, mpPerc, raceD);
 }
 
-/** * SIDEBAR UI: Manages the IDs starting with "hud-"
- */
+/* Sync Sidebar UI */
 function syncSidebarUI(char, totals, hpP, mpP, expP) {
     const getMod = (val) => {
         const m = Math.floor(val / 2);
         return m >= 0 ? `+${m}` : m;
     };
 
+    // --- NEW: Resolve Active Portrait ---
+    const gallery = char.gallery || [];
+    const activeIdx = char.activePortraitIndex !== undefined ? char.activePortraitIndex : 0;
+    const activeImg = gallery[activeIdx] || "";
+
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
     document.getElementById('hud-meta').innerText = `Level ${char.charLevel || 1}`;
     document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
     document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
-    document.getElementById('hud-portrait').style.backgroundImage = char.portrait ? `url(${char.portrait})` : "none";
+    
+    // Updated to use activeImg resolved from the index
+    document.getElementById('hud-portrait').style.backgroundImage = activeImg ? `url(${activeImg})` : "none";
     
     document.getElementById('hud-mod-body').innerText = `BOD ${getMod(totals.body)}`;
     document.getElementById('hud-mod-mind').innerText = `MIN ${getMod(totals.mind)}`;
@@ -1126,7 +1142,6 @@ function syncSidebarUI(char, totals, hpP, mpP, expP) {
     document.getElementById('hud-mp-fill').style.width = mpP + "%";
     document.getElementById('hud-exp-fill').style.width = expP + "%";
     document.getElementById('hud-exp-text').innerText = `${Math.floor(expP)}%`;
-    
 }
 
 /** * SHEET DASHBOARD: Manages IDs specific to the Character Sheet tab
