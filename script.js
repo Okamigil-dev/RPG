@@ -2126,9 +2126,6 @@ async function refreshSkillClassDropdown() {
 }
 
 // --- 10.4 TRAIT LIBRARY ---
-
-
-
 async function deleteTrait(id) {
     if (!confirm("Are you sure?")) return;
     try {
@@ -2229,19 +2226,70 @@ function getSourceColor(source) {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 async function updateTraitDescription(id, val) {
     await firestore.collection('master_traits').doc(id).update({ description: val });
+}
+
+// --- 10.5 ATTRIBUTE LIBRARY LOGIC ---
+
+function openAttributeModal() {
+    document.getElementById('m-attr-id').value = "";
+    document.getElementById('m-attr-name').value = "";
+    document.getElementById('m-attr-key').value = "";
+    document.getElementById('m-attr-default').value = 0;
+    document.getElementById('attribute-modal').classList.remove('hide-default');
+}
+
+function closeAttrModal() {
+    document.getElementById('attribute-modal').classList.add('hide-default');
+}
+
+async function saveAttribute() {
+    const id = document.getElementById('m-attr-id').value;
+    const name = document.getElementById('m-attr-name').value.trim();
+    const key = document.getElementById('m-attr-key').value.trim().toLowerCase().replace(/\s+/g, '_'); // Auto-format key
+    const defVal = parseFloat(document.getElementById('m-attr-default').value) || 0;
+
+    if (!name || !key) return alert("Name and Key are required.");
+
+    const data = { name, key, defaultValue: defVal };
+
+    try {
+        if (id) {
+            await firestore.collection('master_attributes').doc(id).update(data);
+        } else {
+            // Check if key exists first to prevent duplicates
+            const check = await firestore.collection('master_attributes').where('key', '==', key).get();
+            if (!check.empty) return alert("This Key already exists!");
+            
+            await firestore.collection('master_attributes').add(data);
+        }
+        closeAttrModal();
+        loadAttributeList();
+    } catch (e) { console.error(e); }
+}
+
+async function loadAttributeList() {
+    const list = document.getElementById('master-attribute-list');
+    if (!list) return;
+    
+    list.innerHTML = "Loading...";
+    const snap = await firestore.collection('master_attributes').orderBy('name').get();
+    list.innerHTML = "";
+
+    snap.forEach(doc => {
+        const d = doc.data();
+        const div = document.createElement('div');
+        div.className = "panel-card mb-s flex-row space-between trait-item-border";
+        div.innerHTML = `
+            <div>
+                <strong class="text-success">${d.name}</strong>
+                <div class="text-muted small">Key: ${d.key} | Default: ${d.defaultValue}</div>
+            </div>
+            <button class="btn-icon-tiny btn-danger" onclick="deleteMasterAsset('master_attributes', '${doc.id}', loadAttributeList)">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        `;
+        list.appendChild(div);
+    });
 }
