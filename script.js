@@ -382,7 +382,7 @@ function sendSystemMessage(text) {
     });
 }
 
-function rollDice(sides, btn) {
+function rollDice(sides, btn, modifier = 0, label = "Roll") {
     const numDisplay = btn.querySelector('.roll-number');
     if (btn.rollInterval) clearInterval(btn.rollInterval);
     if (btn.resetTimeout) clearTimeout(btn.resetTimeout);
@@ -391,19 +391,35 @@ function rollDice(sides, btn) {
     
     let rolls = 0;
     btn.rollInterval = setInterval(() => {
+        // Animation spinning
         numDisplay.innerText = Math.floor(Math.random() * sides) + 1;
+        
         if (++rolls > 12) {
             clearInterval(btn.rollInterval);
-            const finalRoll = Math.floor(Math.random() * sides) + 1;
-            numDisplay.innerText = finalRoll;
+            const naturalRoll = Math.floor(Math.random() * sides) + 1;
+            const finalTotal = naturalRoll + modifier;
             
+            numDisplay.innerText = finalTotal;
+            
+            // Database Sync
             if (currentCharacterId) {
                 const charName = document.getElementById('hud-name').innerText || "Unknown";
+                const resultText = modifier !== 0 ? 
+                    `${finalTotal} (${naturalRoll} ${modifier >= 0 ? '+' : ''}${modifier})` : 
+                    `${finalTotal}`;
+
                 rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).push({
-                    type: 'roll', name: charName, sides: sides, result: finalRoll, timestamp: firebase.database.ServerValue.TIMESTAMP
+                    type: 'roll', 
+                    name: charName, 
+                    rollLabel: label, 
+                    result: resultText, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
             }
-            btn.resetTimeout = setTimeout(() => { btn.classList.remove('active-roll'); }, 3000);
+            
+            btn.resetTimeout = setTimeout(() => { 
+                btn.classList.remove('active-roll'); 
+            }, 3000);
         }
     }, 40);
 }
