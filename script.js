@@ -1626,7 +1626,6 @@ async function respecCharacterAttributes() {
 }
 
 // --- TRAIT MANAGEMENT --- //
-
 async function saveTraitToRegistry() {
     const name = document.getElementById('reg-trait-name').value.trim();
     const source = document.getElementById('reg-trait-source').value;
@@ -1659,7 +1658,10 @@ async function saveTraitToRegistry() {
         }
 
         resetTraitForm();
-        loadMasterTraitList(); // CHANGE: from loadTraitLibrary
+        loadMasterTraitList(); 
+        
+        // ADD THIS: Closes the modal window after saving
+        closeTraitModal(); 
     } catch (error) { console.error(error); }
 }
 
@@ -1670,19 +1672,18 @@ async function prepTraitEdit(id) {
     if (!doc.exists) return;
     const data = doc.data();
 
+    // 1. Fill the inputs inside the modal
     document.getElementById('m-trait-id').value = id;
     document.getElementById('reg-trait-name').value = data.name || "";
     document.getElementById('reg-trait-source').value = data.sourceType || "General";
     document.getElementById('reg-trait-desc').value = data.description || "";
-    
-    // Fill modifiers
     document.getElementById('reg-trait-stat-target').value = data.statTarget || "none";
     document.getElementById('reg-trait-stat-value').value = data.statValue || 0;
     document.getElementById('reg-trait-logic').value = data.logicType || "additive";
 
-    document.getElementById('trait-editor-title').innerText = "Editing: " + data.name;
-    document.getElementById('trait-cancel-btn').classList.remove('hide-default');
-    document.getElementById('sub-traits').scrollTop = 0;
+    // 2. Update UI and Open Modal
+    document.getElementById('trait-modal-title').innerText = "Editing: " + data.name;
+    document.getElementById('trait-modal').classList.remove('hide-default');
 }
 
 function resetTraitForm() {
@@ -1700,6 +1701,16 @@ function resetTraitForm() {
     document.getElementById('trait-cancel-btn').classList.add('hide-default');
 }
 
+// --- Modal Trait UI --- //
+function openTraitModal() {
+    resetTraitForm(); // Use your existing reset function
+    document.getElementById('trait-modal-title').innerText = "Define Global Trait";
+    document.getElementById('trait-modal').classList.remove('hide-default');
+}
+
+function closeTraitModal() {
+    document.getElementById('trait-modal').classList.add('hide-default');
+}
 
 
 
