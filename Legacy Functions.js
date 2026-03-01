@@ -121,3 +121,45 @@ function rollDice(sides, btn) {
         }
     }, 40);
 }
+
+
+
+async function editTraitInRegistry(id) {
+    const doc = await firestore.collection('master_traits').doc(id).get();
+    if (!doc.exists) return;
+
+    const data = doc.data();
+    document.getElementById('m-trait-id').value = id;
+    document.getElementById('reg-trait-name').value = data.name;
+    document.getElementById('reg-trait-source').value = data.sourceType;
+    document.getElementById('reg-trait-desc').value = data.description;
+
+    document.getElementById('trait-editor-title').innerText = "Editing Trait: " + data.name;
+    document.getElementById('trait-cancel-btn').classList.remove('hide-default');
+    
+    // Scroll to top of the form
+    document.getElementById('sub-traits').scrollTop = 0;
+}
+
+
+
+
+async function deleteTrait(id) {
+    if (!confirm("Are you sure you want to delete this trait from the global library?")) return;
+    await firestore.collection('master_traits').doc(id).delete();
+    loadTraitLibrary();
+}
+
+
+
+
+
+
+async function ensureTraitExists(traitName) {
+    const slug = traitName.toLowerCase().trim().replace(/\s+/g, '-');
+    const traitRef = firestore.collection('master_traits').doc(slug);
+    const doc = await traitRef.get();
+    if (!doc.exists) {
+        await traitRef.set({ name: traitName, description: "Detailed mechanics needed.", createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    }
+}
