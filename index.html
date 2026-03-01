@@ -722,96 +722,24 @@
                         --- 7. Race Management --- 
                         -------------------------->
                         <div id="sub-races" class="control-sub-content hide-default">
-                            <div class="panel-card">
-                                <h3 id="race-editor-title">Register New Race</h3>
-                                <input type="hidden" id="m-race-id" value="">
-                        
-                                <div class="flex-row gap-m mb-m">
-                                    <div class="form-group flex-2">
-                                        <label class="text-muted">Race Name</label>
-                                        <input type="text" id="m-race-name" class="form-input" placeholder="e.g. Human, Elf, Orc">
+                            <div class="panel-card trait-panel-layout">
+                                <div class="trait-list-header mb-m">
+                                    <div class="flex-row space-between w-100">
+                                        <h3 style="margin:0;">Master Race Registry</h3>
+                                        <button class="btn-success" onclick="openRaceModal()">
+                                            <i class="fa-solid fa-plus"></i> Register New Race
+                                        </button>
                                     </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">HP/Lv Bonus</label>
-                                        <input type="number" id="m-race-hp" class="form-input" value="0">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">MP/Lv Bonus</label>
-                                        <input type="number" id="m-race-mp" class="form-input" value="0">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">EXP Bonus (%)</label>
-                                        <input type="number" id="m-race-exp-bonus" class="form-input" value="0" placeholder="e.g. 10">
+                                    <div class="trait-controls-group mt-s">
+                                        <input type="text" id="race-search-input" class="form-input search-input" 
+                                               placeholder="Search races..." onkeyup="loadMasterRaceList()">
                                     </div>
                                 </div>
                                 
-                                <div class="flex-row gap-m mb-m">
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">BODY</label>
-                                        <input type="number" id="m-race-body" class="form-input" value="0">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">MIND</label>
-                                        <input type="number" id="m-race-mind" class="form-input" value="0">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">SPIRIT</label>
-                                        <input type="number" id="m-race-spirit" class="form-input" value="0">
-                                    </div>
+                                <div class="master-asset-list-scroll-area custom-scrollbar">
+                                    <div id="master-race-list">
+                                        </div>
                                 </div>
-                                
-                                <div class="panel-header-small mt-l mb-s">
-                                    <span class="text-muted" style="text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Special Modifiers</span>
-                                </div>
-                                <div class="flex-row gap-m mb-m">
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">HP Regen</label>
-                                        <input type="number" step="0.1" id="m-race-hp-regen" class="form-input" placeholder="0.0">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">MP Regen</label>
-                                        <input type="number" step="0.1" id="m-race-mp-regen" class="form-input" placeholder="0.0">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">Move Speed</label>
-                                        <input type="number" id="m-race-speed" class="form-input" value="30">
-                                    </div>
-                                </div>
-                        
-                                <div class="flex-row gap-m mb-m">
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">Accuracy (+)</label>
-                                        <input type="number" id="m-race-accuracy" class="form-input" value="0">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">Armor Class (+)</label>
-                                        <input type="number" id="m-race-ac" class="form-input" value="0">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">Crit Chance (+)</label>
-                                        <input type="number" id="m-race-crit-chance" class="form-input" value="0">
-                                    </div>
-                                </div>
-                        
-                                <div class="form-group mb-m">
-                                    <label class="text-muted">Passives / Traits (Comma separated)</label>
-                                    <input type="text" id="m-race-traits" class="form-input" placeholder="Darkvision, Resilience">
-                                </div>
-                        
-                                <div class="form-group mb-m">
-                                    <label class="text-muted">Race Description</label>
-                                    <textarea id="m-race-desc" class="form-input" style="height: 60px;"></textarea>
-                                </div>
-                        
-                                <div class="flex-row" style="justify-content: flex-end; gap: 10px;">
-                                    <button id="race-cancel-btn" onclick="resetRaceForm()" class="btn-secondary hide-default">Cancel Edit</button>
-                                    <button onclick="saveMasterRace()" class="btn-success">Save Race</button>
-                                </div>
-                            </div>
-                        
-                            <div class="panel-card">
-                                <h3>Registered Races</h3>
-                                <div id="master-race-list" class="master-asset-list"></div>
                             </div>
                         </div>
                         
@@ -1023,6 +951,61 @@
                 </div>
             </div>
 
+
+
+            <!--===========================
+            ---- 10. MODAL RACE MANAGER ----
+            ============================-->
+            <div id="race-modal" class="modal-overlay hide-default">
+                <div class="modal-content">
+                    <div class="modal-header flex-row">
+                        <h3 id="race-modal-title">Register New Race</h3>
+                        <button class="btn-danger-small" onclick="closeRaceModal()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <input type="hidden" id="m-race-id">
+                        
+                        <div class="field-group mb-m">
+                            <label class="text-muted">Race Name</label>
+                            <input type="text" id="m-race-name" class="form-input" placeholder="e.g. High Elf">
+                        </div>
+            
+                        <div class="field-group mb-m">
+                            <label class="text-muted">Description</label>
+                            <textarea id="m-race-desc" class="form-input" rows="2"></textarea>
+                        </div>
+            
+                        <div class="panel-header-small mt-m mb-s"><span class="section-label">Base Stats</span></div>
+                        <div class="flex-row gap-s mb-s">
+                            <div class="field-group flex-1"><label class="text-muted">Body</label><input type="number" id="m-race-body" class="form-input" value="0"></div>
+                            <div class="field-group flex-1"><label class="text-muted">Mind</label><input type="number" id="m-race-mind" class="form-input" value="0"></div>
+                            <div class="field-group flex-1"><label class="text-muted">Spirit</label><input type="number" id="m-race-spirit" class="form-input" value="0"></div>
+                        </div>
+                        <div class="flex-row gap-s mb-m">
+                             <div class="field-group flex-1"><label class="text-muted">HP/Lv</label><input type="number" id="m-race-hp" class="form-input" value="0"></div>
+                             <div class="field-group flex-1"><label class="text-muted">MP/Lv</label><input type="number" id="m-race-mp" class="form-input" value="0"></div>
+                             <div class="field-group flex-1"><label class="text-muted">Speed</label><input type="number" id="m-race-speed" class="form-input" value="30"></div>
+                        </div>
+            
+                        <div class="panel-header-small mt-m mb-s"><span class="section-label">Racial Traits</span></div>
+                        <div class="flex-row gap-s mb-s">
+                            <select id="race-trait-picker" class="form-input flex-grow">
+                                <option value="">Select a trait...</option>
+                                </select>
+                            <button class="btn-success" onclick="addTraitToRace()"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        
+                        <div id="race-active-traits" class="flex-row gap-s flex-wrap"></div>
+                    </div>
+            
+                    <div class="modal-footer text-right">
+                        <button class="btn-success" onclick="saveMasterRace()">Save Race</button>
+                    </div>
+                </div>
+            </div>
 
 
     
