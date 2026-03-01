@@ -828,7 +828,7 @@
                             <div class="panel-card trait-panel-layout">
                                 <div class="trait-list-header mb-m">
                                     <div class="flex-row space-between w-100">
-                                        <h3>Master Trait Library</h3>
+                                        <h3 style="margin:0;">Trait Library</h3>
                                         <button class="btn-success" onclick="openTraitModal()">
                                             <i class="fa-solid fa-plus"></i> Define New Trait
                                         </button>
@@ -837,7 +837,6 @@
                                     <div class="trait-controls-group mt-s">
                                         <input type="text" id="trait-search-input" class="form-input search-input" 
                                                placeholder="Search name..." onkeyup="loadMasterTraitList()">
-                                        
                                         <select id="trait-filter-source" class="form-input source-select" onchange="loadMasterTraitList()">
                                             <option value="All">All Sources</option>
                                             <option value="Race">Race</option>
@@ -845,8 +844,7 @@
                                             <option value="Backstory">Backstory</option>
                                             <option value="General">General</option>
                                         </select>
-                        
-                                        <button class="btn-icon-small" onclick="toggleTraitSort()" title="Toggle A-Z / Newest">
+                                        <button class="btn-icon-small" onclick="toggleTraitSort()">
                                             <i id="trait-sort-icon" class="fa-solid fa-arrow-down-a-z"></i>
                                         </button>
                                     </div>
