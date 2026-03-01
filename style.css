@@ -900,6 +900,27 @@ select.form-input {
 .btn-square { font-size: 1.2rem; width: 40px; padding: 0; display: flex; align-items: center; justify-content: center; }
 .text-highlight { color: #a855f7; font-weight: bold; }
 
+/* Checklist box for Traits */
+.checklist-container {
+    height: 150px;
+    overflow-y: auto;
+    background-color: #18181b;
+    border: 1px solid #3f3f46;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.checklist-item {
+    padding: 4px 0;
+    border-bottom: 1px solid #27272a;
+    display: flex;
+    align-items: center;
+}
+
+.checklist-item:last-child { border-bottom: none; }
+.checklist-item label { margin-left: 8px; cursor: pointer; color: #a1a1aa; }
+.checklist-item input[type="checkbox"] { cursor: pointer; accent-color: #10b981; }
+
 /* ==========================================================================
    --- 15. LOGIN SPLASH SCREEN ---
    ========================================================================== */
