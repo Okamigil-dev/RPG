@@ -102,12 +102,17 @@ body {
 
 /* Character Portrait: Full width of the sidebar card */
 .portrait-main-hud {
-    width: 100%; 
-    aspect-ratio: 1 / 1;
-    background-size: cover;
+    /* Set fixed dimensions */
+    width: 200px;
+    height: 200px;
+    margin: 20px auto; /* Center it horizontally within the sidebar */
+    border-radius: 12px; /* Make it a rounded square */ 
+    background-size: cover; /* Keep your existing styling */
     background-position: center;
-    border-bottom: 2px solid #a855f7;
+    border: 2px solid #a855f7; /* Changed border-bottom to full border for a square look */
     image-rendering: auto;
+    /* Ensure it behaves as a block for the margin: auto to work */
+    display: block; 
 }
 
 .hud-identity-block {
