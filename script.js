@@ -1630,17 +1630,18 @@ async function respecCharacterAttributes() {
  * SAVE TRAIT: Pushes the form data to the 'master_traits' collection.
  */
 async function saveTraitToRegistry() {
+    // 1. Grab values from the new Trait Library form IDs
     const name = document.getElementById('reg-trait-name').value.trim();
     const source = document.getElementById('reg-trait-source').value;
     const desc = document.getElementById('reg-trait-desc').value.trim();
-    const traitId = document.getElementById('m-trait-id').value; // For editing existing
+    const traitId = document.getElementById('m-trait-id').value; // Hidden field for edits
 
     if (!name || !desc) {
-        alert("Please provide both a Name and a Description for the trait.");
+        alert("Wait! You need a Name and a Description to save a trait.");
         return;
     }
 
-    // Use name as ID if no specific ID exists (Warehouse logic)
+    // 2. Use the Name as the Document ID (The "Warehouse" approach)
     const docId = traitId || name;
 
     try {
@@ -1651,12 +1652,15 @@ async function saveTraitToRegistry() {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        alert(`Trait "${name}" saved to library.`);
-        resetTraitForm();
-        loadTraitLibrary(); // Refresh the list
+        console.log(`Trait "${name}" successfully saved to Master Library.`);
+        
+        // 3. Cleanup
+        resetTraitForm(); // Clears the inputs
+        if (typeof loadMasterTraitList === "function") {
+            loadMasterTraitList(); // Refreshes the list below the form
+        }
     } catch (error) {
-        console.error("Error saving trait:", error);
-        alert("Failed to save trait. Check console.");
+        console.error("Error saving to Trait Library:", error);
     }
 }
 
