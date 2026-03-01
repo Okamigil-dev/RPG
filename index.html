@@ -730,6 +730,7 @@
                                             <i class="fa-solid fa-plus"></i> Register New Race
                                         </button>
                                     </div>
+                                    
                                     <div class="trait-controls-group mt-s">
                                         <input type="text" id="race-search-input" class="form-input search-input" 
                                                placeholder="Search races..." onkeyup="loadMasterRaceList()">
@@ -973,32 +974,46 @@
                             <input type="text" id="m-race-name" class="form-input" placeholder="e.g. High Elf">
                         </div>
             
-                        <div class="field-group mb-m">
-                            <label class="text-muted">Description</label>
-                            <textarea id="m-race-desc" class="form-input" rows="2"></textarea>
+                        <div class="panel-header-small mt-m mb-s"><span class="section-label">Base Attributes</span></div>
+                        <div class="flex-row gap-s mb-s">
+                            <div class="field-group flex-1"><label class="text-muted">BODY</label><input type="number" id="m-race-body" class="form-input" value="0"></div>
+                            <div class="field-group flex-1"><label class="text-muted">MIND</label><input type="number" id="m-race-mind" class="form-input" value="0"></div>
+                            <div class="field-group flex-1"><label class="text-muted">SPIRIT</label><input type="number" id="m-race-spirit" class="form-input" value="0"></div>
                         </div>
             
-                        <div class="panel-header-small mt-m mb-s"><span class="section-label">Base Stats</span></div>
+                        <div class="panel-header-small mt-m mb-s"><span class="section-label">Growth & Vitals</span></div>
                         <div class="flex-row gap-s mb-s">
-                            <div class="field-group flex-1"><label class="text-muted">Body</label><input type="number" id="m-race-body" class="form-input" value="0"></div>
-                            <div class="field-group flex-1"><label class="text-muted">Mind</label><input type="number" id="m-race-mind" class="form-input" value="0"></div>
-                            <div class="field-group flex-1"><label class="text-muted">Spirit</label><input type="number" id="m-race-spirit" class="form-input" value="0"></div>
-                        </div>
-                        <div class="flex-row gap-s mb-m">
                              <div class="field-group flex-1"><label class="text-muted">HP/Lv</label><input type="number" id="m-race-hp" class="form-input" value="0"></div>
                              <div class="field-group flex-1"><label class="text-muted">MP/Lv</label><input type="number" id="m-race-mp" class="form-input" value="0"></div>
+                             <div class="field-group flex-1"><label class="text-muted">EXP %</label><input type="number" id="m-race-exp-bonus" class="form-input" value="0"></div>
+                        </div>
+            
+                        <div class="panel-header-small mt-m mb-s"><span class="section-label">Combat Stats</span></div>
+                        <div class="flex-row gap-s mb-s">
+                             <div class="field-group flex-1"><label class="text-muted">HP Regen</label><input type="number" id="m-race-hp-regen" class="form-input" step="0.1" value="0"></div>
+                             <div class="field-group flex-1"><label class="text-muted">MP Regen</label><input type="number" id="m-race-mp-regen" class="form-input" step="0.1" value="0"></div>
                              <div class="field-group flex-1"><label class="text-muted">Speed</label><input type="number" id="m-race-speed" class="form-input" value="30"></div>
+                        </div>
+                        <div class="flex-row gap-s mb-s">
+                             <div class="field-group flex-1"><label class="text-muted">Accuracy</label><input type="number" id="m-race-accuracy" class="form-input" value="0"></div>
+                             <div class="field-group flex-1"><label class="text-muted">AC Bonus</label><input type="number" id="m-race-ac" class="form-input" value="0"></div>
+                             <div class="field-group flex-1"><label class="text-muted">Crit %</label><input type="number" id="m-race-crit-chance" class="form-input" value="0"></div>
                         </div>
             
                         <div class="panel-header-small mt-m mb-s"><span class="section-label">Racial Traits</span></div>
-                        <div class="flex-row gap-s mb-s">
-                            <select id="race-trait-picker" class="form-input flex-grow">
-                                <option value="">Select a trait...</option>
-                                </select>
-                            <button class="btn-success" onclick="addTraitToRace()"><i class="fa-solid fa-plus"></i></button>
-                        </div>
                         
-                        <div id="race-active-traits" class="flex-row gap-s flex-wrap"></div>
+                        <input type="text" id="trait-checklist-search" class="form-input mb-s" 
+                               placeholder="Search traits..." onkeyup="filterTraitChecklist()">
+                        
+                        <div id="trait-checklist-container" class="checklist-container mb-s">
+                            </div>
+                        
+                        <div id="race-active-traits" class="flex-row gap-s flex-wrap mb-m"></div>
+            
+                        <div class="field-group mb-m">
+                            <label class="text-muted">Description</label>
+                            <textarea id="m-race-desc" class="form-input" rows="3"></textarea>
+                        </div>
                     </div>
             
                     <div class="modal-footer text-right">
