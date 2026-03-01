@@ -594,7 +594,6 @@ body {
     height: 100%;
     object-fit: cover;
     image-rendering: pixelated;
-    image-rendering: crisp-edges;
 }
 
 
