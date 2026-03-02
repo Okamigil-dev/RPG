@@ -1,3 +1,10 @@
+/* =========================================================
+   SCRIPT VERSION: 0.1
+   DATE: 2026-03-02 
+   ========================================================= */
+
+
+
 /* ==========================================================================
    SECTION 1: CONFIGURATION, STATE & FIREBASE
    ========================================================================== */
@@ -47,6 +54,7 @@ const firestore = firebase.firestore();
    SECTION 2: UTILITIES & TOASTS
    ========================================================================== */
 
+
 /** CONSOLE ERROR MESSAGE ( the bandaid that isn't silent ) */
          function setSafeText(id, value) {
              const el = document.getElementById(id);
@@ -57,9 +65,7 @@ const firestore = firebase.firestore();
              }
          }
          
-         /**
-          * Safely updates an input's value.
-          */
+   /* Safely updates an input's value.*/
          function setSafeValue(id, value) {
              const el = document.getElementById(id);
              if (el) {
@@ -70,21 +76,22 @@ const firestore = firebase.firestore();
          }
 /** CONSOLE ERROR MESSAGE ( the bandaid that isn't silent ) */
 
-function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-container';
-    toast.innerText = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
 
-async function deleteMasterAsset(collection, id, callback) {
-    if (!confirm("Permanently remove this asset?")) return;
-    try {
-        await firestore.collection(collection).doc(id).delete();
-        if (callback) callback();
-    } catch (e) { console.error(e); }
-}
+         function showToast(message) {
+             const toast = document.createElement('div');
+             toast.className = 'toast-container';
+             toast.innerText = message;
+             document.body.appendChild(toast);
+             setTimeout(() => toast.remove(), 3000);
+         }
+
+         async function deleteMasterAsset(collection, id, callback) {
+             if (!confirm("Permanently remove this asset?")) return;
+             try {
+                 await firestore.collection(collection).doc(id).delete();
+                 if (callback) callback();
+             } catch (e) { console.error(e); }
+         }
 
 /* === UNIVERSAL WEBP HANDLER (100% QUALITY) === */
 function handleWebPUpload(inputElement, callback, size = 128, quality = 1) {
