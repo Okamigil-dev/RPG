@@ -226,56 +226,27 @@ auth.onAuthStateChanged((user) => {
    ========================================================================== */
 
 function openTab(tabId) {
-    // 1. Safety Check: If tabId is null or undefined, default to character selection
-    if (!tabId) tabId = 'tab-character';
-
-    // 2. Hide all top-level tab contents
     const allTabs = document.querySelectorAll('.tab-content');
     allTabs.forEach(tab => {
         tab.style.display = 'none';
         tab.classList.add('hide-default');
     });
     
-    // 3. Display the target tab
     const target = document.getElementById(tabId);
     if (target) {
         target.style.display = 'block';
         target.classList.remove('hide-default');
-    } else {
-        console.error(`Tab Error: Element with ID "${tabId}" not found.`);
-        // Fallback to avoid a blank screen
-        const fallback = document.getElementById('tab-character');
-        if (fallback) {
-            fallback.style.display = 'block';
-            fallback.classList.remove('hide-default');
-        }
     }
 
-    // 4. Persistence Logic
     if (tabId !== 'tab-login') {
         localStorage.setItem('activeMainTab', tabId);
     }
     
-    // 5. specialized Sub-Tab Handlers
     if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
         loadInstanceList();
         openMasterPanel();
         const savedSubTab = localStorage.getItem('activeMasterSubTab') || 'sub-instances';
         openControlSubTab(null, savedSubTab); 
-    }
-
-    // 6. Character Sheet Refresh
-    // If switching back to the sheet, ensure the HUD is updated
-    if (tabId === 'tab-character' && currentCharacterId) {
-        // We trigger updateHUD to ensure bars/stats are fresh
-        const user = auth.currentUser;
-        if (user) {
-            firestore.collection('users').doc(user.uid)
-                .collection('characters').doc(currentCharacterId)
-                .get().then(doc => {
-                    if (doc.exists) updateHUD(doc.data());
-                });
-        }
     }
 }
 
