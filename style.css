@@ -24,7 +24,7 @@ body {
 /* ==========================================================================
    --- 2. UTILITY CLASSES ---
    ========================================================================== */
-.hide-default { display: none !important; }
+.hide-default { display: none }
 .flex-row { display: flex; align-items: center; gap: 15px; }
 .flex-grow { flex-grow: 1; }
 .flex-1 { flex: 1; }
