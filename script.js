@@ -1,5 +1,5 @@
 /* =========================================================
-   SCRIPT VERSION: 0.3.1
+   SCRIPT VERSION: 0.4.1
    DATE: 2026-03-02 
    ========================================================= */
 
@@ -780,41 +780,47 @@ async function saveCharacter() {
     if (!currentCharacterId) return;
     const charRef = firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId);
     
-    const doc = await charRef.get();
-    const currentData = doc.data();
-
-    // 1. Get EXP from database
-    const currentExp = currentData.expCurrent || 0;
-    
-    // 2. Calculate levels
-    activeCharLevel = calculateLevelFromEXP(currentExp); 
-    const nextLevelExp = (activeCharLevel + 1) * 200; 
-
-    // 3. Update UI
-//    setSafeValue('char-exp-max', nextLevelExp);
-
-    const data = {
-        name: document.getElementById('char-name').value,
-        race: document.getElementById('char-race').value,
-        expCurrent: currentExp, 
-        charLevel: activeCharLevel,
-        body: originalStats.body || 0,
-        mind: originalStats.mind || 0,
-        spirit: originalStats.spirit || 0,
-        hpCurrent: parseFloat(document.getElementById('char-hp-current').value) || 0,
-        mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0,
-        portrait: currentData.portrait || "", 
-        gallery: currentData.gallery || [],
-        unlockedClasses: currentData.unlockedClasses || {}
-    };
-
     try {
+        const doc = await charRef.get();
+        const currentData = doc.data();
+
+        // 1. Calculate Level/EXP Logic
+        const currentExp = currentData.expCurrent || 0;
+        activeCharLevel = calculateLevelFromEXP(currentExp); 
+        const nextLevelExp = (activeCharLevel + 1) * 200; 
+
+        // 2. THE HYBRID ENGINE: Get safe values using global clamping
+        const safeHP = getClampedResource('char-hp-current', 'char-hp-max');
+        const safeMP = getClampedResource('char-mp-current', 'char-mp-max');
+
+        // 3. Prepare Data Object
+        const data = {
+            name: document.getElementById('char-name').value,
+            race: document.getElementById('char-race').value,
+            expCurrent: currentExp, 
+            charLevel: activeCharLevel,
+            body: originalStats.body || 0,
+            mind: originalStats.mind || 0,
+            spirit: originalStats.spirit || 0,
+            // Use the safe clamped values here
+            hpCurrent: safeHP,
+            mpCurrent: safeMP,
+            portrait: currentData.portrait || "", 
+            gallery: currentData.gallery || [],
+            unlockedClasses: currentData.unlockedClasses || {}
+        };
+
+        // 4. Update Firestore
         await charRef.update(data);
-        // Optimization: updateHUD recalculates everything, no need for getFinalMaxStats here
+        
+        // 5. UpdateHUD (re-injects nextLevelExp for the UI bar)
         updateHUD({ ...data, expMax: nextLevelExp });
+        
         if (typeof showToast === "function") showToast("Character Saved.");
+        
     } catch (e) { 
         console.error("Save Error:", e); 
+        if (typeof showToast === "function") showToast("Error saving character.");
     }
 }
 
@@ -1122,34 +1128,44 @@ function renderSkills(charData) {
 async function updateHUD(char) {
     if (!char) return;
 
-    // 1. Get the registry (inherent, equipment, totals)
+    // 1. Get all bonuses from Traits/Race/Equipment
     const bonuses = await resolveAllStats(char);
 
-    // 2. Calculate Totals (Base + Library Totals)
-    // FIX: We must access bonuses.totals['key']
+    // 2. Calculate Attribute Totals
     const totals = {
         body: (char.body || 0) + (bonuses.totals['body'] || 0),
         mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
         spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
     };
 
-    // 3. Calculate Vitals using dynamic keys
-    // FIX: Access bonuses.totals
+    // 3. Calculate Resource Totals (Max HP/MP)
     const hpFromLevel = char.charLevel * (bonuses.totals['hp_lv'] || 0);
     const mpFromLevel = char.charLevel * (bonuses.totals['mp_lv'] || 0);
     
-    char.hpMax = 10 + hpFromLevel + (totals.body * STAT_RESOURCE_MULT);
-    char.mpMax = 10 + mpFromLevel + (totals.spirit * STAT_RESOURCE_MULT);
+    // We calculate these but don't save to DB here; we just show them in the UI
+    const hpMaxTotal = 10 + hpFromLevel + (totals.body * STAT_RESOURCE_MULT);
+    const mpMaxTotal = 10 + mpFromLevel + (totals.spirit * STAT_RESOURCE_MULT);
 
-    const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 1)) * 100, 100);
-    const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 1)) * 100, 100);
+    // Update the Max Value inputs in the UI so clamp logic knows the limit
+    setSafeValue('char-hp-max', hpMaxTotal);
+    setSafeValue('char-mp-max', mpMaxTotal);
+
+    // 4. Get Current Values (now that we know the Max)
+    // We pull from the DOM because the user might have just typed a new number
+    const hpCurr = parseFloat(document.getElementById('char-hp-current').value) || char.hpCurrent || 0;
+    const mpCurr = parseFloat(document.getElementById('char-mp-current').value) || char.mpCurrent || 0;
+
+    // 5. Update the Visual Bars (Red and Blue Fill)
+    updateVisualBars(hpCurr, hpMaxTotal, mpCurr, mpMaxTotal);
+    
+    // 6. Calculate Percentages for Sidebar/EXP
+    const hpPerc = Math.min((hpCurr / (hpMaxTotal || 1)) * 100, 100);
+    const mpPerc = Math.min((mpCurr / (mpMaxTotal || 1)) * 100, 100);
     const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
 
-    // Sidebar and Sheet Sync
+    // 7. Sync All UI Sections
     document.getElementById('active-char-hud').classList.remove('hide-default'); 
     syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
-    
-    // Pass the whole bonuses object, but the UI function must know to look in .totals
     syncSheetDashboardUI(char, totals, hpPerc, mpPerc, bonuses, char.race); 
 }
 
@@ -2668,4 +2684,46 @@ async function prepAttributeEdit(id) {
         // Show Modal
         document.getElementById('attribute-modal').classList.remove('hide-default');
     } catch (e) { console.error("Error prepping attribute edit:", e); }
+}
+
+
+
+/* ==========================================================================
+   SECTION 15: GLOBAL UTILITIES & CLAMPING
+   ========================================================================== */
+
+    // Global function to keep any number within a specific range
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(value, max));
+    }
+
+    // Global function to sync the UI and return the "Safe" value
+    // Usage: const safeHP = getClampedValue('char-hp-current', 'char-hp-max');
+    function getClampedResource(currentId, maxId) {
+        const maxVal = parseInt(document.getElementById(maxId).value) || 0;
+        const currentInput = document.getElementById(currentId);
+        let currentVal = parseInt(currentInput.value) || 0;
+
+        // Apply the clamp
+        const safeVal = clamp(currentVal, 0, maxVal);
+        
+        // Update UI immediately so the user sees it "snap"
+        currentInput.value = safeVal;
+        
+        return safeVal;
+    }
+
+    function updateVisualBars(hp, hpMax, mp, mpMax) {
+    const hpFill = document.getElementById('char-hp-fill-main');
+    const mpFill = document.getElementById('char-mp-fill-main');
+
+    if (hpFill) {
+        const hpPercent = (hp / hpMax) * 100;
+        hpFill.style.width = `${clamp(hpPercent, 0, 100)}%`;
+    }
+
+    if (mpFill) {
+        const mpPercent = (mp / mpMax) * 100;
+        mpFill.style.width = `${clamp(mpPercent, 0, 100)}%`;
+    }
 }

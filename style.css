@@ -1,4 +1,9 @@
 /* ==========================================================================
+   --- Version 0.4.1 ---
+   ========================================================================== */
+
+
+/* ==========================================================================
    --- 1. GLOBAL RESET, BASE & SCROLLBARS ---
    ========================================================================== */
 body {
@@ -844,7 +849,7 @@ select.form-input {
     font-weight: 800; font-family: 'Courier New', monospace; font-size: 1.1rem;
     cursor: default; pointer-events: none;
 }
-
+#char-hp-current, #char-hp-max { color: #ef4444 !important; }
 #char-mp-current, #char-mp-max { color: #3b82f6 !important; }
 
 .display-only { background: #09090b; border: 1px solid #27272a; padding: 8px 15px; border-radius: 8px; display: inline-flex; }
