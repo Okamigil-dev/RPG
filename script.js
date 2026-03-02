@@ -1,5 +1,5 @@
 /* =========================================================
-   SCRIPT VERSION: 0.2.5
+   SCRIPT VERSION: 0.3.1
    DATE: 2026-03-02 
    ========================================================= */
 
@@ -1987,230 +1987,295 @@ async function loadMasterRaceList() {
 }
 
 /* ==========================================================================
-   SECTION 10.2: CLASS REGISTRY (Version 0.3 - Modal Edition)
+   SECTION 10.2: CLASS REGISTRY (Version 0.3.1 - Traits & Attributes)
    ========================================================================== */
 
-let currentClassAttributes = {}; 
+    let currentClassAttributes = {}; 
+    let currentClassTraits = []; // NEW: Array to hold selected traits
 
-// --- A. MODAL CONTROLS ---
+    // --- A. MODAL CONTROLS ---
 
-function openClassModal() {
-    resetClassForm(); // Clear old data
-    populateClassAttrPicker(); // Load stats
-    setSafeText('class-modal-title', "Register New Class");
-    document.getElementById('class-modal').classList.remove('hide-default');
-}
+    function openClassModal() {
+        resetClassForm(); 
+        populateClassAttrPicker(); 
+        populateClassTraitPicker(); // NEW: Load traits
+        setSafeText('class-modal-title', "Register New Class");
+        document.getElementById('class-modal').classList.remove('hide-default');
+    }
 
-function closeClassModal() {
-    document.getElementById('class-modal').classList.add('hide-default');
-}
+    function closeClassModal() {
+        document.getElementById('class-modal').classList.add('hide-default');
+    }
 
-// --- B. HELPER FUNCTIONS ---
+    // --- B. HELPER FUNCTIONS (Attributes) ---
 
-async function populateClassAttrPicker() {
-    const select = document.getElementById('class-attr-picker');
-    if (!select) return;
-    
-    select.innerHTML = '<option value="">Select stat bonus...</option>';
-    
-    try {
-        const snap = await firestore.collection('master_attributes').orderBy('name').get();
-        attributeDefinitions = {}; 
+    async function populateClassAttrPicker() {
+        const select = document.getElementById('class-attr-picker');
+        if (!select) return;
         
-        snap.forEach(doc => {
-            const d = doc.data();
-            attributeDefinitions[d.key] = d.name; 
+        select.innerHTML = '<option value="">Select stat bonus...</option>';
+        
+        try {
+            const snap = await firestore.collection('master_attributes').orderBy('name').get();
+            attributeDefinitions = {}; 
             
-            if (!currentClassAttributes.hasOwnProperty(d.key)) {
-                const opt = document.createElement('option');
-                opt.value = d.key;
-                opt.innerText = d.name;
-                select.appendChild(opt);
-            }
-        });
-    } catch (e) { console.error("Attr Load Error:", e); }
-}
-
-function addClassAttr() {
-    const select = document.getElementById('class-attr-picker');
-    const key = select.value;
-    if (!key) return;
-
-    currentClassAttributes[key] = 0; 
-    renderClassAttributes();
-    populateClassAttrPicker(); 
-}
-
-function removeClassAttr(key) {
-    delete currentClassAttributes[key];
-    renderClassAttributes();
-    populateClassAttrPicker();
-}
-
-function updateClassAttrValue(key, val) {
-    currentClassAttributes[key] = parseFloat(val) || 0;
-}
-
-function renderClassAttributes() {
-    const container = document.getElementById('class-dynamic-attributes');
-    if (!container) return;
-    container.innerHTML = "";
-
-    if (Object.keys(currentClassAttributes).length === 0) {
-        container.innerHTML = `<div class="text-muted text-center" style="font-size:0.8rem; padding:10px;">No bonuses defined.</div>`;
-        return;
+            snap.forEach(doc => {
+                const d = doc.data();
+                attributeDefinitions[d.key] = d.name; 
+                if (!currentClassAttributes.hasOwnProperty(d.key)) {
+                    const opt = document.createElement('option');
+                    opt.value = d.key;
+                    opt.innerText = d.name;
+                    select.appendChild(opt);
+                }
+            });
+        } catch (e) { console.error("Attr Load Error:", e); }
     }
 
-    for (const [key, value] of Object.entries(currentClassAttributes)) {
-        const name = attributeDefinitions[key] || key;
-        
-        const div = document.createElement('div');
-        div.className = "flex-row space-between p-s trait-item-border mb-s";
-        div.style.background = "#27272a";
-        div.innerHTML = `
-            <strong class="text-muted" style="width: 140px;">${name}</strong>
-            <input type="number" class="form-input" style="width: 80px; text-align: right;" 
-                   value="${value}" step="0.1" onchange="updateClassAttrValue('${key}', this.value)">
-            <button class="btn-icon-tiny btn-danger" onclick="removeClassAttr('${key}')">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        `;
-        container.appendChild(div);
+    function addClassAttr() {
+        const select = document.getElementById('class-attr-picker');
+        const key = select.value;
+        if (!key) return;
+        currentClassAttributes[key] = 0; 
+        renderClassAttributes();
+        populateClassAttrPicker(); 
     }
-}
 
-// --- C. MAIN CRUD ---
+    function removeClassAttr(key) {
+        delete currentClassAttributes[key];
+        renderClassAttributes();
+        populateClassAttrPicker();
+    }
 
-async function saveMasterClass() {
-    const classId = document.getElementById('m-class-id').value;
-    const name = document.getElementById('m-class-name').value.trim();
-    if (!name) return alert("Class name required!");
+    function updateClassAttrValue(key, val) {
+        currentClassAttributes[key] = parseFloat(val) || 0;
+    }
 
-    const classData = {
-        name: name,
-        tier: parseInt(document.getElementById('m-class-tier').value) || 1,
-        mainStat: document.getElementById('m-class-main-stat').value,
-        
-        // Save the dynamic map
-        attributes: currentClassAttributes,
-        
-        requirements: document.getElementById('m-class-reqs').value.trim(),
-        description: document.getElementById('m-class-desc').value.trim(),
-        traits: document.getElementById('m-class-traits').value.split(',').map(t => t.trim()).filter(t => t !== ""),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
+    function renderClassAttributes() {
+        const container = document.getElementById('class-dynamic-attributes');
+        if (!container) return;
+        container.innerHTML = "";
 
-    try {
-        if (classId) {
-            await firestore.collection('master_classes').doc(classId).update(classData);
-            if(typeof showToast === "function") showToast("Class Updated");
-        } else {
-            classData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-            await firestore.collection('master_classes').add(classData);
-            if(typeof showToast === "function") showToast("Class Created");
-        }
-        closeClassModal(); // Close the modal on success
-        loadMasterClassList();
-    } catch (e) { console.error(e); }
-}
-
-async function loadMasterClassList() {
-    const list = document.getElementById('master-class-list');
-    if (!list) return;
-
-    try {
-        const snap = await firestore.collection('master_classes').orderBy('tier').get();
-        list.innerHTML = "";
-
-        if (snap.empty) {
-            list.innerHTML = '<p class="text-muted text-center" style="padding:20px;">No classes registered yet.</p>';
+        if (Object.keys(currentClassAttributes).length === 0) {
+            container.innerHTML = `<div class="text-muted text-center" style="font-size:0.8rem; padding:10px;">No bonuses defined.</div>`;
             return;
         }
 
-        snap.forEach(doc => {
-            const d = doc.data();
+        for (const [key, value] of Object.entries(currentClassAttributes)) {
+            const name = attributeDefinitions[key] || key;
+            const div = document.createElement('div');
+            div.className = "flex-row space-between p-s trait-item-border mb-s";
+            div.style.background = "#27272a";
+            div.innerHTML = `
+                <strong class="text-muted" style="width: 140px;">${name}</strong>
+                <input type="number" class="form-input" style="width: 80px; text-align: right;" 
+                    value="${value}" step="0.1" onchange="updateClassAttrValue('${key}', this.value)">
+                <button class="btn-icon-tiny btn-danger" onclick="removeClassAttr('${key}')">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+            container.appendChild(div);
+        }
+    }
+
+    // --- C. HELPER FUNCTIONS (Traits) ---
+
+    async function populateClassTraitPicker() {
+        const select = document.getElementById('class-trait-picker');
+        if (!select) return;
+        select.innerHTML = '<option value="">Select trait...</option>';
+
+        try {
+            // Load all traits
+            const snap = await firestore.collection('master_traits').orderBy('name').get();
+            snap.forEach(doc => {
+                const d = doc.data();
+                // Only show if not already added
+                if (!currentClassTraits.includes(d.name)) {
+                    const opt = document.createElement('option');
+                    opt.value = d.name; // We save the NAME, not ID, for simplicity in display
+                    opt.innerText = d.name;
+                    select.appendChild(opt);
+                }
+            });
+        } catch (e) { console.error("Trait Load Error:", e); }
+    }
+
+    function addClassTrait() {
+        const select = document.getElementById('class-trait-picker');
+        const val = select.value;
+        if (!val) return;
+
+        if (!currentClassTraits.includes(val)) {
+            currentClassTraits.push(val);
+            renderClassTraits();
+            populateClassTraitPicker(); // Refresh list
+        }
+    }
+
+    function removeClassTrait(name) {
+        currentClassTraits = currentClassTraits.filter(t => t !== name);
+        renderClassTraits();
+        populateClassTraitPicker();
+    }
+
+    function renderClassTraits() {
+        const container = document.getElementById('class-active-traits');
+        if (!container) return;
+        container.innerHTML = "";
+
+        currentClassTraits.forEach(t => {
+            const tag = document.createElement('div');
+            tag.className = "trait-tag flex-row gap-s";
+            tag.style.padding = "4px 8px";
+            tag.innerHTML = `
+                <span>${t}</span>
+                <i class="fa-solid fa-xmark" style="cursor:pointer; opacity:0.7;" onclick="removeClassTrait('${t}')"></i>
+            `;
+            container.appendChild(tag);
+        });
+    }
+
+    // --- D. MAIN CRUD ---
+
+    async function saveMasterClass() {
+        const classId = document.getElementById('m-class-id').value;
+        const name = document.getElementById('m-class-name').value.trim();
+        if (!name) return alert("Class name required!");
+
+        const classData = {
+            name: name,
+            tier: parseInt(document.getElementById('m-class-tier').value) || 1,
+            mainStat: document.getElementById('m-class-main-stat').value,
+            attributes: currentClassAttributes,
             
-            let bonusSummary = "";
-            if (d.attributes && Object.keys(d.attributes).length > 0) {
-                const entries = Object.entries(d.attributes).slice(0, 4);
-                bonusSummary = entries.map(([k, v]) => `<span style="color:#a1a1aa;">${k}:</span> <span style="color:#fff;">${v}</span>`).join(' | ');
-                if (Object.keys(d.attributes).length > 4) bonusSummary += " ...";
+            // NEW: Save the dynamic trait array
+            traits: currentClassTraits,
+            
+            requirements: document.getElementById('m-class-reqs').value.trim(),
+            description: document.getElementById('m-class-desc').value.trim(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+            if (classId) {
+                await firestore.collection('master_classes').doc(classId).update(classData);
+                if(typeof showToast === "function") showToast("Class Updated");
             } else {
-                bonusSummary = "No Stat Bonuses";
+                classData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                await firestore.collection('master_classes').add(classData);
+                if(typeof showToast === "function") showToast("Class Created");
+            }
+            closeClassModal(); 
+            loadMasterClassList();
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadMasterClassList() {
+        const list = document.getElementById('master-class-list');
+        if (!list) return;
+
+        try {
+            const snap = await firestore.collection('master_classes').orderBy('tier').get();
+            list.innerHTML = "";
+
+            if (snap.empty) {
+                list.innerHTML = '<p class="text-muted text-center" style="padding:20px;">No classes registered yet.</p>';
+                return;
             }
 
-            const card = document.createElement('div');
-            card.className = "panel-card mb-s";
-            card.style.background = "#18181b";
-            card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#3f3f46'}`;
-            
-            const traitTags = (d.traits || []).map(t => 
-                `<span style="background:#312e81; color:#c7d2fe; padding:2px 6px; border-radius:4px; font-size:0.7rem; margin-right:4px;">${t}</span>`
-            ).join('');
+            snap.forEach(doc => {
+                const d = doc.data();
+                
+                // Render Attributes Summary
+                let bonusSummary = "";
+                if (d.attributes && Object.keys(d.attributes).length > 0) {
+                    const entries = Object.entries(d.attributes).slice(0, 4);
+                    bonusSummary = entries.map(([k, v]) => `<span style="color:#a1a1aa;">${k}:</span> <span style="color:#fff;">${v}</span>`).join(' | ');
+                    if (Object.keys(d.attributes).length > 4) bonusSummary += " ...";
+                } else {
+                    bonusSummary = "No Stat Bonuses";
+                }
 
-            card.innerHTML = `
-                <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
-                    <div style="flex: 1;">
-                        <div class="flex-row" style="gap:10px; align-items: center; margin-bottom: 8px;">
-                            <strong style="color:white; font-size: 1.1rem;">${d.name}</strong> 
-                            <span class="join-code-pill" style="opacity:0.6;">T${d.tier}</span>
-                            <span class="join-code-pill" style="color:#a855f7;">${d.mainStat}</span>
+                // Render Trait Tags
+                const traitTags = (d.traits || []).map(t => 
+                    `<span style="background:#312e81; color:#c7d2fe; padding:2px 6px; border-radius:4px; font-size:0.7rem; margin-right:4px;">${t}</span>`
+                ).join('');
+
+                const card = document.createElement('div');
+                card.className = "panel-card mb-s";
+                card.style.background = "#18181b";
+                card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#3f3f46'}`;
+                
+                card.innerHTML = `
+                    <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div class="flex-row" style="gap:10px; align-items: center; margin-bottom: 8px;">
+                                <strong style="color:white; font-size: 1.1rem;">${d.name}</strong> 
+                                <span class="join-code-pill" style="opacity:0.6;">T${d.tier}</span>
+                                <span class="join-code-pill" style="color:#a855f7;">${d.mainStat}</span>
+                            </div>
+                            <div class="mb-s" style="font-size: 0.8rem; background: #111; padding: 6px; border-radius: 4px;">
+                                ${bonusSummary}
+                            </div>
+                            <div>${traitTags}</div>
                         </div>
-                        <div class="mb-s" style="font-size: 0.8rem; background: #111; padding: 6px; border-radius: 4px;">
-                            ${bonusSummary}
+                        <div class="flex-row" style="gap: 5px;">
+                            <button class="btn-small" onclick="prepClassEdit('${doc.id}')" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
                         </div>
-                        <div>${traitTags}</div>
                     </div>
-                    <div class="flex-row" style="gap: 5px;">
-                        <button class="btn-small" onclick="prepClassEdit('${doc.id}')" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)" title="Delete">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            list.appendChild(card);
-        });
-    } catch (e) {
-        console.error("Class Load Error:", e);
-        list.innerHTML = `<p style="color:#ef4444; text-align:center;">Error: ${e.message}</p>`;
+                `;
+                list.appendChild(card);
+            });
+        } catch (e) {
+            console.error("Class Load Error:", e);
+            list.innerHTML = `<p style="color:#ef4444; text-align:center;">Error: ${e.message}</p>`;
+        }
     }
-}
 
-async function prepClassEdit(id) {
-    const d = (await firestore.collection('master_classes').doc(id).get()).data();
-    if (!d) return;
+    async function prepClassEdit(id) {
+        const d = (await firestore.collection('master_classes').doc(id).get()).data();
+        if (!d) return;
 
-    document.getElementById('m-class-id').value = id;
-    setSafeValue('m-class-name', d.name);
-    setSafeValue('m-class-tier', d.tier);
-    setSafeValue('m-class-main-stat', d.mainStat);
-    setSafeValue('m-class-reqs', d.requirements || "");
-    setSafeValue('m-class-desc', d.description || "");
-    setSafeValue('m-class-traits', (d.traits || []).join(", "));
+        document.getElementById('m-class-id').value = id;
+        setSafeValue('m-class-name', d.name);
+        setSafeValue('m-class-tier', d.tier);
+        setSafeValue('m-class-main-stat', d.mainStat);
+        setSafeValue('m-class-reqs', d.requirements || "");
+        setSafeValue('m-class-desc', d.description || "");
+        
+        // LOAD LISTS
+        currentClassAttributes = d.attributes || {};
+        currentClassTraits = d.traits || []; // NEW
+        
+        setSafeText('class-modal-title', "Editing Class: " + d.name);
+        document.getElementById('class-modal').classList.remove('hide-default');
+        
+        await populateClassAttrPicker();
+        renderClassAttributes();
+        
+        // NEW
+        await populateClassTraitPicker();
+        renderClassTraits();
+    }
 
-    currentClassAttributes = d.attributes || {};
-    
-    // UI Update: Open Modal
-    setSafeText('class-modal-title', "Editing Class: " + d.name);
-    document.getElementById('class-modal').classList.remove('hide-default');
-    
-    await populateClassAttrPicker();
-    renderClassAttributes();
-}
-
-function resetClassForm() {
-    document.getElementById('m-class-id').value = "";
-    setSafeValue('m-class-name', "");
-    setSafeValue('m-class-tier', "1");
-    setSafeValue('m-class-main-stat', "");
-    setSafeValue('m-class-desc', "");
-    setSafeValue('m-class-reqs', "");
-    setSafeValue('m-class-traits', "");
-    
-    currentClassAttributes = {};
-    renderClassAttributes();
-}
+    function resetClassForm() {
+        document.getElementById('m-class-id').value = "";
+        setSafeValue('m-class-name', "");
+        setSafeValue('m-class-tier', "1");
+        setSafeValue('m-class-main-stat', "");
+        setSafeValue('m-class-desc', "");
+        setSafeValue('m-class-reqs', "");
+        
+        currentClassAttributes = {};
+        currentClassTraits = []; // Reset traits
+        
+        renderClassAttributes();
+        renderClassTraits(); // Clear display
+    }
 
 // ==========================================
 // --- 10.3 SKILL REGISTRY ---

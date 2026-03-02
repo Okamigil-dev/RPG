@@ -1,3 +1,4 @@
+<!-- Version 0.3.1 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1033,7 +1034,18 @@
                         <input type="text" id="m-class-reqs" class="form-input" placeholder="Requirements (e.g. 'Body 3')">
                     </div>
                     <div class="mb-s">
-                        <input type="text" id="m-class-traits" class="form-input" placeholder="Traits (comma separated)">
+                        <div class="mb-m p-s" style="background: #111; border-radius: 4px;">
+                            <label class="form-label text-muted small">Class Traits & Abilities</label>
+                            <div class="flex-row gap-s mb-s mt-s">
+                                <select id="class-trait-picker" class="form-input" style="flex-grow: 1;">
+                                    <option value="">Loading traits...</option>
+                                </select>
+                                <button class="btn-secondary" onclick="addClassTrait()">
+                                    <i class="fa-solid fa-plus"></i> Add
+                                </button>
+                            </div>
+                            <div id="class-active-traits" class="flex-row gap-s flex-wrap" style="min-height: 40px;"></div>
+                        </div>
                     </div>
                     
                     <textarea id="m-class-desc" class="form-input mb-m" style="height: 80px;" placeholder="Class Description..."></textarea>
