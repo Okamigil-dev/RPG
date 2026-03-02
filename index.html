@@ -1,4 +1,4 @@
-<!-- Version 0.3.1 -->
+<!-- Version 0.3.6 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -77,17 +77,19 @@
             ---- 1. WORLD CLOCK ----
             ============================-->
             
-            <div id="game-ui" class="game-ui hide-default">
-                <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
-                <div id="time-display" class="time-text">00:00:00</div>
-            
-                <div id="master-quick-controls" class="mt-m hide-default">
-                    <div class="flex-row" style="justify-content: center; gap: 8px;">
-                        <button onclick="toggleTime()" id="sidebar-play-btn" class="btn-small">
-                            <i class="fa-solid fa-play"></i>
-                        </button>
-                        <button onclick="setSpeed(1)" class="btn-small">1x</button>
-                        <button onclick="setSpeed(10)" class="btn-small">10x</button>
+            <div class="sidebar-panel">
+                <div id="game-ui" class="game-ui">
+                    <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
+                    <div id="time-display" class="time-text">09:00:17</div>
+                    
+                    <div id="master-quick-controls" class="mt-m">
+                        <div class="flex-row" style="justify-content: center; gap: 8px;">
+                            <button onclick="toggleTime()" id="sidebar-play-btn" class="btn-small">
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                            <button onclick="setSpeed(1)" class="btn-small">1x</button>
+                            <button onclick="setSpeed(10)" class="btn-small">10x</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -97,27 +99,26 @@
             ---- 2. CHATBOX & DICE TRAY ----
             ============================-->
          
-            <div id="dice-tray" class="dice-tray">
-                <div id="dice-log" class="dice-log">
-                    <div class="dice-log-placeholder">No messages yet</div>
-                </div>
+            <div class="sidebar-panel flex-grow">
+                <div id="dice-tray" class="dice-tray">
+                    <div id="dice-log" class="dice-log">
+                        </div>
+                    
+                    <div class="chat-input-area flex-row gap-s">
+                        <input type="text" id="chat-msg-input" class="form-input flex-grow" placeholder="Type a message...">
+                        <button onclick="sendChatMessage()" class="btn-primary" style="padding: 8px 12px;">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
                 
-                <div class="chat-input-area flex-row gap-s" style="padding: 10px; border-top: 1px solid #333; border-bottom: 1px solid #333;">
-                    <input type="text" id="chat-msg-input" class="form-input flex-grow" placeholder="Type a message..." onkeypress="handleChatEnter(event)">
-                    <button onclick="sendChatMessage()" class="btn-primary" style="padding: 8px 12px;"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            
-                <div class="dice-grid">
-                    <button onclick="rollDice(6, this)" class="dice-btn">
-                        <i class="fa-solid fa-dice-d6"></i>
-                        <span class="roll-number"></span>
-                    </button>
-                    <button onclick="rollDice(20, this)" class="dice-btn">
-                        <i class="fa-solid fa-dice-d20"></i>
-                        <span class="roll-number"></span>
-                    </button>
+                    <div class="dice-grid">
+                        <button onclick="rollDice(6, this)" class="dice-btn"><i class="fa-solid fa-dice-d6"></i></button>
+                        <button onclick="rollDice(20, this)" class="dice-btn"><i class="fa-solid fa-dice-d20"></i></button>
+                    </div>
                 </div>
             </div>
+
+            <!-- END OF SIDEBAR -->
         </div>
 
         <div id="main-content" class="main-content">
@@ -235,7 +236,7 @@
                                 <div class="status-header">
                                     <div class="status-label"><i class="fa-solid fa-heart icon-hp"></i> Health</div>
                                     <div class="status-values">
-                                        <input type="number" id="char-hp-current" onchange="saveCharacter()" class="resource-input-minimal">
+                                        <input type="number" id="char-hp-current" class="resource-input-minimal" min="0" onchange="saveCharacter()">
                                         <span class="resource-divider">/</span>
                                         <input type="number" id="char-hp-max" class="resource-input-minimal" readonly>
                                     </div>
@@ -247,7 +248,7 @@
                                 <div class="status-header">
                                     <div class="status-label"><i class="fa-solid fa-droplet icon-mp"></i> Mana</div>
                                     <div class="status-values">
-                                        <input type="number" id="char-mp-current" onchange="saveCharacter()" class="resource-input-minimal">
+                                        <input type="number" id="char-mp-current" class="resource-input-minimal" min="0" onchange="saveCharacter()">
                                         <span class="resource-divider">/</span>
                                         <input type="number" id="char-mp-max" class="resource-input-minimal" readonly>
                                     </div>
@@ -292,34 +293,36 @@
                     </div>
 
 
+                    <!-- GALLERY, NOTES -->
+                    <div class="stats-resources-wrapper mt-m">
 
-                    <div class="panel-card mt-m">
-                        <h3 class="panel-subtitle">Adventurer's Notes</h3>
-                        <textarea 
-                            id="char-notes" 
-                            class="notes-textarea" 
-                            placeholder="Quest logs, inventory, or secrets..." 
-                            onchange="saveCharacter()"></textarea>
-                    </div>
-                    
-                    <!-- Gallery Box -->
-                    <div class="panel-card mt-m">
-                        <div class="panel-header-row">
-                            <h3 class="panel-subtitle" style="margin:0;">Character Gallery</h3>
-                        </div>
-                    
-                        <input 
-                            type="file" 
-                            id="slot-upload" 
-                            accept="image/*" 
-                            style="display: none;" 
-                            onchange="handleWebPUpload(this, saveImageToNextSlot, 512, 0.6)"
-                        >
-                    
-                        <div id="char-gallery-grid" class="gallery-grid">
+                        <div class="panel-card">
+                            <div class="panel-header-row">
+                                <h3 class="panel-subtitle" style="margin:0;">Character Gallery</h3>
                             </div>
+
+                            <input 
+                                type="file" 
+                                id="slot-upload" 
+                                accept="image/*" 
+                                style="display: none;" 
+                                onchange="handleWebPUpload(this, saveImageToNextSlot, 512, 0.6)"
+                            >
+
+                            <div id="char-gallery-grid" class="gallery-grid">
+                                </div>
+                        </div>
+
+                        <div class="panel-card">
+                            <h3 class="panel-subtitle">Adventurer's Notes</h3>
+                            <textarea 
+                                id="char-notes" 
+                                class="notes-textarea" 
+                                placeholder="Quest logs, inventory, or secrets..." 
+                                onchange="saveCharacter()"></textarea>
+                        </div>
+
                     </div>
-                </div>
             </div>
 
             
@@ -1016,7 +1019,7 @@
                         <input type="text" id="m-class-main-stat" class="form-input" placeholder="Main Stat (e.g. Body, Strength)">
                     </div>
                     
-                    <div class="mb-m p-s" style="background: #111; border-radius: 4px;">
+                    <div class="mb-m p-s" >
                         <label class="form-label text-muted small" style="display:block; margin-bottom:5px;">Class Growth & Bonuses</label>
                         <div class="flex-row gap-s mb-s">
                             <select id="class-attr-picker" class="form-input" style="flex-grow: 1;">
@@ -1030,22 +1033,32 @@
                             </div>
                     </div>
 
-                    <div class="mb-s">
-                        <input type="text" id="m-class-reqs" class="form-input" placeholder="Requirements (e.g. 'Body 3')">
-                    </div>
-                    <div class="mb-s">
-                        <div class="mb-m p-s" style="background: #111; border-radius: 4px;">
-                            <label class="form-label text-muted small">Class Traits & Abilities</label>
-                            <div class="flex-row gap-s mb-s mt-s">
-                                <select id="class-trait-picker" class="form-input" style="flex-grow: 1;">
-                                    <option value="">Loading traits...</option>
-                                </select>
-                                <button class="btn-secondary" onclick="addClassTrait()">
-                                    <i class="fa-solid fa-plus"></i> Add
-                                </button>
-                            </div>
-                            <div id="class-active-traits" class="flex-row gap-s flex-wrap" style="min-height: 40px;"></div>
+                    <div class="mb-m">
+                        <label class="form-label text-muted small">Class Traits & Abilities</label>
+                        
+                        <div class="flex-row gap-s mb-s">
+                            <input type="text" id="class-trait-search" class="form-input" 
+                                placeholder="Search library..." onkeyup="populateClassTraitPicker()" style="flex: 2;">
+                            
+                            <select id="class-trait-filter" class="form-input" 
+                                    onchange="populateClassTraitPicker()" style="flex: 1;">
+                                <option value="All">All Types</option>
+                                <option value="General">General</option>
+                                <option value="Class">Class</option>
+                                <option value="Race">Race</option>
+                            </select>
                         </div>
+
+                        <div class="flex-row gap-s mb-s">
+                            <select id="class-trait-picker" class="form-input" style="flex-grow: 1;">
+                                <option value="">Loading traits...</option>
+                            </select>
+                            <button class="btn-secondary btn-add-fix" onclick="addClassTrait()">
+                                <i class="fa-solid fa-plus"></i> Add
+                            </button>
+                        </div>
+
+                        <div id="class-active-traits" class="registry-box"></div>
                     </div>
                     
                     <textarea id="m-class-desc" class="form-input mb-m" style="height: 80px;" placeholder="Class Description..."></textarea>
