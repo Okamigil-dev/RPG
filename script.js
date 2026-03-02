@@ -643,7 +643,7 @@ async function getFinalMaxStats(charData) {
 
 
 /* ==========================================================================
-   SECTION 7: CHARACTER UI & CRUD (RECOVERY VER 0.4.3)
+   SECTION 7: CHARACTER UI & CRUD (STABILITY FIX)
    ========================================================================== */
 
 function createNewCharacter() {
@@ -723,10 +723,14 @@ async function selectCharacter(id) {
             const notesEl = document.getElementById('char-notes');
             if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
 
-            updateHUD({ ...d, charLevel: activeCharLevel });
+            setSafeValue('char-hp-current', Math.floor(d.hpCurrent || 0));
+            setSafeValue('char-mp-current', Math.floor(d.mpCurrent || 0));
+
+            const nextLevelExp = (activeCharLevel + 1) * 200;
+            updateHUD({ ...d, charLevel: activeCharLevel, expMax: nextLevelExp });
             
             const selectionView = document.getElementById('char-selection-view');
-            if (!selectionView.classList.contains('hide-default')) {
+            if (selectionView && !selectionView.classList.contains('hide-default')) {
                 selectionView.classList.add('hide-default');
                 document.getElementById('char-sheet-view').classList.remove('hide-default');
             }
@@ -743,6 +747,9 @@ async function saveCharacter() {
         const mpIn = document.getElementById('char-mp-current');
         if (!hpIn || !mpIn) return; 
 
+        const doc = await charRef.get();
+        const currentData = doc.data();
+
         const data = {
             name: document.getElementById('char-name').value,
             race: document.getElementById('char-race').value,
@@ -751,7 +758,10 @@ async function saveCharacter() {
             mind: originalStats.mind || 0,
             spirit: originalStats.spirit || 0,
             hpCurrent: parseFloat(hpIn.value) || 0,
-            mpCurrent: parseFloat(mpIn.value) || 0
+            mpCurrent: parseFloat(mpIn.value) || 0,
+            portrait: currentData.portrait || 0,
+            gallery: currentData.gallery || [],
+            unlockedClasses: currentData.unlockedClasses || {}
         };
         await charRef.update(data);
         if (typeof showToast === "function") showToast("Character Saved.");
@@ -761,7 +771,7 @@ async function saveCharacter() {
 /* ============================
    SECTION 8: UPDATE HUD & UI SYNC
    ============================ */
-
+   
 async function updateHUD(char) {
     if (!char) return;
     const bonuses = await resolveAllStats(char);
@@ -774,23 +784,20 @@ async function updateHUD(char) {
     const hpMax = 10 + (char.charLevel * (bonuses.totals['hp_lv'] || 0)) + (totals.body * STAT_RESOURCE_MULT);
     const mpMax = 10 + (char.charLevel * (bonuses.totals['mp_lv'] || 0)) + (totals.spirit * STAT_RESOURCE_MULT);
 
-    // Sync Text Boxes
     setSafeValue('char-hp-max', Math.floor(hpMax));
     setSafeValue('char-mp-max', Math.floor(mpMax));
-    setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
-    setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
-
-    // Sync Bars
+    
     updateVisualBars(char.hpCurrent, hpMax, char.mpCurrent, mpMax);
 
     const hpP = (char.hpCurrent / (hpMax || 1)) * 100;
     const mpP = (char.mpCurrent / (mpMax || 1)) * 100;
-    const expP = ((char.expCurrent || 0) / ((char.charLevel + 1) * 200)) * 100;
+    const expP = ((char.expCurrent || 0) / (char.expMax || 1000)) * 100;
 
-    if (document.getElementById('active-char-hud')) document.getElementById('active-char-hud').classList.remove('hide-default'); 
+    const hudEl = document.getElementById('active-char-hud');
+    if (hudEl) hudEl.classList.remove('hide-default'); 
 
     syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax);
-    syncSheetDashboardUI(char, totals, bonuses); 
+    syncSheetDashboardUI(char, totals, bonuses, char.race); 
 }
 
 function syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax) {
@@ -817,13 +824,16 @@ function syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax) {
     setSafeText('hud-mod-mind', `MIN ${getMod(totals.mind)}`);
     setSafeText('hud-mod-spirit', `SPI ${getMod(totals.spirit)}`);
 
-    if (document.getElementById('hud-hp-fill')) document.getElementById('hud-hp-fill').style.width = hpP + "%";
-    if (document.getElementById('hud-mp-fill')) document.getElementById('hud-mp-fill').style.width = mpP + "%";
-    if (document.getElementById('hud-exp-fill')) document.getElementById('hud-exp-fill').style.width = expP + "%";
+    const hpFill = document.getElementById('hud-hp-fill');
+    const mpFill = document.getElementById('hud-mp-fill');
+    const expFill = document.getElementById('hud-exp-fill');
+    if (hpFill) hpFill.style.width = hpP + "%";
+    if (mpFill) mpFill.style.width = mpP + "%";
+    if (expFill) expFill.style.width = expP + "%";
     setSafeText('hud-exp-text', `${Math.floor(expP)}%`);
 }
 
-function syncSheetDashboardUI(char, totals, bonuses) {
+function syncSheetDashboardUI(char, totals, bonuses, raceName) {
     setSafeText('total-body-label', totals.body);
     setSafeText('total-mind-label', totals.mind);
     setSafeText('total-spirit-label', totals.spirit);
@@ -835,6 +845,7 @@ function syncSheetDashboardUI(char, totals, bonuses) {
         const bestMod = Math.max(Math.floor(totals.body/2), Math.floor(totals.mind/2));
         initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
     }
+    renderClassPills(char);
 }
 
 /* ==========================================================================
