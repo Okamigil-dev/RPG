@@ -669,6 +669,34 @@ body {
 }
 
 
+/* The new dedicated layout class */
+.side-by-side-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: stretch; /* Forces both boxes to be the same height */
+    margin-top: 20px;
+}
+
+/* Make Notes wider (Ratio 2:1) */
+.notes-column {
+    flex: 2; 
+    min-width: 300px;
+}
+
+/* Keep Gallery at a standard size */
+.gallery-column {
+    flex: 1;
+    min-width: 300px;
+}
+
+/* Ensure the textarea fills the extra space you just gave it */
+.notes-column .notes-textarea {
+    height: 100%;
+    min-height: 300px; /* Adjust this number to match the gallery height */
+}
+
+
 /* ==========================================================================
    --- 11. MASTER CONTROL PANEL ---
    ========================================================================== */

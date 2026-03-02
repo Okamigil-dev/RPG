@@ -297,18 +297,19 @@
 
                    
                     <!-- Gallery Box -->
-                     <div class="flex-row wrap gap-m mt-m align-start" style="align-items: flex-start;">
+                     <div class="side-by-side-row">
 
-                        <div class="panel-card flex-1" style="margin-top: 0;">
+                        <div class="panel-card notes-column" style="margin-top: 0; display: flex; flex-direction: column;">
                             <h3 class="panel-subtitle">Adventurer's Notes</h3>
                             <textarea 
                                 id="char-notes" 
                                 class="notes-textarea" 
                                 placeholder="Quest logs, inventory, or secrets..." 
-                                onchange="saveCharacter()"></textarea>
+                                onchange="saveCharacter()"
+                                style="flex-grow: 1;"></textarea>
                         </div>
                         
-                        <div class="panel-card flex-1" style="margin-top: 0;">
+                        <div class="panel-card gallery-column" style="margin-top: 0;">
                             <div class="panel-header-row">
                                 <h3 class="panel-subtitle" style="margin:0;">Character Gallery</h3>
                             </div>
