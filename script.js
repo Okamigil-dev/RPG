@@ -5,7 +5,7 @@
 // --- 1.1 CONSTANTS ---
 const MAX_CHAR_LEVEL = 60;      
 const MAX_ALLOCATED_STAT = 20;  
-const MAX_GALLERY_SLOTS = 16;
+const MAX_GALLERY_SLOTS = 8;
 const STAT_RESOURCE_MULT = 5;
 
 // --- 1.2 STATE VARIABLES ---
@@ -478,6 +478,166 @@ function calculateLevelFromEXP(exp) {
     return Math.min(finalLv, MAX_CHAR_LEVEL);
 }
 
+// Safely gets a value from the dynamic attributes map
+function getAttrValue(source, key) {
+    if (!source || !source.attributes) return 0;
+    return parseFloat(source.attributes[key]) || 0;
+}
+
+function getAttrValue(source, key) {
+    if (!source || !source.attributes) return 0;
+    return parseFloat(source.attributes[key]) || 0;
+}
+
+/** * Core Engine: Gathers all sources (Race, Classes, etc.) and sums their attributes.
+ */
+async function resolveAllStats(charData) {
+    const registry = {
+        inherent: {}, // Race, Class, Background
+        equipment: {}, // Weapons, Armor, Accessories
+        status: {},    // Potions, Spells, Buffs
+        totals: {}     // Final sum of everything
+    };
+
+    const sources = [];
+
+    // --- 1. GATHER INHERENT SOURCES ---
+    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
+    if (!raceSnap.empty) {
+        let d = raceSnap.docs[0].data();
+        d._sourceType = 'inherent';
+        d._sourceName = 'Race';
+        sources.push(d);
+    }
+
+    for (const className of Object.keys(charData.unlockedClasses || {})) {
+        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
+        if (!classSnap.empty) {
+            let d = classSnap.docs[0].data();
+            d._sourceType = 'inherent';
+            d._sourceName = className;
+            sources.push(d);
+        }
+    }
+
+    // --- 2. GATHER EQUIPMENT SOURCES (Placeholder for your future Item system) ---
+    // (charData.equippedItems || []).forEach(item => { ... push to sources with _sourceType: 'equipment' ... });
+
+    // --- 3. GATHER STATUS SOURCES (Placeholder for your future Buff system) ---
+    // (charData.activeBuffs || []).forEach(buff => { ... push to sources with _sourceType: 'status' ... });
+
+
+    // --- 4. THE MULTI-LAYER MERGE ---
+    sources.forEach(src => {
+        if (!src.attributes) return;
+        
+        const type = src._sourceType; 
+        const name = src._sourceName; 
+
+        for (const [key, value] of Object.entries(src.attributes)) {
+            const val = parseFloat(value) || 0;
+
+            // Save to specific category (The "Receipt")
+            if (!registry[type][key]) registry[type][key] = {};
+            registry[type][key][name] = val;
+
+            // Add to the final totals map
+            registry.totals[key] = (registry.totals[key] || 0) + val;
+        }
+    });
+
+    return registry;
+}
+
+
+// Fetches the 'Nice Name' (e.g., "HP per Level") for a key (e.g., "hp_lv")
+async function getAttributeDefinitions() {
+    if (Object.keys(attributeDefinitions).length > 0) return attributeDefinitions;
+    const snap = await firestore.collection('master_attributes').get();
+    snap.forEach(doc => {
+        const d = doc.data();
+        attributeDefinitions[d.key] = d.name;
+    });
+    return attributeDefinitions;
+}
+
+// Calculates Vitals (HP/MP) based on dynamic attributes
+async function getFinalMaxStats(charData) {
+    // 1. Get Race/Class data
+    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
+    const raceD = raceSnap.empty ? {} : raceSnap.docs[0].data();
+
+    // 2. Start with Base 10
+    let baseHP = 10;
+    let baseMP = 10;
+
+    // 3. Add Level-based bonuses from Race
+    baseHP += (charData.charLevel * getAttrValue(raceD, 'hp_lv'));
+    baseMP += (charData.charLevel * getAttrValue(raceD, 'mp_lv'));
+
+    // 4. Add Level-based bonuses from Classes
+    for (const [className, info] of Object.entries(charData.unlockedClasses || {})) {
+        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
+        if (!classSnap.empty) {
+            const classD = classSnap.docs[0].data();
+            baseHP += (info.level * getAttrValue(classD, 'hp_lv'));
+            baseMP += (info.level * getAttrValue(classD, 'mp_lv'));
+        }
+    }
+
+    // 5. Add Stat-based bonuses (Body for HP, Spirit for MP)
+    // We get the TOTAL stat (Base + Race Bonus)
+    const totalBody = (charData.body || 0) + getAttrValue(raceD, 'body');
+    const totalSpirit = (charData.spirit || 0) + getAttrValue(raceD, 'spirit');
+    
+    baseHP += (totalBody * STAT_RESOURCE_MULT);
+    baseMP += (totalSpirit * STAT_RESOURCE_MULT);
+
+    // 6. Final Percentages
+    const finalHP = Math.floor((baseHP + (charData.hpBonusFlat || 0)) * (1 + (charData.hpBonusPerc || 0) / 100));
+    const finalMP = Math.floor((baseMP + (charData.mpBonusFlat || 0)) * (1 + (charData.mpBonusPerc || 0) / 100));
+
+    return { finalHP, finalMP };
+}
+
+// Calculates Regens, Speed, and AC dynamically
+async function getDynamicTotals(charData) {
+    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
+    const raceD = raceSnap.empty ? {} : raceSnap.docs[0].data();
+
+    // Sum up everything with the key 'hp_regen', 'speed', etc.
+    let totals = {
+        hp_regen: (charData.hpMax * 0.00208333) + getAttrValue(raceD, 'hp_regen'),
+        mp_regen: (charData.mpMax * 0.00208333) + getAttrValue(raceD, 'mp_regen'),
+        speed: getAttrValue(raceD, 'speed') || 5,
+        ac: 10 + getAttrValue(raceD, 'ac')
+    };
+
+    // Add Class bonuses to these same keys
+    for (const className of Object.keys(charData.unlockedClasses || {})) {
+        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
+        if (!classSnap.empty) {
+            const classD = classSnap.docs[0].data();
+            totals.hp_regen += getAttrValue(classD, 'hp_regen');
+            totals.mp_regen += getAttrValue(classD, 'mp_regen');
+            totals.speed += getAttrValue(classD, 'speed');
+            totals.ac += getAttrValue(classD, 'ac');
+        }
+    }
+    return totals;
+}
+
+
+
+
+
+
+
+
+
+
+
+/*
 //Calculates Initiative, Speed, Armor Class
 async function getFinalCombatStats(charData) {
     const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
@@ -543,6 +703,20 @@ async function getTotalRegen(charData) {
     }
     return { totalHPRegen, totalMPRegen };
 }
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /* ==========================================================================
@@ -740,12 +914,14 @@ async function deleteCharacter(event, charId, name) {
     } catch (err) { alert("Error: " + err.message); }
 }
 
+
+// in case of error on regen come here
 async function applyPassiveRegen() {
     if (!currentCharacterId) return;
     const charSnap = await firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get();
     const charData = charSnap.data();
     
-    const { totalHPRegen, totalMPRegen } = await getTotalRegen(charData);
+    const { totalHPRegen, totalMPRegen } = await getDynamicTotals(charData);
 
     const hpInput = document.getElementById('char-hp-current');
     const mpInput = document.getElementById('char-mp-current');
@@ -888,7 +1064,6 @@ function saveImageToNextSlot(base64Data) {
             
             renderGallery(gallery, activeIndex);
             
-            // 4. Update HUD immediately
             document.getElementById('hud-portrait').style.backgroundImage = `url(${base64Data})`;
         });
     });
@@ -1022,42 +1197,44 @@ function renderSkills(charData) {
     });
 }
 
-
+/* ============================
+   === UPDATE HUD & UI SYNC ===
+   ============================ */
 /** * MAIN CONTROLLER: Calculates data once and delegates to specific UI sections.
  */
 async function updateHUD(char) {
     if (!char) return;
 
-    // 1. Calculate Core Data
+    // Get the sum of all bonuses from all sources
+    const bonuses = await resolveAllStats(char);
+
+    // Calculate Totals (Base + Library Bonuses)
+    const totals = {
+        body: (char.body || 0) + (bonuses['body'] || 0),
+        mind: (char.mind || 0) + (bonuses['mind'] || 0),
+        spirit: (char.spirit || 0) + (bonuses['spirit'] || 0)
+    };
+
+    // Calculate Vitals using dynamic keys
+    const hpFromLevel = char.charLevel * (bonuses['hp_lv'] || 0);
+    const mpFromLevel = char.charLevel * (bonuses['mp_lv'] || 0);
+    
+    char.hpMax = 10 + hpFromLevel + (totals.body * STAT_RESOURCE_MULT);
+    char.mpMax = 10 + mpFromLevel + (totals.spirit * STAT_RESOURCE_MULT);
+
     const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 1)) * 100, 100);
     const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 1)) * 100, 100);
     const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
 
-    const raceSnap = await firestore.collection('master_races').where('name', '==', char.race).limit(1).get();
-    const raceD = raceSnap.empty ? { baseBody: 0, baseMind: 0, baseSpirit: 0, speed: 30, traits: [] } : raceSnap.docs[0].data();
+    // Sidebar and Sheet Sync
+    document.getElementById('active-char-hud').classList.remove('hide-default'); 
+    syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
     
-    const totals = {
-        body: (char.body || 0) + (raceD.baseBody || 0),
-        mind: (char.mind || 0) + (raceD.baseMind || 0),
-        spirit: (char.spirit || 0) + (raceD.baseSpirit || 0)
-    };
-
-   
-   // 2. Sidebar and Sheet Syncs
-   // Declaring Variables (not really needed extra step)
-   const sidebar = document.getElementById('active-char-hud');
-   const sheet = document.getElementById('char-sheet-view');
-   
-   // Unhides both 
-   sidebar.classList.remove('hide-default'); 
-   sheet.classList.contains('hide-default');
-
-   // Runs Syncfunctions
-   syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
-   syncSheetDashboardUI(char, totals, hpPerc, mpPerc, raceD);
+    // We pass the bonuses map directly to the dashboard
+    syncSheetDashboardUI(char, totals, hpPerc, mpPerc, bonuses, char.race); 
 }
 
-/* Sync Sidebar UI */
+/* Sync SIDE BAR UI */
 function syncSidebarUI(char, totals, hpP, mpP, expP) {
     const getMod = (val) => {
         const m = Math.floor(val / 2);
@@ -1087,34 +1264,26 @@ function syncSidebarUI(char, totals, hpP, mpP, expP) {
     document.getElementById('hud-exp-text').innerText = `${Math.floor(expP)}%`;
 }
 
-/** * SHEET DASHBOARD: Manages IDs specific to the Character Sheet tab
+/** * SHEET DASH BOARD: Manages IDs specific to the Character Sheet tab
  */
-function syncSheetDashboardUI(char, totals, hpP, mpP, raceData) {
-    // --- Attributes & Status ---
-    const bodyEl = document.getElementById('total-body-label');
-    if (bodyEl) {
-        bodyEl.innerText = totals.body;
-        document.getElementById('total-mind-label').innerText = totals.mind;
-        document.getElementById('total-spirit-label').innerText = totals.spirit;
-    }
+function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
+    // 1. Core Attributes
+    document.getElementById('total-body-label').innerText = totals.body;
+    document.getElementById('total-mind-label').innerText = totals.mind;
+    document.getElementById('total-spirit-label').innerText = totals.spirit;
     
-    const hpBar = document.getElementById('char-hp-fill-main');
-    if (hpBar) {
-        hpBar.style.width = hpP + "%";
-        document.getElementById('char-mp-fill-main').style.width = mpP + "%";
+    document.getElementById('char-hp-fill-main').style.width = hpP + "%";
+    document.getElementById('char-mp-fill-main').style.width = mpP + "%";
+
+    // 2. Combat Trio (Using the bonuses map)
+    if (document.getElementById('char-speed-display')) {
+        document.getElementById('char-speed-display').innerText = (bonuses['speed'] || 5) + "m";
     }
 
-    // --- NEW: Combat Trio (Speed, AC, Initiative) ---
-    
-    // 1. Speed: Defaulting to 5 if no race data exists
-    const speedEl = document.getElementById('char-speed-display');
-    if (speedEl) speedEl.innerText = (raceData.speed || 5) + "m";
+    if (document.getElementById('char-ac-display')) {
+        document.getElementById('char-ac-display').innerText = 10 + (bonuses['ac'] || 0);
+    }
 
-    // 2. Armor Class: 10 + Racial Bonus (No Body Mod)
-    const acEl = document.getElementById('char-ac-display');
-    if (acEl) acEl.innerText = 10 + (raceData.acBonus || 0);
-
-    // 3. Initiative: Higher of Body/Mind Mods
     const initEl = document.getElementById('char-init-display');
     if (initEl) {
         const bodyMod = Math.floor(totals.body / 2);
@@ -1123,17 +1292,6 @@ function syncSheetDashboardUI(char, totals, hpP, mpP, raceData) {
         initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
     }
 
-    // --- Traits Display ---
-    const traitContainer = document.getElementById('char-traits-container');
-    if (traitContainer) {
-        traitContainer.innerHTML = "";
-        (raceData.traits || []).forEach(t => {
-            const tag = document.createElement('span');
-            tag.className = 'trait-tag';
-            tag.innerText = t;
-            traitContainer.appendChild(tag);
-        });
-    }
     renderClassPills(char);
 }
 
