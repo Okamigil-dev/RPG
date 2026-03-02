@@ -786,40 +786,32 @@ async function applyPassiveRegen() {
     const charSnap = await firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get();
     const charData = charSnap.data();
     
-    // 1. Use the Master Resolver logic
+    // 1. Resolve all dynamic bonuses (Speed, Regen, etc.)
     const bonuses = await resolveAllStats(charData);
 
-    // 2. Calculate Regen using .totals
-    const totalHPRegen = (charData.hpMax * 0.00208333) + (bonuses.totals['hp_regen'] || 0);
-    const totalMPRegen = (charData.mpMax * 0.00208333) + (bonuses.totals['mp_regen'] || 0);
+    // 2. USE YOUR ENGINE: Get the true Max HP/MP for this character
+    const maxStats = await getFinalMaxStats(charData); 
+    const hpMax = maxStats.finalHP;
+    const mpMax = maxStats.finalMP;
 
-    // 3. Get the HTML elements
-    const hpInput = document.getElementById('char-hp-current');
-    const mpInput = document.getElementById('char-mp-current');
-    const hpMaxInput = document.getElementById('char-hp-max');
-    const mpMaxInput = document.getElementById('char-mp-max');
+    // 3. Calculate Regen amounts (Now using real numbers, not undefined/NaN)
+    const totalHPRegen = (hpMax * 0.00208333) + (bonuses.totals['hp_regen'] || 0);
+    const totalMPRegen = (mpMax * 0.00208333) + (bonuses.totals['mp_regen'] || 0);
 
-    // 4. Fallback Logic: Use DOM values if present, otherwise use Database values
-    let hpCur = hpInput ? (parseFloat(hpInput.dataset.trueValue) || parseFloat(hpInput.value)) : charData.hpCurrent;
-    let mpCur = mpInput ? (parseFloat(mpInput.dataset.trueValue) || parseFloat(mpInput.value)) : charData.mpCurrent;
-    
-    const hpMax = hpMaxInput ? parseFloat(hpMaxInput.value) : (charData.hpMax || 10);
-    const mpMax = mpMaxInput ? parseFloat(mpMaxInput.value) : (charData.mpMax || 10);
+    // 4. Fallback Logic: Always start with Database values to prevent "Zeroing" bugs
+    let hpCur = charData.hpCurrent || 0;
+    let mpCur = charData.mpCurrent || 0;
 
     const newHP = Math.min(hpCur + totalHPRegen, hpMax);
     const newMP = Math.min(mpCur + totalMPRegen, mpMax);
 
-    // 5. Only update the UI if the elements actually exist (prevents the crash)
-    if (hpInput) {
-        hpInput.dataset.trueValue = newHP;
-        hpInput.value = Math.floor(newHP);
-    }
-    if (mpInput) {
-        mpInput.dataset.trueValue = newMP;
-        mpInput.value = Math.floor(newMP);
-    }
+    // 5. Sync to Database immediately so the change is permanent
+    firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).update({
+        hpCurrent: newHP,
+        mpCurrent: newMP
+    });
     
-    // 6. Push to HUD (UpdateHUD handles the bars and sidebar)
+    // 6. Push to HUD (This will update sidebar and bars automatically)
     updateHUD({ ...charData, hpCurrent: newHP, mpCurrent: newMP });
 }
 
@@ -1078,6 +1070,8 @@ function renderSkills(charData) {
 
 async function updateHUD(char) {
     if (!char) return;
+
+    // 1. Resolve general bonuses (BOD/MIN/SPI totals)
     const bonuses = await resolveAllStats(char);
     const totals = {
         body: (char.body || 0) + (bonuses.totals['body'] || 0),
@@ -1085,20 +1079,29 @@ async function updateHUD(char) {
         spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
     };
 
-    const hpMax = 10 + (char.charLevel * (bonuses.totals['hp_lv'] || 0)) + (totals.body * STAT_RESOURCE_MULT);
-    const mpMax = 10 + (char.charLevel * (bonuses.totals['mp_lv'] || 0)) + (totals.spirit * STAT_RESOURCE_MULT);
+    // 2. USE YOUR ENGINE: Get the true Max HP/MP (Stops the HUD mismatch)
+    const maxStats = await getFinalMaxStats(char); 
+    const hpMax = maxStats.finalHP;
+    const mpMax = maxStats.finalMP;
 
+    // 3. Update UI Elements (Character Sheet Boxes)
     setSafeValue('char-hp-max', Math.floor(hpMax));
     setSafeValue('char-mp-max', Math.floor(mpMax));
-    
+    setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
+    setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
+
+    // 4. Update Visual Progress Bars
     updateVisualBars(char.hpCurrent, hpMax, char.mpCurrent, mpMax);
 
+    // 5. Calculate Percentages for Sidebar
     const hpP = (char.hpCurrent / (hpMax || 1)) * 100;
     const mpP = (char.mpCurrent / (mpMax || 1)) * 100;
     const expP = ((char.expCurrent || 0) / ((char.charLevel + 1) * 200)) * 100;
 
-    const hudEl = document.getElementById('active-char-hud');
-    if (hudEl) hudEl.classList.remove('hide-default'); 
+    // 6. Final Sync
+    if (document.getElementById('active-char-hud')) {
+        document.getElementById('active-char-hud').classList.remove('hide-default'); 
+    }
 
     syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax);
     syncSheetDashboardUI(char, totals, bonuses, char.race); 
