@@ -139,24 +139,27 @@ function triggerInput(inputId) {
  * A universal tooltip generator for any object or string.
  */
 function buildUniversalTooltip(data, header = "") {
-    let tooltip = header ? `${header}\n${"-".repeat(header.length)}\n` : "";
+    let tooltip = header ? `${header}\n${"=".repeat(header.length)}\n` : "";
 
-    // Case 1: If it's just a string (like a Skill Description)
-    if (typeof data === 'string') {
-        return tooltip + data;
+    if (!data) return tooltip + "No data available.";
+
+    // Case 1: Handle Arrays (Traits)
+    if (Array.isArray(data)) {
+        if (data.length === 0) return tooltip + "No traits.";
+        return tooltip + "Traits:\n • " + data.join('\n • ');
     }
 
-    // Case 2: If it's an Object (like Attributes or Item Stats)
-    if (data && typeof data === 'object') {
+    // Case 2: Handle Objects (Attributes)
+    if (typeof data === 'object') {
         const lines = Object.entries(data).map(([key, val]) => {
-            // Check if it's a known attribute ID first, otherwise capitalize the key
-            const label = attributeDefinitions[key] || key.charAt(0).toUpperCase() + key.slice(1);
+            const label = attributeDefinitions[key] || key.replace(/_/g, ' ').toUpperCase();
             return `${label}: ${val}`;
         });
-        return tooltip + lines.join('\n');
+        return tooltip + (lines.length > 0 ? lines.join('\n') : "No attributes.");
     }
 
-    return "No information available.";
+    // Case 3: Handle Strings
+    return tooltip + data;
 }
 
 
@@ -1912,6 +1915,7 @@ async function loadMasterRaceList() {
     const list = document.getElementById('master-race-list');
     if(!list) return;
 
+    // Ensure we have the latest attribute names for the tooltip
     await getAttributeDefinitions(); 
 
     const searchTerm = document.getElementById('race-search-input') ? document.getElementById('race-search-input').value.toLowerCase() : "";
@@ -1924,8 +1928,13 @@ async function loadMasterRaceList() {
             const card = document.createElement('div');
             card.className = "panel-card mb-s trait-item-border";
             
-            // Apply the modular tooltip
-            card.title = buildUniversalTooltip(r.attributes, `${r.name} Stats`);
+            // 1. Generate the individual tooltip sections
+            const attrSection = buildUniversalTooltip(r.attributes, "STATS");
+            const traitSection = buildUniversalTooltip(r.traits, "TRAITS");
+
+            // 2. Combine them into the final hover text
+            // This places the Race Name at the very top, followed by stats, then traits.
+            card.title = `${r.name.toUpperCase()}\n\n${attrSection}\n\n${traitSection}`;
 
             const traitBadges = (r.traits || []).map(t => `<span class="badge-stat" style="font-size:0.7rem; margin-right:4px;">${t}</span>`).join("");
 
