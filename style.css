@@ -72,6 +72,15 @@ body {
     box-sizing: border-box; 
 }
 
+.sidebar-panel {
+    background: #111;
+    border-radius: 12px;
+    border: 1px solid #27272a;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
 .main-content {
     flex-grow: 1;
     padding: 30px;
