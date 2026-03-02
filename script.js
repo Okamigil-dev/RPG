@@ -226,43 +226,24 @@ auth.onAuthStateChanged((user) => {
    ========================================================================== */
 
 function openTab(tabId) {
-    // 1. SELECT ALL TABS
     const allTabs = document.querySelectorAll('.tab-content');
-    
     allTabs.forEach(tab => {
-        // Add the CSS class to hide
+        // We hide everything with a simple class and a simple style
         tab.classList.add('hide-default');
-        
-        // Apply an inline '!important' hide to ensure it beats ANY other CSS rule
-        tab.style.setProperty('display', 'none', 'important');
+        tab.style.display = 'none'; 
     });
     
-    // 2. TARGET THE SELECTED TAB
     const target = document.getElementById(tabId);
     if (target) {
-        // Remove the CSS class
+        // We show the target. This simple 'block' overrides the 'none' from above.
         target.classList.remove('hide-default');
-        
-        // REMOVE the inline style entirely. 
-        // This allows your CSS rule (.tab-content:not(.hide-default)) to take over.
-        target.style.removeProperty('display');
-        
-        // Final fallback: explicitly set it to block just in case
         target.style.display = 'block';
 
-        // Update Persistence
         if (tabId !== 'tab-login') {
             localStorage.setItem('activeMainTab', tabId);
         }
-
-        // --- OPTIONAL: Visual Feedback for Nav Buttons ---
-        // Removes 'active' highlight from all buttons and adds to the current one
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        const activeBtn = document.querySelector(`[onclick*="${tabId}"]`);
-        if (activeBtn) activeBtn.classList.add('active');
     }
 
-    // 3. MASTER PANEL LOGIC (Remains exactly as your build needs)
     if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
         loadInstanceList();
         openMasterPanel();
@@ -1101,61 +1082,89 @@ function renderSkills(charData) {
    === UPDATE HUD & UI SYNC ===
    ============================ */
     async function updateHUD(char) {
-        if (!char) return;
-        const bonuses = await resolveAllStats(char);
-        const totals = {
-            body: (char.body || 0) + (bonuses.totals['body'] || 0),
-            mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
-            spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
-        };
+    if (!char) return;
 
-        const hpMaxTotal = 10 + (char.charLevel * (bonuses.totals['hp_lv'] || 0)) + (totals.body * STAT_RESOURCE_MULT);
-        const mpMaxTotal = 10 + (char.charLevel * (bonuses.totals['mp_lv'] || 0)) + (totals.spirit * STAT_RESOURCE_MULT);
+    const bonuses = await resolveAllStats(char);
 
-        // Use the calculated totals for the bars
-        const hpPerc = Math.min(((char.hpCurrent || 0) / (hpMaxTotal || 1)) * 100, 100);
-        const mpPerc = Math.min(((char.mpCurrent || 0) / (mpMaxTotal || 1)) * 100, 100);
-        const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
+    const totals = {
+        body: (char.body || 0) + (bonuses.totals['body'] || 0),
+        mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
+        spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
+    };
 
-        // Pass the CALCULATED MAXES instead of just the percentage
-        syncSidebarUI(char, totals, hpMaxTotal, mpMaxTotal, expPerc);
-        syncSheetDashboardUI(char, totals, hpMaxTotal, mpMaxTotal, bonuses); 
+    const hpFromLevel = char.charLevel * (bonuses.totals['hp_lv'] || 0);
+    const mpFromLevel = char.charLevel * (bonuses.totals['mp_lv'] || 0);
+    
+    char.hpMax = 10 + hpFromLevel + (totals.body * STAT_RESOURCE_MULT);
+    char.mpMax = 10 + mpFromLevel + (totals.spirit * STAT_RESOURCE_MULT);
+
+    const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 1)) * 100, 100);
+    const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 1)) * 100, 100);
+    const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
+
+    syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
+    syncSheetDashboardUI(char, totals, hpPerc, mpPerc, bonuses, char.race); 
+}
+
+function syncSidebarUI(char, totals, hpP, mpP, expP) {
+    const getMod = (val) => {
+        const m = Math.floor(val / 2);
+        return m >= 0 ? `+${m}` : m;
+    };
+
+    const gallery = char.gallery || [];
+    const activeIdx = char.portrait !== undefined ? char.portrait : 0;
+    const activeImg = gallery[activeIdx] || "";
+
+    setSafeText('hud-name', char.name || "Unnamed");
+    setSafeText('hud-meta', `Level ${char.charLevel || 1}`);
+    setSafeText('hud-hp-text', `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`);
+    setSafeText('hud-mp-text', `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`);
+    
+    const port = document.getElementById('hud-portrait');
+    if (port) port.style.backgroundImage = activeImg ? `url(${activeImg})` : "none";
+    
+    setSafeText('hud-mod-body', `BOD ${getMod(totals.body)}`);
+    setSafeText('hud-mod-mind', `MIN ${getMod(totals.mind)}`);
+    setSafeText('hud-mod-spirit', `SPI ${getMod(totals.spirit)}`);
+
+    const hpF = document.getElementById('hud-hp-fill');
+    if (hpF) hpF.style.width = hpP + "%";
+    const mpF = document.getElementById('hud-mp-fill');
+    if (mpF) mpF.style.width = mpP + "%";
+    const expF = document.getElementById('hud-exp-fill');
+    if (expF) expF.style.width = expP + "%";
+    setSafeText('hud-exp-text', `${Math.floor(expP)}%`);
+}
+
+function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
+    setSafeText('total-body-label', totals.body);
+    setSafeText('total-mind-label', totals.mind);
+    setSafeText('total-spirit-label', totals.spirit);
+    
+    const hpBar = document.getElementById('char-hp-fill-main');
+    if (hpBar) hpBar.style.width = hpP + "%";
+    const mpBar = document.getElementById('char-mp-fill-main');
+    if (mpBar) mpBar.style.width = mpP + "%";
+
+    setSafeValue('char-hp-max', char.hpMax); 
+    setSafeValue('char-mp-max', char.mpMax);
+    setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
+    setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
+
+    setSafeText('char-speed-display', (bonuses.totals['speed'] || 5) + "m");
+    setSafeText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
+
+    const initEl = document.getElementById('char-init-display');
+    if (initEl) {
+        const bodyMod = Math.floor(totals.body / 2);
+        const mindMod = Math.floor(totals.mind / 2);
+        const bestMod = Math.max(bodyMod, mindMod);
+        initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
     }
 
-    function syncSidebarUI(char, totals, hpMax, mpMax, expP) {
-        const getMod = (val) => {
-            const m = Math.floor(val / 2);
-            return m >= 0 ? `+${m}` : m;
-        };
-
-        setSafeText('hud-name', char.name || "Unnamed");
-        setSafeText('hud-hp-text', `${Math.floor(char.hpCurrent || 0)}/${hpMax}`); // FIXED
-        setSafeText('hud-mp-text', `${Math.floor(char.mpCurrent || 0)}/${mpMax}`); // FIXED
-        
-        // Sidebar Bars
-        const hpFill = document.getElementById('hud-hp-fill');
-        if (hpFill) hpFill.style.width = ((char.hpCurrent / hpMax) * 100) + "%";
-        
-        const mpFill = document.getElementById('hud-mp-fill');
-        if (mpFill) mpFill.style.width = ((char.mpCurrent / mpMax) * 100) + "%";
-
-        document.getElementById('hud-exp-fill').style.width = expP + "%";
-        setSafeText('hud-exp-text', `${Math.floor(expP)}%`);
-    }
-
-    function syncSheetDashboardUI(char, totals, hpMax, mpMax, bonuses) {
-        setSafeText('total-body-label', totals.body);
-        setSafeText('total-mind-label', totals.mind);
-        setSafeText('total-spirit-label', totals.spirit);
-        
-        // Character Sheet Inputs
-        setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
-        setSafeValue('char-hp-max', hpMax); // FIXED
-        setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
-        setSafeValue('char-mp-max', mpMax); // FIXED
-
-        updateVisualBars(char.hpCurrent || 0, hpMax, char.mpCurrent || 0, mpMax);
-    }
+    renderClassPills(char);
+}
 
 
 
