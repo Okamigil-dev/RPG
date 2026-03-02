@@ -1929,12 +1929,13 @@ async function loadMasterRaceList() {
             card.className = "panel-card mb-s trait-item-border";
             
             // 1. Generate the individual tooltip sections
+            const descSection = buildUniversalTooltip(r.description || "No description.", "DESCRIPTION");
             const attrSection = buildUniversalTooltip(r.attributes, "STATS");
             const traitSection = buildUniversalTooltip(r.traits, "TRAITS");
 
             // 2. Combine them into the final hover text
-            // This places the Race Name at the very top, followed by stats, then traits.
-            card.title = `${r.name.toUpperCase()}\n\n${attrSection}\n\n${traitSection}`;
+            // Organized as: NAME -> DESCRIPTION -> STATS -> TRAITS
+            card.title = `${r.name.toUpperCase()}\n\n${descSection}\n\n${attrSection}\n\n${traitSection}`;
 
             const traitBadges = (r.traits || []).map(t => `<span class="badge-stat" style="font-size:0.7rem; margin-right:4px;">${t}</span>`).join("");
 
