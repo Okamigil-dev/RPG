@@ -2309,10 +2309,16 @@ async function updateTraitDescription(id, val) {
 // --- 10.5 ATTRIBUTE LIBRARY LOGIC ---
 
 function openAttributeModal() {
+    // Reset fields
     document.getElementById('m-attr-id').value = "";
     document.getElementById('m-attr-name').value = "";
     document.getElementById('m-attr-key').value = "";
     document.getElementById('m-attr-default').value = 0;
+    
+    // Reset UI State
+    document.getElementById('attr-modal-title').innerText = "Define Attribute";
+    document.getElementById('m-attr-key').disabled = false; // Re-enable for new entries
+    
     document.getElementById('attribute-modal').classList.remove('hide-default');
 }
 
@@ -2349,23 +2355,63 @@ async function loadAttributeList() {
     const list = document.getElementById('master-attribute-list');
     if (!list) return;
     
-    list.innerHTML = "Loading...";
-    const snap = await firestore.collection('master_attributes').orderBy('name').get();
-    list.innerHTML = "";
+    list.innerHTML = '<div class="text-muted p-s">Loading attributes...</div>';
 
-    snap.forEach(doc => {
+    try {
+        const snap = await firestore.collection('master_attributes').orderBy('name').get();
+        list.innerHTML = "";
+
+        if (snap.empty) {
+            list.innerHTML = '<div class="text-muted p-s">No attributes defined yet.</div>';
+            return;
+        }
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            const div = document.createElement('div');
+            div.className = "panel-card mb-s flex-row space-between trait-item-border";
+            div.innerHTML = `
+                <div>
+                    <strong class="text-success">${d.name}</strong>
+                    <div class="text-muted small">Key: <code style="color:#a1a1aa">${d.key}</code> | Default: ${d.defaultValue}</div>
+                </div>
+                <div class="flex-row gap-s">
+                    <button class="btn-icon-tiny" onclick="prepAttributeEdit('${doc.id}')">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="btn-icon-tiny btn-danger" onclick="deleteMasterAsset('master_attributes', '${doc.id}', loadAttributeList)">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    } catch (e) {
+        console.error("Attribute Load Error:", e);
+        list.innerHTML = `<div class="text-danger p-s">Error: ${e.message}</div>`;
+    }
+}
+
+
+async function prepAttributeEdit(id) {
+    try {
+        const doc = await firestore.collection('master_attributes').doc(id).get();
+        if (!doc.exists) return;
         const d = doc.data();
-        const div = document.createElement('div');
-        div.className = "panel-card mb-s flex-row space-between trait-item-border";
-        div.innerHTML = `
-            <div>
-                <strong class="text-success">${d.name}</strong>
-                <div class="text-muted small">Key: ${d.key} | Default: ${d.defaultValue}</div>
-            </div>
-            <button class="btn-icon-tiny btn-danger" onclick="deleteMasterAsset('master_attributes', '${doc.id}', loadAttributeList)">
-                <i class="fa-solid fa-trash"></i>
-            </button>
-        `;
-        list.appendChild(div);
-    });
+
+        // Fill the modal fields
+        document.getElementById('m-attr-id').value = id;
+        document.getElementById('m-attr-name').value = d.name || "";
+        document.getElementById('m-attr-key').value = d.key || "";
+        document.getElementById('m-attr-default').value = d.defaultValue || 0;
+
+        // Change Title
+        document.getElementById('attr-modal-title').innerText = "Edit Attribute: " + d.name;
+
+        // Optional: Disable the key field so they don't break existing references
+        document.getElementById('m-attr-key').disabled = true;
+
+        // Show Modal
+        document.getElementById('attribute-modal').classList.remove('hide-default');
+    } catch (e) { console.error("Error prepping attribute edit:", e); }
 }
