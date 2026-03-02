@@ -1214,21 +1214,23 @@ function syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax) {
 /** * SHEET DASH BOARD: Manages IDs specific to the Character Sheet tab
  */
 function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
-    // 1. Core Attributes (Keep as is)
+    // 1. Core Attributes
     setSafeText('total-body-label', totals.body);
     setSafeText('total-mind-label', totals.mind);
     setSafeText('total-spirit-label', totals.spirit);
     
-    // 2. Resource Bars & Numbers
-    // We update the Max boxes FIRST so the CSS and Clamping have their target
+    // 2. Resource Numbers (MAX)
+    // We calculate these derived maxes inside updateHUD and pass them here
+    // But since we are cleaning up, we'll ensure the boxes show the data
     setSafeValue('char-hp-max', Math.floor(char.hpMax || 10)); 
     setSafeValue('char-mp-max', Math.floor(char.mpMax || 10));
 
-    // IMPORTANT: We do NOT set current values here. 
-    // updateHUD already handled this via getClampedResource to ensure
-    // the UI shows the "Safe" number, not the "Raw" database number.
+    // 3. Resource Numbers (CURRENT) - FIX: No longer skipping this!
+    // This ensures the input boxes actually show your health
+    setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
+    setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
 
-    // 3. Combat Trio (Keep as is)
+    // 4. Combat Trio
     setSafeText('char-speed-display', (bonuses.totals['speed'] || 5) + "m");
     setSafeText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
 
@@ -1242,7 +1244,6 @@ function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
 
     renderClassPills(char);
 }
-
 
 /* ==========================================================================
    SECTION 9: MASTER PANEL LOGIC
