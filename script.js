@@ -1,5 +1,5 @@
 /* =========================================================
-   SCRIPT VERSION: 0.2.1
+   SCRIPT VERSION: 0.2.3
    DATE: 2026-03-02 
    ========================================================= */
 
@@ -755,7 +755,7 @@ async function getTotalRegen(charData) {
 
 function createNewCharacter() {
     const user = auth.currentUser;
-    // CLEANED UP DATA STRUCTURE
+    // DATA STRUCTURE V0.2.3 (Nested Skills)
     const data = { 
         name: "New Hero", 
         race: "", 
@@ -765,23 +765,26 @@ function createNewCharacter() {
         totalSP: 1, 
         spentSP: 0,        
         
-        // Base Attributes (Points spent by player)
+        // Base Attributes
         body: 0, 
         mind: 0, 
         spirit: 0,
         
-        // Vitals (Current state only)
+        // Vitals
         hpCurrent: 10, 
         mpCurrent: 10,
         
         // Progression
         expCurrent: 0, 
-        expMax: 400, 
         
-        // Lists
-        basicSkills: [], 
-        intSkills: [], 
-        advSkills: [],
+        // LISTS & REGISTRIES
+        // New: Skills are now organized in a single registry object
+        skills: {
+            basic: [],
+            intermediate: [],
+            advanced: []
+        },
+        
         gallery: [], 
         portrait: 0,
         unlockedClasses: {}, 
@@ -1185,10 +1188,14 @@ function renderSkills(charData) {
     if (!container) return;
     container.innerHTML = ""; 
     
+    // Safety: Fallback to empty object if skills haven't been created yet
+    const skillRegistry = charData.skills || {};
+
+    // Map the UI labels to the database keys
     const tiers = [
-        { key: 'basicSkills', label: 'Basic Skills' }, 
-        { key: 'intSkills', label: 'Intermediate Skills' }, 
-        { key: 'advSkills', label: 'Advanced Skills' }
+        { key: 'basic', label: 'Basic Skills' }, 
+        { key: 'intermediate', label: 'Intermediate Skills' }, 
+        { key: 'advanced', label: 'Advanced Skills' }
     ];
 
     tiers.forEach(tier => {
@@ -1196,7 +1203,9 @@ function renderSkills(charData) {
         section.className = 'skill-tier-section';
         section.innerHTML = `<h4 class="mt-m mb-s">${tier.label}</h4>`;
         
-        const skills = charData[tier.key] || [];
+        // Read from the new registry
+        const skills = skillRegistry[tier.key] || [];
+        
         if (skills.length === 0) {
             section.innerHTML += `<div class="text-muted" style="width:100%; text-align:center; font-size:0.8rem;">Empty</div>`;
         }
@@ -1206,7 +1215,6 @@ function renderSkills(charData) {
             const slot = document.createElement('div');
             slot.className = 'skill-slot-card';
             
-            // Added img support here in case the skill has an icon
             const iconHtml = s.icon ? `<img src="${s.icon}" class="registry-icon" style="width:32px; height:32px; margin-right:10px;">` : '';
 
             slot.innerHTML = `
