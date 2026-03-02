@@ -1,9 +1,4 @@
 /* ==========================================================================
-   --- Version 0.3.6 ---
-   ========================================================================== */
-
-
-/* ==========================================================================
    --- 1. GLOBAL RESET, BASE & SCROLLBARS ---
    ========================================================================== */
 body {
@@ -13,8 +8,6 @@ body {
     font-family: 'Inter', sans-serif;
     overflow: hidden;
 }
-
-* { box-sizing: border-box; } /* <--- ADD THIS. It fixes the alignment in Image 2 */
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -84,32 +77,6 @@ body {
     padding: 30px;
     overflow-y: auto;
     background-color: #09090b;
-}
-
-/* Sidebar Module Wrapper - Matches Active Char HUD */
-.sidebar-panel {
-    background: #111;
-    border-radius: 12px;
-    border: 1px solid #27272a;
-    padding: 15px; /* Added padding so content isn't touching the edge */
-    margin-bottom: 20px;
-    overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    display: flex;
-    flex-direction: column;
-}
-
-/* Ensure the Clock doesn't have double borders */
-.game-ui {
-    border-top: none !important;
-    padding: 0 !important;
-}
-
-/* Make sure the Chat Input doesn't have an awkward line at the top */
-.chat-input-area {
-    border-top: 1px solid #27272a;
-    margin-top: 10px;
-    padding: 10px 0 0 0 !important; /* Clean alignment inside panel */
 }
 
 /* ==========================================================================
@@ -471,45 +438,11 @@ body {
 
 .status-values { display: flex; align-items: center; gap: 5px; }
 
+/* Resource Inputs */
 .resource-input-minimal {
-    background: transparent !important; 
-    border: none !important; 
-    color: white !important;
-    width: 35px; 
-    text-align: right; 
-    font-family: monospace; 
-    font-weight: bold; 
-    font-size: 1rem;
+    background: transparent !important; border: none !important; color: white !important;
+    width: 35px; text-align: right; font-family: monospace; font-weight: bold; font-size: 1rem;
     padding: 0 !important;
-    outline: none !important;      /* Removes blue focus ring */
-    appearance: none;              /* Removes browser default styling */
-    -moz-appearance: textfield;    /* Removes spinners in Firefox */
-}
-
-/* Hides up/down arrows in Chrome/Safari/Edge */
-.resource-input-minimal::-webkit-outer-spin-button,
-.resource-input-minimal::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-/* Fix for the white background on HP/MP numbers */
-.resource-input-minimal[readonly] {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    cursor: default;
-    color: inherit; /* Keeps the color tied to the parent or specific icon color */
-}
-
-/* Optional: If you want the Current HP to be slightly brighter than the Max */
-#char-hp-current, #char-mp-current {
-    color: #ffffff !important;
-    filter: drop-shadow(0 0 2px rgba(255,255,255,0.2));
-}
-
-#char-hp-max, #char-mp-max {
-    color: #a1a1aa !important; /* Dim the Max value slightly for better hierarchy */
 }
 
 .resource-divider { color: #3f3f46; font-weight: bold; }
@@ -796,12 +729,40 @@ body {
     width: 120px;
 }
 
+/* For the dynamic cards generated in JS */
+.trait-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.badge-stat {
+    color: #00ff88;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: rgba(0, 255, 136, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
 .ml-s { margin-left: 8px; }
 .mb-s { margin-bottom: 8px; }
 
 
 
 
+/* don't know what this is yet */
+.registry-skill-card { background: #18181b !important; padding: 12px !important; }
+.registry-icon { width: 64px; height: 64px; border-radius: 4px; border: 1px solid #333; object-fit: cover; flex-shrink: 0; }
+.registry-icon-placeholder { width: 64px; height: 64px; background: #222; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #444; flex-shrink: 0; }
+.skill-title-text { color: #e879f9; font-size: 1.1rem; }
+.skill-desc-text { font-size: 0.85rem; color: #ccc; margin: 6px 0; }
+.skill-meta-tags { font-size: 0.75rem; color: #71717a; display: flex; gap: 12px; flex-wrap: wrap; }
+.MP-pill { border-color: #3b82f6 !important; color: #3b82f6 !important; }
+.align-start { align-items: flex-start; }
+.space-between { justify-content: space-between; }
+.wrap { flex-wrap: wrap; }
 
 
 
@@ -812,17 +773,13 @@ body {
 /* ==========================================================================
    --- 12. INPUTS & SELECTS ---
    ========================================================================== */
-
-
-   .form-input {
+.form-input, .attr-input, .hp-input {
     background: #09090b !important;
     color: white !important;
     border: 1px solid #3f3f46;
     padding: 10px;
     border-radius: 6px;
     box-sizing: border-box;
-    height: 40px;                 /* Forces consistency for the Tier box */
-    width: 100%;
     transition: border-color 0.2s;
 }
 
@@ -849,7 +806,7 @@ select.form-input {
     font-weight: 800; font-family: 'Courier New', monospace; font-size: 1.1rem;
     cursor: default; pointer-events: none;
 }
-#char-hp-current, #char-hp-max { color: #ef4444 !important; }
+
 #char-mp-current, #char-mp-max { color: #3b82f6 !important; }
 
 .display-only { background: #09090b; border: 1px solid #27272a; padding: 8px 15px; border-radius: 8px; display: inline-flex; }
@@ -958,26 +915,6 @@ select.form-input {
     border-bottom: 1px solid #27272a;
     display: flex;
     align-items: center;
-}
-
-/* Unified container for dynamic lists (Traits, Attributes, etc.) */
-.registry-box {
-    background: #18181b; 
-    border: 1px solid #3f3f46; 
-    border-radius: 4px; 
-    min-height: 60px;
-    padding: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-content: flex-start;
-}
-
-/* Fix for the small 'Add' button to keep it consistent */
-.btn-add-fix {
-    width: 80px;
-    height: 40px;
-    flex-shrink: 0;
 }
 
 .checklist-item:last-child { border-bottom: none; }
