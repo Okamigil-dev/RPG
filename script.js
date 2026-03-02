@@ -1067,7 +1067,7 @@ function renderSkills(charData) {
 /* ==========================================================================
    SECTION 8: UPDATE HUD & UI SYNC
    ========================================================================== */
-
+ 
 async function updateHUD(char) {
     if (!char) return;
 
