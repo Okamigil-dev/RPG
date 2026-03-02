@@ -1,5 +1,5 @@
 /* =========================================================
-   SCRIPT VERSION: 0.4.1
+   SCRIPT VERSION: 0.4.2
    DATE: 2026-03-02 
    ========================================================= */
 
@@ -752,17 +752,8 @@ async function selectCharacter(id) {
             const nextLevelExp = (activeCharLevel + 1) * 200;
 //            setSafeValue('char-exp-max', nextLevelExp);
                 
-            const hpInput = document.getElementById('char-hp-current');
-            if (hpInput) {
-                hpInput.dataset.trueValue = d.hpCurrent || 0;
-                hpInput.value = Math.floor(d.hpCurrent || 0);
-            }
-
-            const mpInput = document.getElementById('char-mp-current');
-            if (mpInput) {
-                mpInput.dataset.trueValue = d.mpCurrent || 0;
-                mpInput.value = Math.floor(d.mpCurrent || 0);
-            }
+            setSafeValue('char-hp-current', Math.floor(d.hpCurrent || 0));
+            setSafeValue('char-mp-current', Math.floor(d.mpCurrent || 0));
 
             // OPTIMIZATION: We pass 'd' directly. updateHUD will calculate Max HP/MP itself.
             const hudData = { ...d, charLevel: activeCharLevel, expMax: nextLevelExp };
@@ -1123,51 +1114,50 @@ function renderSkills(charData) {
 /* ============================
    === UPDATE HUD & UI SYNC ===
    ============================ */
-/** * MAIN CONTROLLER: Calculates data once and delegates to specific UI sections.
- */
-async function updateHUD(char) {
-    if (!char) return;
+    /** * MAIN CONTROLLER: Calculates data once and delegates to specific UI sections.
+     */
+    async function updateHUD(char) {
+        if (!char) return;
 
-    // 1. Get all bonuses from Traits/Race/Equipment
-    const bonuses = await resolveAllStats(char);
+        // 1. Resolve stats from all sources
+        const bonuses = await resolveAllStats(char);
 
-    // 2. Calculate Attribute Totals
-    const totals = {
-        body: (char.body || 0) + (bonuses.totals['body'] || 0),
-        mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
-        spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
-    };
+        // 2. Attribute Totals
+        const totals = {
+            body: (char.body || 0) + (bonuses.totals['body'] || 0),
+            mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
+            spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
+        };
 
-    // 3. Calculate Resource Totals (Max HP/MP)
-    const hpFromLevel = char.charLevel * (bonuses.totals['hp_lv'] || 0);
-    const mpFromLevel = char.charLevel * (bonuses.totals['mp_lv'] || 0);
-    
-    // We calculate these but don't save to DB here; we just show them in the UI
-    const hpMaxTotal = 10 + hpFromLevel + (totals.body * STAT_RESOURCE_MULT);
-    const mpMaxTotal = 10 + mpFromLevel + (totals.spirit * STAT_RESOURCE_MULT);
+        // 3. Calculate Resource Max Values
+        const hpFromLevel = char.charLevel * (bonuses.totals['hp_lv'] || 0);
+        const mpFromLevel = char.charLevel * (bonuses.totals['mp_lv'] || 0);
+        
+        const hpMaxTotal = 10 + hpFromLevel + (totals.body * STAT_RESOURCE_MULT);
+        const mpMaxTotal = 10 + mpFromLevel + (totals.spirit * STAT_RESOURCE_MULT);
 
-    // Update the Max Value inputs in the UI so clamp logic knows the limit
-    setSafeValue('char-hp-max', hpMaxTotal);
-    setSafeValue('char-mp-max', mpMaxTotal);
+        // 4. Update the Max boxes FIRST so they are visible and usable for clamping
+        setSafeValue('char-hp-max', hpMaxTotal);
+        setSafeValue('char-mp-max', mpMaxTotal);
 
-    // 4. Get Current Values (now that we know the Max)
-    // We pull from the DOM because the user might have just typed a new number
-    const hpCurr = parseFloat(document.getElementById('char-hp-current').value) || char.hpCurrent || 0;
-    const mpCurr = parseFloat(document.getElementById('char-mp-current').value) || char.mpCurrent || 0;
+        // 5. Use the Engine to get safe current values
+        const hpCurr = getClampedResource('char-hp-current', 'char-hp-max');
+        const mpCurr = getClampedResource('char-mp-current', 'char-mp-max');
 
-    // 5. Update the Visual Bars (Red and Blue Fill)
-    updateVisualBars(hpCurr, hpMaxTotal, mpCurr, mpMaxTotal);
-    
-    // 6. Calculate Percentages for Sidebar/EXP
-    const hpPerc = Math.min((hpCurr / (hpMaxTotal || 1)) * 100, 100);
-    const mpPerc = Math.min((mpCurr / (mpMaxTotal || 1)) * 100, 100);
-    const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
+        // 6. Visual Updates
+        updateVisualBars(hpCurr, hpMaxTotal, mpCurr, mpMaxTotal);
+        
+        const hpPerc = Math.min((hpCurr / (hpMaxTotal || 1)) * 100, 100);
+        const mpPerc = Math.min((mpCurr / (mpMaxTotal || 1)) * 100, 100);
+        const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
 
-    // 7. Sync All UI Sections
-    document.getElementById('active-char-hud').classList.remove('hide-default'); 
-    syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
-    syncSheetDashboardUI(char, totals, hpPerc, mpPerc, bonuses, char.race); 
-}
+        // 7. Sync Sections
+        const hudEl = document.getElementById('active-char-hud');
+        if (hudEl) hudEl.classList.remove('hide-default'); 
+
+        syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
+        syncSheetDashboardUI(char, totals, hpPerc, mpPerc, bonuses, char.race); 
+    }
 
 /* Sync SIDE BAR UI */
 function syncSidebarUI(char, totals, hpP, mpP, expP) {
@@ -1202,27 +1192,21 @@ function syncSidebarUI(char, totals, hpP, mpP, expP) {
 /** * SHEET DASH BOARD: Manages IDs specific to the Character Sheet tab
  */
 function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
-    // 1. Core Attributes
+    // 1. Core Attributes (Keep as is)
     setSafeText('total-body-label', totals.body);
     setSafeText('total-mind-label', totals.mind);
     setSafeText('total-spirit-label', totals.spirit);
     
-    // 2. Resource Bars & Numbers (THE FIX)
-    const hpBar = document.getElementById('char-hp-fill-main');
-    if (hpBar) hpBar.style.width = hpP + "%";
-    
-    const mpBar = document.getElementById('char-mp-fill-main');
-    if (mpBar) mpBar.style.width = mpP + "%";
+    // 2. Resource Bars & Numbers
+    // We update the Max boxes FIRST so the CSS and Clamping have their target
+    setSafeValue('char-hp-max', Math.floor(char.hpMax || 10)); 
+    setSafeValue('char-mp-max', Math.floor(char.mpMax || 10));
 
-    // Update the input boxes (The white boxes in your screenshot)
-    setSafeValue('char-hp-max', char.hpMax); 
-    setSafeValue('char-mp-max', char.mpMax);
-    
-    // Ensure current values are also synced
-    setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
-    setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
+    // IMPORTANT: We do NOT set current values here. 
+    // updateHUD already handled this via getClampedResource to ensure
+    // the UI shows the "Safe" number, not the "Raw" database number.
 
-    // 3. Combat Trio 
+    // 3. Combat Trio (Keep as is)
     setSafeText('char-speed-display', (bonuses.totals['speed'] || 5) + "m");
     setSafeText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
 
@@ -1232,8 +1216,6 @@ function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
         const mindMod = Math.floor(totals.mind / 2);
         const bestMod = Math.max(bodyMod, mindMod);
         initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
-    } else {
-        console.warn("Missing Init Display: char-init-display");
     }
 
     renderClassPills(char);
@@ -2689,41 +2671,46 @@ async function prepAttributeEdit(id) {
 
 
 /* ==========================================================================
-   SECTION 15: GLOBAL UTILITIES & CLAMPING
+   SECTION 15: GLOBAL UTILITIES & CLAMPING (v0.4.1)
    ========================================================================== */
 
-    // Global function to keep any number within a specific range
     function clamp(value, min, max) {
         return Math.max(min, Math.min(value, max));
     }
 
-    // Global function to sync the UI and return the "Safe" value
-    // Usage: const safeHP = getClampedValue('char-hp-current', 'char-hp-max');
+    /**
+     * Resource Protector: Uses setSafeValue to fix the "Invisible Max" bug.
+     */
     function getClampedResource(currentId, maxId) {
-        const maxVal = parseInt(document.getElementById(maxId).value) || 0;
         const currentInput = document.getElementById(currentId);
-        let currentVal = parseInt(currentInput.value) || 0;
+        const maxInput = document.getElementById(maxId);
 
-        // Apply the clamp
+        // Guard Clause: If we are on a different tab and can't find these, exit gracefully
+        if (!currentInput || !maxInput) return 0;
+
+        const maxVal = parseFloat(maxInput.value) || 0;
+        const currentVal = parseFloat(currentInput.value) || 0;
+
         const safeVal = clamp(currentVal, 0, maxVal);
         
-        // Update UI immediately so the user sees it "snap"
-        currentInput.value = safeVal;
+        // Use your existing setSafeValue to force the display update
+        setSafeValue(currentId, safeVal);
         
         return safeVal;
     }
 
     function updateVisualBars(hp, hpMax, mp, mpMax) {
-    const hpFill = document.getElementById('char-hp-fill-main');
-    const mpFill = document.getElementById('char-mp-fill-main');
+        const hpFill = document.getElementById('char-hp-fill-main');
+        const mpFill = document.getElementById('char-mp-fill-main');
 
-    if (hpFill) {
-        const hpPercent = (hp / hpMax) * 100;
-        hpFill.style.width = `${clamp(hpPercent, 0, 100)}%`;
-    }
+        // Prevent division by zero and ensure bars are within 0-100%
+        if (hpFill) {
+            const hpPercent = (hp / (hpMax || 1)) * 100;
+            hpFill.style.width = `${clamp(hpPercent, 0, 100)}%`;
+        }
 
-    if (mpFill) {
-        const mpPercent = (mp / mpMax) * 100;
-        mpFill.style.width = `${clamp(mpPercent, 0, 100)}%`;
+        if (mpFill) {
+            const mpPercent = (mp / (mpMax || 1)) * 100;
+            mpFill.style.width = `${clamp(mpPercent, 0, 100)}%`;
+        }
     }
-}
