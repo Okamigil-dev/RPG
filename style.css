@@ -9,6 +9,8 @@ body {
     overflow: hidden;
 }
 
+* { box-sizing: border-box; } /* <--- ADD THIS. It fixes the alignment in Image 2 */
+
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
@@ -438,11 +440,26 @@ body {
 
 .status-values { display: flex; align-items: center; gap: 5px; }
 
-/* Resource Inputs */
 .resource-input-minimal {
-    background: transparent !important; border: none !important; color: white !important;
-    width: 35px; text-align: right; font-family: monospace; font-weight: bold; font-size: 1rem;
+    background: transparent !important; 
+    border: none !important; 
+    color: white !important;
+    width: 35px; 
+    text-align: right; 
+    font-family: monospace; 
+    font-weight: bold; 
+    font-size: 1rem;
     padding: 0 !important;
+    outline: none !important;      /* Removes blue focus ring */
+    appearance: none;              /* Removes browser default styling */
+    -moz-appearance: textfield;    /* Removes spinners in Firefox */
+}
+
+/* Hides up/down arrows in Chrome/Safari/Edge */
+.resource-input-minimal::-webkit-outer-spin-button,
+.resource-input-minimal::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .resource-divider { color: #3f3f46; font-weight: bold; }
@@ -729,40 +746,12 @@ body {
     width: 120px;
 }
 
-/* For the dynamic cards generated in JS */
-.trait-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.badge-stat {
-    color: #00ff88;
-    font-size: 0.7rem;
-    font-weight: 600;
-    background: rgba(0, 255, 136, 0.1);
-    padding: 2px 8px;
-    border-radius: 4px;
-    text-transform: uppercase;
-}
-
 .ml-s { margin-left: 8px; }
 .mb-s { margin-bottom: 8px; }
 
 
 
 
-/* don't know what this is yet */
-.registry-skill-card { background: #18181b !important; padding: 12px !important; }
-.registry-icon { width: 64px; height: 64px; border-radius: 4px; border: 1px solid #333; object-fit: cover; flex-shrink: 0; }
-.registry-icon-placeholder { width: 64px; height: 64px; background: #222; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #444; flex-shrink: 0; }
-.skill-title-text { color: #e879f9; font-size: 1.1rem; }
-.skill-desc-text { font-size: 0.85rem; color: #ccc; margin: 6px 0; }
-.skill-meta-tags { font-size: 0.75rem; color: #71717a; display: flex; gap: 12px; flex-wrap: wrap; }
-.MP-pill { border-color: #3b82f6 !important; color: #3b82f6 !important; }
-.align-start { align-items: flex-start; }
-.space-between { justify-content: space-between; }
-.wrap { flex-wrap: wrap; }
 
 
 
@@ -773,13 +762,17 @@ body {
 /* ==========================================================================
    --- 12. INPUTS & SELECTS ---
    ========================================================================== */
-.form-input, .attr-input, .hp-input {
+
+
+   .form-input {
     background: #09090b !important;
     color: white !important;
     border: 1px solid #3f3f46;
     padding: 10px;
     border-radius: 6px;
     box-sizing: border-box;
+    height: 40px;                 /* Forces consistency for the Tier box */
+    width: 100%;
     transition: border-color 0.2s;
 }
 
