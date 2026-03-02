@@ -284,8 +284,21 @@ function openControlSubTab(evt, subTabId) {
 }
 
 function goBackToSelection() {
+    // 1. Kill the live listener so it stops watching the database
+    if (characterListener) {
+        characterListener();
+        characterListener = null;
+    }
+    
+    // 2. Clear the active ID
+    currentCharacterId = null;
+
+    // 3. Swap the views
     document.getElementById('char-selection-view').classList.remove('hide-default');
     document.getElementById('char-sheet-view').classList.add('hide-default');
+    
+    // 4. Hide the sidebar HUD since no one is active
+    document.getElementById('active-char-hud').classList.add('hide-default');
 }
 
 
@@ -712,67 +725,74 @@ function loadUserCharacters() {
 }
 
 // SELECT CHARACTER FUNCTION
-async function selectCharacter(id) {
-    if (characterListener) characterListener(); 
+    async function selectCharacter(id) {
+        // 1. CLEANUP: Kill any existing listener before starting a new one
+        if (characterListener) characterListener(); 
 
-    // Reset all inputs except files to prevent data carry-over
-    const allInputs = document.querySelectorAll('#char-sheet-view input');
-    allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
+        // 2. UI RESET: Clear inputs to prevent "ghost data" from the previous character
+        const allInputs = document.querySelectorAll('#char-sheet-view input');
+        allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
 
-    currentCharacterId = id;
-    const user = auth.currentUser;
-    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
+        currentCharacterId = id;
+        const user = auth.currentUser;
+        const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
 
-    characterListener = charRef.onSnapshot(async (doc) => {
-        if (doc.exists) {
-            const d = doc.data();
-            
-            // Sync Campaign/Instance
-            if (currentCampaignId !== (d.instanceId || "global")) {
-                currentCampaignId = d.instanceId || "global"; 
-                initClockListener(); 
-                initDiceLogListener();
+        // 3. THE LIVE LISTENER: This watches the database for changes
+        characterListener = charRef.onSnapshot(async (doc) => {
+            if (doc.exists) {
+                const d = doc.data();
+                
+                // Sync Campaign/Instance (World Clock & Chat)
+                if (currentCampaignId !== (d.instanceId || "global")) {
+                    currentCampaignId = d.instanceId || "global"; 
+                    initClockListener(); 
+                    initDiceLogListener();
+                }
+
+                // Sync Identity & Level
+                setSafeValue('char-name', d.name || "");
+                setSafeValue('char-race', d.race || "");
+                activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
+                setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
+                
+                // Sync Attribute Points (AP)
+                originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
+                pendingStats = { ...originalStats };
+                const spentPoints = (originalStats.body + originalStats.mind + originalStats.spirit);
+                totalAP = Math.max(0, activeCharLevel - spentPoints); 
+
+                // Sync Lists (Gallery, Skills, Class Pills)
+                renderClassPills(d);
+                refreshStatDisplay();
+                renderGallery(d.gallery || [], d.portrait !== undefined ? d.portrait : 0);
+                renderSkills(d);
+
+                // STABILITY FIX 1: Only update Notes if the player isn't currently typing in them
+                const notesEl = document.getElementById('char-notes');
+                if (notesEl && document.activeElement !== notesEl) {
+                    notesEl.value = d.notes || "";
+                }
+
+                // Sync Vitals (DB numbers are absolute)
+                setSafeValue('char-hp-current', Math.floor(d.hpCurrent || 0));
+                setSafeValue('char-mp-current', Math.floor(d.mpCurrent || 0));
+
+                // Sync HUD & Sidebar
+                const nextLevelExp = (activeCharLevel + 1) * 200;
+                updateHUD({ ...d, charLevel: activeCharLevel, expMax: nextLevelExp });
+                
+                // STABILITY FIX 2: Only swap the view if we are still on the selection screen
+                const selectionView = document.getElementById('char-selection-view');
+                if (!selectionView.classList.contains('hide-default')) {
+                    selectionView.classList.add('hide-default');
+                    document.getElementById('char-sheet-view').classList.remove('hide-default');
+                }
             }
+        });
 
-            // Identity Sync
-            setSafeValue('char-name', d.name || "");
-            setSafeValue('char-race', d.race || "");
-
-            // Level & AP Logic
-            activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
-            setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
-            
-            originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
-            pendingStats = { ...originalStats };
-            const spentPoints = (originalStats.body + originalStats.mind + originalStats.spirit);
-            totalAP = Math.max(0, activeCharLevel - spentPoints); 
-
-            // Sub-renderers
-            renderClassPills(d);
-            refreshStatDisplay();
-            renderGallery(d.gallery || [], d.portrait || 0);
-            renderSkills(d);
-
-            // Sync Notes (Important for your new layout)
-            const notesEl = document.getElementById('char-notes');
-            if (notesEl) notesEl.value = d.notes || "";
-
-            // Set Current HP/MP Values directly from DB (Clamping Removed)
-            setSafeValue('char-hp-current', Math.floor(d.hpCurrent || 0));
-            setSafeValue('char-mp-current', Math.floor(d.mpCurrent || 0));
-
-            // Final HUD Update
-            const nextLevelExp = (activeCharLevel + 1) * 200;
-            updateHUD({ ...d, charLevel: activeCharLevel, expMax: nextLevelExp });
-            
-            // Switch View
-            document.getElementById('char-selection-view').classList.add('hide-default');
-            document.getElementById('char-sheet-view').classList.remove('hide-default');
-        }
-    });
-
-    firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
-}
+        // Save persistent session state
+        firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
+    }
 
 async function saveCharacter() {
     if (!currentCharacterId) return;
