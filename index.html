@@ -628,111 +628,19 @@
                         --- 6. Class Management --- 
                         -------------------------->
                         <div id="sub-classes" class="control-sub-content hide-default">
-                            <div class="panel-card">
-                                <h3 id="class-editor-title">Register New Class Archetype</h3>
-                                <input type="hidden" id="m-class-id" value="">
-                        
-                                <div class="flex-row gap-m mb-m">
-                                    <div class="form-group flex-2">
-                                        <label class="text-muted">Class Name</label>
-                                        <input type="text" id="m-class-name" class="form-input">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">Class Tier</label>
-                                        <select id="m-class-tier" class="form-input">
-                                            <option value="1">Tier 1 (Base)</option>
-                                            <option value="2">Tier 2 (Advanced)</option>
-                                            <option value="3">Tier 3 (Prestige)</option>
-                                        </select>
+                            <div class="panel-card trait-panel-layout">
+                                <div class="trait-list-header mb-m">
+                                    <div class="flex-row space-between w-100">
+                                        <h3 style="margin:0;">Class Registry</h3>
+                                        <button class="btn-success" onclick="openClassModal()">
+                                            <i class="fa-solid fa-plus"></i> Register Class
+                                        </button>
                                     </div>
                                 </div>
                                 
-                                <div class="flex-row gap-m mb-m">
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">Main Stat</label>
-                                        <select id="m-class-main-stat" class="form-input">
-                                            <option value="BODY">BODY</option>
-                                            <option value="MIND">MIND</option>
-                                            <option value="SPIRIT">SPIRIT</option>
-                                            <option value="BODY_OR_MIND">BODY or MIND (Highest)</option>
-                                            <option value="BODY_OR_SPIRIT">BODY or SPIRIT (Highest)</option>
-                                            <option value="MIND_OR_SPIRIT">MIND or SPIRIT (Highest)</option>
-                                            <option value="ANY">Any Stat (Highest of 3)</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">HP/Lv</label>
-                                        <input type="number" id="m-class-hp" class="form-input" value="5">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">MP/Lv</label>
-                                        <input type="number" id="m-class-mp" class="form-input" value="2">
-                                    </div>
+                                <div class="master-asset-list-scroll-area custom-scrollbar">
+                                    <div id="master-class-list"></div> 
                                 </div>
-                        
-                                <div class="panel-header-small mt-l mb-s">
-                                    <span class="text-muted" style="text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Special Modifiers</span>
-                                </div>
-                                <div class="flex-row gap-m mb-m">
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">HP Regen</label>
-                                        <input type="number" step="0.1" id="m-class-hp-regen" class="form-input" placeholder="0.0">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">MP Regen</label>
-                                        <input type="number" step="0.1" id="m-class-mp-regen" class="form-input" placeholder="0.0">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">Move Spd</label>
-                                        <input type="number" id="m-class-speed-bonus" class="form-input" placeholder="0">
-                                    </div>
-                                </div>
-                        
-                                <div class="flex-row gap-m mb-m">
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">Accuracy (+)</label>
-                                        <input type="number" id="m-class-accuracy" class="form-input" placeholder="0">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">Armor Class (+)</label>
-                                        <input type="number" id="m-class-ac" class="form-input" placeholder="0">
-                                    </div>
-                                </div>
-                                <div class="flex-row gap-m mb-m">
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">Crit Multiplier</label>
-                                        <input type="number" step="0.1" id="m-class-crit" class="form-input" placeholder="2.0">
-                                    </div>
-                                    <div class="form-group flex-1">
-                                        <label class="text-muted">Crit Chance (+)</label>
-                                        <input type="number" id="m-class-crit-chance" class="form-input" placeholder="0">
-                                    </div>
-                                </div>
-                        
-                                <div class="form-group mb-m">
-                                    <label class="text-muted">Requirements</label>
-                                    <input type="text" id="m-class-reqs" class="form-input" placeholder="e.g., Warrior Lv.10, Cleric Lv.5">
-                                </div>
-                        
-                                <div class="form-group mb-m">
-                                    <label class="text-muted">Passives / Traits (Comma separated)</label>
-                                    <input type="text" id="m-class-traits" class="form-input" placeholder="Darkvision, Smite">
-                                </div>
-                        
-                                <div class="form-group mb-m">
-                                    <label class="text-muted">Description</label>
-                                    <textarea id="m-class-desc" class="form-input" style="height: 60px;"></textarea>
-                                </div>
-                        
-                                <div class="flex-row" style="justify-content: flex-end; gap: 10px;">
-                                    <button id="class-cancel-btn" onclick="resetClassForm()" class="btn-secondary hide-default">Cancel Edit</button>
-                                    <button onclick="saveMasterClass()" class="btn-success">Save Class Archetype</button>
-                                </div>
-                            </div>
-                            
-                            <div class="panel-card">
-                                <h3>Registered Class Archetypes</h3>
-                                <div id="master-class-list" class="master-asset-list"></div>
                             </div>
                         </div>
                         
@@ -1080,14 +988,61 @@
     
     
     
-     <!--===========================
+        <!--=================================
             ---- 12. MODAL SKILL MANAGER ----
-            ============================-->
+            =================================-->
 
-     <!--===========================
+        <!--=================================
             ---- 13. MODAL CLASS MANAGER ----
-            ============================-->
+            =================================-->
+            <div id="class-modal" class="modal-overlay hide-default" onclick="if(event.target === this) closeClassModal()">
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header flex-row">
+                        <h3 id="class-modal-title">Register New Class</h3>
+                        <button class="btn-danger-small" onclick="closeClassModal()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    
+                    <input type="hidden" id="m-class-id">
+                    
+                    <div class="flex-row gap-s mb-s">
+                        <input type="text" id="m-class-name" class="form-input" placeholder="Class Name (e.g. Warrior)" style="flex: 2;">
+                        <input type="number" id="m-class-tier" class="form-input" placeholder="Tier (1-3)" min="1" max="3" style="width: 80px;">
+                    </div>
+                    
+                    <div class="mb-s">
+                        <input type="text" id="m-class-main-stat" class="form-input" placeholder="Main Stat (e.g. Body, Strength)">
+                    </div>
+                    
+                    <div class="mb-m p-s" style="background: #111; border-radius: 4px;">
+                        <label class="form-label text-muted small" style="display:block; margin-bottom:5px;">Class Growth & Bonuses</label>
+                        <div class="flex-row gap-s mb-s">
+                            <select id="class-attr-picker" class="form-input" style="flex-grow: 1;">
+                                <option value="">Loading...</option>
+                            </select>
+                            <button class="btn-secondary" onclick="addClassAttr()">
+                                <i class="fa-solid fa-plus"></i> Add
+                            </button>
+                        </div>
+                        <div id="class-dynamic-attributes" class="p-s" style="background: #18181b; border: 1px solid #3f3f46; border-radius: 4px; min-height: 50px;">
+                            </div>
+                    </div>
 
+                    <div class="mb-s">
+                        <input type="text" id="m-class-reqs" class="form-input" placeholder="Requirements (e.g. 'Body 3')">
+                    </div>
+                    <div class="mb-s">
+                        <input type="text" id="m-class-traits" class="form-input" placeholder="Traits (comma separated)">
+                    </div>
+                    
+                    <textarea id="m-class-desc" class="form-input mb-m" style="height: 80px;" placeholder="Class Description..."></textarea>
+                    
+                    <div class="modal-footer text-right">
+                        <button class="btn-success" onclick="saveMasterClass()">Save Class Archetype</button>
+                    </div>
+                </div>
+            </div>
 
 
 

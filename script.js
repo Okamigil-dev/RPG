@@ -1,5 +1,5 @@
 /* =========================================================
-   SCRIPT VERSION: 0.2.3
+   SCRIPT VERSION: 0.2.5
    DATE: 2026-03-02 
    ========================================================= */
 
@@ -497,6 +497,8 @@ function triggerInitiative(btn) {
     rollDice(20, btn, modifier, "Initiative");
 }
 
+
+
 /* ==========================================================================
    SECTION 6: CHARACTER LOGIC (MATH & STATS)
    ========================================================================== */
@@ -625,129 +627,7 @@ async function getFinalMaxStats(charData) {
     return { finalHP, finalMP };
 }
 
-/* IN CASE I STILL NEED getDynamicTotals
-// Calculates Regens, Speed, and AC dynamically
-async function getDynamicTotals(charData) {
-    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
-    const raceD = raceSnap.empty ? {} : raceSnap.docs[0].data();
 
-    // Sum up everything with the key 'hp_regen', 'speed', etc.
-    let totals = {
-        hp_regen: (charData.hpMax * 0.00208333) + getAttrValue(raceD, 'hp_regen'),
-        mp_regen: (charData.mpMax * 0.00208333) + getAttrValue(raceD, 'mp_regen'),
-        speed: getAttrValue(raceD, 'speed') || 5,
-        ac: 10 + getAttrValue(raceD, 'ac')
-    };
-
-    // Add Class bonuses to these same keys
-    for (const className of Object.keys(charData.unlockedClasses || {})) {
-        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
-        if (!classSnap.empty) {
-            const classD = classSnap.docs[0].data();
-            totals.hp_regen += getAttrValue(classD, 'hp_regen');
-            totals.mp_regen += getAttrValue(classD, 'mp_regen');
-            totals.speed += getAttrValue(classD, 'speed');
-            totals.ac += getAttrValue(classD, 'ac');
-        }
-    }
-    return totals;
-}
-*/
-
-
-
-
-
-
-
-
-
-
-/*
-//Calculates Initiative, Speed, Armor Class
-async function getFinalCombatStats(charData) {
-    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
-    const raceD = raceSnap.empty ? { acBonus: 0, speed: 5 } : raceSnap.docs[0].data();
-
-    // 1. INITIATIVE: Higher of Body or Mind
-    // Using the same logic as your stat calculation for consistency
-    const body = (charData.body || 0) + (raceD.baseBody || 0);
-    const mind = (charData.mind || 0) + (raceD.baseMind || 0);
-    const initBonus = Math.max(body, mind);
-
-    // 2. ARMOR CLASS: Base 10 + Race Bonus (need armor bonus after making items)
-    const finalAC = 10 + (raceD.acBonus || 0);
-
-    // 3. SPEED: Taken directly from race
-    const finalSpeed = raceD.speed || 5;
-
-    return { initBonus, finalAC, finalSpeed };
-}
-
-async function getFinalMaxStats(charData) {
-    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
-    const raceD = raceSnap.empty ? { hpPerLv: 1, mpPerLv: 1, baseBody: 0 } : raceSnap.docs[0].data();
-
-    let baseHP = 10 + (charData.charLevel * (raceD.hpPerLv || 0));
-    let baseMP = 10 + (charData.charLevel * (raceD.mpPerLv || 0));
-
-    for (const [className, info] of Object.entries(charData.unlockedClasses || {})) {
-        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
-        if (!classSnap.empty) {
-            const classD = classSnap.docs[0].data();
-            baseHP += (info.level * (classD.hpPerLv || 0));
-            baseMP += (info.level * (classD.mpPerLv || 0));
-        }
-    }
-
-    const totalBody = (charData.body || 0) + (raceD.baseBody || 0);
-    const totalSpirit = (charData.spirit || 0) + (raceD.baseSpirit || 0);
-    
-    baseHP += (totalBody * STAT_RESOURCE_MULT);
-    baseMP += (totalSpirit * STAT_RESOURCE_MULT);
-
-    const finalHP = Math.floor((baseHP + (charData.hpBonusFlat || 0)) * (1 + (charData.hpBonusPerc || 0) / 100));
-    const finalMP = Math.floor((baseMP + (charData.mpBonusFlat || 0)) * (1 + (charData.mpBonusPerc || 0) / 100));
-
-    return { finalHP, finalMP };
-}
-
-async function getTotalRegen(charData) {
-    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
-    const raceD = raceSnap.empty ? { hpRegen: 0, mpRegen: 0 } : raceSnap.docs[0].data();
-
-    let totalHPRegen = (charData.hpMax * 0.00208333) + (raceD.hpRegen || 0);
-    let totalMPRegen = (charData.mpMax * 0.00208333) + (raceD.mpRegen || 0);
-
-    for (const className of Object.keys(charData.unlockedClasses || {})) {
-        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
-        if (!classSnap.empty) {
-            const classD = classSnap.docs[0].data();
-            totalHPRegen += (classD.hpRegenBonus || 0);
-            totalMPRegen += (classD.mpRegenBonus || 0);
-        }
-    }
-    return { totalHPRegen, totalMPRegen };
-}
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* ==========================================================================
-   SECTION 7: CHARACTER UI & CRUD
-   ========================================================================== */
 
 /* ==========================================================================
    SECTION 7: CHARACTER UI & CRUD
@@ -2106,8 +1986,100 @@ async function loadMasterRaceList() {
     });
 }
 
-// --- 10.2 CLASS REGISTRY ---
-async function createMasterClass() { saveMasterClass(); } // Helper alias
+/* ==========================================================================
+   SECTION 10.2: CLASS REGISTRY (Version 0.3 - Modal Edition)
+   ========================================================================== */
+
+let currentClassAttributes = {}; 
+
+// --- A. MODAL CONTROLS ---
+
+function openClassModal() {
+    resetClassForm(); // Clear old data
+    populateClassAttrPicker(); // Load stats
+    setSafeText('class-modal-title', "Register New Class");
+    document.getElementById('class-modal').classList.remove('hide-default');
+}
+
+function closeClassModal() {
+    document.getElementById('class-modal').classList.add('hide-default');
+}
+
+// --- B. HELPER FUNCTIONS ---
+
+async function populateClassAttrPicker() {
+    const select = document.getElementById('class-attr-picker');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">Select stat bonus...</option>';
+    
+    try {
+        const snap = await firestore.collection('master_attributes').orderBy('name').get();
+        attributeDefinitions = {}; 
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            attributeDefinitions[d.key] = d.name; 
+            
+            if (!currentClassAttributes.hasOwnProperty(d.key)) {
+                const opt = document.createElement('option');
+                opt.value = d.key;
+                opt.innerText = d.name;
+                select.appendChild(opt);
+            }
+        });
+    } catch (e) { console.error("Attr Load Error:", e); }
+}
+
+function addClassAttr() {
+    const select = document.getElementById('class-attr-picker');
+    const key = select.value;
+    if (!key) return;
+
+    currentClassAttributes[key] = 0; 
+    renderClassAttributes();
+    populateClassAttrPicker(); 
+}
+
+function removeClassAttr(key) {
+    delete currentClassAttributes[key];
+    renderClassAttributes();
+    populateClassAttrPicker();
+}
+
+function updateClassAttrValue(key, val) {
+    currentClassAttributes[key] = parseFloat(val) || 0;
+}
+
+function renderClassAttributes() {
+    const container = document.getElementById('class-dynamic-attributes');
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (Object.keys(currentClassAttributes).length === 0) {
+        container.innerHTML = `<div class="text-muted text-center" style="font-size:0.8rem; padding:10px;">No bonuses defined.</div>`;
+        return;
+    }
+
+    for (const [key, value] of Object.entries(currentClassAttributes)) {
+        const name = attributeDefinitions[key] || key;
+        
+        const div = document.createElement('div');
+        div.className = "flex-row space-between p-s trait-item-border mb-s";
+        div.style.background = "#27272a";
+        div.innerHTML = `
+            <strong class="text-muted" style="width: 140px;">${name}</strong>
+            <input type="number" class="form-input" style="width: 80px; text-align: right;" 
+                   value="${value}" step="0.1" onchange="updateClassAttrValue('${key}', this.value)">
+            <button class="btn-icon-tiny btn-danger" onclick="removeClassAttr('${key}')">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        `;
+        container.appendChild(div);
+    }
+}
+
+// --- C. MAIN CRUD ---
 
 async function saveMasterClass() {
     const classId = document.getElementById('m-class-id').value;
@@ -2116,17 +2088,12 @@ async function saveMasterClass() {
 
     const classData = {
         name: name,
-        tier: parseInt(document.getElementById('m-class-tier').value),
+        tier: parseInt(document.getElementById('m-class-tier').value) || 1,
         mainStat: document.getElementById('m-class-main-stat').value,
-        hpPerLv: parseInt(document.getElementById('m-class-hp').value) || 0,
-        mpPerLv: parseInt(document.getElementById('m-class-mp').value) || 0,
-        hpRegenBonus: parseFloat(document.getElementById('m-class-hp-regen').value) || 0,
-        mpRegenBonus: parseFloat(document.getElementById('m-class-mp-regen').value) || 0,
-        critMultiplier: parseFloat(document.getElementById('m-class-crit').value) || 2.0,
-        critChanceBonus: parseInt(document.getElementById('m-class-crit-chance').value) || 0,
-        accuracyBonus: parseInt(document.getElementById('m-class-accuracy').value) || 0,
-        armorClassBonus: parseInt(document.getElementById('m-class-ac').value) || 0,
-        speedBonus: parseInt(document.getElementById('m-class-speed-bonus').value) || 0,
+        
+        // Save the dynamic map
+        attributes: currentClassAttributes,
+        
         requirements: document.getElementById('m-class-reqs').value.trim(),
         description: document.getElementById('m-class-desc').value.trim(),
         traits: document.getElementById('m-class-traits').value.split(',').map(t => t.trim()).filter(t => t !== ""),
@@ -2136,13 +2103,13 @@ async function saveMasterClass() {
     try {
         if (classId) {
             await firestore.collection('master_classes').doc(classId).update(classData);
-            alert("Class updated!");
+            if(typeof showToast === "function") showToast("Class Updated");
         } else {
             classData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             await firestore.collection('master_classes').add(classData);
-            alert("Class created!");
+            if(typeof showToast === "function") showToast("Class Created");
         }
-        resetClassForm();
+        closeClassModal(); // Close the modal on success
         loadMasterClassList();
     } catch (e) { console.error(e); }
 }
@@ -2152,7 +2119,6 @@ async function loadMasterClassList() {
     if (!list) return;
 
     try {
-        // FIX: Only sort by 'tier' to avoid the 400 Index Error
         const snap = await firestore.collection('master_classes').orderBy('tier').get();
         list.innerHTML = "";
 
@@ -2163,10 +2129,19 @@ async function loadMasterClassList() {
 
         snap.forEach(doc => {
             const d = doc.data();
+            
+            let bonusSummary = "";
+            if (d.attributes && Object.keys(d.attributes).length > 0) {
+                const entries = Object.entries(d.attributes).slice(0, 4);
+                bonusSummary = entries.map(([k, v]) => `<span style="color:#a1a1aa;">${k}:</span> <span style="color:#fff;">${v}</span>`).join(' | ');
+                if (Object.keys(d.attributes).length > 4) bonusSummary += " ...";
+            } else {
+                bonusSummary = "No Stat Bonuses";
+            }
+
             const card = document.createElement('div');
             card.className = "panel-card mb-s";
             card.style.background = "#18181b";
-            // Color coding tiers: Gold (3), Indigo (2), Dark Grey (1)
             card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#3f3f46'}`;
             
             const traitTags = (d.traits || []).map(t => 
@@ -2176,18 +2151,18 @@ async function loadMasterClassList() {
             card.innerHTML = `
                 <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
                     <div style="flex: 1;">
-                        <div class="flex-row" style="gap:10px;">
-                            <strong style="color:white;">${d.name}</strong> 
+                        <div class="flex-row" style="gap:10px; align-items: center; margin-bottom: 8px;">
+                            <strong style="color:white; font-size: 1.1rem;">${d.name}</strong> 
                             <span class="join-code-pill" style="opacity:0.6;">T${d.tier}</span>
                             <span class="join-code-pill" style="color:#a855f7;">${d.mainStat}</span>
                         </div>
-                        <div class="mt-s" style="margin-bottom:8px;">${traitTags}</div>
-                        <div style="font-size: 0.7rem; color: #71717a;">
-                            HP/Lv: +${d.hpPerLv} | MP/Lv: +${d.mpPerLv}
+                        <div class="mb-s" style="font-size: 0.8rem; background: #111; padding: 6px; border-radius: 4px;">
+                            ${bonusSummary}
                         </div>
+                        <div>${traitTags}</div>
                     </div>
                     <div class="flex-row" style="gap: 5px;">
-                        <button class="btn-small" onclick="editClass('${doc.id}')" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn-small" onclick="prepClassEdit('${doc.id}')" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)" title="Delete">
                             <i class="fa-solid fa-trash"></i>
                         </button>
@@ -2202,38 +2177,39 @@ async function loadMasterClassList() {
     }
 }
 
-async function editClass(id) {
+async function prepClassEdit(id) {
     const d = (await firestore.collection('master_classes').doc(id).get()).data();
     if (!d) return;
 
     document.getElementById('m-class-id').value = id;
-    document.getElementById('m-class-name').value = d.name;
-    document.getElementById('m-class-tier').value = d.tier;
-    document.getElementById('m-class-main-stat').value = d.mainStat;
-    document.getElementById('m-class-hp').value = d.hpPerLv;
-    document.getElementById('m-class-mp').value = d.mpPerLv;
-    document.getElementById('m-class-hp-regen').value = d.hpRegenBonus || 0;
-    document.getElementById('m-class-mp-regen').value = d.mpRegenBonus || 0;
-    document.getElementById('m-class-crit').value = d.critMultiplier || 2.0;
-    document.getElementById('m-class-crit-chance').value = d.critChanceBonus || 0;
-    document.getElementById('m-class-accuracy').value = d.accuracyBonus || 0;
-    document.getElementById('m-class-ac').value = d.armorClassBonus || 0;
-    document.getElementById('m-class-speed-bonus').value = d.speedBonus || 0;
-    document.getElementById('m-class-reqs').value = d.requirements || "";
-    document.getElementById('m-class-desc').value = d.description || "";
-    document.getElementById('m-class-traits').value = (d.traits || []).join(", ");
+    setSafeValue('m-class-name', d.name);
+    setSafeValue('m-class-tier', d.tier);
+    setSafeValue('m-class-main-stat', d.mainStat);
+    setSafeValue('m-class-reqs', d.requirements || "");
+    setSafeValue('m-class-desc', d.description || "");
+    setSafeValue('m-class-traits', (d.traits || []).join(", "));
 
-    document.getElementById('class-editor-title').innerText = "Editing Class: " + d.name;
-    document.getElementById('class-cancel-btn').classList.remove('hide-default');
-    document.querySelector('.master-workspace').scrollTop = 0;
+    currentClassAttributes = d.attributes || {};
+    
+    // UI Update: Open Modal
+    setSafeText('class-modal-title', "Editing Class: " + d.name);
+    document.getElementById('class-modal').classList.remove('hide-default');
+    
+    await populateClassAttrPicker();
+    renderClassAttributes();
 }
 
 function resetClassForm() {
     document.getElementById('m-class-id').value = "";
-    document.querySelectorAll('#sub-classes input').forEach(i => i.value = (i.type === "number" ? 0 : ""));
-    document.getElementById('m-class-desc').value = "";
-    document.getElementById('class-editor-title').innerText = "Register New Class Archetype";
-    document.getElementById('class-cancel-btn').classList.add('hide-default');
+    setSafeValue('m-class-name', "");
+    setSafeValue('m-class-tier', "1");
+    setSafeValue('m-class-main-stat', "");
+    setSafeValue('m-class-desc', "");
+    setSafeValue('m-class-reqs', "");
+    setSafeValue('m-class-traits', "");
+    
+    currentClassAttributes = {};
+    renderClassAttributes();
 }
 
 // ==========================================
