@@ -772,46 +772,16 @@ async function saveCharacter() {
     const charRef = firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId);
     
     try {
-        const doc = await charRef.get();
-        const currentData = doc.data();
-
-        // 1. Calculate Level/EXP Logic
-        const currentExp = currentData.expCurrent || 0;
-        activeCharLevel = calculateLevelFromEXP(currentExp); 
-        const nextLevelExp = (activeCharLevel + 1) * 200; 
-
-        // 2. THE HYBRID ENGINE: Get safe values using global clamping
-        const safeHP = getClampedResource('char-hp-current', 'char-hp-max');
-        const safeMP = getClampedResource('char-mp-current', 'char-mp-max');
-
-        // 3. Prepare Data Object
         const data = {
             name: document.getElementById('char-name').value,
             race: document.getElementById('char-race').value,
-            expCurrent: currentExp, 
-            charLevel: activeCharLevel,
-            body: originalStats.body || 0,
-            mind: originalStats.mind || 0,
-            spirit: originalStats.spirit || 0,
-            // Use the safe clamped values here
-            hpCurrent: safeHP,
-            mpCurrent: safeMP,
-            portrait: currentData.portrait || "", 
-            gallery: currentData.gallery || [],
-            unlockedClasses: currentData.unlockedClasses || {}
+            notes: document.getElementById('char-notes').value || ""
         };
 
-        // 4. Update Firestore
         await charRef.update(data);
-        
-        // 5. UpdateHUD (re-injects nextLevelExp for the UI bar)
-        updateHUD({ ...data, expMax: nextLevelExp });
-        
-        if (typeof showToast === "function") showToast("Character Saved.");
-        
+        if (typeof showToast === "function") showToast("Profile Saved.");
     } catch (e) { 
         console.error("Save Error:", e); 
-        if (typeof showToast === "function") showToast("Error saving character.");
     }
 }
 
@@ -828,38 +798,33 @@ async function deleteCharacter(event, charId, name) {
 
 // Updated to use the new resolveAllStats engine
 async function applyPassiveRegen() {
-    if (!currentCharacterId) return;
-    const charSnap = await firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get();
+    if (!currentCharacterId || !isRunning) return;
+    
+    const charRef = firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId);
+    const charSnap = await charRef.get();
     const charData = charSnap.data();
     
-    // 1. Use the Master Resolver
     const bonuses = await resolveAllStats(charData);
+    const charLevel = calculateLevelFromEXP(charData.expCurrent || 0);
 
-    // 2. Calculate Regen using .totals
-    // Note: You can add +bonuses.totals['hp_regen_mult'] here later if you want percentage regen!
-    const totalHPRegen = (charData.hpMax * 0.00208333) + (bonuses.totals['hp_regen'] || 0);
-    const totalMPRegen = (charData.mpMax * 0.00208333) + (bonuses.totals['mp_regen'] || 0);
+    // Max calculation based on DB data (No DOM needed)
+    const bodyTotal = (charData.body || 0) + (bonuses.totals['body'] || 0);
+    const spiritTotal = (charData.spirit || 0) + (bonuses.totals['spirit'] || 0);
+    const hpMax = 10 + (charLevel * (bonuses.totals['hp_lv'] || 0)) + (bodyTotal * STAT_RESOURCE_MULT);
+    const mpMax = 10 + (charLevel * (bonuses.totals['mp_lv'] || 0)) + (spiritTotal * STAT_RESOURCE_MULT);
 
-    const hpInput = document.getElementById('char-hp-current');
-    const mpInput = document.getElementById('char-mp-current');
+    // Regen Math
+    const hpRegen = (hpMax * 0.00208333) + (bonuses.totals['hp_regen'] || 0);
+    const mpRegen = (mpMax * 0.00208333) + (bonuses.totals['mp_regen'] || 0);
 
-    let hpCur = parseFloat(hpInput.dataset.trueValue) || parseFloat(hpInput.value) || 0;
-    let mpCur = parseFloat(mpInput.dataset.trueValue) || parseFloat(mpInput.value) || 0;
+    const newHP = Math.min((charData.hpCurrent || 0) + hpRegen, hpMax);
+    const newMP = Math.min((charData.mpCurrent || 0) + mpRegen, mpMax);
 
-    // Use calculated Max from DOM to ensure consistency
-    const hpMax = parseFloat(document.getElementById('char-hp-max').value) || 10;
-    const mpMax = parseFloat(document.getElementById('char-mp-max').value) || 10;
-
-    const newHP = Math.min(hpCur + totalHPRegen, hpMax);
-    const newMP = Math.min(mpCur + totalMPRegen, mpMax);
-
-    hpInput.dataset.trueValue = newHP;
-    mpInput.dataset.trueValue = newMP;
-    hpInput.value = Math.floor(newHP);
-    mpInput.value = Math.floor(newMP);
-    
-    // We pass new vitals to HUD, but let it calculate Max HP/MP itself
-    updateHUD({ ...charData, hpCurrent: newHP, mpCurrent: newMP });
+    // Sync to Firebase (Your onSnapshot listener handles the HUD update)
+    await charRef.update({
+        hpCurrent: newHP,
+        mpCurrent: newMP
+    });
 }
 
 function refreshStatDisplay() {
@@ -1114,15 +1079,13 @@ function renderSkills(charData) {
 /* ============================
    === UPDATE HUD & UI SYNC ===
    ============================ */
-    /** * MAIN CONTROLLER: Calculates data once and delegates to specific UI sections.
-     */
     async function updateHUD(char) {
         if (!char) return;
 
-        // 1. Resolve stats from all sources
+        // 1. Resolve stats (Race/Class/Equipment)
         const bonuses = await resolveAllStats(char);
 
-        // 2. Attribute Totals
+        // 2. Attribute Totals (Base + Bonuses)
         const totals = {
             body: (char.body || 0) + (bonuses.totals['body'] || 0),
             mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
@@ -1130,30 +1093,22 @@ function renderSkills(charData) {
         };
 
         // 3. Calculate Resource Max Values
-        const hpFromLevel = char.charLevel * (bonuses.totals['hp_lv'] || 0);
-        const mpFromLevel = char.charLevel * (bonuses.totals['mp_lv'] || 0);
-        
-        const hpMaxTotal = 10 + hpFromLevel + (totals.body * STAT_RESOURCE_MULT);
-        const mpMaxTotal = 10 + mpFromLevel + (totals.spirit * STAT_RESOURCE_MULT);
+        const hpMaxTotal = 10 + (char.charLevel * (bonuses.totals['hp_lv'] || 0)) + (totals.body * STAT_RESOURCE_MULT);
+        const mpMaxTotal = 10 + (char.charLevel * (bonuses.totals['mp_lv'] || 0)) + (totals.spirit * STAT_RESOURCE_MULT);
 
-        // 4. Update the Max boxes FIRST so they are visible and usable for clamping
+        // 4. Paint the numbers (Using setSafeValue to prevent crashes on other tabs)
         setSafeValue('char-hp-max', hpMaxTotal);
         setSafeValue('char-mp-max', mpMaxTotal);
+        setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
+        setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
 
-        // 5. Use the Engine to get safe current values
-        const hpCurr = getClampedResource('char-hp-current', 'char-hp-max');
-        const mpCurr = getClampedResource('char-mp-current', 'char-mp-max');
-
-        // 6. Visual Updates
-        updateVisualBars(hpCurr, hpMaxTotal, mpCurr, mpMaxTotal);
+        // 5. Stretch the bars
+        updateVisualBars(char.hpCurrent || 0, hpMaxTotal, char.mpCurrent || 0, mpMaxTotal);
         
-        const hpPerc = Math.min((hpCurr / (hpMaxTotal || 1)) * 100, 100);
-        const mpPerc = Math.min((mpCurr / (mpMaxTotal || 1)) * 100, 100);
+        // 6. UI Percentages
+        const hpPerc = Math.min(((char.hpCurrent || 0) / (hpMaxTotal || 1)) * 100, 100);
+        const mpPerc = Math.min(((char.mpCurrent || 0) / (mpMaxTotal || 1)) * 100, 100);
         const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
-
-        // 7. Sync Sections
-        const hudEl = document.getElementById('active-char-hud');
-        if (hudEl) hudEl.classList.remove('hide-default'); 
 
         syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
         syncSheetDashboardUI(char, totals, hpPerc, mpPerc, bonuses, char.race); 
@@ -2671,32 +2626,11 @@ async function prepAttributeEdit(id) {
 
 
 /* ==========================================================================
-   SECTION 15: GLOBAL UTILITIES & CLAMPING (v0.4.1)
+   SECTION 15: GLOBAL UTILITIES
    ========================================================================== */
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(value, max));
-    }
-
-    /**
-     * Resource Protector: Uses setSafeValue to fix the "Invisible Max" bug.
-     */
-    function getClampedResource(currentId, maxId) {
-        const currentInput = document.getElementById(currentId);
-        const maxInput = document.getElementById(maxId);
-
-        // Guard Clause: If we are on a different tab and can't find these, exit gracefully
-        if (!currentInput || !maxInput) return 0;
-
-        const maxVal = parseFloat(maxInput.value) || 0;
-        const currentVal = parseFloat(currentInput.value) || 0;
-
-        const safeVal = clamp(currentVal, 0, maxVal);
-        
-        // Use your existing setSafeValue to force the display update
-        setSafeValue(currentId, safeVal);
-        
-        return safeVal;
     }
 
     function updateVisualBars(hp, hpMax, mp, mpMax) {
