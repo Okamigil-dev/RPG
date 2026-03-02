@@ -1141,73 +1141,70 @@ function renderSkills(charData) {
      */
     async function updateHUD(char) {
     if (!char) return;
-
-    // 1. Resolve stats from all sources
     const bonuses = await resolveAllStats(char);
 
-    // 2. Attribute Totals
     const totals = {
         body: (char.body || 0) + (bonuses.totals['body'] || 0),
         mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
         spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
     };
 
-    // 3. Calculate Resource Max Values
+    // Calculate Max Values
     const hpFromLevel = char.charLevel * (bonuses.totals['hp_lv'] || 0);
     const mpFromLevel = char.charLevel * (bonuses.totals['mp_lv'] || 0);
-    
     const hpMaxTotal = 10 + hpFromLevel + (totals.body * STAT_RESOURCE_MULT);
     const mpMaxTotal = 10 + mpFromLevel + (totals.spirit * STAT_RESOURCE_MULT);
 
-    // 4. Update UI Max boxes
+    // 1. Update Character Sheet Boxes
     setSafeValue('char-hp-max', Math.floor(hpMaxTotal));
     setSafeValue('char-mp-max', Math.floor(mpMaxTotal));
+    setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
+    setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
 
-    // 5. Update Current values (Database wins, no clamping)
-    const hpCurr = char.hpCurrent || 0;
-    const mpCurr = char.mpCurrent || 0;
-    setSafeValue('char-hp-current', Math.floor(hpCurr));
-    setSafeValue('char-mp-current', Math.floor(mpCurr));
+    // 2. Update Visual Bars (Character Sheet)
+    updateVisualBars(char.hpCurrent, hpMaxTotal, char.mpCurrent, mpMaxTotal);
 
-    // 6. Calculate Percentages for Bars
-    const hpPerc = Math.min((hpCurr / (hpMaxTotal || 1)) * 100, 100);
-    const mpPerc = Math.min((mpCurr / (mpMaxTotal || 1)) * 100, 100);
+    // 3. Update Sidebar HUD
+    const hpPerc = Math.min(((char.hpCurrent || 0) / (hpMaxTotal || 1)) * 100, 100);
+    const mpPerc = Math.min(((char.mpCurrent || 0) / (mpMaxTotal || 1)) * 100, 100);
     const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
 
-    // 7. Visual Sync
-    updateVisualBars(hpCurr, hpMaxTotal, mpCurr, mpMaxTotal);
-    
     const hudEl = document.getElementById('active-char-hud');
     if (hudEl) hudEl.classList.remove('hide-default'); 
 
-    syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
+    syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc, hpMaxTotal, mpMaxTotal);
     syncSheetDashboardUI(char, totals, hpPerc, mpPerc, bonuses, char.race); 
 }
 
-/* Sync SIDE BAR UI */
-function syncSidebarUI(char, totals, hpP, mpP, expP) {
+function syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax) {
     const getMod = (val) => {
         const m = Math.floor(val / 2);
         return m >= 0 ? `+${m}` : m;
     };
 
-    // --- NEW: Resolve Active Portrait ---
+    // Portrait Logic
     const gallery = char.gallery || [];
     const activeIdx = char.portrait !== undefined ? char.portrait : 0;
     const activeImg = gallery[activeIdx] || "";
+    const portraitEl = document.getElementById('hud-portrait');
+    if (portraitEl) {
+        portraitEl.style.backgroundImage = activeImg ? `url(${activeImg})` : "none";
+        portraitEl.innerHTML = activeImg ? "" : '<i class="fa-solid fa-user"></i>';
+    }
 
+    // IDENTITY & STATS
     document.getElementById('hud-name').innerText = char.name || "Unnamed";
     document.getElementById('hud-meta').innerText = `Level ${char.charLevel || 1}`;
-    document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
-    document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
     
-    // Updated to use activeImg resolved from the index
-    document.getElementById('hud-portrait').style.backgroundImage = activeImg ? `url(${activeImg})` : "none";
+    // FIX FOR SIDEBAR TEXT:
+    document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(hpMax)}`;
+    document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(mpMax)}`;
     
     document.getElementById('hud-mod-body').innerText = `BOD ${getMod(totals.body)}`;
     document.getElementById('hud-mod-mind').innerText = `MIN ${getMod(totals.mind)}`;
     document.getElementById('hud-mod-spirit').innerText = `SPI ${getMod(totals.spirit)}`;
 
+    // BARS
     document.getElementById('hud-hp-fill').style.width = hpP + "%";
     document.getElementById('hud-mp-fill').style.width = mpP + "%";
     document.getElementById('hud-exp-fill').style.width = expP + "%";
@@ -2698,31 +2695,6 @@ async function prepAttributeEdit(id) {
 /* ==========================================================================
    SECTION 15: GLOBAL UTILITIES & CLAMPING (v0.4.1)
    ========================================================================== */
-
-    function clamp(value, min, max) {
-        return Math.max(min, Math.min(value, max));
-    }
-
-    /**
-     * Resource Protector: Uses setSafeValue to fix the "Invisible Max" bug.
-     */
-    function getClampedResource(currentId, maxId) {
-        const currentInput = document.getElementById(currentId);
-        const maxInput = document.getElementById(maxId);
-
-        // Guard Clause: If we are on a different tab and can't find these, exit gracefully
-        if (!currentInput || !maxInput) return 0;
-
-        const maxVal = parseFloat(maxInput.value) || 0;
-        const currentVal = parseFloat(currentInput.value) || 0;
-
-        const safeVal = clamp(currentVal, 0, maxVal);
-        
-        // Use your existing setSafeValue to force the display update
-        setSafeValue(currentId, safeVal);
-        
-        return safeVal;
-    }
 
     function updateVisualBars(hp, hpMax, mp, mpMax) {
         const hpFill = document.getElementById('char-hp-fill-main');
