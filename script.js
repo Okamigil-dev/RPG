@@ -2082,23 +2082,30 @@ async function loadMasterRaceList() {
 
     async function populateClassTraitPicker() {
         const select = document.getElementById('class-trait-picker');
+        const searchVal = document.getElementById('class-trait-search').value.toLowerCase();
+        const filterVal = document.getElementById('class-trait-filter').value;
+        
         if (!select) return;
         select.innerHTML = '<option value="">Select trait...</option>';
 
         try {
-            // Load all traits
             const snap = await firestore.collection('master_traits').orderBy('name').get();
+            
             snap.forEach(doc => {
                 const d = doc.data();
-                // Only show if not already added
-                if (!currentClassTraits.includes(d.name)) {
+                const nameMatch = d.name.toLowerCase().includes(searchVal);
+                const typeMatch = (filterVal === "All" || d.source === filterVal);
+                const alreadyAdded = currentClassTraits.includes(d.name);
+
+                // Only add to dropdown if it matches search/filter AND isn't already in the class
+                if (nameMatch && typeMatch && !alreadyAdded) {
                     const opt = document.createElement('option');
-                    opt.value = d.name; // We save the NAME, not ID, for simplicity in display
+                    opt.value = d.name;
                     opt.innerText = d.name;
                     select.appendChild(opt);
                 }
             });
-        } catch (e) { console.error("Trait Load Error:", e); }
+        } catch (e) { console.error("Trait Picker Error:", e); }
     }
 
     function addClassTrait() {

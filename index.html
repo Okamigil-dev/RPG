@@ -293,34 +293,36 @@
                     </div>
 
 
+                    <!-- GALLERY, NOTES -->
+                    <div class="stats-resources-wrapper mt-m">
 
-                    <div class="panel-card mt-m">
-                        <h3 class="panel-subtitle">Adventurer's Notes</h3>
-                        <textarea 
-                            id="char-notes" 
-                            class="notes-textarea" 
-                            placeholder="Quest logs, inventory, or secrets..." 
-                            onchange="saveCharacter()"></textarea>
-                    </div>
-                    
-                    <!-- Gallery Box -->
-                    <div class="panel-card mt-m">
-                        <div class="panel-header-row">
-                            <h3 class="panel-subtitle" style="margin:0;">Character Gallery</h3>
-                        </div>
-                    
-                        <input 
-                            type="file" 
-                            id="slot-upload" 
-                            accept="image/*" 
-                            style="display: none;" 
-                            onchange="handleWebPUpload(this, saveImageToNextSlot, 512, 0.6)"
-                        >
-                    
-                        <div id="char-gallery-grid" class="gallery-grid">
+                        <div class="panel-card">
+                            <div class="panel-header-row">
+                                <h3 class="panel-subtitle" style="margin:0;">Character Gallery</h3>
                             </div>
+
+                            <input 
+                                type="file" 
+                                id="slot-upload" 
+                                accept="image/*" 
+                                style="display: none;" 
+                                onchange="handleWebPUpload(this, saveImageToNextSlot, 512, 0.6)"
+                            >
+
+                            <div id="char-gallery-grid" class="gallery-grid">
+                                </div>
+                        </div>
+
+                        <div class="panel-card">
+                            <h3 class="panel-subtitle">Adventurer's Notes</h3>
+                            <textarea 
+                                id="char-notes" 
+                                class="notes-textarea" 
+                                placeholder="Quest logs, inventory, or secrets..." 
+                                onchange="saveCharacter()"></textarea>
+                        </div>
+
                     </div>
-                </div>
             </div>
 
             
@@ -1017,7 +1019,7 @@
                         <input type="text" id="m-class-main-stat" class="form-input" placeholder="Main Stat (e.g. Body, Strength)">
                     </div>
                     
-                    <div class="mb-m p-s" style="background: #111; border-radius: 4px;">
+                    <div class="mb-m p-s" >
                         <label class="form-label text-muted small" style="display:block; margin-bottom:5px;">Class Growth & Bonuses</label>
                         <div class="flex-row gap-s mb-s">
                             <select id="class-attr-picker" class="form-input" style="flex-grow: 1;">
@@ -1031,22 +1033,32 @@
                             </div>
                     </div>
 
-                    <div class="mb-s">
-                        <input type="text" id="m-class-reqs" class="form-input" placeholder="Requirements (e.g. 'Body 3')">
-                    </div>
-                    <div class="mb-s">
-                        <div class="mb-m p-s" style="background: #111; border-radius: 4px;">
-                            <label class="form-label text-muted small">Class Traits & Abilities</label>
-                            <div class="flex-row gap-s mb-s mt-s">
-                                <select id="class-trait-picker" class="form-input" style="flex-grow: 1;">
-                                    <option value="">Loading traits...</option>
-                                </select>
-                                <button class="btn-secondary" onclick="addClassTrait()">
-                                    <i class="fa-solid fa-plus"></i> Add
-                                </button>
-                            </div>
-                            <div id="class-active-traits" class="flex-row gap-s flex-wrap" style="min-height: 40px;"></div>
+                    <div class="mb-m">
+                        <label class="form-label text-muted small">Class Traits & Abilities</label>
+                        
+                        <div class="flex-row gap-s mb-s">
+                            <input type="text" id="class-trait-search" class="form-input" 
+                                placeholder="Search library..." onkeyup="populateClassTraitPicker()" style="flex: 2;">
+                            
+                            <select id="class-trait-filter" class="form-input" 
+                                    onchange="populateClassTraitPicker()" style="flex: 1;">
+                                <option value="All">All Types</option>
+                                <option value="General">General</option>
+                                <option value="Class">Class</option>
+                                <option value="Race">Race</option>
+                            </select>
                         </div>
+
+                        <div class="flex-row gap-s mb-s">
+                            <select id="class-trait-picker" class="form-input" style="flex-grow: 1;">
+                                <option value="">Loading traits...</option>
+                            </select>
+                            <button class="btn-secondary btn-add-fix" onclick="addClassTrait()">
+                                <i class="fa-solid fa-plus"></i> Add
+                            </button>
+                        </div>
+
+                        <div id="class-active-traits" class="registry-box"></div>
                     </div>
                     
                     <textarea id="m-class-desc" class="form-input mb-m" style="height: 80px;" placeholder="Class Description..."></textarea>

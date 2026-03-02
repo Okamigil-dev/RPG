@@ -488,6 +488,25 @@ body {
     margin: 0;
 }
 
+/* Fix for the white background on HP/MP numbers */
+.resource-input-minimal[readonly] {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: default;
+    color: inherit; /* Keeps the color tied to the parent or specific icon color */
+}
+
+/* Optional: If you want the Current HP to be slightly brighter than the Max */
+#char-hp-current, #char-mp-current {
+    color: #ffffff !important;
+    filter: drop-shadow(0 0 2px rgba(255,255,255,0.2));
+}
+
+#char-hp-max, #char-mp-max {
+    color: #a1a1aa !important; /* Dim the Max value slightly for better hierarchy */
+}
+
 .resource-divider { color: #3f3f46; font-weight: bold; }
 .icon-hp { color: #ef4444; }
 .icon-mp { color: #3b82f6; }
@@ -934,6 +953,26 @@ select.form-input {
     border-bottom: 1px solid #27272a;
     display: flex;
     align-items: center;
+}
+
+/* Unified container for dynamic lists (Traits, Attributes, etc.) */
+.registry-box {
+    background: #18181b; 
+    border: 1px solid #3f3f46; 
+    border-radius: 4px; 
+    min-height: 60px;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-content: flex-start;
+}
+
+/* Fix for the small 'Add' button to keep it consistent */
+.btn-add-fix {
+    width: 80px;
+    height: 40px;
+    flex-shrink: 0;
 }
 
 .checklist-item:last-child { border-bottom: none; }
