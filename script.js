@@ -226,24 +226,43 @@ auth.onAuthStateChanged((user) => {
    ========================================================================== */
 
 function openTab(tabId) {
+    // 1. SELECT ALL TABS
     const allTabs = document.querySelectorAll('.tab-content');
+    
     allTabs.forEach(tab => {
+        // Add the CSS class to hide
         tab.classList.add('hide-default');
-        // We use setProperty to ensure we beat the CSS file
+        
+        // Apply an inline '!important' hide to ensure it beats ANY other CSS rule
         tab.style.setProperty('display', 'none', 'important');
     });
     
+    // 2. TARGET THE SELECTED TAB
     const target = document.getElementById(tabId);
     if (target) {
+        // Remove the CSS class
         target.classList.remove('hide-default');
-        // CRITICAL: We MUST remove the inline !important hide so the CSS can show it
+        
+        // REMOVE the inline style entirely. 
+        // This allows your CSS rule (.tab-content:not(.hide-default)) to take over.
         target.style.removeProperty('display');
         
+        // Final fallback: explicitly set it to block just in case
+        target.style.display = 'block';
+
+        // Update Persistence
         if (tabId !== 'tab-login') {
             localStorage.setItem('activeMainTab', tabId);
         }
+
+        // --- OPTIONAL: Visual Feedback for Nav Buttons ---
+        // Removes 'active' highlight from all buttons and adds to the current one
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.querySelector(`[onclick*="${tabId}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
     }
 
+    // 3. MASTER PANEL LOGIC (Remains exactly as your build needs)
     if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
         loadInstanceList();
         openMasterPanel();
@@ -1082,59 +1101,63 @@ function renderSkills(charData) {
    === UPDATE HUD & UI SYNC ===
    ============================ */
     async function updateHUD(char) {
-    if (!char) return;
-    const bonuses = await resolveAllStats(char);
-    const totals = {
-        body: (char.body || 0) + (bonuses.totals['body'] || 0),
-        mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
-        spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
-    };
+        if (!char) return;
+        const bonuses = await resolveAllStats(char);
+        const totals = {
+            body: (char.body || 0) + (bonuses.totals['body'] || 0),
+            mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
+            spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
+        };
 
-    // 1. Calculate Maxes locally
-    const hpMaxTotal = 10 + (char.charLevel * (bonuses.totals['hp_lv'] || 0)) + (totals.body * STAT_RESOURCE_MULT);
-    const mpMaxTotal = 10 + (char.charLevel * (bonuses.totals['mp_lv'] || 0)) + (totals.spirit * STAT_RESOURCE_MULT);
+        const hpMaxTotal = 10 + (char.charLevel * (bonuses.totals['hp_lv'] || 0)) + (totals.body * STAT_RESOURCE_MULT);
+        const mpMaxTotal = 10 + (char.charLevel * (bonuses.totals['mp_lv'] || 0)) + (totals.spirit * STAT_RESOURCE_MULT);
 
-    // 2. Pass those calculated Maxes into the Sync functions
-    syncSidebarUI(char, totals, hpMaxTotal, mpMaxTotal);
-    syncSheetDashboardUI(char, totals, hpMaxTotal, mpMaxTotal, bonuses); 
-}
+        // Use the calculated totals for the bars
+        const hpPerc = Math.min(((char.hpCurrent || 0) / (hpMaxTotal || 1)) * 100, 100);
+        const mpPerc = Math.min(((char.mpCurrent || 0) / (mpMaxTotal || 1)) * 100, 100);
+        const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
 
-function syncSidebarUI(char, totals, hpMax, mpMax) {
-    const getMod = (val) => {
-        const m = Math.floor(val / 2);
-        return m >= 0 ? `+${m}` : m;
-    };
+        // Pass the CALCULATED MAXES instead of just the percentage
+        syncSidebarUI(char, totals, hpMaxTotal, mpMaxTotal, expPerc);
+        syncSheetDashboardUI(char, totals, hpMaxTotal, mpMaxTotal, bonuses); 
+    }
 
-    // Calculate percentages for the bars
-    const hpPerc = Math.min(((char.hpCurrent || 0) / (hpMax || 1)) * 100, 100);
-    const mpPerc = Math.min(((char.mpCurrent || 0) / (mpMax || 1)) * 100, 100);
-    const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
+    function syncSidebarUI(char, totals, hpMax, mpMax, expP) {
+        const getMod = (val) => {
+            const m = Math.floor(val / 2);
+            return m >= 0 ? `+${m}` : m;
+        };
 
-    // Use Safe Helpers to prevent crashes if the sidebar isn't ready
-    setSafeText('hud-name', char.name || "Unnamed");
-    setSafeText('hud-hp-text', `${Math.floor(char.hpCurrent || 0)}/${hpMax}`);
-    setSafeText('hud-mp-text', `${Math.floor(char.mpCurrent || 0)}/${mpMax}`);
-    
-    const hpFill = document.getElementById('hud-hp-fill');
-    if (hpFill) hpFill.style.width = hpPerc + "%";
-    
-    const mpFill = document.getElementById('hud-mp-fill');
-    if (mpFill) mpFill.style.width = mpPerc + "%";
-}
+        setSafeText('hud-name', char.name || "Unnamed");
+        setSafeText('hud-hp-text', `${Math.floor(char.hpCurrent || 0)}/${hpMax}`); // FIXED
+        setSafeText('hud-mp-text', `${Math.floor(char.mpCurrent || 0)}/${mpMax}`); // FIXED
+        
+        // Sidebar Bars
+        const hpFill = document.getElementById('hud-hp-fill');
+        if (hpFill) hpFill.style.width = ((char.hpCurrent / hpMax) * 100) + "%";
+        
+        const mpFill = document.getElementById('hud-mp-fill');
+        if (mpFill) mpFill.style.width = ((char.mpCurrent / mpMax) * 100) + "%";
 
-function syncSheetDashboardUI(char, totals, hpMax, mpMax, bonuses) {
-    setSafeText('total-body-label', totals.body);
-    setSafeText('total-mind-label', totals.mind);
-    setSafeText('total-spirit-label', totals.spirit);
-    
-    // Update the numbers on the character sheet
-    setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
-    setSafeValue('char-hp-max', hpMax);
-    setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
-    setSafeValue('char-mp-max', mpMax);
+        document.getElementById('hud-exp-fill').style.width = expP + "%";
+        setSafeText('hud-exp-text', `${Math.floor(expP)}%`);
+    }
 
-    updateVisualBars(char.hpCurrent || 0, hpMax, char.mpCurrent || 0, mpMax);
-}
+    function syncSheetDashboardUI(char, totals, hpMax, mpMax, bonuses) {
+        setSafeText('total-body-label', totals.body);
+        setSafeText('total-mind-label', totals.mind);
+        setSafeText('total-spirit-label', totals.spirit);
+        
+        // Character Sheet Inputs
+        setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
+        setSafeValue('char-hp-max', hpMax); // FIXED
+        setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
+        setSafeValue('char-mp-max', mpMax); // FIXED
+
+        updateVisualBars(char.hpCurrent || 0, hpMax, char.mpCurrent || 0, mpMax);
+    }
+
+
 
 /* ==========================================================================
    SECTION 9: MASTER PANEL LOGIC
