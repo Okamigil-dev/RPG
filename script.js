@@ -1306,17 +1306,22 @@ function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
     setSafeText('total-mind-label', totals.mind);
     setSafeText('total-spirit-label', totals.spirit);
     
-    // Bars (These need style, so we keep the check or make a setSafeStyle helper)
+    // 2. Resource Bars & Numbers (THE FIX)
     const hpBar = document.getElementById('char-hp-fill-main');
     if (hpBar) hpBar.style.width = hpP + "%";
-    else console.warn("Missing HP Bar: char-hp-fill-main");
-
+    
     const mpBar = document.getElementById('char-mp-fill-main');
     if (mpBar) mpBar.style.width = mpP + "%";
-    else console.warn("Missing MP Bar: char-mp-fill-main");
 
-    // 2. Combat Trio 
-    // Now if you forgot the HTML for speed, the console will tell you!
+    // Update the input boxes (The white boxes in your screenshot)
+    setSafeValue('char-hp-max', char.hpMax); 
+    setSafeValue('char-mp-max', char.mpMax);
+    
+    // Ensure current values are also synced
+    setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
+    setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
+
+    // 3. Combat Trio 
     setSafeText('char-speed-display', (bonuses.totals['speed'] || 5) + "m");
     setSafeText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
 
