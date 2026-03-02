@@ -226,22 +226,30 @@ auth.onAuthStateChanged((user) => {
    ========================================================================== */
 
 function openTab(tabId) {
+    // 1. Hide everything using the "Force" method
     const allTabs = document.querySelectorAll('.tab-content');
     allTabs.forEach(tab => {
-        tab.style.display = 'none';
+        // This adds the class AND an inline !important hide
         tab.classList.add('hide-default');
+        tab.style.setProperty('display', 'none', 'important');
     });
     
+    // 2. Show the target
     const target = document.getElementById(tabId);
     if (target) {
-        target.style.display = 'block';
+        // This removes the class AND the inline style
         target.classList.remove('hide-default');
+        target.style.removeProperty('display'); 
+        
+        // Final fallback to ensure it's visible
+        target.style.display = 'block';
+
+        if (tabId !== 'tab-login') {
+            localStorage.setItem('activeMainTab', tabId);
+        }
     }
 
-    if (tabId !== 'tab-login') {
-        localStorage.setItem('activeMainTab', tabId);
-    }
-    
+    // 3. Master Panel Logic (Section 9)
     if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
         loadInstanceList();
         openMasterPanel();
