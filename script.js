@@ -643,48 +643,21 @@ async function getFinalMaxStats(charData) {
 
 
 /* ==========================================================================
-   SECTION 7: CHARACTER UI & CRUD
+   SECTION 7: CHARACTER UI & CRUD (RECOVERY VER 0.4.3)
    ========================================================================== */
 
 function createNewCharacter() {
     const user = auth.currentUser;
-    // DATA STRUCTURE V0.2.3 (Nested Skills)
     const data = { 
-        name: "New Hero", 
-        race: "", 
-        class: "",
-        charLevel: 1,      
-        
-        // Base Attributes
-        body: 0, 
-        mind: 0, 
-        spirit: 0,
-        
-        // Vitals
-        hpCurrent: 10, 
-        mpCurrent: 10,
-        
-        // Progression
-        expCurrent: 0, 
-        
-        // LISTS & REGISTRIES
-        // New: Skills are now organized in a single registry object
-        skills: {
-            basic: [],
-            intermediate: [],
-            advanced: []
-        },
-        
-        gallery: [], 
-        portrait: 0,
-        unlockedClasses: {}, 
-        
-        // Meta
-        instanceId: "global", 
-        instanceName: "Global",
+        name: "New Hero", race: "", class: "", charLevel: 1, 
+        body: 0, mind: 0, spirit: 0,
+        hpCurrent: 10, mpCurrent: 10,
+        expCurrent: 0, notes: "",
+        skills: { basic: [], intermediate: [], advanced: [] },
+        gallery: [], portrait: 0, unlockedClasses: {}, 
+        instanceId: "global", instanceName: "Global",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    
     firestore.collection('users').doc(user.uid).collection('characters').add(data)
         .then(() => loadUserCharacters());
 }
@@ -692,19 +665,15 @@ function createNewCharacter() {
 function loadUserCharacters() {
     const user = auth.currentUser;
     if (!user) return;
-
     firestore.collection('users').doc(user.uid).collection('characters').get().then(snap => {
         const grid = document.getElementById('char-list-grid');
+        if (!grid) return;
         grid.innerHTML = "";
-        
         snap.forEach(doc => {
             const d = doc.data();
-            
-            // --- Resolve Portrait from Gallery Index ---
             const gallery = d.gallery || [];
             const activeIdx = d.portrait !== undefined ? d.portrait : 0;
             const displayImg = gallery[activeIdx] || ''; 
-
             const card = document.createElement('div');
             card.className = 'char-card';
             card.onclick = () => selectCharacter(doc.id);
@@ -713,467 +682,115 @@ function loadUserCharacters() {
                     ${!displayImg ? '<i class="fa-solid fa-user"></i>' : ''}
                 </div>
                 <strong>${d.name || 'New Hero'}</strong>
-                <div class="char-card-meta">Lv.${d.charLevel || 1} ${d.class || ''}</div>
-                <div class="char-realm-tag"><i class="fa-solid fa-globe"></i> ${d.instanceName || 'Global'}</div>
-                <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">
-                    <i class="fa-solid fa-trash"></i> Delete
-                </button>
+                <div class="char-card-meta">Lv.${d.charLevel || 1}</div>
+                <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">Delete</button>
             `;
             grid.appendChild(card);
         });
     });
 }
 
-// SELECT CHARACTER FUNCTION
-    async function selectCharacter(id) {
-        // 1. CLEANUP: Kill any existing listener before starting a new one
-        if (characterListener) characterListener(); 
+async function selectCharacter(id) {
+    if (characterListener) characterListener(); 
+    const allInputs = document.querySelectorAll('#char-sheet-view input');
+    allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
 
-        // 2. UI RESET: Clear inputs to prevent "ghost data" from the previous character
-        const allInputs = document.querySelectorAll('#char-sheet-view input');
-        allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
+    currentCharacterId = id;
+    const user = auth.currentUser;
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
 
-        currentCharacterId = id;
-        const user = auth.currentUser;
-        const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
-
-        // 3. THE LIVE LISTENER: This watches the database for changes
-        characterListener = charRef.onSnapshot(async (doc) => {
-            if (doc.exists) {
-                const d = doc.data();
-                
-                // Sync Campaign/Instance (World Clock & Chat)
-                if (currentCampaignId !== (d.instanceId || "global")) {
-                    currentCampaignId = d.instanceId || "global"; 
-                    initClockListener(); 
-                    initDiceLogListener();
-                }
-
-                // Sync Identity & Level
-                setSafeValue('char-name', d.name || "");
-                setSafeValue('char-race', d.race || "");
-                activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
-                setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
-                
-                // Sync Attribute Points (AP)
-                originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
-                pendingStats = { ...originalStats };
-                const spentPoints = (originalStats.body + originalStats.mind + originalStats.spirit);
-                totalAP = Math.max(0, activeCharLevel - spentPoints); 
-
-                // Sync Lists (Gallery, Skills, Class Pills)
-                renderClassPills(d);
-                refreshStatDisplay();
-                renderGallery(d.gallery || [], d.portrait !== undefined ? d.portrait : 0);
-                renderSkills(d);
-
-                // STABILITY FIX 1: Only update Notes if the player isn't currently typing in them
-                const notesEl = document.getElementById('char-notes');
-                if (notesEl && document.activeElement !== notesEl) {
-                    notesEl.value = d.notes || "";
-                }
-
-                // Sync Vitals (DB numbers are absolute)
-                setSafeValue('char-hp-current', Math.floor(d.hpCurrent || 0));
-                setSafeValue('char-mp-current', Math.floor(d.mpCurrent || 0));
-
-                // Sync HUD & Sidebar
-                const nextLevelExp = (activeCharLevel + 1) * 200;
-                updateHUD({ ...d, charLevel: activeCharLevel, expMax: nextLevelExp });
-                
-                // STABILITY FIX 2: Only swap the view if we are still on the selection screen
-                const selectionView = document.getElementById('char-selection-view');
-                if (!selectionView.classList.contains('hide-default')) {
-                    selectionView.classList.add('hide-default');
-                    document.getElementById('char-sheet-view').classList.remove('hide-default');
-                }
+    characterListener = charRef.onSnapshot(async (doc) => {
+        if (doc.exists) {
+            const d = doc.data();
+            if (currentCampaignId !== (d.instanceId || "global")) {
+                currentCampaignId = d.instanceId || "global"; 
+                initClockListener(); initDiceLogListener();
             }
-        });
+            setSafeValue('char-name', d.name || "");
+            setSafeValue('char-race', d.race || "");
+            activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
+            setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
+            
+            originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
+            pendingStats = { ...originalStats };
+            totalAP = Math.max(0, activeCharLevel - (originalStats.body + originalStats.mind + originalStats.spirit)); 
 
-        // Save persistent session state
-        firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
-    }
+            renderClassPills(d);
+            refreshStatDisplay();
+            renderGallery(d.gallery || [], d.portrait !== undefined ? d.portrait : 0);
+            renderSkills(d);
+
+            const notesEl = document.getElementById('char-notes');
+            if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
+
+            updateHUD({ ...d, charLevel: activeCharLevel });
+            
+            const selectionView = document.getElementById('char-selection-view');
+            if (!selectionView.classList.contains('hide-default')) {
+                selectionView.classList.add('hide-default');
+                document.getElementById('char-sheet-view').classList.remove('hide-default');
+            }
+        }
+    });
+    firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
+}
 
 async function saveCharacter() {
     if (!currentCharacterId) return;
     const charRef = firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId);
-    
     try {
-        const hpInput = document.getElementById('char-hp-current');
-        const mpInput = document.getElementById('char-mp-current');
-        
-        // Safety: If the sheet isn't loaded, don't save (prevents saving 0)
-        if (!hpInput || !mpInput) return;
-
-        const doc = await charRef.get();
-        const currentData = doc.data();
-        const nextLevelExp = (calculateLevelFromEXP(currentData.expCurrent || 0) + 1) * 200;
+        const hpIn = document.getElementById('char-hp-current');
+        const mpIn = document.getElementById('char-mp-current');
+        if (!hpIn || !mpIn) return; 
 
         const data = {
             name: document.getElementById('char-name').value,
             race: document.getElementById('char-race').value,
+            notes: document.getElementById('char-notes').value,
             body: originalStats.body || 0,
             mind: originalStats.mind || 0,
             spirit: originalStats.spirit || 0,
-            hpCurrent: parseFloat(hpInput.value) || 0,
-            mpCurrent: parseFloat(mpInput.value) || 0,
-            portrait: currentData.portrait || 0,
-            gallery: currentData.gallery || [],
-            unlockedClasses: currentData.unlockedClasses || {}
+            hpCurrent: parseFloat(hpIn.value) || 0,
+            mpCurrent: parseFloat(mpIn.value) || 0
         };
-
         await charRef.update(data);
-        updateHUD({ ...data, expCurrent: currentData.expCurrent, expMax: nextLevelExp });
-        
         if (typeof showToast === "function") showToast("Character Saved.");
-    } catch (e) { 
-        console.error("Save Error:", e); 
-    }
-}
-
-async function deleteCharacter(event, charId, name) {
-    event.stopPropagation();
-    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
-    try {
-        const user = auth.currentUser;
-        await firestore.collection('users').doc(user.uid).collection('characters').doc(charId).delete();
-        if (currentCharacterId === charId) { currentCharacterId = null; goBackToSelection(); }
-        loadUserCharacters();
-    } catch (err) { alert("Error: " + err.message); }
-}
-
-// Updated to use the new resolveAllStats engine
-async function applyPassiveRegen() {
-    if (!currentCharacterId) return;
-    const charSnap = await firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get();
-    const charData = charSnap.data();
-    
-    // 1. Use the Master Resolver logic
-    const bonuses = await resolveAllStats(charData);
-
-    // 2. Calculate Regen using .totals
-    const totalHPRegen = (charData.hpMax * 0.00208333) + (bonuses.totals['hp_regen'] || 0);
-    const totalMPRegen = (charData.mpMax * 0.00208333) + (bonuses.totals['mp_regen'] || 0);
-
-    // 3. Get the HTML elements
-    const hpInput = document.getElementById('char-hp-current');
-    const mpInput = document.getElementById('char-mp-current');
-    const hpMaxInput = document.getElementById('char-hp-max');
-    const mpMaxInput = document.getElementById('char-mp-max');
-
-    // 4. Fallback Logic: Use DOM values if present, otherwise use Database values
-    let hpCur = hpInput ? (parseFloat(hpInput.dataset.trueValue) || parseFloat(hpInput.value)) : charData.hpCurrent;
-    let mpCur = mpInput ? (parseFloat(mpInput.dataset.trueValue) || parseFloat(mpInput.value)) : charData.mpCurrent;
-    
-    const hpMax = hpMaxInput ? parseFloat(hpMaxInput.value) : (charData.hpMax || 10);
-    const mpMax = mpMaxInput ? parseFloat(mpMaxInput.value) : (charData.mpMax || 10);
-
-    const newHP = Math.min(hpCur + totalHPRegen, hpMax);
-    const newMP = Math.min(mpCur + totalMPRegen, mpMax);
-
-    // 5. Only update the UI if the elements actually exist (prevents the crash)
-    if (hpInput) {
-        hpInput.dataset.trueValue = newHP;
-        hpInput.value = Math.floor(newHP);
-    }
-    if (mpInput) {
-        mpInput.dataset.trueValue = newMP;
-        mpInput.value = Math.floor(newMP);
-    }
-    
-    // 6. Push to HUD (UpdateHUD handles the bars and sidebar)
-    updateHUD({ ...charData, hpCurrent: newHP, mpCurrent: newMP });
-}
-
-function refreshStatDisplay() {
-    setSafeText('display-body', pendingStats.body);
-    setSafeText('display-mind', pendingStats.mind);
-    setSafeText('display-spirit', pendingStats.spirit);
-    setSafeText('char-ap-rem', `AP: ${totalAP}`);
-
-    const confirmArea = document.getElementById('attr-confirm-area');
-    if (confirmArea) {
-        const hasChanges = JSON.stringify(pendingStats) !== JSON.stringify(originalStats);
-        if (hasChanges) {
-            confirmArea.classList.remove('hide-default');
-        } else {
-            confirmArea.classList.add('hide-default');
-        }
-    }
-}
-
-function adjustPendingStat(stat, amount) {
-    if (!currentCharacterId) return;
-    const currentVal = pendingStats[stat];
-    
-    if (amount > 0 && currentVal >= MAX_ALLOCATED_STAT) {
-        showToast(`Stat Cap Reached! (Max ${MAX_ALLOCATED_STAT})`);
-        return;
-    }
-    if (amount < 0 && currentVal <= 0) return;
-
-    const cost = amount; 
-    if (amount > 0 && totalAP < cost) return;
-
-    pendingStats[stat] += amount;
-    totalAP -= cost;
-    refreshStatDisplay();
-}
-
-async function confirmAttributeChanges() {
-    if (!currentCharacterId) return;
-    let spentInThisBatch = (pendingStats.body - originalStats.body) + 
-                           (pendingStats.mind - originalStats.mind) + 
-                           (pendingStats.spirit - originalStats.spirit);
-    try {
-        await firestore.collection('users').doc(auth.currentUser.uid)
-            .collection('characters').doc(currentCharacterId).update({
-                body: pendingStats.body, mind: pendingStats.mind, spirit: pendingStats.spirit
-            });
-        totalAP -= spentInThisBatch; 
-        originalStats = { ...pendingStats };
-        if (typeof showToast === "function") showToast("Attributes committed.");
-        refreshStatDisplay(); 
-        saveCharacter();      
-    } catch (e) { console.error("Update failed:", e); }
-}
-
-async function syncRegistryToDropdowns() {
-    const raceSelect = document.getElementById('char-race');
-    if (!raceSelect) return; 
-    try {
-        const raceSnap = await firestore.collection('master_races').get();
-        raceSelect.innerHTML = '<option value="">Select Race</option>';
-        raceSnap.forEach(doc => {
-            const d = doc.data();
-            raceSelect.innerHTML += `<option value="${d.name}">${d.name}</option>`;
-        });
-    } catch (error) { console.error("Error syncing registry:", error); }
-} 
-
-function renderClassPills(charData) {
-    const container = document.getElementById('char-class-list-display');
-    if(!container) return;
-    container.innerHTML = "";
-    const classes = charData.unlockedClasses || {};
-    if (Object.keys(classes).length === 0) {
-        container.innerHTML = '<span class="text-muted" style="font-size: 0.8rem;">No classes unlocked</span>';
-    } else {
-        Object.keys(classes).forEach(className => {
-            const pill = document.createElement('span');
-            pill.className = 'join-code-pill';
-            pill.innerText = `${className} Lv.${classes[className].level}`;
-            container.appendChild(pill);
-        });
-    }
-}
-
-// --- GALLERY LOGIC ---
-function saveImageToNextSlot(base64Data) {
-    const user = auth.currentUser;
-    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
-
-    charRef.get().then(doc => {
-        const data = doc.data();
-        let gallery = data.gallery || [];
-        
-        if (gallery.length >= MAX_GALLERY_SLOTS) return alert("Gallery Full!");
-
-        // 1. Add the new high-res WebP to the gallery array
-        gallery.push(base64Data);
-
-        const updateData = { gallery: gallery };
-
-        // 2. If it's the very first image, make sure portrait points to index 0
-        // We check if portrait is currently "" or undefined
-        if (data.portrait === "" || data.portrait === undefined) {
-            updateData.portrait = 0; 
-        }
-
-        charRef.update(updateData).then(() => {
-            // 3. Refresh UI using the (potentially new) portrait index
-            const activeIndex = updateData.portrait !== undefined ? updateData.portrait : data.portrait;
-            
-            renderGallery(gallery, activeIndex);
-            
-            document.getElementById('hud-portrait').style.backgroundImage = `url(${base64Data})`;
-        });
-    });
-}
-
-function renderGallery(galleryArray, activeIndex) {
-    const container = document.getElementById('char-gallery-grid');
-    if (!container) return;
-    container.innerHTML = "";
-
-    const images = galleryArray || [];
-
-    for (let i = 0; i < MAX_GALLERY_SLOTS; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'gallery-item';
-
-        if (images[i]) {
-            // Compare the Index (Numbers), not the Strings!
-            if (i === activeIndex) {
-                slot.style.borderColor = "#10b981"; 
-                slot.style.boxShadow = "0 0 10px #10b981";
-            }
-
-            slot.innerHTML = `
-                <img src="${images[i]}" onclick="setActivePortrait(${i})">
-                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
-            `;
-        } else {
-            slot.className = 'gallery-item empty-slot';
-            slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
-            slot.onclick = () => document.getElementById('slot-upload').click();
-        }
-        container.appendChild(slot);
-    }
-}
-
-function setActivePortrait(index) {
-    const user = auth.currentUser;
-    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
-    
-    charRef.update({ portrait: index }).then(() => {
-        charRef.get().then(doc => {
-            const data = doc.data();
-            const imgData = data.gallery[index];
-            document.getElementById('hud-portrait').style.backgroundImage = `url(${imgData})`;
-            loadUserCharacters(); 
-            renderGallery(data.gallery, index);
-        });
-    });
-}
-
-function deleteImage(event, index) {
-    event.stopPropagation();
-    if (!confirm("Delete this image?")) return;
-    const user = auth.currentUser;
-    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
-
-    charRef.get().then(doc => {
-        let gallery = doc.data().gallery || [];
-        let activeIdx = doc.data().portrait;
-
-        gallery.splice(index, 1);
-        const updateData = { gallery: gallery };
-
-        // Adjust index logic after a deletion
-        if (activeIdx === index) {
-            // If we deleted the active one, default to the first image or nothing
-            updateData.portrait = gallery.length > 0 ? 0 : -1;
-        } else if (index < activeIdx) {
-            // If we deleted an image BEFORE the active one, shift the index down
-            updateData.portrait = activeIdx - 1;
-        }
-
-        charRef.update(updateData).then(() => {
-            const finalIdx = updateData.portrait !== undefined ? updateData.portrait : activeIdx;
-            const finalImg = gallery[finalIdx] || '';
-            
-            renderGallery(gallery, finalIdx);
-            document.getElementById('hud-portrait').style.backgroundImage = `url(${finalImg})`;
-            loadUserCharacters();
-        });
-    });
-}
-
-function renderSkills(charData) {
-    const container = document.getElementById('skills-container');
-    if (!container) return;
-    container.innerHTML = ""; 
-    
-    // Safety: Fallback to empty object if skills haven't been created yet
-    const skillRegistry = charData.skills || {};
-
-    // Map the UI labels to the database keys
-    const tiers = [
-        { key: 'basic', label: 'Basic Skills' }, 
-        { key: 'intermediate', label: 'Intermediate Skills' }, 
-        { key: 'advanced', label: 'Advanced Skills' }
-    ];
-
-    tiers.forEach(tier => {
-        const section = document.createElement('div');
-        section.className = 'skill-tier-section';
-        section.innerHTML = `<h4 class="mt-m mb-s">${tier.label}</h4>`;
-        
-        // Read from the new registry
-        const skills = skillRegistry[tier.key] || [];
-        
-        if (skills.length === 0) {
-            section.innerHTML += `<div class="text-muted" style="width:100%; text-align:center; font-size:0.8rem;">Empty</div>`;
-        }
-
-        skills.forEach((s) => {
-            const perc = Math.min((s.exp / (s.expMax || 10)) * 100, 100);
-            const slot = document.createElement('div');
-            slot.className = 'skill-slot-card';
-            
-            const iconHtml = s.icon ? `<img src="${s.icon}" class="registry-icon" style="width:32px; height:32px; margin-right:10px;">` : '';
-
-            slot.innerHTML = `
-                <div class="flex-row" style="align-items: center;">
-                    ${iconHtml}
-                    <div style="flex-grow: 1;">
-                        <div class="flex-row" style="justify-content: space-between;">
-                            <strong>${s.name || '---'}</strong>
-                            <span style="font-size: 0.8rem; opacity: 0.7;">Lv.${s.level}</span>
-                        </div>
-                        <div class="skill-exp-bg" style="height: 4px; background: #27272a; margin-top: 5px; border-radius: 2px;">
-                            <div class="skill-exp-fill" style="width: ${perc}%; height: 100%; background: #a855f7; border-radius: 2px;"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            section.appendChild(slot);
-        });
-        container.appendChild(section);
-    });
+    } catch (e) { console.error("Save Error:", e); }
 }
 
 /* ============================
-   === UPDATE HUD & UI SYNC ===
+   SECTION 8: UPDATE HUD & UI SYNC
    ============================ */
-    /** * MAIN CONTROLLER: Calculates data once and delegates to specific UI sections.
-     */
-    async function updateHUD(char) {
+
+async function updateHUD(char) {
     if (!char) return;
     const bonuses = await resolveAllStats(char);
-
     const totals = {
         body: (char.body || 0) + (bonuses.totals['body'] || 0),
         mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
         spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
     };
 
-    // Calculate Max Values
-    const hpFromLevel = char.charLevel * (bonuses.totals['hp_lv'] || 0);
-    const mpFromLevel = char.charLevel * (bonuses.totals['mp_lv'] || 0);
-    const hpMaxTotal = 10 + hpFromLevel + (totals.body * STAT_RESOURCE_MULT);
-    const mpMaxTotal = 10 + mpFromLevel + (totals.spirit * STAT_RESOURCE_MULT);
+    const hpMax = 10 + (char.charLevel * (bonuses.totals['hp_lv'] || 0)) + (totals.body * STAT_RESOURCE_MULT);
+    const mpMax = 10 + (char.charLevel * (bonuses.totals['mp_lv'] || 0)) + (totals.spirit * STAT_RESOURCE_MULT);
 
-    // 1. Update Character Sheet Boxes
-    setSafeValue('char-hp-max', Math.floor(hpMaxTotal));
-    setSafeValue('char-mp-max', Math.floor(mpMaxTotal));
+    // Sync Text Boxes
+    setSafeValue('char-hp-max', Math.floor(hpMax));
+    setSafeValue('char-mp-max', Math.floor(mpMax));
     setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
     setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
 
-    // 2. Update Visual Bars (Character Sheet)
-    updateVisualBars(char.hpCurrent, hpMaxTotal, char.mpCurrent, mpMaxTotal);
+    // Sync Bars
+    updateVisualBars(char.hpCurrent, hpMax, char.mpCurrent, mpMax);
 
-    // 3. Update Sidebar HUD
-    const hpPerc = Math.min(((char.hpCurrent || 0) / (hpMaxTotal || 1)) * 100, 100);
-    const mpPerc = Math.min(((char.mpCurrent || 0) / (mpMaxTotal || 1)) * 100, 100);
-    const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
+    const hpP = (char.hpCurrent / (hpMax || 1)) * 100;
+    const mpP = (char.mpCurrent / (mpMax || 1)) * 100;
+    const expP = ((char.expCurrent || 0) / ((char.charLevel + 1) * 200)) * 100;
 
-    const hudEl = document.getElementById('active-char-hud');
-    if (hudEl) hudEl.classList.remove('hide-default'); 
+    if (document.getElementById('active-char-hud')) document.getElementById('active-char-hud').classList.remove('hide-default'); 
 
-    syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc, hpMaxTotal, mpMaxTotal);
-    syncSheetDashboardUI(char, totals, hpPerc, mpPerc, bonuses, char.race); 
+    syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax);
+    syncSheetDashboardUI(char, totals, bonuses); 
 }
 
 function syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax) {
@@ -1181,68 +798,43 @@ function syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax) {
         const m = Math.floor(val / 2);
         return m >= 0 ? `+${m}` : m;
     };
-
-    // Portrait Logic
     const gallery = char.gallery || [];
     const activeIdx = char.portrait !== undefined ? char.portrait : 0;
     const activeImg = gallery[activeIdx] || "";
-    const portraitEl = document.getElementById('hud-portrait');
-    if (portraitEl) {
-        portraitEl.style.backgroundImage = activeImg ? `url(${activeImg})` : "none";
-        portraitEl.innerHTML = activeImg ? "" : '<i class="fa-solid fa-user"></i>';
+    
+    const portEl = document.getElementById('hud-portrait');
+    if (portEl) {
+        portEl.style.backgroundImage = activeImg ? `url(${activeImg})` : "none";
+        portEl.innerHTML = activeImg ? "" : '<i class="fa-solid fa-user"></i>';
     }
 
-    // IDENTITY & STATS
-    document.getElementById('hud-name').innerText = char.name || "Unnamed";
-    document.getElementById('hud-meta').innerText = `Level ${char.charLevel || 1}`;
+    setSafeText('hud-name', char.name || "Unnamed");
+    setSafeText('hud-meta', `Level ${char.charLevel || 1}`);
+    setSafeText('hud-hp-text', `${Math.floor(char.hpCurrent || 0)}/${Math.floor(hpMax)}`);
+    setSafeText('hud-mp-text', `${Math.floor(char.mpCurrent || 0)}/${Math.floor(mpMax)}`);
     
-    // FIX FOR SIDEBAR TEXT:
-    document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(hpMax)}`;
-    document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(mpMax)}`;
-    
-    document.getElementById('hud-mod-body').innerText = `BOD ${getMod(totals.body)}`;
-    document.getElementById('hud-mod-mind').innerText = `MIN ${getMod(totals.mind)}`;
-    document.getElementById('hud-mod-spirit').innerText = `SPI ${getMod(totals.spirit)}`;
+    setSafeText('hud-mod-body', `BOD ${getMod(totals.body)}`);
+    setSafeText('hud-mod-mind', `MIN ${getMod(totals.mind)}`);
+    setSafeText('hud-mod-spirit', `SPI ${getMod(totals.spirit)}`);
 
-    // BARS
-    document.getElementById('hud-hp-fill').style.width = hpP + "%";
-    document.getElementById('hud-mp-fill').style.width = mpP + "%";
-    document.getElementById('hud-exp-fill').style.width = expP + "%";
-    document.getElementById('hud-exp-text').innerText = `${Math.floor(expP)}%`;
+    if (document.getElementById('hud-hp-fill')) document.getElementById('hud-hp-fill').style.width = hpP + "%";
+    if (document.getElementById('hud-mp-fill')) document.getElementById('hud-mp-fill').style.width = mpP + "%";
+    if (document.getElementById('hud-exp-fill')) document.getElementById('hud-exp-fill').style.width = expP + "%";
+    setSafeText('hud-exp-text', `${Math.floor(expP)}%`);
 }
 
-/** * SHEET DASH BOARD: Manages IDs specific to the Character Sheet tab
- */
-function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
-    // 1. Core Attributes
+function syncSheetDashboardUI(char, totals, bonuses) {
     setSafeText('total-body-label', totals.body);
     setSafeText('total-mind-label', totals.mind);
     setSafeText('total-spirit-label', totals.spirit);
-    
-    // 2. Resource Numbers (MAX)
-    // We calculate these derived maxes inside updateHUD and pass them here
-    // But since we are cleaning up, we'll ensure the boxes show the data
-    setSafeValue('char-hp-max', Math.floor(char.hpMax || 10)); 
-    setSafeValue('char-mp-max', Math.floor(char.mpMax || 10));
-
-    // 3. Resource Numbers (CURRENT) - FIX: No longer skipping this!
-    // This ensures the input boxes actually show your health
-    setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
-    setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
-
-    // 4. Combat Trio
-    setSafeText('char-speed-display', (bonuses.totals['speed'] || 5) + "m");
+    setSafeText('char-speed-display', (bonuses.totals['speed'] || 6) + "m");
     setSafeText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
 
     const initEl = document.getElementById('char-init-display');
     if (initEl) {
-        const bodyMod = Math.floor(totals.body / 2);
-        const mindMod = Math.floor(totals.mind / 2);
-        const bestMod = Math.max(bodyMod, mindMod);
+        const bestMod = Math.max(Math.floor(totals.body/2), Math.floor(totals.mind/2));
         initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
     }
-
-    renderClassPills(char);
 }
 
 /* ==========================================================================
