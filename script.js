@@ -135,6 +135,31 @@ function triggerInput(inputId) {
     if (input) input.click();
 }
 
+/**
+ * A universal tooltip generator for any object or string.
+ */
+function buildUniversalTooltip(data, header = "") {
+    let tooltip = header ? `${header}\n${"-".repeat(header.length)}\n` : "";
+
+    // Case 1: If it's just a string (like a Skill Description)
+    if (typeof data === 'string') {
+        return tooltip + data;
+    }
+
+    // Case 2: If it's an Object (like Attributes or Item Stats)
+    if (data && typeof data === 'object') {
+        const lines = Object.entries(data).map(([key, val]) => {
+            // Check if it's a known attribute ID first, otherwise capitalize the key
+            const label = attributeDefinitions[key] || key.charAt(0).toUpperCase() + key.slice(1);
+            return `${label}: ${val}`;
+        });
+        return tooltip + lines.join('\n');
+    }
+
+    return "No information available.";
+}
+
+
 
 /* ==========================================================================
    SECTION 3: AUTHENTICATION
@@ -1887,8 +1912,9 @@ async function loadMasterRaceList() {
     const list = document.getElementById('master-race-list');
     if(!list) return;
 
+    await getAttributeDefinitions(); 
+
     const searchTerm = document.getElementById('race-search-input') ? document.getElementById('race-search-input').value.toLowerCase() : "";
-    
     const snap = await firestore.collection('master_races').orderBy('name').get();
     list.innerHTML = "";
 
@@ -1898,22 +1924,25 @@ async function loadMasterRaceList() {
             const card = document.createElement('div');
             card.className = "panel-card mb-s trait-item-border";
             
-            // Create badges for traits
+            // Apply the modular tooltip
+            card.title = buildUniversalTooltip(r.attributes, `${r.name} Stats`);
+
             const traitBadges = (r.traits || []).map(t => `<span class="badge-stat" style="font-size:0.7rem; margin-right:4px;">${t}</span>`).join("");
 
             card.innerHTML = `
                 <div class="flex-row space-between mb-s">
-                    <strong class="text-success">${r.name}</strong>
+                    <strong class="text-success" style="cursor: help;">
+                        ${r.name} <i class="fa-solid fa-circle-info" style="font-size:0.7rem; opacity:0.5;"></i>
+                    </strong>
                     <div>
                         <button class="btn-icon-tiny" onclick="prepRaceEdit('${doc.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button class="btn-icon-tiny btn-danger" onclick="deleteMasterAsset('master_races', '${doc.id}', loadMasterRaceList)"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
-                <div class="text-muted mb-s" style="font-size: 0.8rem;">
-                    B:${r.baseBody} M:${r.baseMind} S:${r.baseSpirit} | HP+${r.hpPerLv} MP+${r.mpPerLv} | Spd ${r.speed}m
-                </div>
                 <div class="flex-row flex-wrap mb-s">${traitBadges}</div>
-                <div class="text-muted" style="font-size: 0.8rem;">${r.description || ""}</div>
+                <div class="text-muted" style="font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90%;">
+                    ${r.description || "No description provided."}
+                </div>
             `;
             list.appendChild(card);
         }
