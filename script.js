@@ -760,10 +760,7 @@ function createNewCharacter() {
         name: "New Hero", 
         race: "", 
         class: "",
-        charLevel: 1, 
-        classLevel: 1, 
-        totalSP: 1, 
-        spentSP: 0,        
+        charLevel: 1,      
         
         // Base Attributes
         body: 0, 
