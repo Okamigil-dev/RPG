@@ -1,5 +1,5 @@
 /* =========================================================
-   SCRIPT VERSION: 0.1
+   SCRIPT VERSION: 0.2
    DATE: 2026-03-02 
    ========================================================= */
 
@@ -831,6 +831,7 @@ function loadUserCharacters() {
     });
 }
 
+// SELECT CHARACTER FUNCTION
 async function selectCharacter(id) {
     if (characterListener) characterListener(); 
 
@@ -853,7 +854,7 @@ async function selectCharacter(id) {
             // UI Safe Checks
             setSafeValue('char-name', d.name || "");
             setSafeValue('char-race', d.race || "");
-            setSafeValue('char-exp-current', d.expCurrent || 0);
+//            setSafeValue('char-exp-current', d.expCurrent || 0);
 
             activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
             setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
@@ -869,7 +870,7 @@ async function selectCharacter(id) {
             renderSkills(d);
 
             const nextLevelExp = (activeCharLevel + 1) * 200;
-            setSafeValue('char-exp-max', nextLevelExp);
+//            setSafeValue('char-exp-max', nextLevelExp);
                 
             const hpInput = document.getElementById('char-hp-current');
             if (hpInput) {
@@ -910,7 +911,7 @@ async function saveCharacter() {
     const nextLevelExp = (activeCharLevel + 1) * 200; 
 
     // 3. Update UI
-    setSafeValue('char-exp-max', nextLevelExp);
+//    setSafeValue('char-exp-max', nextLevelExp);
 
     const data = {
         name: document.getElementById('char-name').value,
