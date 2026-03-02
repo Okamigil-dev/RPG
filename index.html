@@ -1,4 +1,4 @@
-<!-- Version 0.4.2 -->
+<!-- Version 0.3.1 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -236,7 +236,7 @@
                                 <div class="status-header">
                                     <div class="status-label"><i class="fa-solid fa-heart icon-hp"></i> Health</div>
                                     <div class="status-values">
-                                        <input type="number" id="char-hp-current" class="resource-input-minimal" min="0" onchange="saveCharacter()">
+                                        <input type="number" id="char-hp-current" onchange="saveCharacter()" class="resource-input-minimal">
                                         <span class="resource-divider">/</span>
                                         <input type="number" id="char-hp-max" class="resource-input-minimal" readonly>
                                     </div>
@@ -248,7 +248,7 @@
                                 <div class="status-header">
                                     <div class="status-label"><i class="fa-solid fa-droplet icon-mp"></i> Mana</div>
                                     <div class="status-values">
-                                        <input type="number" id="char-mp-current" class="resource-input-minimal" min="0" onchange="saveCharacter()">
+                                        <input type="number" id="char-mp-current" onchange="saveCharacter()" class="resource-input-minimal">
                                         <span class="resource-divider">/</span>
                                         <input type="number" id="char-mp-max" class="resource-input-minimal" readonly>
                                     </div>
@@ -294,7 +294,7 @@
 
 
                     <!-- GALLERY, NOTES -->
-                    <!--<div class="stats-resources-wrapper mt-m">
+                    <div class="stats-resources-wrapper mt-m">
 
                         <div class="panel-card">
                             <div class="panel-header-row">
@@ -322,7 +322,7 @@
                                 onchange="saveCharacter()"></textarea>
                         </div>
 
-                    </div>-->
+                    </div>
             </div>
 
             
