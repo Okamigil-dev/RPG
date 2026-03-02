@@ -47,6 +47,29 @@ const firestore = firebase.firestore();
    SECTION 2: UTILITIES & TOASTS
    ========================================================================== */
 
+/** CONSOLE ERROR MESSAGE ( the bandaid that isn't silent ) */
+         function setSafeText(id, value) {
+             const el = document.getElementById(id);
+             if (el) {
+                 el.innerText = value;
+             } else {
+                 console.warn(`Missing element ID: "${id}" (Value: ${value})`);
+             }
+         }
+         
+         /**
+          * Safely updates an input's value.
+          */
+         function setSafeValue(id, value) {
+             const el = document.getElementById(id);
+             if (el) {
+                 el.value = value;
+             } else {
+                 console.warn(`Missing input ID: "${id}" (Value: ${value})`);
+             }
+         }
+/** CONSOLE ERROR MESSAGE ( the bandaid that isn't silent ) */
+
 function showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast-container';
@@ -1272,22 +1295,23 @@ function syncSidebarUI(char, totals, hpP, mpP, expP) {
  */
 function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
     // 1. Core Attributes
-    document.getElementById('total-body-label').innerText = totals.body;
-    document.getElementById('total-mind-label').innerText = totals.mind;
-    document.getElementById('total-spirit-label').innerText = totals.spirit;
+    setSafeText('total-body-label', totals.body);
+    setSafeText('total-mind-label', totals.mind);
+    setSafeText('total-spirit-label', totals.spirit);
     
-    document.getElementById('char-hp-fill-main').style.width = hpP + "%";
-    document.getElementById('char-mp-fill-main').style.width = mpP + "%";
+    // Bars (These need style, so we keep the check or make a setSafeStyle helper)
+    const hpBar = document.getElementById('char-hp-fill-main');
+    if (hpBar) hpBar.style.width = hpP + "%";
+    else console.warn("Missing HP Bar: char-hp-fill-main");
+
+    const mpBar = document.getElementById('char-mp-fill-main');
+    if (mpBar) mpBar.style.width = mpP + "%";
+    else console.warn("Missing MP Bar: char-mp-fill-main");
 
     // 2. Combat Trio 
-    // FIX: Check bonuses.totals['key']
-    if (document.getElementById('char-speed-display')) {
-        document.getElementById('char-speed-display').innerText = (bonuses.totals['speed'] || 5) + "m";
-    }
-
-    if (document.getElementById('char-ac-display')) {
-        document.getElementById('char-ac-display').innerText = 10 + (bonuses.totals['ac'] || 0);
-    }
+    // Now if you forgot the HTML for speed, the console will tell you!
+    setSafeText('char-speed-display', (bonuses.totals['speed'] || 5) + "m");
+    setSafeText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
 
     const initEl = document.getElementById('char-init-display');
     if (initEl) {
@@ -1295,6 +1319,8 @@ function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
         const mindMod = Math.floor(totals.mind / 2);
         const bestMod = Math.max(bodyMod, mindMod);
         initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
+    } else {
+        console.warn("Missing Init Display: char-init-display");
     }
 
     renderClassPills(char);
