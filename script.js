@@ -1,5 +1,5 @@
 /* =========================================================
-   SCRIPT VERSION: 0.4.2
+   SCRIPT VERSION: 0.4.5
    DATE: 2026-03-02 
    ========================================================= */
 
@@ -1769,7 +1769,7 @@ function removeAttrFromRace(key) {
 
 // 4. Update the value in memory when you type numbers
 function updateAttrValue(key, val) {
-    currentRaceAttributes[key] = parseInt(val) || 0;
+    currentRaceAttributes[key] = parseFloat(val) || 0;
 }
 
 // 5. Render the list of inputs
