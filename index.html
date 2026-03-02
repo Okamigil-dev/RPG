@@ -295,32 +295,39 @@
 
 
 
-                    <div class="panel-card mt-m">
-                        <h3 class="panel-subtitle">Adventurer's Notes</h3>
-                        <textarea 
-                            id="char-notes" 
-                            class="notes-textarea" 
-                            placeholder="Quest logs, inventory, or secrets..." 
-                            onchange="saveCharacter()"></textarea>
-                    </div>
-                    
+                   
                     <!-- Gallery Box -->
-                    <div class="panel-card mt-m">
-                        <div class="panel-header-row">
-                            <h3 class="panel-subtitle" style="margin:0;">Character Gallery</h3>
+                     <div class="flex-row wrap gap-m mt-m align-start" style="align-items: flex-start;">
+
+                        <div class="panel-card flex-1" style="margin-top: 0;">
+                            <h3 class="panel-subtitle">Adventurer's Notes</h3>
+                            <textarea 
+                                id="char-notes" 
+                                class="notes-textarea" 
+                                placeholder="Quest logs, inventory, or secrets..." 
+                                onchange="saveCharacter()"></textarea>
                         </div>
-                    
-                        <input 
-                            type="file" 
-                            id="slot-upload" 
-                            accept="image/*" 
-                            style="display: none;" 
-                            onchange="handleWebPUpload(this, saveImageToNextSlot, 512, 0.6)"
-                        >
-                    
-                        <div id="char-gallery-grid" class="gallery-grid">
+                        
+                        <div class="panel-card flex-1" style="margin-top: 0;">
+                            <div class="panel-header-row">
+                                <h3 class="panel-subtitle" style="margin:0;">Character Gallery</h3>
                             </div>
+
+                            <input 
+                                type="file" 
+                                id="slot-upload" 
+                                accept="image/*" 
+                                style="display: none;" 
+                                onchange="handleWebPUpload(this, saveImageToNextSlot, 512, 0.6)"
+                            >
+
+                            <div id="char-gallery-grid" class="gallery-grid">
+                                </div>
+                        </div>
+
                     </div>
+
+
                 </div>
             </div>
 
@@ -344,7 +351,7 @@
             <div id="tab-skills" class="tab-content hide-default">
                 <div class="flex-row">
                     <h2 class="tab-title">Skill Pyramid</h2>
-                    <div class="sp-indicator">SP: <span id="char-sp-total">1</span> / Spent: <span id="char-sp-spent">0</span></div>
+                    <div class="char-level-badge">SP: <span id="char-sp-total">1</span> / Spent: <span id="char-sp-spent">0</span></div>
                 </div>
                 <div class="panel-card">
                     <div id="skills-container" class="skills-pyramid-grid">

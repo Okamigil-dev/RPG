@@ -412,10 +412,10 @@ body {
 
 .skill-exp-bg { background: #09090b; border-radius: 2px; overflow: hidden; }
 .skill-exp-fill { transition: width 0.4s ease-out; }
-.sp-indicator {
+/*.sp-indicator {
     background: #1e1b4b; color: #a5b4fc; padding: 4px 12px;
     border-radius: 99px; font-size: 0.75rem; font-weight: bold; border: 1px solid #312e81;
-}
+}*/
 
 /* ==========================================================================
    --- 10. CHARACTER SHEET (Inside Dashboard) ---
@@ -546,7 +546,7 @@ body {
     align-items: center;
     justify-content: center;
     font-weight: 800;
-    color: #a855f7;    /* Purple accent to match the rest of the sheet */
+    color: white;    /* Purple accent to match the rest of the sheet */
     font-size: 0.95rem;
     padding: 0 10px;
     box-shadow: inset 0 0 10px rgba(168, 85, 247, 0.05); /* Very subtle glow */
@@ -849,6 +849,7 @@ select.form-input {
     font-weight: 800; font-family: 'Courier New', monospace; font-size: 1.1rem;
     cursor: default; pointer-events: none;
 }
+
 #char-hp-current, #char-hp-max { color: #ef4444 !important; }
 #char-mp-current, #char-mp-max { color: #3b82f6 !important; }
 
