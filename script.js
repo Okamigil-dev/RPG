@@ -484,11 +484,6 @@ function getAttrValue(source, key) {
     return parseFloat(source.attributes[key]) || 0;
 }
 
-function getAttrValue(source, key) {
-    if (!source || !source.attributes) return 0;
-    return parseFloat(source.attributes[key]) || 0;
-}
-
 /** * Core Engine: Gathers all sources (Race, Classes, etc.) and sums their attributes.
  */
 async function resolveAllStats(charData) {
@@ -600,6 +595,7 @@ async function getFinalMaxStats(charData) {
     return { finalHP, finalMP };
 }
 
+/* IN CASE I STILL NEED getDynamicTotals
 // Calculates Regens, Speed, and AC dynamically
 async function getDynamicTotals(charData) {
     const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
@@ -626,7 +622,7 @@ async function getDynamicTotals(charData) {
     }
     return totals;
 }
-
+*/
 
 
 
@@ -915,13 +911,18 @@ async function deleteCharacter(event, charId, name) {
 }
 
 
-// in case of error on regen come here
+// APPLY PASSIVE REGEN or APPLY REGEN
 async function applyPassiveRegen() {
     if (!currentCharacterId) return;
     const charSnap = await firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get();
     const charData = charSnap.data();
     
-    const { totalHPRegen, totalMPRegen } = await getDynamicTotals(charData);
+    // Use the Master Resolver
+    const bonuses = await resolveAllStats(charData);
+
+    // FIX: Access .totals
+    const totalHPRegen = (charData.hpMax * 0.00208333) + (bonuses.totals['hp_regen'] || 0);
+    const totalMPRegen = (charData.mpMax * 0.00208333) + (bonuses.totals['mp_regen'] || 0);
 
     const hpInput = document.getElementById('char-hp-current');
     const mpInput = document.getElementById('char-mp-current');
@@ -929,6 +930,7 @@ async function applyPassiveRegen() {
     let hpCur = parseFloat(hpInput.dataset.trueValue) || parseFloat(hpInput.value) || 0;
     let mpCur = parseFloat(mpInput.dataset.trueValue) || parseFloat(mpInput.value) || 0;
 
+    // Use calculated Max from DOM to ensure consistency
     const hpMax = parseFloat(document.getElementById('char-hp-max').value) || 10;
     const mpMax = parseFloat(document.getElementById('char-mp-max').value) || 10;
 
@@ -1205,19 +1207,21 @@ function renderSkills(charData) {
 async function updateHUD(char) {
     if (!char) return;
 
-    // Get the sum of all bonuses from all sources
+    // 1. Get the registry (inherent, equipment, totals)
     const bonuses = await resolveAllStats(char);
 
-    // Calculate Totals (Base + Library Bonuses)
+    // 2. Calculate Totals (Base + Library Totals)
+    // FIX: We must access bonuses.totals['key']
     const totals = {
-        body: (char.body || 0) + (bonuses['body'] || 0),
-        mind: (char.mind || 0) + (bonuses['mind'] || 0),
-        spirit: (char.spirit || 0) + (bonuses['spirit'] || 0)
+        body: (char.body || 0) + (bonuses.totals['body'] || 0),
+        mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
+        spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
     };
 
-    // Calculate Vitals using dynamic keys
-    const hpFromLevel = char.charLevel * (bonuses['hp_lv'] || 0);
-    const mpFromLevel = char.charLevel * (bonuses['mp_lv'] || 0);
+    // 3. Calculate Vitals using dynamic keys
+    // FIX: Access bonuses.totals
+    const hpFromLevel = char.charLevel * (bonuses.totals['hp_lv'] || 0);
+    const mpFromLevel = char.charLevel * (bonuses.totals['mp_lv'] || 0);
     
     char.hpMax = 10 + hpFromLevel + (totals.body * STAT_RESOURCE_MULT);
     char.mpMax = 10 + mpFromLevel + (totals.spirit * STAT_RESOURCE_MULT);
@@ -1230,7 +1234,7 @@ async function updateHUD(char) {
     document.getElementById('active-char-hud').classList.remove('hide-default'); 
     syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
     
-    // We pass the bonuses map directly to the dashboard
+    // Pass the whole bonuses object, but the UI function must know to look in .totals
     syncSheetDashboardUI(char, totals, hpPerc, mpPerc, bonuses, char.race); 
 }
 
@@ -1275,13 +1279,14 @@ function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
     document.getElementById('char-hp-fill-main').style.width = hpP + "%";
     document.getElementById('char-mp-fill-main').style.width = mpP + "%";
 
-    // 2. Combat Trio (Using the bonuses map)
+    // 2. Combat Trio 
+    // FIX: Check bonuses.totals['key']
     if (document.getElementById('char-speed-display')) {
-        document.getElementById('char-speed-display').innerText = (bonuses['speed'] || 5) + "m";
+        document.getElementById('char-speed-display').innerText = (bonuses.totals['speed'] || 5) + "m";
     }
 
     if (document.getElementById('char-ac-display')) {
-        document.getElementById('char-ac-display').innerText = 10 + (bonuses['ac'] || 0);
+        document.getElementById('char-ac-display').innerText = 10 + (bonuses.totals['ac'] || 0);
     }
 
     const initEl = document.getElementById('char-init-display');
