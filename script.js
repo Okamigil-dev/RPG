@@ -226,30 +226,24 @@ auth.onAuthStateChanged((user) => {
    ========================================================================== */
 
 function openTab(tabId) {
-    // 1. Hide everything using the "Force" method
     const allTabs = document.querySelectorAll('.tab-content');
     allTabs.forEach(tab => {
-        // This adds the class AND an inline !important hide
         tab.classList.add('hide-default');
+        // We use setProperty to ensure we beat the CSS file
         tab.style.setProperty('display', 'none', 'important');
     });
     
-    // 2. Show the target
     const target = document.getElementById(tabId);
     if (target) {
-        // This removes the class AND the inline style
         target.classList.remove('hide-default');
-        target.style.removeProperty('display'); 
+        // CRITICAL: We MUST remove the inline !important hide so the CSS can show it
+        target.style.removeProperty('display');
         
-        // Final fallback to ensure it's visible
-        target.style.display = 'block';
-
         if (tabId !== 'tab-login') {
             localStorage.setItem('activeMainTab', tabId);
         }
     }
 
-    // 3. Master Panel Logic (Section 9)
     if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
         loadInstanceList();
         openMasterPanel();
@@ -1088,102 +1082,59 @@ function renderSkills(charData) {
    === UPDATE HUD & UI SYNC ===
    ============================ */
     async function updateHUD(char) {
-        if (!char) return;
+    if (!char) return;
+    const bonuses = await resolveAllStats(char);
+    const totals = {
+        body: (char.body || 0) + (bonuses.totals['body'] || 0),
+        mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
+        spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
+    };
 
-        // 1. Resolve stats (Race/Class/Equipment)
-        const bonuses = await resolveAllStats(char);
+    // 1. Calculate Maxes locally
+    const hpMaxTotal = 10 + (char.charLevel * (bonuses.totals['hp_lv'] || 0)) + (totals.body * STAT_RESOURCE_MULT);
+    const mpMaxTotal = 10 + (char.charLevel * (bonuses.totals['mp_lv'] || 0)) + (totals.spirit * STAT_RESOURCE_MULT);
 
-        // 2. Attribute Totals (Base + Bonuses)
-        const totals = {
-            body: (char.body || 0) + (bonuses.totals['body'] || 0),
-            mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
-            spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
-        };
+    // 2. Pass those calculated Maxes into the Sync functions
+    syncSidebarUI(char, totals, hpMaxTotal, mpMaxTotal);
+    syncSheetDashboardUI(char, totals, hpMaxTotal, mpMaxTotal, bonuses); 
+}
 
-        // 3. Calculate Resource Max Values
-        const hpMaxTotal = 10 + (char.charLevel * (bonuses.totals['hp_lv'] || 0)) + (totals.body * STAT_RESOURCE_MULT);
-        const mpMaxTotal = 10 + (char.charLevel * (bonuses.totals['mp_lv'] || 0)) + (totals.spirit * STAT_RESOURCE_MULT);
-
-        // 4. Paint the numbers (Using setSafeValue to prevent crashes on other tabs)
-        setSafeValue('char-hp-max', hpMaxTotal);
-        setSafeValue('char-mp-max', mpMaxTotal);
-        setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
-        setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
-
-        // 5. Stretch the bars
-        updateVisualBars(char.hpCurrent || 0, hpMaxTotal, char.mpCurrent || 0, mpMaxTotal);
-        
-        // 6. UI Percentages
-        const hpPerc = Math.min(((char.hpCurrent || 0) / (hpMaxTotal || 1)) * 100, 100);
-        const mpPerc = Math.min(((char.mpCurrent || 0) / (mpMaxTotal || 1)) * 100, 100);
-        const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
-
-        syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
-        syncSheetDashboardUI(char, totals, hpPerc, mpPerc, bonuses, char.race); 
-    }
-
-/* Sync SIDE BAR UI */
-function syncSidebarUI(char, totals, hpP, mpP, expP) {
+function syncSidebarUI(char, totals, hpMax, mpMax) {
     const getMod = (val) => {
         const m = Math.floor(val / 2);
         return m >= 0 ? `+${m}` : m;
     };
 
-    // --- NEW: Resolve Active Portrait ---
-    const gallery = char.gallery || [];
-    const activeIdx = char.portrait !== undefined ? char.portrait : 0;
-    const activeImg = gallery[activeIdx] || "";
+    // Calculate percentages for the bars
+    const hpPerc = Math.min(((char.hpCurrent || 0) / (hpMax || 1)) * 100, 100);
+    const mpPerc = Math.min(((char.mpCurrent || 0) / (mpMax || 1)) * 100, 100);
+    const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
 
-    document.getElementById('hud-name').innerText = char.name || "Unnamed";
-    document.getElementById('hud-meta').innerText = `Level ${char.charLevel || 1}`;
-    document.getElementById('hud-hp-text').innerText = `${Math.floor(char.hpCurrent || 0)}/${Math.floor(char.hpMax || 0)}`;
-    document.getElementById('hud-mp-text').innerText = `${Math.floor(char.mpCurrent || 0)}/${Math.floor(char.mpMax || 0)}`;
+    // Use Safe Helpers to prevent crashes if the sidebar isn't ready
+    setSafeText('hud-name', char.name || "Unnamed");
+    setSafeText('hud-hp-text', `${Math.floor(char.hpCurrent || 0)}/${hpMax}`);
+    setSafeText('hud-mp-text', `${Math.floor(char.mpCurrent || 0)}/${mpMax}`);
     
-    // Updated to use activeImg resolved from the index
-    document.getElementById('hud-portrait').style.backgroundImage = activeImg ? `url(${activeImg})` : "none";
+    const hpFill = document.getElementById('hud-hp-fill');
+    if (hpFill) hpFill.style.width = hpPerc + "%";
     
-    document.getElementById('hud-mod-body').innerText = `BOD ${getMod(totals.body)}`;
-    document.getElementById('hud-mod-mind').innerText = `MIN ${getMod(totals.mind)}`;
-    document.getElementById('hud-mod-spirit').innerText = `SPI ${getMod(totals.spirit)}`;
-
-    document.getElementById('hud-hp-fill').style.width = hpP + "%";
-    document.getElementById('hud-mp-fill').style.width = mpP + "%";
-    document.getElementById('hud-exp-fill').style.width = expP + "%";
-    document.getElementById('hud-exp-text').innerText = `${Math.floor(expP)}%`;
+    const mpFill = document.getElementById('hud-mp-fill');
+    if (mpFill) mpFill.style.width = mpPerc + "%";
 }
 
-/** * SHEET DASH BOARD: Manages IDs specific to the Character Sheet tab
- */
-function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
-    // 1. Core Attributes (Keep as is)
+function syncSheetDashboardUI(char, totals, hpMax, mpMax, bonuses) {
     setSafeText('total-body-label', totals.body);
     setSafeText('total-mind-label', totals.mind);
     setSafeText('total-spirit-label', totals.spirit);
     
-    // 2. Resource Bars & Numbers
-    // We update the Max boxes FIRST so the CSS and Clamping have their target
-    setSafeValue('char-hp-max', Math.floor(char.hpMax || 10)); 
-    setSafeValue('char-mp-max', Math.floor(char.mpMax || 10));
+    // Update the numbers on the character sheet
+    setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
+    setSafeValue('char-hp-max', hpMax);
+    setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
+    setSafeValue('char-mp-max', mpMax);
 
-    // IMPORTANT: We do NOT set current values here. 
-    // updateHUD already handled this via getClampedResource to ensure
-    // the UI shows the "Safe" number, not the "Raw" database number.
-
-    // 3. Combat Trio (Keep as is)
-    setSafeText('char-speed-display', (bonuses.totals['speed'] || 5) + "m");
-    setSafeText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
-
-    const initEl = document.getElementById('char-init-display');
-    if (initEl) {
-        const bodyMod = Math.floor(totals.body / 2);
-        const mindMod = Math.floor(totals.mind / 2);
-        const bestMod = Math.max(bodyMod, mindMod);
-        initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
-    }
-
-    renderClassPills(char);
+    updateVisualBars(char.hpCurrent || 0, hpMax, char.mpCurrent || 0, mpMax);
 }
-
 
 /* ==========================================================================
    SECTION 9: MASTER PANEL LOGIC
