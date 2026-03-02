@@ -742,22 +742,51 @@ async function getTotalRegen(charData) {
    SECTION 7: CHARACTER UI & CRUD
    ========================================================================== */
 
+/* ==========================================================================
+   SECTION 7: CHARACTER UI & CRUD
+   ========================================================================== */
+
 function createNewCharacter() {
     const user = auth.currentUser;
+    // CLEANED UP DATA STRUCTURE
     const data = { 
-        name: "New Hero", race: "", class: "",
-        charLevel: 1, classLevel: 1, totalSP: 1, spentSP: 0,        
-        hpBonusFlat: 0, hpBonusPerc: 0, mpBonusFlat: 0, mpBonusPerc: 0,
-        basicSkills: [], intSkills: [], advSkills: [],
-        body: 0, mind: 0, spirit: 0,
-        hpMaxBonus: 0, mpMaxBonus: 0,
-        hpCurrent: 10, hpMax: 10, mpCurrent: 10, mpMax: 10,
-        expCurrent: 0, expMax: 400, 
-        gallery: [], portrait: 0,
-        instanceId: "global", instanceName: "Global",
+        name: "New Hero", 
+        race: "", 
+        class: "",
+        charLevel: 1, 
+        classLevel: 1, 
+        totalSP: 1, 
+        spentSP: 0,        
+        
+        // Base Attributes (Points spent by player)
+        body: 0, 
+        mind: 0, 
+        spirit: 0,
+        
+        // Vitals (Current state only)
+        hpCurrent: 10, 
+        mpCurrent: 10,
+        
+        // Progression
+        expCurrent: 0, 
+        expMax: 400, 
+        
+        // Lists
+        basicSkills: [], 
+        intSkills: [], 
+        advSkills: [],
+        gallery: [], 
+        portrait: 0,
+        unlockedClasses: {}, 
+        
+        // Meta
+        instanceId: "global", 
+        instanceName: "Global",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    firestore.collection('users').doc(user.uid).collection('characters').add(data).then(() => loadUserCharacters());
+    
+    firestore.collection('users').doc(user.uid).collection('characters').add(data)
+        .then(() => loadUserCharacters());
 }
 
 function loadUserCharacters() {
@@ -771,7 +800,7 @@ function loadUserCharacters() {
         snap.forEach(doc => {
             const d = doc.data();
             
-            // --- NEW: Resolve Portrait from Gallery Index ---
+            // --- Resolve Portrait from Gallery Index ---
             const gallery = d.gallery || [];
             const activeIdx = d.portrait !== undefined ? d.portrait : 0;
             const displayImg = gallery[activeIdx] || ''; 
@@ -814,19 +843,13 @@ async function selectCharacter(id) {
                 initDiceLogListener();
             }
 
-            // Fixed: Individual null checks for Identity fields
-            const nameEl = document.getElementById('char-name');
-            if (nameEl) nameEl.value = d.name || "";
-            
-            const raceEl = document.getElementById('char-race');
-            if (raceEl) raceEl.value = d.race || "";
-            
-            const expCurrEl = document.getElementById('char-exp-current');
-            if (expCurrEl) expCurrEl.value = d.expCurrent || 0;
+            // UI Safe Checks
+            setSafeValue('char-name', d.name || "");
+            setSafeValue('char-race', d.race || "");
+            setSafeValue('char-exp-current', d.expCurrent || 0);
 
             activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
-            const levelDisp = document.getElementById('char-level-display');
-            if (levelDisp) levelDisp.innerText = `Lv. ${activeCharLevel}`;
+            setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
             
             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
             pendingStats = { ...originalStats };
@@ -838,18 +861,8 @@ async function selectCharacter(id) {
             renderGallery(d.gallery || [], d.portrait || "");
             renderSkills(d);
 
-            const totals = await getFinalMaxStats(d);
             const nextLevelExp = (activeCharLevel + 1) * 200;
-
-            // Fixed: Individual null checks for Resource and EXP displays
-            const hpMaxEl = document.getElementById('char-hp-max');
-            if (hpMaxEl) hpMaxEl.value = totals.finalHP;
-            
-            const mpMaxEl = document.getElementById('char-mp-max');
-            if (mpMaxEl) mpMaxEl.value = totals.finalMP;
-            
-            const expMaxEl = document.getElementById('char-exp-max');
-            if (expMaxEl) expMaxEl.value = nextLevelExp;
+            setSafeValue('char-exp-max', nextLevelExp);
                 
             const hpInput = document.getElementById('char-hp-current');
             if (hpInput) {
@@ -863,14 +876,12 @@ async function selectCharacter(id) {
                 mpInput.value = Math.floor(d.mpCurrent || 0);
             }
 
-            const hudData = { ...d, charLevel: activeCharLevel, hpMax: totals.finalHP, mpMax: totals.finalMP, expMax: nextLevelExp };
+            // OPTIMIZATION: We pass 'd' directly. updateHUD will calculate Max HP/MP itself.
+            const hudData = { ...d, charLevel: activeCharLevel, expMax: nextLevelExp };
             updateHUD(hudData);
             
-            const selectionView = document.getElementById('char-selection-view');
-            if (selectionView) selectionView.classList.add('hide-default');
-            
-            const sheetView = document.getElementById('char-sheet-view');
-            if (sheetView) sheetView.classList.remove('hide-default');
+            document.getElementById('char-selection-view').classList.add('hide-default');
+            document.getElementById('char-sheet-view').classList.remove('hide-default');
         }
     });
 
@@ -884,23 +895,20 @@ async function saveCharacter() {
     const doc = await charRef.get();
     const currentData = doc.data();
 
-    // --- CHANGE STARTS HERE ---
-    // 1. Get EXP from the database directly since the input is gone from the HTML
+    // 1. Get EXP from database
     const currentExp = currentData.expCurrent || 0;
     
-    // 2. Calculate levels based on that database value
+    // 2. Calculate levels
     activeCharLevel = calculateLevelFromEXP(currentExp); 
     const nextLevelExp = (activeCharLevel + 1) * 200; 
 
-    // 3. Use a guard for the "max" display in case the element is missing
-    const expMaxDisplay = document.getElementById('char-exp-max');
-    if (expMaxDisplay) expMaxDisplay.value = nextLevelExp;
-    // --- CHANGE ENDS HERE ---
+    // 3. Update UI
+    setSafeValue('char-exp-max', nextLevelExp);
 
     const data = {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
-        expCurrent: currentExp, // Saves the existing database value back
+        expCurrent: currentExp, 
         charLevel: activeCharLevel,
         body: originalStats.body || 0,
         mind: originalStats.mind || 0,
@@ -914,8 +922,8 @@ async function saveCharacter() {
 
     try {
         await charRef.update(data);
-        const totals = await getFinalMaxStats(data);
-        updateHUD({ ...data, hpMax: totals.finalHP, mpMax: totals.finalMP, expMax: nextLevelExp });
+        // Optimization: updateHUD recalculates everything, no need for getFinalMaxStats here
+        updateHUD({ ...data, expMax: nextLevelExp });
         if (typeof showToast === "function") showToast("Character Saved.");
     } catch (e) { 
         console.error("Save Error:", e); 
@@ -933,17 +941,17 @@ async function deleteCharacter(event, charId, name) {
     } catch (err) { alert("Error: " + err.message); }
 }
 
-
-// APPLY PASSIVE REGEN or APPLY REGEN
+// Updated to use the new resolveAllStats engine
 async function applyPassiveRegen() {
     if (!currentCharacterId) return;
     const charSnap = await firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get();
     const charData = charSnap.data();
     
-    // Use the Master Resolver
+    // 1. Use the Master Resolver
     const bonuses = await resolveAllStats(charData);
 
-    // FIX: Access .totals
+    // 2. Calculate Regen using .totals
+    // Note: You can add +bonuses.totals['hp_regen_mult'] here later if you want percentage regen!
     const totalHPRegen = (charData.hpMax * 0.00208333) + (bonuses.totals['hp_regen'] || 0);
     const totalMPRegen = (charData.mpMax * 0.00208333) + (bonuses.totals['mp_regen'] || 0);
 
@@ -965,25 +973,16 @@ async function applyPassiveRegen() {
     hpInput.value = Math.floor(newHP);
     mpInput.value = Math.floor(newMP);
     
-    updateHUD({ ...charData, hpCurrent: newHP, mpCurrent: newMP, hpMax, mpMax });
+    // We pass new vitals to HUD, but let it calculate Max HP/MP itself
+    updateHUD({ ...charData, hpCurrent: newHP, mpCurrent: newMP });
 }
 
 function refreshStatDisplay() {
-    // 1. Update the "Pending" numbers (the ones between the - and + buttons)
-    const displayBody = document.getElementById('display-body');
-    if (displayBody) displayBody.innerText = pendingStats.body;
+    setSafeText('display-body', pendingStats.body);
+    setSafeText('display-mind', pendingStats.mind);
+    setSafeText('display-spirit', pendingStats.spirit);
+    setSafeText('char-ap-rem', `AP: ${totalAP}`);
 
-    const displayMind = document.getElementById('display-mind');
-    if (displayMind) displayMind.innerText = pendingStats.mind;
-
-    const displaySpirit = document.getElementById('display-spirit');
-    if (displaySpirit) displaySpirit.innerText = pendingStats.spirit;
-
-    // 2. Update the "AP Available" badge
-    const apRem = document.getElementById('char-ap-rem');
-    if (apRem) apRem.innerText = `AP: ${totalAP}`;
-
-    // 3. Show or Hide the "Commit Changes" area based on AP spent
     const confirmArea = document.getElementById('attr-confirm-area');
     if (confirmArea) {
         const hasChanges = JSON.stringify(pendingStats) !== JSON.stringify(originalStats);
