@@ -881,34 +881,35 @@
                             <label class="text-muted">Race Name</label>
                             <input type="text" id="m-race-name" class="form-input" placeholder="e.g. High Elf">
                         </div>
-            
-                        <div class="panel-header-small mt-m mb-s"><span class="section-label">Race Attributes</span></div>
+
+                        <div class="panel-header-small mt-m mb-s">
+                            <span class="section-label">Race Attributes</span>
+                        </div>
 
                         <div class="flex-row gap-s mb-s">
-                            <select id="race-attr-picker" class="form-input flex-grow">
-                                </select>
+                            <select id="race-attr-picker" class="form-input flex-grow"></select>
                             <button class="btn-success" onclick="addAttrToRace()">Add</button>
                         </div>
                         
-                        <div id="race-dynamic-attributes" class="flex-column gap-s mb-m">
-                            </div>
-            
-                        <div class="panel-header-small mt-m mb-s"><span class="section-label">Racial Traits</span></div>
+                        <div id="race-dynamic-attributes" class="flex-column gap-s mb-m"></div>
+
+                        <div class="panel-header-small mt-m mb-s">
+                            <span class="section-label">Racial Traits</span>
+                        </div>
                         
                         <input type="text" id="trait-checklist-search" class="form-input mb-s" 
-                               placeholder="Search traits..." onkeyup="filterTraitChecklist()">
+                            placeholder="Search traits..." onkeyup="filterTraitChecklist()">
                         
-                        <div id="trait-checklist-container" class="checklist-container mb-s">
-                            </div>
+                        <div id="trait-checklist-container" class="checklist-container mb-s"></div>
                         
                         <div id="race-active-traits" class="flex-row gap-s flex-wrap mb-m"></div>
-            
+
                         <div class="field-group mb-m">
                             <label class="text-muted">Description</label>
-                            <textarea id="m-race-desc" class="form-input" rows="3"></textarea>
+                            <textarea id="m-race-desc" class="form-input h-100 resize-none" placeholder="Describe the race..."></textarea>
                         </div>
                     </div>
-            
+
                     <div class="modal-footer text-right">
                         <button class="btn-success" onclick="saveMasterRace()">Save Race</button>
                     </div>
@@ -920,11 +921,14 @@
                 ---- 11. MODAL ATTRIBUTE MANAGER ----
                 ============================-->
             <div id="attribute-modal" class="modal-overlay hide-default">
-                <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-content modal-sm">
                     <div class="modal-header flex-row">
                         <h3 id="attr-modal-title">Define Attribute</h3>
-                        <button class="btn-danger-small" onclick="closeAttrModal()"><i class="fa-solid fa-xmark"></i></button>
+                        <button class="btn-danger-small" onclick="closeAttrModal()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
+                    
                     <div class="modal-body">
                         <input type="hidden" id="m-attr-id">
                         
@@ -936,14 +940,15 @@
                         <div class="field-group mb-m">
                             <label class="text-muted">System Key (Unique ID)</label>
                             <input type="text" id="m-attr-key" class="form-input" placeholder="e.g. hp_regen">
-                            <small class="text-muted" style="font-size:0.7rem;">Used by code. No spaces (use _).</small>
+                            <small class="text-muted fs-tiny">Used by code. No spaces (use _).</small>
                         </div>
-            
+
                         <div class="field-group mb-m">
                             <label class="text-muted">Default Value</label>
                             <input type="number" id="m-attr-default" class="form-input" value="0">
                         </div>
                     </div>
+
                     <div class="modal-footer text-right">
                         <button class="btn-success" onclick="saveAttribute()">Save Attribute</button>
                     </div>
@@ -960,7 +965,7 @@
             ---- 13. MODAL CLASS MANAGER ----
             =================================-->
             <div id="class-modal" class="modal-overlay hide-default" onclick="if(event.target === this) closeClassModal()">
-                <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-content char-edit-modal">
                     <div class="modal-header flex-row">
                         <h3 id="class-modal-title">Register New Class</h3>
                         <button class="btn-danger-small" onclick="closeClassModal()">
@@ -971,8 +976,8 @@
                     <input type="hidden" id="m-class-id">
                     
                     <div class="flex-row gap-s mb-s">
-                        <input type="text" id="m-class-name" class="form-input" placeholder="Class Name (e.g. Warrior)" style="flex: 2;">
-                        <input type="number" id="m-class-tier" class="form-input" placeholder="Tier (1-3)" min="1" max="3" style="width: 80px;">
+                        <input type="text" id="m-class-name" class="form-input flex-2" placeholder="Class Name (e.g. Warrior)">
+                        <input type="number" id="m-class-tier" class="form-input w-fixed-80" placeholder="Tier (1-3)" min="1" max="3">
                     </div>
                     
                     <div class="mb-s">
@@ -984,28 +989,26 @@
                     </div>
                     
                     <div class="mb-m p-s">
-                        <label class="form-label text-muted small" style="display:block; margin-bottom:5px;">Class Growth & Bonuses</label>
+                        <label class="form-label text-muted fs-tiny label-spacing">Class Growth & Bonuses</label>
                         <div class="flex-row gap-s mb-s">
-                            <select id="class-attr-picker" class="form-input" style="flex-grow: 1;">
+                            <select id="class-attr-picker" class="form-input flex-grow">
                                 <option value="">Loading...</option>
                             </select>
                             <button class="btn-secondary" onclick="addClassAttr()">
                                 <i class="fa-solid fa-plus"></i> Add
                             </button>
                         </div>
-                        <div id="class-dynamic-attributes" class="p-s" style="background: #18181b; border: 1px solid #3f3f46; border-radius: 4px; min-height: 50px;">
-                        </div>
+                        <div id="class-dynamic-attributes" class="p-s dynamic-registry-box"></div>
                     </div>
 
                     <div class="mb-m">
-                        <label class="form-label text-muted small">Class Traits & Abilities</label>
+                        <label class="form-label text-muted fs-tiny label-spacing">Class Traits & Abilities</label>
                         
                         <div class="flex-row gap-s mb-s">
-                            <input type="text" id="class-trait-search" class="form-input" 
-                                placeholder="Search library..." onkeyup="populateClassTraitPicker()" style="flex: 2;">
+                            <input type="text" id="class-trait-search" class="form-input flex-2" 
+                                placeholder="Search library..." onkeyup="populateClassTraitPicker()">
                             
-                            <select id="class-trait-filter" class="form-input" 
-                                    onchange="populateClassTraitPicker()" style="flex: 1;">
+                            <select id="class-trait-filter" class="form-input flex-1" onchange="populateClassTraitPicker()">
                                 <option value="All">All Types</option>
                                 <option value="General">General</option>
                                 <option value="Class">Class</option>
@@ -1014,7 +1017,7 @@
                         </div>
 
                         <div class="flex-row gap-s mb-s">
-                            <select id="class-trait-picker" class="form-input" style="flex-grow: 1;">
+                            <select id="class-trait-picker" class="form-input flex-grow">
                                 <option value="">Loading traits...</option>
                             </select>
                             <button class="btn-secondary btn-add-fix" onclick="addClassTrait()">
@@ -1025,7 +1028,7 @@
                         <div id="class-active-traits" class="registry-box"></div>
                     </div>
                     
-                    <textarea id="m-class-desc" class="form-input mb-m" style="height: 80px;" placeholder="Class Description..."></textarea>
+                    <textarea id="m-class-desc" class="form-input h-80 resize-none mb-m" placeholder="Class Description..."></textarea>
                     
                     <div class="modal-footer text-right">
                         <button class="btn-success" onclick="saveMasterClass()">Save Class Archetype</button>

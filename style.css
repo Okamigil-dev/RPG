@@ -69,6 +69,15 @@
                     border-radius: 10px; 
                 }
                 ::-webkit-scrollbar-thumb:hover { background: var(--color-border-bright); }
+
+            /* Add a hover lift to ALL your primary buttons */
+                .btn-primary, .btn-success, .btn-secondary {
+                    transition: transform 0.1s ease, background 0.2s;
+                }
+
+                .btn-primary:active, .btn-success:active {
+                    transform: scale(0.96); /* Feels like a real button press */
+                }
     
     /*  ==========================================================================
         --- 3. Layout System -----------------------------------------------------
@@ -121,8 +130,11 @@
 
         .master-nav-sidebar {
             width: 220px; min-width: 220px;
-            display: flex; flex-direction: column; gap: 5px;
-            border-right: 1px solid var(--color-border); padding-right: 20px;
+            display: flex; 
+            flex-direction: column; 
+            gap: 5px;
+            border-right: 1px solid var(--color-border);
+            padding-right: 20px;
         }
 
         .master-workspace { 
@@ -140,9 +152,17 @@
             .flex-row { display: flex; align-items: center; gap: 15px; }
             .flex-grow { flex-grow: 1; }
             .flex-1 { flex: 1; }
+            .flex-2 { flex: 2; }
             .flex-end { justify-content: flex-end; }
             .space-between { justify-content: space-between; }
             .flex-wrap { flex-wrap: wrap; }
+
+            .dynamic-registry-box {
+                background: var(--color-bg-main);
+                border: 1px solid var(--color-border-bright);
+                border-radius: var(--radius-s);
+                min-height: 50px;
+            }
 
         /* Text Alignment & Color */
             .text-center { text-align: center; }
@@ -165,15 +185,44 @@
             .ml-s { margin-left: 8px; }
             .gap-s { gap: 10px; }
             .gap-m { gap: 15px; }
+            .label-spacing { display: block; margin-bottom: 5px; }
+            
 
         /* Fixed Width Helper */
             .w-fixed-80 { width: 80px; }
             .h-80 { height: 80px; }
+            .h-100 { height: 100px; }
             .h-150 { height: 150px; }
             .resize-none { resize: none; }
             .justify-center { justify-content: center; }
             .opacity-50 { opacity: 0.5; }
+            .fs-tiny { font-size: 0.7rem; }
+            .d-block { display: block; }
 
+            
+            .empty-state-notice {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 40px;
+                color: #52525b;
+                text-align: center;
+                border: 2px dashed var(--color-border);
+                border-radius: var(--radius-l);
+                margin: 10px 0;
+            }
+            .empty-state-notice i {
+                font-size: 2rem;
+                margin-bottom: 10px;
+                opacity: 0.5;
+            }
+
+            .clickable {
+                cursor: pointer;
+                user-select: none; /* Prevents text highlighting when clicking fast */
+            }
+            
     /*  ==========================================================================
         --- 5. Component ---------------------------------------------------------
         ==========================================================================   */
@@ -220,6 +269,45 @@
                 .btn-square { font-size: 1.2rem; width: 40px; padding: 0; display: flex; align-items: center; justify-content: center; }
                 .btn-add-fix { width: 80px; height: 40px; flex-shrink: 0; }
                 .btn-compact { padding: 8px 12px; }
+            
+            /* Sub-Nav Buttons (For the registry lists) */
+            .sub-nav-btn {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 10px 15px;
+                background: var(--color-bg-card);
+                border: 1px solid var(--color-border);
+                border-radius: var(--radius-s);
+                color: var(--color-silver);
+                transition: all 0.2s;
+            }
+
+            .sub-nav-btn:hover {
+                background: var(--color-bg-panel);
+                border-color: var(--color-border-bright);
+                color: var(--color-white);
+            }
+
+            .sub-nav-btn.active {
+                background: var(--color-exp); 
+                color: var(--color-white);
+                border-color: var(--color-white);
+                box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+            }
+
+            /* Specific Button Overrides */
+            .speed-label {
+                color: var(--color-success); /* Use that neon green for the speed */
+                font-weight: bold;
+                font-family: monospace;
+            }
+            
+            #current-instance-name {
+                color: var(--color-silver);
+                border-bottom: 1px solid var(--color-border-bright);
+            }
 
         /*  ==========================================================================
             --- B. Inputs ------------------------------------------------------------
@@ -238,9 +326,10 @@
                     transition: border-color 0.2s;
                 }
 
-                .form-input:focus { 
-                    border-color: var(--color-mp); 
-                    outline: none; 
+                .form-input:focus {
+                    border-color: var(--color-success);
+                    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.1); /* Soft glow */
+                    outline: none;
                 }
 
             /* Specialized Selectors */
@@ -305,11 +394,11 @@
 
             /* Core Registry & Library Cards */
                 .panel-card { 
-                    background: rgba(17, 17, 17, 0.8); 
+                    background: var(--color-bg-card); /* #18181b */
                     backdrop-filter: blur(10px);
                     padding: 24px; 
-                    border-radius: var(--radius-xl); 
-                    border: 1px solid rgba(188, 198, 204, 0.15); /* Using Silver variable with opacity */
+                    border-radius: var(--radius-m);
+                    border: 1px solid var(--color-border); /* #27272a */
                     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
                 }
 
@@ -469,6 +558,45 @@
                     color: var(--color-white);
                     font-weight: 700;
                 }
+                
+            /* HP, MP, and EXP Fillers */
+                .hp-bar-fill { 
+                    height: 100%; 
+                    background: var(--color-hp); 
+                    width: 0%; 
+                    transition: width 0.3s; 
+                }
+
+                .mp-bar-fill { 
+                    height: 100%; 
+                    background: var(--color-mp); 
+                    width: 0%; 
+                    transition: width 0.3s; 
+                }
+
+                .exp-bar-thick-fill {
+                    height: 100%;
+                    width: 0%;
+                    background: var(--color-exp); /* Simple & Clean variable use */
+                    transition: width 0.3s ease-in-out;
+                }
+
+            /* Containers & Backgrounds */
+                .hp-bar-bg, .mp-bar-bg, .exp-bar-thick-bg {
+                    height: 10px;
+                    background: var(--color-bg-main);
+                    border-radius: var(--radius-s);
+                    overflow: hidden;
+                    border: 1px solid var(--color-border);
+                }
+
+                .hud-stat-box {
+                    background: var(--color-bg-card);
+                    border: 1px solid var(--color-border);
+                    border-radius: var(--radius-s);
+                    padding: 8px 4px;
+                    color: var(--color-silver);
+                }
 
         /*  ==========================================================================
             --- E. Modals ------------------------------------------------------------
@@ -480,6 +608,7 @@
                     background: rgba(0, 0, 0, 0.85); /* Slightly darker for better focus */
                     z-index: 9999;
                     display: flex; justify-content: center; align-items: center;
+                    transition: opacity 0.2s ease-in-out;
                 }
 
             /* Modal Content Box */
@@ -499,6 +628,8 @@
                 .modal-content.char-edit-modal { 
                     max-width: 600px; /* Giving the char manager a bit more room */
                 }
+            
+                .modal-content.modal-sm { max-width: 400px; } /* A narrower variant for simple inputs */
 
             /* Modal Internal Layout */
                 .modal-header { 
@@ -537,6 +668,11 @@
 
                 .checklist-item:last-child { border-bottom: none; }
                 .checklist-item label { margin-left: 8px; cursor: pointer; color: #a1a1aa; }
+
+        /*  ==========================================================================
+            --- F. ?.....? -----------------------------------------------------------
+            ==========================================================================   */
+
 
     /*  ==========================================================================
         --- 6. Feature -----------------------------------------------------------
@@ -758,6 +894,42 @@
 
                 .dice-btn.active-roll i { opacity: 0.1; transform: scale(0.8); }
                 .dice-btn.active-roll .roll-number { display: block; animation: dice-pop 0.2s ease-out; }
+
+            /* The container for the EXP bar */
+                .exp-bar-thick-bg {
+                    height: 12px;
+                    background: #18181b; /* Deep dark background */
+                    border-radius: 6px;
+                    position: relative;
+                    overflow: hidden;
+                    margin-top: 5px;
+                    border: 1px solid #27272a;
+                }
+
+            /* The actual purple progress filling */
+                .exp-bar-thick-fill {
+                    height: 100%;
+                    width: 0%; /* JS will update this */
+                    background: linear-gradient(90deg, #7c3aed, #a855f7);
+                    transition: width 0.3s ease-in-out;
+                }
+
+            /* The percentage text sitting on top */
+                .exp-overlay-grid {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    font-size: 0.65rem;
+                    font-weight: 900;
+                    color: white;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+                    pointer-events: none; /* Allows clicking through to the bar if needed */
+                }
         
         /*  ==========================================================================
             --- C. Login Screen ------------------------------------------------------
