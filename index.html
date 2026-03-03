@@ -100,16 +100,18 @@
             ---- 2. CHATBOX & DICE TRAY ----
             ============================-->
             <div class="sidebar-panel flex-grow">
-                <div id="dice-tray" class="dice-tray">
+                <div id="chat-log" class="dice-tray">
                     <div id="dice-log" class="dice-log">
                         <div class="dice-log-placeholder">No messages yet</div>
                     </div>
                     
-                    <div class="chat-input-area flex-row gap-s" style="padding: 10px; border-top: 1px solid #333; border-bottom: 1px solid #333;">
+                    <div class="chat-input-area flex-row gap-s">
                         <input type="text" id="chat-msg-input" class="form-input flex-grow" placeholder="Type a message..." onkeypress="handleChatEnter(event)">
-                        <button onclick="sendChatMessage()" class="btn-primary" style="padding: 8px 12px;"><i class="fa-solid fa-paper-plane"></i></button>
+                        <button onclick="sendChatMessage()" class="btn-primary"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
+                </div>
                 
+                <div id="dice-tray" class="dice-tray">
                     <div class="dice-grid">
                         <button onclick="rollDice(6, this)" class="dice-btn">
                             <i class="fa-solid fa-dice-d6"></i>
@@ -120,7 +122,8 @@
                             <span class="roll-number"></span>
                         </button>
                     </div>
-                </div>
+                </div>  
+
             </div>
         </div>
         <div id="main-content" class="main-content">

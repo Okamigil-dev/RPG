@@ -13,7 +13,7 @@
             --color-mp: #3b82f6;        /* Bright blue for MP bars and icons */
             --color-success: #00ff88;       /* Bright green for success messages and indicators */
             --color-shadow: rgba(0, 0, 0, 0.5); /* For consistent shadow effects across the app */
-            --color-dark:#121212;
+            
 
             /* System Colors */
             --color-system-text: #34d399;
@@ -37,6 +37,13 @@
             --radius-md: 8px;
             --radius-lg: 12px;
 
+            /* Scrollbar */
+            --color-scrollbar:#121212;
+            --hover-scrollbar: #252525;
+            --width-scrollbar: 8px;
+            --radius-scrollbar: 4px;
+
+
             /* Transition */
             --transition-fast: 0.2s ease; /* For quick hover effects */
         }
@@ -58,15 +65,19 @@
             * { box-sizing: border-box; }
 
         /*  ==========================================================================
-            --- B. Scroll Bar --------------------------------------------------------
+            --- B. Scroll Bars --------------------------------------------------------
             ==========================================================================   */
-            ::-webkit-scrollbar { 
-                width: 6px; 
-                border-radius: 10px;
-            }    /* Slim scrollbar for a more modern look */
+            ::-webkit-scrollbar { width: var(--width-scrollbar); }    /* Slim scrollbar for a more modern look */
             ::-webkit-scrollbar-track { background: transparent ; }  /* Keeps the track invisible for a cleaner look */
-            ::-webkit-scrollbar-thumb { background: var(--color-bg-alt); border-radius: 10px; } /* Matches the panel background for a cohesive look */
-            ::-webkit-scrollbar-thumb:hover { background: var(--color-border); } /* Darkens on hover for better visibility */
+            ::-webkit-scrollbar-thumb { background: var(--color-scrollbar);  border-radius: var(--radius-scrollbar); } /* Matches the panel background for a cohesive look */
+            ::-webkit-scrollbar-thumb:hover { background: var(--hover-scrollbar); } /* Darkens on hover for better visibility */
+
+            /* Chat Log Scrollbar
+            .dice-log::-webkit-scrollbar { width: 6px; }
+            .dice-log::-webkit-scrollbar-track { background: transparent; }
+            .dice-log::-webkit-scrollbar-thumb { background: var(--color-bg-alt); border-radius: 10px; }
+            .dice-log::-webkit-scrollbar-thumb:hover { background: #555; }
+            */
 
         /*  ==========================================================================
             --- C. Global Classes ----------------------------------------------------
@@ -234,12 +245,7 @@
                 padding: 15px 0; 
             }
 
-            /* Make sure the Chat Input doesn't have an awkward line at the top */
-            .chat-input-area {
-                border-top: 1px solid #27272a;
-                margin-top: 10px;
-                padding: 10px 0 0 0 !important; /* Clean alignment inside panel */
-            }
+            
 
             .active-char-hud { 
                 padding: 0; 
@@ -336,18 +342,31 @@
     max-height: 450px;
 }
 
-.dice-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--gap-m);
-    margin-top: 10px;
-    flex-shrink: 0;
-}
+            .dice-log {
+                flex-grow: 1;
+                height: 300px;
+                min-height: 150px;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column-reverse;
+                padding: 4px;
+                gap: 4px; /* Space between chat entries */
+            }
+
+            .chat-input-area {
+                border: 1px solid var(--color-border);
+                border-radius: 4px;
+                margin: 10px 0;
+                padding: 10px;
+            }
 
 
-
-
-
+            .dice-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: var(--gap-m);
+                margin-top: 10px;
+            }
 
 
 
@@ -397,17 +416,7 @@
 
 
 
-.dice-log {
-    flex-grow: 1;
-    height: 300px;
-    min-height: 150px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column-reverse;
-    padding: 10px;
-    background: #121212;
-    gap: 8px;
-}
+
 
 .chat-entry {
     font-size: 0.85rem;
@@ -430,12 +439,7 @@
 
 .dice-log-placeholder { text-align: center; opacity: 0.3; padding-top: 15px; }
 
-/* Chat Log Scrollbar
-.dice-log::-webkit-scrollbar { width: 6px; }
-.dice-log::-webkit-scrollbar-track { background: #121212; }
-.dice-log::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-.dice-log::-webkit-scrollbar-thumb:hover { background: #555; }
-*/
+
 /* ==========================================================================
    --- 8. CHARACTER DASHBOARD & GALLERY ---
    ========================================================================== */
