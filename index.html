@@ -1,4 +1,4 @@
-<!-- Version 0.4.5 -->
+<!-- Version 0.3.1 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,19 +50,21 @@
                     <div class="bar-label"><span>Health</span><span id="hud-hp-text">0/0</span></div>
                     <div class="hp-bar-bg"><div id="hud-hp-fill" class="hp-bar-fill"></div></div>
                 </div>
-
+            
                 <div class="hud-resource">
                     <div class="bar-label"><span>Mana</span><span id="hud-mp-text">0/0</span></div>
                     <div class="mp-bar-bg"><div id="hud-mp-fill" class="mp-bar-fill"></div></div>
                 </div>
-
-                <div class="hud-resource mb-l">
+            
+                <div class="hud-resource" style="margin-bottom: 20px;">
                     <div class="bar-label"><span>Experience</span></div>
                     <div class="exp-bar-thick-bg">
                         <div id="hud-exp-fill" class="exp-bar-thick-fill"></div>
                         <div id="hud-exp-text" class="exp-overlay-grid">0%</div>
                     </div>
-                </div> <div class="hud-stats-row">
+                </div>
+            
+                <div class="hud-stats-row">
                     <div id="hud-mod-body" class="hud-stat-box">BOD +0</div>
                     <div id="hud-mod-mind" class="hud-stat-box">MIN +0</div>
                     <div id="hud-mod-spirit" class="hud-stat-box">SPI +0</div>
@@ -81,7 +83,7 @@
                     <div id="time-display" class="time-text">09:00:17</div>
                     
                     <div id="master-quick-controls" class="mt-m">
-                        <div class="flex-row justify-center gap-s">
+                        <div class="flex-row" style="justify-content: center; gap: 8px;">
                             <button onclick="toggleTime()" id="sidebar-play-btn" class="btn-small">
                                 <i class="fa-solid fa-play"></i>
                             </button>
@@ -102,11 +104,9 @@
                         <div class="dice-log-placeholder">No messages yet</div>
                     </div>
                     
-                    <div class="chat-input-area flex-row gap-s">
+                    <div class="chat-input-area flex-row gap-s" style="padding: 10px; border-top: 1px solid #333; border-bottom: 1px solid #333;">
                         <input type="text" id="chat-msg-input" class="form-input flex-grow" placeholder="Type a message..." onkeypress="handleChatEnter(event)">
-                        <button onclick="sendChatMessage()" class="btn-primary btn-compact">
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
+                        <button onclick="sendChatMessage()" class="btn-primary" style="padding: 8px 12px;"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
                 
                     <div class="dice-grid">
@@ -131,12 +131,12 @@
             ============================-->
             <div id="tab-login" class="tab-content">
                 <div class="login-box">
-                    <div class="brand-logo">Virtual Table Top RPG</div>
+                    <div class="brand-logo" style="text-align: center; margin-bottom: 10px; font-size: 1.8rem;">WORLD VTT</div>
                     <h2>Sign In</h2>
                     <input type="email" id="email-input" class="form-input" placeholder="Email">
                     <input type="password" id="password-input" class="form-input" placeholder="Password">
                     <button onclick="loginUser()" class="btn-primary btn-full">Access Realm</button>
-                    <div class="login-divider">OR</div>
+                    <div style="margin: 20px 0; text-align: center; opacity: 0.3;">OR</div>
                     <button onclick="registerUser()" class="btn-secondary btn-full">Create New Account</button>
                 </div>
             </div>
@@ -156,15 +156,14 @@
                 </div>
             
                 <div id="char-sheet-view" class="hide-default">
-                    <div class="flex-row header-spacing mb-xl">
-                        <button onclick="goBackToSelection()" class="btn-secondary">
-                            <i class="fa-solid fa-arrow-left"></i> Back
-                        </button>
+                    <div class="flex-row header-spacing" style="margin-bottom: 25px;">
+                        <button onclick="goBackToSelection()" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</button>
                         <div class="flex-row">
-                            <h2 class="tab-title m-0">Character Sheet</h2>
+                            <h2 class="tab-title" style="margin:0;">Character Sheet</h2>
                         </div>
-                    </div>
+                    </div>                        
 
+                    <!-- Name, Race, Level Box -->
                     <div class="panel-card mb-m">
                         <h3 class="panel-subtitle">Identity</h3>
                         <div class="identity-grid">
@@ -183,11 +182,12 @@
                         </div>
                     </div>
 
+                    <!-- Attribute Box -->
                     <div class="stats-resources-wrapper">
                         <div class="panel-card">
                             <div class="panel-header-row">
                                 <h3 class="panel-subtitle">Attributes</h3>
-                                <div id="char-ap-rem" class="char-level-badge">AP: 0</div>
+                                <div id="char-ap-rem" class="sp-indicator">AP: 0</div>
                             </div>
                             
                             <div class="attr-list-grid">
@@ -227,6 +227,9 @@
                             </div>
                         </div>
 
+
+                        
+                        <!-- HP Bar, MP Bar -->
                         <div class="panel-card">
                             <h3 class="panel-subtitle">Vitals & Status</h3>
                             
@@ -274,6 +277,9 @@
                         </div>
                     </div>
 
+
+                    
+                    <!-- CLASSES, TRAITS -->
                     <div class="panel-card mt-m">
                         <div class="identity-grid">
                             <div class="field-group">
@@ -287,32 +293,42 @@
                         </div>
                     </div>
 
-                    <div class="side-by-side-row">
-                        <div class="panel-card notes-column mt-0 flex-column">
+
+
+                   
+                    <!-- Gallery Box -->
+                     <div class="side-by-side-row">
+
+                        <div class="panel-card notes-column" style="margin-top: 0; display: flex; flex-direction: column;">
                             <h3 class="panel-subtitle">Adventurer's Notes</h3>
                             <textarea 
                                 id="char-notes" 
-                                class="notes-textarea flex-grow" 
+                                class="notes-textarea" 
                                 placeholder="Quest logs, inventory, or secrets..." 
-                                onchange="saveCharacter()"></textarea>
+                                onchange="saveCharacter()"
+                                style="flex-grow: 1;"></textarea>
                         </div>
                         
-                        <div class="panel-card gallery-column mt-0">
+                        <div class="panel-card gallery-column" style="margin-top: 0;">
                             <div class="panel-header-row">
-                                <h3 class="panel-subtitle m-0">Character Gallery</h3>
+                                <h3 class="panel-subtitle" style="margin:0;">Character Gallery</h3>
                             </div>
 
                             <input 
                                 type="file" 
                                 id="slot-upload" 
                                 accept="image/*" 
-                                class="hide-default"
+                                style="display: none;" 
                                 onchange="handleWebPUpload(this, saveImageToNextSlot, 512, 0.6)"
                             >
 
-                            <div id="char-gallery-grid" class="gallery-grid"></div>
+                            <div id="char-gallery-grid" class="gallery-grid">
+                                </div>
                         </div>
+
                     </div>
+
+
                 </div>
             </div>
 
@@ -355,47 +371,63 @@
                 <div class="master-dashboard-layout">
                     
                     <div class="master-nav-sidebar">
-                        <h3 class="nav-section-title">World Management</h3>
-                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-accounts')">
-                            <i class="fa-solid fa-users-gear"></i> User Access
-                        </button>
 
+
+                        
+                        <h3 class="nav-section-title">World Management</h3>
+                        
                         <button class="sub-nav-btn active" onclick="openControlSubTab(event, 'sub-instances')">
                             <i class="fa-solid fa-layer-group"></i> Instances
                         </button>
+
                         <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-characters')">
                             <i class="fa-solid fa-user-shield"></i> Characters
                         </button>
-                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-npcs')">
-                            <i class="fa-solid fa-people-group"></i> NPCs
-                        </button>
-                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-monsters')">
-                            <i class="fa-solid fa-dragon"></i> Bestiary
+                        
+                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-accounts')">
+                            <i class="fa-solid fa-users-gear"></i> User Access
                         </button>
                         
-                        <h3 class="nav-section-title">Data Management</h3>
+                        
+                        
+                        <h3 class="nav-section-title">Data Assets</h3>
+                        
+                        
+                        
                         <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-classes')">
                             <i class="fa-solid fa-vest"></i> Classes
                         </button>
+                        
                         <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-skills')">
                             <i class="fa-solid fa-scroll"></i> Skills
                         </button>
+                        
                         <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-races')">
                             <i class="fa-solid fa-dna"></i> Races
                         </button>
                         
-                        <h3 class="nav-section-title">Assets Library</h3>
                         <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-traits')">
                             <i class="fa-solid fa-book-open-reader"></i> Traits
                         </button>
+                        
                         <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-items')">
                             <i class="fa-solid fa-box-open"></i> Items
                         </button>
+
                         <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-attributes')">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> Attributes
                         </button>
+
                         <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-images')">
                             <i class="fa-solid fa-images"></i> Image Gallery
+                        </button>
+
+                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-npcs')">
+                            <i class="fa-solid fa-people-group"></i> NPCs
+                        </button>
+
+                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-monsters')">
+                            <i class="fa-solid fa-dragon"></i> Bestiary
                         </button>
                         
                     </div>
@@ -406,24 +438,24 @@
                         --- 1. Instance Management --- 
                         ------------------------------>
                         <div id="sub-instances" class="control-sub-content">
-                            <div class="panel-card mb-m">
+                            <div class="panel-card">
                                 <h3>Spawn New Instance</h3>
                                 <div class="flex-row">
                                     <input type="text" id="new-instance-name" class="form-input" placeholder="Instance Name (e.g. Campaign: North)">
                                     <button onclick="spawnInstance()" class="btn-success">Spawn Instance</button>
                                 </div>
                             </div>
-
-                            <div class="panel-card mb-m">
+            
+                            <div class="panel-card">
                                 <h3>Active Instance Registry</h3>
                                 <div id="admin-instance-list">
-                                    <p class="text-center opacity-50 p-m">No active instances found.</p>
+                                    <p class="text-center" style="opacity: 0.5; padding: 20px;">No active instances found.</p>
                                 </div>
                             </div>
 
                             <div class="panel-card">
                                 <h3>Instance Heartbeat: <span id="current-instance-name">Global</span></h3>
-                                <div class="flex-row gap-s">
+                                <div class="flex-row">
                                     <button onclick="toggleTime()" class="btn-success">Play/Pause</button>
                                     <span id="speed-label">1x</span>
                                     <button onclick="setSpeed(1)" class="btn-small">1x</button>
@@ -431,6 +463,7 @@
                                     <button onclick="setSpeed(1440)" class="btn-small">1d/min</button>
                                 </div>
                             </div>
+                                                        
                         </div>
 
                         <!-------------------------
@@ -438,19 +471,21 @@
                         -------------------------->
                         <div id="sub-accounts" class="control-sub-content hide-default">
                             <div class="panel-card">
-                                <div class="flex-row space-between mb-l">
+                                <div class="flex-row" style="justify-content: space-between; margin-bottom: 20px;">
                                     <h3>Account Permissions</h3>
-                                    <div class="flex-row gap-s">
+                                    <div class="flex-row">
                                         <button onclick="saveAllUserRoles()" class="btn-success">Save All Changes</button>
                                         <button onclick="loadUserList()" class="btn-small"><i class="fa-solid fa-rotate"></i> Refresh</button>
                                     </div>
                                 </div>
                                 
-                                <div class="admin-list-header">
+                                <div class="user-list-header" style="display: grid; grid-template-columns: 2fr 1fr; padding: 10px; color: #71717a; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid #27272a;">
                                     <span>Email</span>
                                     <span>Role Assignment</span>
                                 </div>
-                                <div id="admin-user-list" class="user-list-body"></div>
+            
+                                <div id="admin-user-list" class="user-list-body">
+                                    </div>
                             </div>
                         </div>
 
@@ -468,18 +503,17 @@
                         <!-------------------------
                         --- 4. Item Management --- 
                         -------------------------->
-                        <div id="sub-items" class="control-sub-content hide-default">
-                            <div class="panel-card"><h3>Master Item List</h3></div>
-                        </div>
+                        <div id="sub-items" class="control-sub-content hide-default"><div class="panel-card"><h3>Master Item List</h3></div></div>
 
                         <!-------------------------
                         --- 5. Skill Management --- 
                         -------------------------->
                         <div id="sub-skills" class="control-sub-content hide-default">
-                            <div class="panel-card mb-m">
+                            <div class="panel-card">
                                 <h3 id="skill-editor-label">Create Global Skill</h3>
                                 <div id="skill-creator-form">
                                     <input type="hidden" id="ms-skill-id"> 
+                                    
                                     <div class="skill-form-grid">
                                         <div class="field-group">
                                             <label class="text-muted">Skill Name</label>
@@ -490,7 +524,7 @@
                                             <select id="reg-skill-class" class="form-input"></select>
                                         </div>
                                     </div>
-
+                        
                                     <div class="skill-form-triple">
                                         <div class="field-group">
                                             <label class="text-muted">Tier</label>
@@ -504,21 +538,34 @@
                                             <label class="text-muted">MP Cost</label>
                                             <input type="number" id="reg-skill-cost" class="form-input" value="10">
                                         </div>
-                                        <div class="field-group">
+                                        
+                                        <!-- Skill Icon Upload -->
+
+                                        <div class="form-group">
                                             <label class="text-muted">Skill Icon (64x64 PNG)</label>
-                                            <input type="file" id="reg-skill-icon" accept="image/*" class="hide-default" onchange="handleWebPUpload(this, processSkillIcon, 128)">
+                                            
+                                            <input 
+                                                type="file" 
+                                                id="reg-skill-icon" 
+                                                accept="image/*" 
+                                                style="display: none;" 
+                                                onchange="handleWebPUpload(this, processSkillIcon, 128)"
+                                            >
+                                        
                                             <div id="icon-preview" class="icon-upload-box" onclick="triggerInput('reg-skill-icon')">
                                                 <i class="fa-solid fa-plus"></i>
                                             </div>
+                                            
                                             <input type="hidden" id="reg-skill-icon-base64">
                                         </div>
+                                        
                                     </div>
-
+                        
                                     <div class="field-group mb-m">
                                         <label class="text-muted">Description</label>
-                                        <textarea id="reg-skill-desc" class="form-input h-80 resize-none" placeholder="Describe the effect..."></textarea>
+                                        <textarea id="reg-skill-desc" class="form-input" rows="2" placeholder="Describe the effect..."></textarea>
                                     </div>
-
+                        
                                     <div class="section-divider"><span class="section-label">Combat & Timing</span></div>
                                     <div class="skill-form-triple">
                                         <div class="field-group">
@@ -539,7 +586,7 @@
                                             <input type="number" id="reg-skill-cooldown" class="form-input" value="0">
                                         </div>
                                     </div>
-
+                                    
                                     <div class="skill-form-grid">
                                         <div class="field-group">
                                             <label class="text-muted">Area of Effect (AoE)</label>
@@ -556,7 +603,7 @@
                                             </select>
                                         </div>
                                     </div>
-
+                        
                                     <div class="section-divider"><span class="section-label">Scaling Formula</span></div>
                                     <div class="skill-form-grid">
                                         <div class="field-group">
@@ -573,22 +620,21 @@
                                             <input type="number" id="reg-skill-factor" class="form-input" step="0.1" value="1.0">
                                         </div>
                                     </div>
-
+                        
                                     <div class="flex-row flex-end mt-m">
                                         <button id="skill-cancel-btn" onclick="resetSkillForm()" class="btn-secondary hide-default">Cancel Edit</button>
-                                        <button id="skill-save-btn" onclick="saveSkillToRegistry()" class="btn-success ml-s">Save Skill to Library</button>
+                                        <button id="skill-save-btn" onclick="saveSkillToRegistry()" class="btn-success">Save Skill to Library</button>
                                     </div>
                                 </div>
                             </div>
-
+                        
                             <div class="panel-card">
                                 <h3>Skill Manager</h3>
                                 <div id="registry-skill-list" class="master-asset-list">
-                                    <p class="text-muted text-center opacity-50">Loading...</p>
+                                    <p class="text-muted text-center">Loading...</p>
                                 </div>
                             </div>
                         </div>
-
                         <!-------------------------
                         --- 6. Class Management --- 
                         -------------------------->
@@ -596,7 +642,7 @@
                             <div class="panel-card trait-panel-layout">
                                 <div class="trait-list-header mb-m">
                                     <div class="flex-row space-between w-100">
-                                        <h3>Class Registry</h3>
+                                        <h3 style="margin:0;">Class Registry</h3>
                                         <button class="btn-success" onclick="openClassModal()">
                                             <i class="fa-solid fa-plus"></i> Register Class
                                         </button>
@@ -616,7 +662,7 @@
                             <div class="panel-card trait-panel-layout">
                                 <div class="trait-list-header mb-m">
                                     <div class="flex-row space-between w-100">
-                                        <h3>Race Library</h3>
+                                        <h3 style="margin:0;">Race Library</h3>
                                         <button class="btn-success" onclick="openRaceModal()">
                                             <i class="fa-solid fa-plus"></i> Register New Race
                                         </button>
@@ -624,12 +670,13 @@
                                     
                                     <div class="trait-controls-group mt-s">
                                         <input type="text" id="race-search-input" class="form-input search-input" 
-                                            placeholder="Search races..." onkeyup="loadMasterRaceList()">
+                                               placeholder="Search races..." onkeyup="loadMasterRaceList()">
                                     </div>
                                 </div>
                                 
                                 <div class="master-asset-list-scroll-area custom-scrollbar">
-                                    <div id="master-race-list"></div>
+                                    <div id="master-race-list">
+                                        </div>
                                 </div>
                             </div>
                         </div>
@@ -639,7 +686,7 @@
                             <div class="panel-card trait-panel-layout">
                                 <div class="trait-list-header mb-m">
                                     <div class="flex-row space-between w-100">
-                                        <h3>Trait Library</h3>
+                                        <h3 style="margin:0;">Trait Library</h3>
                                         <button class="btn-success" onclick="openTraitModal()">
                                             <i class="fa-solid fa-plus"></i> Define New Trait
                                         </button>
@@ -647,8 +694,7 @@
                                     
                                     <div class="trait-controls-group mt-s">
                                         <input type="text" id="trait-search-input" class="form-input search-input" 
-                                            placeholder="Search name..." onkeyup="loadMasterTraitList()">
-                                        
+                                               placeholder="Search name..." onkeyup="loadMasterTraitList()">
                                         <select id="trait-filter-source" class="form-input source-select" onchange="loadMasterTraitList()">
                                             <option value="All">All Sources</option>
                                             <option value="Race">Race</option>
@@ -656,7 +702,6 @@
                                             <option value="Backstory">Backstory</option>
                                             <option value="General">General</option>
                                         </select>
-                                        
                                         <button class="btn-icon-small" onclick="toggleTraitSort()">
                                             <i id="trait-sort-icon" class="fa-solid fa-arrow-down-a-z"></i>
                                         </button>
@@ -664,7 +709,8 @@
                                 </div>
                                 
                                 <div class="master-asset-list-scroll-area custom-scrollbar">
-                                    <div id="master-trait-list"></div>
+                                    <div id="master-trait-list">
+                                        </div>
                                 </div>
                             </div>
                         </div>
@@ -675,7 +721,7 @@
                             <div class="panel-card trait-panel-layout">
                                 <div class="trait-list-header mb-m">
                                     <div class="flex-row space-between w-100">
-                                        <h3>Attribute Library</h3>
+                                        <h3 style="margin:0;">Attribute Library</h3>
                                         <button class="btn-success" onclick="openAttributeModal()">
                                             <i class="fa-solid fa-plus"></i> Define Attribute
                                         </button>
@@ -725,18 +771,18 @@
                     <div class="modal-body">
                         <input type="hidden" id="edit-modal-uid">
                         <input type="hidden" id="edit-modal-cid">
-
+            
                         <div class="form-group mb-m">
                             <label class="text-muted">Award / Remove EXP (Current: <span id="modal-current-exp-display" class="text-highlight">0</span>)</label>
                             <input type="hidden" id="edit-modal-exp">
-
-                            <div class="flex-row">
+            
+                            <div class="control-box">
                                 <button class="btn-danger-small btn-square" onclick="adjustModalExp(-1)">-</button>
                                 <input type="number" id="exp-adjust-amount" class="form-input text-center" placeholder="Amount" value="100">
                                 <button class="btn-success btn-square" onclick="adjustModalExp(1)">+</button>
                             </div>
                         </div>
-
+            
                         <div class="panel-header-small mt-l mb-s">
                             <span class="section-label">Class Management</span>
                         </div>
@@ -745,71 +791,72 @@
                             <button class="btn-success" onclick="assignClassToCharacter()">Add Class</button>
                         </div>
                         <div id="modal-active-classes" class="master-asset-list"></div>
-
+            
                         <div class="flex-row gap-m mb-m">
-                            <div class="field-group">
+                            <div class="form-group flex-1">
                                 <label class="text-muted">Current HP</label>
-                                <input type="number" id="edit-modal-hp" class="form-input">
+                                <input type="number" id="edit-modal-hp" class="form-input w-100">
                             </div>
-                            <div class="field-group">
+                            <div class="form-group flex-1">
                                 <label class="text-muted">Current MP</label>
-                                <input type="number" id="edit-modal-mp" class="form-input">
+                                <input type="number" id="edit-modal-mp" class="form-input w-100">
                             </div>
                         </div>
-
-                        <div class="field-group mb-m">
+            
+                        <div class="form-group mb-m">
                             <label class="text-muted">Gold / Currency</label>
-                            <input type="number" id="edit-modal-gold" class="form-input">
+                            <input type="number" id="edit-modal-gold" class="form-input w-100">
                         </div>
-
+            
                         <div class="panel-header-small mt-l mb-s">
                             <span class="section-label">Core Attributes</span>
                         </div>
                         
-                        <div class="flex-row flex-end mb-m">
+                        <div class="flex-row mb-m flex-end">
                             <button class="btn-danger-small" onclick="respecCharacterAttributes()">
                                 <i class="fa-solid fa-rotate-left"></i> Respec (Reset to 0)
                             </button>
                         </div>
-
+            
                         <div class="flex-row gap-m mb-m">
-                            <div class="field-group">
+                            <div class="form-group flex-1">
                                 <label class="text-muted">Body</label>
-                                <input type="number" id="edit-modal-body" class="form-input">
+                                <input type="number" id="edit-modal-body" class="form-input w-100">
                             </div>
-                            <div class="field-group">
+                            <div class="form-group flex-1">
                                 <label class="text-muted">Mind</label>
-                                <input type="number" id="edit-modal-mind" class="form-input">
+                                <input type="number" id="edit-modal-mind" class="form-input w-100">
                             </div>
-                            <div class="field-group">
+                            <div class="form-group flex-1">
                                 <label class="text-muted">Spirit</label>
-                                <input type="number" id="edit-modal-spirit" class="form-input">
+                                <input type="number" id="edit-modal-spirit" class="form-input w-100">
                             </div>
                         </div>
-
+            
                         <div class="panel-header-small mt-l mb-s">
                             <span class="section-label">Equipment Modifiers (Manual)</span>
                         </div>
                         <div class="flex-row gap-m mb-m">
-                            <div class="field-group">
+                            <div class="form-group flex-1">
                                 <label class="text-muted">Flat HP Bonus</label>
-                                <input type="number" id="edit-modal-hp-flat" class="form-input">
+                                <input type="number" id="edit-modal-hp-flat" class="form-input w-100">
                             </div>
-                            <div class="field-group">
+                            <div class="form-group flex-1">
                                 <label class="text-muted">HP Bonus %</label>
-                                <input type="number" id="edit-modal-hp-perc" class="form-input">
+                                <input type="number" id="edit-modal-hp-perc" class="form-input w-100">
                             </div>
                         </div>
                         <div class="flex-row gap-m mb-m">
-                            <div class="field-group">
+                            <div class="form-group flex-1">
                                 <label class="text-muted">Flat MP Bonus</label>
-                                <input type="number" id="edit-modal-mp-flat" class="form-input">
+                                <input type="number" id="edit-modal-mp-flat" class="form-input w-100">
                             </div>
-                            <div class="field-group">
+                            <div class="form-group flex-1">
                                 <label class="text-muted">MP Bonus %</label>
-                                <input type="number" id="edit-modal-mp-perc" class="form-input">
+                                <input type="number" id="edit-modal-mp-perc" class="form-input w-100">
                             </div>
                         </div>
+                        
                     </div>
                     
                     <div class="modal-footer text-right mt-l">
@@ -837,7 +884,7 @@
                             <label class="text-muted">Trait Name</label>
                             <input type="text" id="reg-trait-name" class="form-input" placeholder="e.g. Darkvision">
                         </div>
-
+            
                         <div class="field-group mb-m">
                             <label class="text-muted">Primary Source</label>
                             <select id="reg-trait-source" class="form-input">
@@ -847,13 +894,13 @@
                                 <option value="Backstory">Backstory</option>
                             </select>
                         </div>
-
+            
                         <div class="field-group mb-m">
                             <label class="text-muted">Description</label>
-                            <textarea id="reg-trait-desc" class="form-input h-150 resize-none" placeholder="Describe the effect..."></textarea>
+                            <textarea id="reg-trait-desc" class="form-input" rows="6" placeholder="Describe the effect..."></textarea>
                         </div>
                     </div>
-
+            
                     <div class="modal-footer text-right">
                         <button class="btn-success" onclick="saveTraitToRegistry()">Save Trait</button>
                     </div>
@@ -881,35 +928,34 @@
                             <label class="text-muted">Race Name</label>
                             <input type="text" id="m-race-name" class="form-input" placeholder="e.g. High Elf">
                         </div>
-
-                        <div class="panel-header-small mt-m mb-s">
-                            <span class="section-label">Race Attributes</span>
-                        </div>
+            
+                        <div class="panel-header-small mt-m mb-s"><span class="section-label">Race Attributes</span></div>
 
                         <div class="flex-row gap-s mb-s">
-                            <select id="race-attr-picker" class="form-input flex-grow"></select>
+                            <select id="race-attr-picker" class="form-input flex-grow">
+                                </select>
                             <button class="btn-success" onclick="addAttrToRace()">Add</button>
                         </div>
                         
-                        <div id="race-dynamic-attributes" class="flex-column gap-s mb-m"></div>
-
-                        <div class="panel-header-small mt-m mb-s">
-                            <span class="section-label">Racial Traits</span>
-                        </div>
+                        <div id="race-dynamic-attributes" class="flex-column gap-s mb-m">
+                            </div>
+            
+                        <div class="panel-header-small mt-m mb-s"><span class="section-label">Racial Traits</span></div>
                         
                         <input type="text" id="trait-checklist-search" class="form-input mb-s" 
-                            placeholder="Search traits..." onkeyup="filterTraitChecklist()">
+                               placeholder="Search traits..." onkeyup="filterTraitChecklist()">
                         
-                        <div id="trait-checklist-container" class="checklist-container mb-s"></div>
+                        <div id="trait-checklist-container" class="checklist-container mb-s">
+                            </div>
                         
                         <div id="race-active-traits" class="flex-row gap-s flex-wrap mb-m"></div>
-
+            
                         <div class="field-group mb-m">
                             <label class="text-muted">Description</label>
-                            <textarea id="m-race-desc" class="form-input h-100 resize-none" placeholder="Describe the race..."></textarea>
+                            <textarea id="m-race-desc" class="form-input" rows="3"></textarea>
                         </div>
                     </div>
-
+            
                     <div class="modal-footer text-right">
                         <button class="btn-success" onclick="saveMasterRace()">Save Race</button>
                     </div>
@@ -921,14 +967,11 @@
                 ---- 11. MODAL ATTRIBUTE MANAGER ----
                 ============================-->
             <div id="attribute-modal" class="modal-overlay hide-default">
-                <div class="modal-content modal-sm">
+                <div class="modal-content" style="max-width: 400px;">
                     <div class="modal-header flex-row">
                         <h3 id="attr-modal-title">Define Attribute</h3>
-                        <button class="btn-danger-small" onclick="closeAttrModal()">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
+                        <button class="btn-danger-small" onclick="closeAttrModal()"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-                    
                     <div class="modal-body">
                         <input type="hidden" id="m-attr-id">
                         
@@ -940,15 +983,14 @@
                         <div class="field-group mb-m">
                             <label class="text-muted">System Key (Unique ID)</label>
                             <input type="text" id="m-attr-key" class="form-input" placeholder="e.g. hp_regen">
-                            <small class="text-muted fs-tiny">Used by code. No spaces (use _).</small>
+                            <small class="text-muted" style="font-size:0.7rem;">Used by code. No spaces (use _).</small>
                         </div>
-
+            
                         <div class="field-group mb-m">
                             <label class="text-muted">Default Value</label>
                             <input type="number" id="m-attr-default" class="form-input" value="0">
                         </div>
                     </div>
-
                     <div class="modal-footer text-right">
                         <button class="btn-success" onclick="saveAttribute()">Save Attribute</button>
                     </div>
@@ -965,7 +1007,7 @@
             ---- 13. MODAL CLASS MANAGER ----
             =================================-->
             <div id="class-modal" class="modal-overlay hide-default" onclick="if(event.target === this) closeClassModal()">
-                <div class="modal-content char-edit-modal">
+                <div class="modal-content" style="max-width: 600px;">
                     <div class="modal-header flex-row">
                         <h3 id="class-modal-title">Register New Class</h3>
                         <button class="btn-danger-small" onclick="closeClassModal()">
@@ -976,8 +1018,8 @@
                     <input type="hidden" id="m-class-id">
                     
                     <div class="flex-row gap-s mb-s">
-                        <input type="text" id="m-class-name" class="form-input flex-2" placeholder="Class Name (e.g. Warrior)">
-                        <input type="number" id="m-class-tier" class="form-input w-fixed-80" placeholder="Tier (1-3)" min="1" max="3">
+                        <input type="text" id="m-class-name" class="form-input" placeholder="Class Name (e.g. Warrior)" style="flex: 2;">
+                        <input type="number" id="m-class-tier" class="form-input" placeholder="Tier (1-3)" min="1" max="3" style="width: 80px;">
                     </div>
                     
                     <div class="mb-s">
@@ -989,26 +1031,28 @@
                     </div>
                     
                     <div class="mb-m p-s">
-                        <label class="form-label text-muted fs-tiny label-spacing">Class Growth & Bonuses</label>
+                        <label class="form-label text-muted small" style="display:block; margin-bottom:5px;">Class Growth & Bonuses</label>
                         <div class="flex-row gap-s mb-s">
-                            <select id="class-attr-picker" class="form-input flex-grow">
+                            <select id="class-attr-picker" class="form-input" style="flex-grow: 1;">
                                 <option value="">Loading...</option>
                             </select>
                             <button class="btn-secondary" onclick="addClassAttr()">
                                 <i class="fa-solid fa-plus"></i> Add
                             </button>
                         </div>
-                        <div id="class-dynamic-attributes" class="p-s dynamic-registry-box"></div>
+                        <div id="class-dynamic-attributes" class="p-s" style="background: #18181b; border: 1px solid #3f3f46; border-radius: 4px; min-height: 50px;">
+                        </div>
                     </div>
 
                     <div class="mb-m">
-                        <label class="form-label text-muted fs-tiny label-spacing">Class Traits & Abilities</label>
+                        <label class="form-label text-muted small">Class Traits & Abilities</label>
                         
                         <div class="flex-row gap-s mb-s">
-                            <input type="text" id="class-trait-search" class="form-input flex-2" 
-                                placeholder="Search library..." onkeyup="populateClassTraitPicker()">
+                            <input type="text" id="class-trait-search" class="form-input" 
+                                placeholder="Search library..." onkeyup="populateClassTraitPicker()" style="flex: 2;">
                             
-                            <select id="class-trait-filter" class="form-input flex-1" onchange="populateClassTraitPicker()">
+                            <select id="class-trait-filter" class="form-input" 
+                                    onchange="populateClassTraitPicker()" style="flex: 1;">
                                 <option value="All">All Types</option>
                                 <option value="General">General</option>
                                 <option value="Class">Class</option>
@@ -1017,7 +1061,7 @@
                         </div>
 
                         <div class="flex-row gap-s mb-s">
-                            <select id="class-trait-picker" class="form-input flex-grow">
+                            <select id="class-trait-picker" class="form-input" style="flex-grow: 1;">
                                 <option value="">Loading traits...</option>
                             </select>
                             <button class="btn-secondary btn-add-fix" onclick="addClassTrait()">
@@ -1028,7 +1072,7 @@
                         <div id="class-active-traits" class="registry-box"></div>
                     </div>
                     
-                    <textarea id="m-class-desc" class="form-input h-80 resize-none mb-m" placeholder="Class Description..."></textarea>
+                    <textarea id="m-class-desc" class="form-input mb-m" style="height: 80px;" placeholder="Class Description..."></textarea>
                     
                     <div class="modal-footer text-right">
                         <button class="btn-success" onclick="saveMasterClass()">Save Class Archetype</button>
