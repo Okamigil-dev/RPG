@@ -56,8 +56,9 @@
                     <div class="mp-bar-bg"><div id="hud-mp-fill" class="mp-bar-fill"></div></div>
                 </div>
             
-                <div class="hud-resource" style="margin-bottom: 20px;">
+                <div class="hud-resource mb-l">
                     <div class="bar-label"><span>Experience</span></div>
+                </div>
                     <div class="exp-bar-thick-bg">
                         <div id="hud-exp-fill" class="exp-bar-thick-fill"></div>
                         <div id="hud-exp-text" class="exp-overlay-grid">0%</div>
@@ -376,39 +377,41 @@
                         
                         <h3 class="nav-section-title">World Management</h3>
                         
-                        <button class="sub-nav-btn active" onclick="openControlSubTab(event, 'sub-instances')">
-                            <i class="fa-solid fa-layer-group"></i> Instances
-                        </button>
+                            <button class="sub-nav-btn active" onclick="openControlSubTab(event, 'sub-instances')">
+                                <i class="fa-solid fa-layer-group"></i> Instances
+                            </button>
 
-                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-characters')">
-                            <i class="fa-solid fa-user-shield"></i> Characters
-                        </button>
+                            <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-characters')">
+                                <i class="fa-solid fa-user-shield"></i> Characters
+                            </button>
+                            
+                            <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-accounts')">
+                                <i class="fa-solid fa-users-gear"></i> User Access
+                            </button>
                         
-                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-accounts')">
-                            <i class="fa-solid fa-users-gear"></i> User Access
-                        </button>
                         
-                        
+                        <h3 class="nav-section-title">Data Management</h3>
+                            <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-classes')">
+                                <i class="fa-solid fa-vest"></i> Classes
+                            </button>
+                            
+                            <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-skills')">
+                                <i class="fa-solid fa-scroll"></i> Skills
+                            </button>
+                            
+                            <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-races')">
+                                <i class="fa-solid fa-dna"></i> Races
+                            </button>
                         
                         <h3 class="nav-section-title">Data Assets</h3>
+                            <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-traits')">
+                                <i class="fa-solid fa-book-open-reader"></i> Traits
+                            </button>
                         
                         
                         
-                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-classes')">
-                            <i class="fa-solid fa-vest"></i> Classes
-                        </button>
                         
-                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-skills')">
-                            <i class="fa-solid fa-scroll"></i> Skills
-                        </button>
                         
-                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-races')">
-                            <i class="fa-solid fa-dna"></i> Races
-                        </button>
-                        
-                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-traits')">
-                            <i class="fa-solid fa-book-open-reader"></i> Traits
-                        </button>
                         
                         <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-items')">
                             <i class="fa-solid fa-box-open"></i> Items

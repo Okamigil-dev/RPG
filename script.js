@@ -1,5 +1,5 @@
 /* =========================================================
-   SCRIPT VERSION: 0.4.5
+   SCRIPT VERSION: 0.4.6
    DATE: 2026-03-02 
    ========================================================= */
 
@@ -2152,69 +2152,66 @@ async function loadMasterRaceList() {
     }
 
     async function loadMasterClassList() {
-        const list = document.getElementById('master-class-list');
-        if (!list) return;
+    const list = document.getElementById('master-class-list');
+    if (!list) return;
 
-        try {
-            const snap = await firestore.collection('master_classes').orderBy('tier').get();
-            list.innerHTML = "";
+    try {
+        // Ensure nice names for attributes are loaded
+        await getAttributeDefinitions(); 
 
-            if (snap.empty) {
-                list.innerHTML = '<p class="text-muted text-center" style="padding:20px;">No classes registered yet.</p>';
-                return;
-            }
+        const snap = await firestore.collection('master_classes').orderBy('tier').get();
+        list.innerHTML = "";
 
-            snap.forEach(doc => {
-                const d = doc.data();
-                
-                // Render Attributes Summary
-                let bonusSummary = "";
-                if (d.attributes && Object.keys(d.attributes).length > 0) {
-                    const entries = Object.entries(d.attributes).slice(0, 4);
-                    bonusSummary = entries.map(([k, v]) => `<span style="color:#a1a1aa;">${k}:</span> <span style="color:#fff;">${v}</span>`).join(' | ');
-                    if (Object.keys(d.attributes).length > 4) bonusSummary += " ...";
-                } else {
-                    bonusSummary = "No Stat Bonuses";
-                }
-
-                // Render Trait Tags
-                const traitTags = (d.traits || []).map(t => 
-                    `<span style="background:#312e81; color:#c7d2fe; padding:2px 6px; border-radius:4px; font-size:0.7rem; margin-right:4px;">${t}</span>`
-                ).join('');
-
-                const card = document.createElement('div');
-                card.className = "panel-card mb-s";
-                card.style.background = "#18181b";
-                card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#3f3f46'}`;
-                
-                card.innerHTML = `
-                    <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
-                        <div style="flex: 1;">
-                            <div class="flex-row" style="gap:10px; align-items: center; margin-bottom: 8px;">
-                                <strong style="color:white; font-size: 1.1rem;">${d.name}</strong> 
-                                <span class="join-code-pill" style="opacity:0.6;">T${d.tier}</span>
-                                <span class="join-code-pill" style="color:#a855f7;">${d.mainStat}</span>
-                            </div>
-                            <div class="mb-s" style="font-size: 0.8rem; background: #111; padding: 6px; border-radius: 4px;">
-                                ${bonusSummary}
-                            </div>
-                            <div>${traitTags}</div>
-                        </div>
-                        <div class="flex-row" style="gap: 5px;">
-                            <button class="btn-small" onclick="prepClassEdit('${doc.id}')" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)" title="Delete">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-                list.appendChild(card);
-            });
-        } catch (e) {
-            console.error("Class Load Error:", e);
-            list.innerHTML = `<p style="color:#ef4444; text-align:center;">Error: ${e.message}</p>`;
+        if (snap.empty) {
+            list.innerHTML = '<p class="text-muted text-center" style="padding:20px;">No classes registered yet.</p>';
+            return;
         }
+
+        snap.forEach(doc => {
+            const d = doc.data();
+
+            // 1. Generate the Tooltip (Attributes + Description, No Traits)
+            const descSection = buildUniversalTooltip(d.description || "No description provided.", "DESCRIPTION");
+            const attrSection = buildUniversalTooltip(d.attributes, "STAT BONUSES");
+            
+            const card = document.createElement('div');
+            card.className = "panel-card mb-s";
+            card.style.background = "#18181b";
+            card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#3f3f46'}`;
+            
+            // Apply the modular tooltip to the whole card
+            card.title = `${d.name.toUpperCase()} (T${d.tier})\n\n${descSection}\n\n${attrSection}`;
+
+            // 2. Render Trait Tags (keeping them visible as requested)
+            const traitTags = (d.traits || []).map(t => 
+                `<span style="background:#312e81; color:#c7d2fe; padding:2px 6px; border-radius:4px; font-size:0.7rem; margin-right:4px;">${t}</span>`
+            ).join('');
+
+            card.innerHTML = `
+                <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
+                    <div style="flex: 1;">
+                        <div class="flex-row" style="gap:10px; align-items: center; margin-bottom: 8px;">
+                            <strong style="color:white; font-size: 1.1rem; cursor: help;">${d.name} <i class="fa-solid fa-circle-info" style="font-size:0.7rem; opacity:0.4;"></i></strong> 
+                            <span class="join-code-pill" style="opacity:0.6;">T${d.tier}</span>
+                            <span class="join-code-pill" style="color:#a855f7;">${d.mainStat || ""}</span>
+                        </div>
+                        <div style="margin-top: 5px;">${traitTags}</div>
+                    </div>
+                    <div class="flex-row" style="gap: 5px;">
+                        <button class="btn-small" onclick="prepClassEdit('${doc.id}')" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)" title="Delete">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    } catch (e) {
+        console.error("Class Load Error:", e);
+        list.innerHTML = `<p style="color:#ef4444; text-align:center;">Error: ${e.message}</p>`;
     }
+}
 
     async function prepClassEdit(id) {
         const d = (await firestore.collection('master_classes').doc(id).get()).data();
