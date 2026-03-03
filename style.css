@@ -18,7 +18,9 @@
             /* System Colors */
             --system-text: #34d399;
             --system-bg: #065f46;
-
+            --color-danger: #450a0a;
+            --color-danger-hover: #f87171;
+            
             /* Money Colors */
             --color-gold:   #ffd700; /* Rich, classic gold */
             --color-silver: #c0c0c0; /* Clean, polished silver/steel */
@@ -38,8 +40,8 @@
             --radius-lg: 12px;
 
             /* Scrollbar */
-            --color-scrollbar:#121212;
-            --hover-scrollbar: #252525;
+            --color-scrollbar:#202020;
+            --hover-scrollbar: #303030;
             --width-scrollbar: 8px;
             --radius-scrollbar: 4px;
 
@@ -161,13 +163,13 @@
                 pointer-events: none;
             }
             
-    /*  ==========================================================================
-        --- Section 3. Layout ----------------------------------------------------
-        ==========================================================================   */
+/*  ==========================================================================
+    --- Section 3. Layout ----------------------------------------------------
+    ==========================================================================   */
 
-        /*  ==========================================================================
-            --- A. Top Bar -----------------------------------------------------------
-            ==========================================================================   */
+    /*  ==========================================================================
+        --- A. Top Bar -----------------------------------------------------------
+        ==========================================================================   */
             .top-nav {                              
                 background: var(--color-bg-alt); 
                 padding: 0 20px; 
@@ -197,13 +199,25 @@
             .user-name { font-weight: bold; font-size: 0.9em; }
             .user-role { font-weight: bold; font-size: 0.7em; color: var(--color-accent); text-transform: none; }
 
-        /*  ==========================================================================
-            --- B. Main Body ---------------------------------------------------------
-            ==========================================================================   */
+            .btn-danger { 
+                background: var(--color-danger); 
+                color: var(--color-danger-hover); 
+                border: 1px solid var(--color-danger); 
+                padding: 6px 12px; 
+                border-radius: 4px; 
+                cursor: pointer; font-size: 0.75rem; 
+                font-weight: bold; 
+                transition: 0.2s; 
+            }
+            .btn-danger:hover { background: var(--color-danger); color: white; }
+
+    /*  ==========================================================================
+        --- B. Main Body ---------------------------------------------------------
+        ==========================================================================   */
             .app-body { 
                 display: flex; 
                 width: 100%;
-                height: calc(100vh - 60px);
+                height: calc(100vh - 60px); 
             }
 
             .main-content {
@@ -213,9 +227,13 @@
                 background-color: var(--color-bg);
             }
 
-        /*  ==========================================================================
-            --- C. Sidebar Body ------------------------------------------------------
-            ==========================================================================   */
+            /*  ==========================================================================
+                --- Character Sheet Tab --------------------------------------------------
+                ==========================================================================   */
+                
+    /*  ==========================================================================
+        --- C. Sidebar Body ------------------------------------------------------
+        ==========================================================================   */
             .sidebar { 
                 width: 260px; 
                 min-width: 260px;
@@ -229,13 +247,13 @@
             
             /* Sidebar Module Wrapper - Matches Active Char HUD */
             .sidebar-panel {        
-                background: #111;
+                background: var(--color-bg-alt);
                 border-radius: 12px;
-                border: 1px solid #27272a;
+                border: 1px solid var(--color-border);
                 padding: 15px; 
                 margin: 5px 0;
                 overflow: hidden;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+                box-shadow: 0 10px 25px var(--color-shadow);
                 display: flex;
                 flex-direction: column;
             }
@@ -266,9 +284,12 @@
                 }
                 
                 .hud-identity-block {
-                    padding: 5px 15px 10px;
                     text-align: center;
                 }
+                
+                .hud-name { margin: 0; font-size: 1.2rem; color: var(--color-text); }
+                .hud-meta { font-size: 0.8rem; color: var(--color-accent); font-weight: bold; }
+                .hud-resource { padding: 0 15px; margin-bottom: 10px; }
                 
             /*  ==========================================================================
                 --- World Clock ----------------------------------------------------------
@@ -295,7 +316,38 @@
             /*  ==========================================================================
                 --- Chat Log -------------------------------------------------------------
                 ==========================================================================   */
-            
+                .dice-tray { 
+                display: flex;
+                flex-direction: column;
+                flex-grow: 1;
+                max-height: 450px;
+            }
+
+            .dice-log {
+                border-radius: var(--radius-sm);
+                border: 1px solid var(--color-border);
+                flex-grow: 1;
+                height: 300px;
+                min-height: 150px;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column-reverse;
+                padding: 2px;
+                gap: 2px;/* Space between chat entries */
+            }
+
+            .chat-input-area {
+                border-radius: 4px;
+                margin: 10px 0;
+            }
+
+            .dice-grid {
+                border-radius: 4px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: var(--gap-m);
+                margin: 10px 0;
+            }
 
             
 
@@ -303,9 +355,7 @@
 
             
 
-            .hud-name { margin: 0; font-size: 1.2rem; color: var(--color-text); }
-            .hud-meta { font-size: 0.8rem; color: var(--color-accent); font-weight: bold; }
-            .hud-resource { padding: 0 15px; margin-bottom: 10px; }
+            
         
             /* Sidebar Stats Grid */
             .hud-stats-row { 
@@ -355,43 +405,10 @@
         */
         
         /*  ==========================================================================
-            --- D.  ----------------------------------------------------------
+            ---  ----------------------------------------------------------
             ==========================================================================   */
 
-            .dice-tray { 
-                display: flex;
-                flex-direction: column;
-                flex-grow: 1;
-                max-height: 450px;
-            }
-
-            .dice-log {
-                flex-grow: 1;
-                height: 300px;
-                min-height: 150px;
-                overflow-y: auto;
-                display: flex;
-                flex-direction: column-reverse;
-                padding: 4px;
-                gap: 4px; /* Space between chat entries */
-            }
-
-            .chat-input-area {
-                border: 1px solid var(--color-border);
-                border-radius: 4px;
-                margin: 10px 0;
-                padding: 10px;
-            }
-
-
-.dice-grid {
-    border-radius: 4px;
-    border: 1px solid var(--color-border);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--gap-m);
-    margin: 10px 0;
-}
+            
 
 
 
@@ -1091,8 +1108,6 @@ select.form-input {
 .btn-success { background: #065f46; color: #34d399; border: 1px solid #064e3b; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
 .btn-success:hover { background: #059669; color: white; }
 
-.btn-danger { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: bold; transition: 0.2s; }
-.btn-danger:hover { background: #7f1d1d; color: white; }
 
 .btn-small { background: #27272a; color: white; border: 1px solid #3f3f46; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
 .btn-small:hover { background: #3f3f46; }
