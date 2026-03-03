@@ -48,18 +48,19 @@
                 
                 <div class="hud-resource">
                     <div class="bar-label"><span>Health</span><span id="hud-hp-text">0/0</span></div>
-                    <div class="hp-bar-bg"><div id="hud-hp-fill" class="hp-bar-fill"></div></div>
+                    <div class="bar-body"><div id="hud-hp-fill" class="bar-inner hp-fill"></div></div>
                 </div>
             
                 <div class="hud-resource">
                     <div class="bar-label"><span>Mana</span><span id="hud-mp-text">0/0</span></div>
-                    <div class="mp-bar-bg"><div id="hud-mp-fill" class="mp-bar-fill"></div></div>
+                    <div class="bar-body">
+                        <div id="hud-mp-fill" class="bar-inner mp-fill"></div></div>
                 </div>
             
                 <div class="hud-resource" style="margin-bottom: 20px;">
                     <div class="bar-label"><span>Experience</span></div>
-                    <div class="exp-bar-thick-bg">
-                        <div id="hud-exp-fill" class="exp-bar-thick-fill"></div>
+                    <div class="bar-body">
+                        <div id="hud-exp-fill" class="bar-inner exp-fill"></div>
                         <div id="hud-exp-text" class="exp-overlay-grid">0%</div>
                     </div>
                 </div>
@@ -187,7 +188,7 @@
                         <div class="panel-card">
                             <div class="panel-header-row">
                                 <h3 class="panel-subtitle">Attributes</h3>
-                                <div id="char-ap-rem" class="sp-indicator">AP: 0</div>
+                                <div id="char-ap-rem" class="char-level-badge">AP: 0</div>
                             </div>
                             
                             <div class="attr-list-grid">

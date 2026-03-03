@@ -3,18 +3,20 @@
         ==========================================================================   */
         :root {
             /* Colors */
-            --color-bg: #09090b;
-            --color-bg-alt: #111;
-            --color-border: #27272a;
-            --color-text: white;
-            --color-muted: #a1a1aa;
-            --color-accent: #a855f7;
-            --color-hp: #ef4444;
-            --color-mp: #3b82f6;
+            --color-bg: #09090b;        /* A very dark gray for the main background */
+            --color-bg-alt: #111;       /* Slightly lighter for panels and cards */
+            --color-border: #27272a;    /* Dark gray for borders and dividers */
+            --color-text: #bcc6cc;      /* A soft off-white for better readability */
+            --color-muted: #9da8ae;     /* For less important text and labels */
+            --color-accent: #a855f7;    /* A vibrant purple for highlights and accents */
+            --color-hp: #ef4444;        /* Bright red for HP bars and icons */
+            --color-mp: #3b82f6;        /* Bright blue for MP bars and icons */
+            --color-success: #00ff88;       /* Bright green for success messages and indicators */
+            --color-shadow: rgba(0, 0, 0, 0.5); /* For consistent shadow effects across the app */
 
             /* Font */
-            --font-family: 'Inter', sans-serif;
-
+            --font-family: 'Inter', sans-serif; /* A modern, clean font for the entire app */
+            
             /* Spacing */
             --gap-s: 10px;
             --gap-m: 15px;
@@ -26,7 +28,7 @@
             --radius-lg: 12px;
 
             /* Transition */
-            --transition-fast: 0.2s ease;
+            --transition-fast: 0.2s ease; /* For quick hover effects */
         }
 
     /*  ==========================================================================
@@ -35,7 +37,7 @@
         /*  ==========================================================================
             --- A. Base --------------------------------------------------------------
             ==========================================================================   */
-            body {
+            body {                                  
                 margin: 0;
                 background-color: var(--color-bg);
                 color: var(--color-text);
@@ -48,10 +50,10 @@
         /*  ==========================================================================
             --- B. Scroll Bar --------------------------------------------------------
             ==========================================================================   */
-            ::-webkit-scrollbar { width: var(--radius-sm); }
-            ::-webkit-scrollbar-track { background: transparent; }
-            ::-webkit-scrollbar-thumb { background: var(--color-bg-alt); border-radius: 10px; }
-            ::-webkit-scrollbar-thumb:hover { background: var(--color-border); }
+            ::-webkit-scrollbar { width: var(--radius-sm); }    /* Slim scrollbar for a more modern look */
+            ::-webkit-scrollbar-track { background: transparent; }  /* Keeps the track invisible for a cleaner look */
+            ::-webkit-scrollbar-thumb { background: var(--color-bg-alt); border-radius: 10px; } /* Matches the panel background for a cohesive look */
+            ::-webkit-scrollbar-thumb:hover { background: var(--color-border); } /* Darkens on hover for better visibility */
 
         /*  ==========================================================================
             --- C. Utility -----------------------------------------------------------
@@ -71,157 +73,216 @@
             .gap-s { gap: 10px; }
             .gap-m { gap: 15px; }
 
-/* ==========================================================================
-   --- 3. LAYOUT STRUCTURE (NAV & BODY) ---
-   ========================================================================== */
-.top-nav { 
-    background: #111; 
-    padding: 0 20px; 
-    border-bottom: 1px solid #27272a; 
-    height: 60px; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    box-sizing: border-box; 
-    z-index: 100;
-}
+            /* Hexagonal Image Container - For character portraits or gallery items that want a unique shape 
+            .shape-hex {
+                width: 64px;
+                aspect-ratio: 1 / 1; 
+                clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+                overflow: hidden;
+            }
+            .shape-hex img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }   
+            */
 
-.top-nav.hide-default, .app-body.hide-default {
-    display: none !important;
-}
+    /*  ==========================================================================
+        --- Section 3. Layout ----------------------------------------------------
+        ==========================================================================   */
 
-.app-body {
-    display: flex; 
-    width: 100%;
-    height: calc(100vh - 60px);
-}
+        /*  ==========================================================================
+            --- A. Top Bar -----------------------------------------------------------
+            ==========================================================================   */
+            .top-nav {                              
+                background: var(--color-bg-alt); 
+                padding: 0 20px; 
+                border-bottom: 1px solid var(--color-border); 
+                height: 60px; 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                box-sizing: border-box; 
+                z-index: 100;
+            }
 
-.nav-left { display: flex; align-items: center; gap: 20px; }
-.brand-logo { font-weight: bold; color: #00ff88; letter-spacing: 1px; }
-.nav-tabs { display: flex; gap: 5px; }
+            .top-nav.hide-default, .app-body.hide-default { /* Utility class to hide elements that are not needed in certain views (like the Master Dashboard) */
+                display: none !important;
+            }
 
-.sidebar { 
-    width: 260px; 
-    min-width: 260px;
-    background: #18181b; 
-    padding: 20px; 
-    border-right: 1px solid #27272a; 
-    display: flex; 
-    flex-direction: column; 
-    box-sizing: border-box; 
-}
+            .brand-logo { font-weight: bold; color: var(--color-accent); letter-spacing: 1px; } /* A simple, bold logo style that matches the accent color of the app */
+            .nav-left { display: flex; align-items: center; gap: 20px; }
 
-.main-content {
-    flex-grow: 1;
-    padding: 30px;
-    overflow-y: auto;
-    background-color: #09090b;
-}
+            .nav-tabs { display: flex; gap: 5px; } /* Added gap between tabs for better separation */
 
-/* Sidebar Module Wrapper - Matches Active Char HUD */
-.sidebar-panel {
-    background: #111;
-    border-radius: 12px;
-    border: 1px solid #27272a;
-    padding: 15px; /* Added padding so content isn't touching the edge */
-    margin-bottom: 20px;
-    overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    display: flex;
-    flex-direction: column;
-}
+            /* Login and Logoff Button + User Box */
+            .user-header { display: flex; align-items: center; gap: 15px; }
+            
+            /* User Info Styling */
+            .user-info { text-align: right; line-height: 1.2; }
+            .user-name { font-weight: bold; font-size: 0.9em; }
+            .user-role { font-weight: bold; font-size: 0.7em; color: var(--color-accent); text-transform: none; }
 
-/* Ensure the Clock doesn't have double borders */
-.game-ui {
-    border-top: none !important;
-    padding: 0 !important;
-}
+        /*  ==========================================================================
+            --- B. Main Body ---------------------------------------------------------
+            ==========================================================================   */
+            .app-body { 
+                display: flex; 
+                width: 100%;
+                height: calc(100vh - 60px);
+            }
 
-/* Make sure the Chat Input doesn't have an awkward line at the top */
-.chat-input-area {
-    border-top: 1px solid #27272a;
-    margin-top: 10px;
-    padding: 10px 0 0 0 !important; /* Clean alignment inside panel */
-}
+            .main-content {
+                flex-grow: 1;
+                padding: 30px;
+                overflow-y: auto;
+                background-color: var(--color-bg);
+            }
 
-/* ==========================================================================
-   --- 4. USER HEADER ---
-   ========================================================================== */
-.user-header { display: flex; align-items: center; gap: 15px; }
-.user-info { text-align: right; line-height: 1.2; }
-.user-name { font-weight: bold; font-size: 0.9em; }
-.user-role { font-size: 0.7em; color: #00ff88; text-transform: uppercase; }
+        /*  ==========================================================================
+            --- C. Side Bar ----------------------------------------------------------
+            ==========================================================================   */
+            .sidebar { 
+                width: 260px; 
+                min-width: 260px;
+                background: var(--color-bg-alt); 
+                padding: 20px; 
+                border-right: 1px solid var(--color-border); 
+                display: flex; 
+                flex-direction: column; 
+                box-sizing: border-box; 
+            }
+            /* Sidebar Module Wrapper - Matches Active Char HUD */
+            .sidebar-panel {        
+                background: #111;
+                border-radius: 12px;
+                border: 1px solid #27272a;
+                padding: 15px; 
+                margin-bottom: 20px;
+                overflow: hidden;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+                display: flex;
+                flex-direction: column;
+            }
+            
+            /* Ensure the Clock doesn't have double borders */
+            .game-ui { 
+                border-top: none;
+                padding: 0;
+            }
 
-/* ==========================================================================
-   --- 5. SIDEBAR HUD (CHARACTER WRAP) ---
-   ========================================================================== */
-.active-char-hud { 
-    padding: 0; 
-    background: #111; 
-    border-radius: 12px; 
-    border: 1px solid #27272a; 
-    margin-bottom: 20px; 
-    overflow: hidden; 
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-}
+            /* Make sure the Chat Input doesn't have an awkward line at the top */
+            .chat-input-area {
+                border-top: 1px solid #27272a;
+                margin-top: 10px;
+                padding: 10px 0 0 0 !important; /* Clean alignment inside panel */
+            }
 
-/* Character Portrait: Full width of the sidebar card */
-.portrait-main-hud {
-    /* Set fixed dimensions */
-    width: 200px;
-    height: 200px;
-    margin: 20px auto; /* Center it horizontally within the sidebar */
-    border-radius: 12px; /* Make it a rounded square */ 
-    background-size: cover; /* Keep your existing styling */
-    background-position: center;
-    border: 2px solid #a855f7; /* Changed border-bottom to full border for a square look */
-    image-rendering: auto;
-    /* Ensure it behaves as a block for the margin: auto to work */
-    display: block; 
-}
+            .active-char-hud { 
+                padding: 0; 
+                background: var(--color-bg-alt); 
+                border-radius: var(--radius-lg); 
+                border: 1px solid var(--color-border); 
+                margin-bottom: 20px; 
+                overflow: hidden; 
+                box-shadow: 0 10px 25px var(--color-shadow);
+            }
 
-.hud-identity-block {
-    padding: 15px 15px 10px;
-    text-align: center;
-}
+            /* Character Portrait: Full width of the sidebar card */
+            .portrait-main-hud {
+                width: 200px;
+                height: 200px;
+                margin: 20px auto; 
+                border-radius: var(--radius-lg); 
+                background-size: cover; 
+                background-position: center;
+                border: 2px solid var(--color-accent);
+                image-rendering: auto;
+                display: block; 
+            }
 
-.hud-name { margin: 0; font-size: 1.2rem; color: #fafafa; }
-.hud-meta { font-size: 0.8rem; color: #a855f7; font-weight: bold; }
+            .hud-identity-block {
+                padding: 5px 15px 10px;
+                text-align: center;
+            }
 
-/* Resource HUD Styles */
-.hud-resource { padding: 0 15px; margin-bottom: 10px; }
-.bar-label { 
-    display: flex; 
-    justify-content: space-between; 
-    font-size: 0.75rem; 
-    font-weight: bold; 
-    margin-bottom: 4px; 
-    color: #a1a1aa;
-}
+            .hud-name { margin: 0; font-size: 1.2rem; color: var(--color-text); }
+            .hud-meta { font-size: 0.8rem; color: var(--color-accent); font-weight: bold; }
+            .hud-resource { padding: 0 15px; margin-bottom: 10px; }
+        
+            .bar-label { 
+                display: flex; 
+                justify-content: space-between; 
+                font-size: 0.75rem; 
+                font-weight: bold; 
+                margin-bottom: 4px; 
+                color: var(--color-muted);
+            }
 
-.hp-bar-bg { width: 100%; height: 10px; background: #09090b; border-radius: 4px; overflow: hidden; border: 1px solid #27272a; }
-.hp-bar-fill { height: 100%; background: #ef4444; transition: width 0.3s; }
+            .bar-body { 
+                width: 100%; 
+                height: 14px; 
+                background: var(--color-bg); border-radius: var(--radius-sm); 
+                overflow: hidden; 
+                border: 1px solid var(--color-border); 
+            }
 
-.mp-bar-bg { width: 100%; height: 10px; background: #09090b; border-radius: 4px; overflow: hidden; border: 1px solid #27272a; }
-.mp-bar-fill { height: 100%; background: #3b82f6; transition: width 0.3s; }
+            .bar-inner { height: 100%; transition: width 0.3s; }
 
-/* EXP Bar Style */
-.exp-bar-thick-bg {
-    width: 100%; height: 12px; background: #09090b; border-radius: 4px; overflow: hidden;
-    position: relative; border: 1px solid #27272a; margin-top: 5px;
-}
+            .hp-fill { 
+                background: linear-gradient(90deg, var(--color-hp), #b91c1c); 
+                transition: width 0.3s; 
+            }
+            .mp-fill { 
+                background: linear-gradient(90deg, var(--color-mp), #1d4ed8); 
+            }
+            .exp-fill { 
+                background: linear-gradient(180deg,var(--color-success), #10b981); 
+            }
+        
+            .exp-overlay-grid {
+                position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 0.6rem; font-weight: 800; color: white; text-shadow: 0 1px 2px black;
+                pointer-events: none;
+            }
 
-.exp-bar-thick-fill {
-    height: 100%; background: linear-gradient(180deg, #a855f7, #7e22ce);
-    width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
+        
+        /*
+            .hp-bar-bg { width: 100%; height: 10px; background: #09090b; border-radius: 4px; overflow: hidden; border: 1px solid #27272a; }
+            .hp-bar-fill { height: 100%; background: #ef4444; transition: width 0.3s; }
 
-.exp-overlay-grid {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.6rem; font-weight: 800; color: white; text-shadow: 0 1px 2px black;
-    pointer-events: none;
-}
+            .mp-bar-bg { width: 100%; height: 10px; background: #09090b; border-radius: 4px; overflow: hidden; border: 1px solid #27272a; }
+            .mp-bar-fill { height: 100%; background: #3b82f6; transition: width 0.3s; }
+
+            .exp-bar-thick-bg {
+                width: 100%; height: 12px; background: #09090b; border-radius: 4px; overflow: hidden;
+                position: relative; border: 1px solid #27272a; margin-top: 5px;
+            }
+
+            .exp-bar-thick-fill {
+                height: 100%; background: linear-gradient(180deg, #a855f7, #7e22ce);
+                width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+        */
+        
+        /*  ==========================================================================
+            --- D.  ----------------------------------------------------------
+            ==========================================================================   */
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Sidebar Stats Grid */
 .hud-stats-row { 
