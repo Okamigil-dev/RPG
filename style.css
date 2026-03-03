@@ -16,8 +16,8 @@
             
 
             /* System Colors */
-            --color-system-text: #34d399;
-            --color-system-bg: #065f46;
+            --system-text: #34d399;
+            --system-bg: #065f46;
 
             /* Money Colors */
             --color-gold:   #ffd700; /* Rich, classic gold */
@@ -220,60 +220,88 @@
                 width: 260px; 
                 min-width: 260px;
                 background: var(--color-bg-alt); 
-                padding: 20px; 
+                padding: 10px; 
                 border-right: 1px solid var(--color-border); 
                 display: flex; 
                 flex-direction: column; 
                 box-sizing: border-box; 
             }
+            
             /* Sidebar Module Wrapper - Matches Active Char HUD */
             .sidebar-panel {        
                 background: #111;
                 border-radius: 12px;
                 border: 1px solid #27272a;
                 padding: 15px; 
-                margin-bottom: 20px;
+                margin: 5px 0;
                 overflow: hidden;
                 box-shadow: 0 10px 25px rgba(0,0,0,0.5);
                 display: flex;
                 flex-direction: column;
             }
+
+            /*  ==========================================================================
+                --- Active Character -----------------------------------------------------
+                ==========================================================================   */
+                .active-char-hud { 
+                    background: var(--color-bg-alt); 
+                    border-radius: var(--radius-lg); 
+                    border: 1px solid var(--color-border); 
+                    margin: 5px 0; 
+                    overflow: hidden; 
+                    box-shadow: 0 10px 25px var(--color-shadow);
+                }
             
-            /* Ensure the Clock doesn't have double borders */
-            .game-ui { 
-                text-align: center; 
-                padding: 15px 0; 
-            }
+                /* Character Portrait: Full width of the sidebar card */
+                .portrait-main-hud {
+                    width: 200px;
+                    height: 200px;
+                    margin: 20px auto; 
+                    border-radius: var(--radius-lg); 
+                    background-size: cover; 
+                    background-position: center;
+                    border: 2px solid var(--color-accent);
+                    image-rendering: auto;
+                    display: block; 
+                }
+                
+                .hud-identity-block {
+                    padding: 5px 15px 10px;
+                    text-align: center;
+                }
+                
+            /*  ==========================================================================
+                --- World Clock ----------------------------------------------------------
+                ==========================================================================   */
+                /* Ensure the Clock doesn't have double borders */
+                .game-ui { 
+                    text-align: center; 
+                    padding: 15px 0; 
+                }
+
+                .time-text {  
+                    color: var(--color-accent); 
+                    font-weight: bold; 
+                    font-variant-numeric: 
+                    tabular-nums; 
+                }
+
+                .date-text { 
+                    color: var(--color-muted); 
+                    font-size: 0.75rem; 
+                    margin: 4px; 
+                }
+
+            /*  ==========================================================================
+                --- Chat Log -------------------------------------------------------------
+                ==========================================================================   */
+            
 
             
 
-            .active-char-hud { 
-                padding: 0; 
-                background: var(--color-bg-alt); 
-                border-radius: var(--radius-lg); 
-                border: 1px solid var(--color-border); 
-                margin-bottom: 20px; 
-                overflow: hidden; 
-                box-shadow: 0 10px 25px var(--color-shadow);
-            }
+            
 
-            /* Character Portrait: Full width of the sidebar card */
-            .portrait-main-hud {
-                width: 200px;
-                height: 200px;
-                margin: 20px auto; 
-                border-radius: var(--radius-lg); 
-                background-size: cover; 
-                background-position: center;
-                border: 2px solid var(--color-accent);
-                image-rendering: auto;
-                display: block; 
-            }
-
-            .hud-identity-block {
-                padding: 5px 15px 10px;
-                text-align: center;
-            }
+            
 
             .hud-name { margin: 0; font-size: 1.2rem; color: var(--color-text); }
             .hud-meta { font-size: 0.8rem; color: var(--color-accent); font-weight: bold; }
@@ -298,16 +326,11 @@
                 font-weight: bold;
             }
 
-            .time-text {  
-                color: var(--color-accent); 
-                font-weight: bold; 
-                font-variant-numeric: 
-                tabular-nums; 
-            }
             
+            /* World Clock Speed Control */
             #speed-label {
-                margin-left: 15px; font-weight: bold; color: #06b6d4;
-                font-family: monospace; background: #09090b; padding: 4px 10px;
+                margin-left: 15px; font-weight: bold; color: var(--system-text);
+                font-family: monospace; background: var(--color-bg); padding: 4px 10px;
                 border-radius: 4px; border: 1px solid #27272a;
             }
 
@@ -335,12 +358,12 @@
             --- D.  ----------------------------------------------------------
             ==========================================================================   */
 
-.dice-tray { 
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    max-height: 450px;
-}
+            .dice-tray { 
+                display: flex;
+                flex-direction: column;
+                flex-grow: 1;
+                max-height: 450px;
+            }
 
             .dice-log {
                 flex-grow: 1;
@@ -361,12 +384,14 @@
             }
 
 
-            .dice-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: var(--gap-m);
-                margin-top: 10px;
-            }
+.dice-grid {
+    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--gap-m);
+    margin: 10px 0;
+}
 
 
 
@@ -390,7 +415,7 @@
 .dice-btn i { font-size: 3rem; color: #3f3f46; transition: all 0.2s ease; }
 
 .roll-number {
-    position: absolute; font-size: 1.5rem; font-weight: 800; color: #00ff88;
+    position: absolute; font-size: 1.5rem; font-weight: 800; color: var(--color-success);
     display: none; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); z-index: 2;
 }
 
