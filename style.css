@@ -8,11 +8,21 @@
             --color-border: #27272a;    /* Dark gray for borders and dividers */
             --color-text: #bcc6cc;      /* A soft off-white for better readability */
             --color-muted: #9da8ae;     /* For less important text and labels */
-            --color-accent: #a855f7;    /* A vibrant purple for highlights and accents */
+            --color-accent: #8e630c;    /* A vibrant purple for highlights and accents */
             --color-hp: #ef4444;        /* Bright red for HP bars and icons */
             --color-mp: #3b82f6;        /* Bright blue for MP bars and icons */
             --color-success: #00ff88;       /* Bright green for success messages and indicators */
             --color-shadow: rgba(0, 0, 0, 0.5); /* For consistent shadow effects across the app */
+            --color-dark:#121212;
+
+            /* System Colors */
+            --color-system-text: #34d399;
+            --color-system-bg: #065f46;
+
+            /* Money Colors */
+            --color-gold:   #ffd700; /* Rich, classic gold */
+            --color-silver: #c0c0c0; /* Clean, polished silver/steel */
+            --color-copper: #b87333; /* Warm, earthy copper/bronze */
 
             /* Font */
             --font-family: 'Inter', sans-serif; /* A modern, clean font for the entire app */
@@ -50,19 +60,24 @@
         /*  ==========================================================================
             --- B. Scroll Bar --------------------------------------------------------
             ==========================================================================   */
-            ::-webkit-scrollbar { width: var(--radius-sm); }    /* Slim scrollbar for a more modern look */
-            ::-webkit-scrollbar-track { background: transparent; }  /* Keeps the track invisible for a cleaner look */
+            ::-webkit-scrollbar { 
+                width: 6px; 
+                border-radius: 10px;
+            }    /* Slim scrollbar for a more modern look */
+            ::-webkit-scrollbar-track { background: transparent ; }  /* Keeps the track invisible for a cleaner look */
             ::-webkit-scrollbar-thumb { background: var(--color-bg-alt); border-radius: 10px; } /* Matches the panel background for a cohesive look */
             ::-webkit-scrollbar-thumb:hover { background: var(--color-border); } /* Darkens on hover for better visibility */
 
         /*  ==========================================================================
-            --- C. Utility -----------------------------------------------------------
+            --- C. Global Classes ----------------------------------------------------
             ========================================================================== */
             .hide-default { display: none !important; }
+            
             .flex-row { display: flex; align-items: center; gap: 15px; }
             .flex-grow { flex-grow: 1; }
             .flex-1 { flex: 1; }
             .flex-end { justify-content: flex-end; }
+
             .text-center { text-align: center; }
             .text-right { text-align: right; }
             .btn-full { width: 100%; }
@@ -215,8 +230,8 @@
             
             /* Ensure the Clock doesn't have double borders */
             .game-ui { 
-                border-top: none;
-                padding: 0;
+                text-align: center; 
+                padding: 15px 0; 
             }
 
             /* Make sure the Chat Input doesn't have an awkward line at the top */
@@ -258,12 +273,41 @@
             .hud-meta { font-size: 0.8rem; color: var(--color-accent); font-weight: bold; }
             .hud-resource { padding: 0 15px; margin-bottom: 10px; }
         
-            
+            /* Sidebar Stats Grid */
+            .hud-stats-row { 
+                display: grid; 
+                grid-template-columns: 1fr 1fr 1fr; 
+                gap: 1px;
+                background: var(--color-border); /* Grid gap color */
+                margin-top: 10px;
+                border-top: 1px solid var(--color-border); /* Top border for the first row */
+            }
 
+            .hud-stat-box {
+                background: var(--color-bg-alt); 
+                padding: 10px 5px; 
+                text-align: center; 
+                font-size: 0.7rem; 
+                color: var(--color-text); 
+                font-weight: bold;
+            }
+
+            .time-text {  
+                color: var(--color-accent); 
+                font-weight: bold; 
+                font-variant-numeric: 
+                tabular-nums; 
+            }
             
+            #speed-label {
+                margin-left: 15px; font-weight: bold; color: #06b6d4;
+                font-family: monospace; background: #09090b; padding: 4px 10px;
+                border-radius: 4px; border: 1px solid #27272a;
+            }
 
         
-        /*
+        /* backup bars
+
             .hp-bar-bg { width: 100%; height: 10px; background: #09090b; border-radius: 4px; overflow: hidden; border: 1px solid #27272a; }
             .hp-bar-fill { height: 100%; background: #ef4444; transition: width 0.3s; }
 
@@ -285,52 +329,7 @@
             --- D.  ----------------------------------------------------------
             ==========================================================================   */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Sidebar Stats Grid */
-.hud-stats-row { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr 1fr; 
-    gap: 1px;
-    background: #27272a; 
-    margin-top: 10px;
-    border-top: 1px solid #27272a;
-}
-
-.hud-stat-box {
-    background: #111; padding: 10px 5px; text-align: center; 
-    font-size: 0.7rem; color: #e4e4e7; font-weight: bold;
-}
-
-
-
-/* ==========================================================================
-   --- 6. WORLD CLOCK & UI ---
-   ========================================================================== */
-.game-ui { text-align: center; padding: 15px 0; border-top: 1px solid #27272a; }
-.time-text { font-size: 1.2em; color: #06b6d4; font-weight: bold; font-variant-numeric: tabular-nums; }
-
-#speed-label {
-    margin-left: 15px; font-weight: bold; color: #06b6d4;
-    font-family: monospace; background: #09090b; padding: 4px 10px;
-    border-radius: 4px; border: 1px solid #27272a;
-}
-
-/* ==========================================================================
-   --- 7. CHATBOX & DICE TRAY ---
-   ========================================================================== */
-.dice-tray {
+.dice-tray { 
     display: flex;
     flex-direction: column;
     flex-grow: 1;
@@ -340,10 +339,63 @@
 .dice-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: var(--gap-m);
     margin-top: 10px;
     flex-shrink: 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Dice Buttons */
+.dice-btn {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    aspect-ratio: 1/1; background: #18181b; border: 1px solid #27272a;
+    border-radius: 12px; cursor: pointer; overflow: hidden; transition: all 0.2s ease;
+}
+
+.dice-btn i { font-size: 3rem; color: #3f3f46; transition: all 0.2s ease; }
+
+.roll-number {
+    position: absolute; font-size: 1.5rem; font-weight: 800; color: #00ff88;
+    display: none; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); z-index: 2;
+}
+
+.dice-btn.active-roll i { opacity: 0.1; transform: scale(0.8); }
+.dice-btn.active-roll .roll-number { display: block; animation: dice-pop 0.2s ease-out; }
+
+@keyframes dice-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+
+/* ==========================================================================
+   --- 7. CHATBOX & DICE TRAY ---
+   ========================================================================== */
+
+
+
 
 .dice-log {
     flex-grow: 1;
@@ -378,12 +430,12 @@
 
 .dice-log-placeholder { text-align: center; opacity: 0.3; padding-top: 15px; }
 
-/* Chat Log Scrollbar */
+/* Chat Log Scrollbar
 .dice-log::-webkit-scrollbar { width: 6px; }
 .dice-log::-webkit-scrollbar-track { background: #121212; }
 .dice-log::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
 .dice-log::-webkit-scrollbar-thumb:hover { background: #555; }
-
+*/
 /* ==========================================================================
    --- 8. CHARACTER DASHBOARD & GALLERY ---
    ========================================================================== */
@@ -1019,32 +1071,6 @@ select.form-input {
 .btn-danger-small { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; transition: 0.2s; }
 .btn-danger-small:hover { background: #ef4444; color: white; }
 
-/* Dice Buttons */
-.dice-btn {
-    position: relative; display: flex; align-items: center; justify-content: center;
-    aspect-ratio: 1/1; background: #18181b; border: 1px solid #27272a;
-    border-radius: 12px; cursor: pointer; overflow: hidden; transition: all 0.2s ease;
-}
-
-.dice-btn i { font-size: 2.2rem; color: #3f3f46; transition: all 0.2s ease; }
-
-.roll-number {
-    position: absolute; font-size: 1.5rem; font-weight: 800; color: #00ff88;
-    display: none; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); z-index: 2;
-}
-
-.dice-btn.active-roll i { opacity: 0.1; transform: scale(0.8); }
-.dice-btn.active-roll .roll-number { display: block; animation: dice-pop 0.2s ease-out; }
-
-@keyframes dice-pop {
-    0% { transform: scale(0.5); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
 
 /* ==========================================================================
    --- 14. MODALS & OVERLAYS ---
