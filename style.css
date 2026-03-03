@@ -73,6 +73,8 @@
             .gap-s { gap: 10px; }
             .gap-m { gap: 15px; }
 
+            
+        
             /* Hexagonal Image Container - For character portraits or gallery items that want a unique shape 
             .shape-hex {
                 width: 64px;
@@ -88,6 +90,38 @@
             }   
             */
 
+
+        /*  ==========================================================================
+            --- D. Bars --------------------------------------------------------------
+            ========================================================================== */
+            .bar-body { 
+                width: 100%; 
+                height: 14px; 
+                background: var(--color-bg); border-radius: var(--radius-sm); 
+                overflow: hidden; 
+                border: 1px solid var(--color-border); 
+            }
+            
+            .bar-inner { height: 100%; transition: width 0.3s; }
+
+            .hp-fill { 
+                background: linear-gradient(90deg, var(--color-hp), #b91c1c); 
+                transition: width 0.3s; 
+            }
+            .mp-fill { 
+                background: linear-gradient(90deg, var(--color-mp), #1d4ed8); 
+            }
+            .exp-fill { 
+                background: linear-gradient(180deg,var(--color-success), #10b981); 
+            }
+        
+            .exp-overlay-grid {
+                position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 0.6rem; font-weight: 800; color: white; text-shadow: 0 1px 2px black;
+                pointer-events: none;
+            }
+            
     /*  ==========================================================================
         --- Section 3. Layout ----------------------------------------------------
         ==========================================================================   */
@@ -141,7 +175,7 @@
             }
 
         /*  ==========================================================================
-            --- C. Side Bar ----------------------------------------------------------
+            --- C. Sidebar Body ------------------------------------------------------
             ==========================================================================   */
             .sidebar { 
                 width: 260px; 
@@ -220,33 +254,7 @@
                 color: var(--color-muted);
             }
 
-            .bar-body { 
-                width: 100%; 
-                height: 14px; 
-                background: var(--color-bg); border-radius: var(--radius-sm); 
-                overflow: hidden; 
-                border: 1px solid var(--color-border); 
-            }
-
-            .bar-inner { height: 100%; transition: width 0.3s; }
-
-            .hp-fill { 
-                background: linear-gradient(90deg, var(--color-hp), #b91c1c); 
-                transition: width 0.3s; 
-            }
-            .mp-fill { 
-                background: linear-gradient(90deg, var(--color-mp), #1d4ed8); 
-            }
-            .exp-fill { 
-                background: linear-gradient(180deg,var(--color-success), #10b981); 
-            }
-        
-            .exp-overlay-grid {
-                position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
-                display: flex; align-items: center; justify-content: center;
-                font-size: 0.6rem; font-weight: 800; color: white; text-shadow: 0 1px 2px black;
-                pointer-events: none;
-            }
+            
 
         
         /*
