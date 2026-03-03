@@ -154,20 +154,25 @@
         /* Sizing & Spacing */
             .btn-full { width: 100%; }
             .w-100 { width: 100%; }
+            .m-0 { margin: 0 !important; }
+            .mt-0 { margin-top: 0 !important; }
             .mt-m { margin-top: 20px; }
             .mt-l { margin-top: 20px; }
             .mb-l { margin-bottom: 20px; }
             .mb-s { margin-bottom: 8px; }
             .mb-m { margin-bottom: 15px; }
+            .mb-xl { margin-bottom: 25px; }
             .ml-s { margin-left: 8px; }
             .gap-s { gap: 10px; }
             .gap-m { gap: 15px; }
 
         /* Fixed Width Helper */
             .w-fixed-80 { width: 80px; }
-            .m-0 { margin: 0 !important; }
             .h-80 { height: 80px; }
+            .h-150 { height: 150px; }
             .resize-none { resize: none; }
+            .justify-center { justify-content: center; }
+            .opacity-50 { opacity: 0.5; }
 
     /*  ==========================================================================
         --- 5. Component ---------------------------------------------------------
@@ -214,6 +219,7 @@
             /* Fixed Size Helpers */
                 .btn-square { font-size: 1.2rem; width: 40px; padding: 0; display: flex; align-items: center; justify-content: center; }
                 .btn-add-fix { width: 80px; height: 40px; flex-shrink: 0; }
+                .btn-compact { padding: 8px 12px; }
 
         /*  ==========================================================================
             --- B. Inputs ------------------------------------------------------------
@@ -711,6 +717,13 @@
                     word-wrap: break-word;
                 }
 
+                .chat-input-area { 
+                    border-top: 1px solid var(--color-border); 
+                    border-bottom: 1px solid var(--color-border); 
+                    margin-top: 10px; 
+                    padding: 10px; 
+                }
+
                 .chat-entry .chat-name { font-weight: bold; color: var(--color-exp); margin-right: 5px; }
                 .chat-entry.roll-type { background: #2a2a35; border-left: 3px solid var(--color-mp); }
                 .chat-entry.system-type { background: #064e3b; border-left: 3px solid var(--color-success); color: #a7f3d0; font-style: italic; }
@@ -768,6 +781,20 @@
                 letter-spacing: 1px; font-size: 1.5rem; 
             }
 
+            .login-divider {
+                margin: 20px 0;
+                text-align: center;
+                opacity: 0.3;
+                font-size: 0.8rem; /* Optional: Makes the "OR" look a bit neater */
+                font-weight: bold;
+            }
+
+            .login-box .brand-logo {
+                text-align: center;
+                margin-bottom: 10px;
+                font-size: 1.8rem;
+                display: block; /* Ensures centering works */
+            }
             /* Specific override for inputs inside the login box */
                 .login-box .form-input { margin-bottom: 15px; background: var(--color-bg-main); }
 
@@ -776,8 +803,34 @@
                     to { opacity: 1; transform: translateY(0); }
                 }
                 
+        /*  ==========================================================================
+            --- D. Admin Area ------------------------------------------------------
+            ==========================================================================   */
+                
+            /* Reusable header for Admin lists (User Access, etc) */
+                .admin-list-header {
+                    display: grid;
+                    grid-template-columns: 2fr 1fr;
+                    padding: 10px;
+                    color: #71717a;
+                    font-size: 0.75rem;
+                    text-transform: uppercase;
+                    border-bottom: 1px solid var(--color-border);
+                }
 
-
+            /* Fix for the Skill Creator divider lines */
+                .section-divider {
+                    border-top: 1px solid var(--color-border);
+                    margin: 20px 0;
+                    position: relative;
+                    text-align: center;
+                }
+                .section-divider .section-label {
+                    position: relative;
+                    top: -10px;
+                    background: var(--color-bg-card);
+                    padding: 0 10px;
+                }
 
 
 
