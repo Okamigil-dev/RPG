@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg">
-    <symbol id="d10" viewBox="0 0 100 100">
+    <symbol id="icon-d10" viewBox="0 0 100 100">
         <g>
             <polygon points="37.75,16.9 4.34,55.41 6.01,56.96 25.26,51.21"/>
             <polygon points="49.58,5.35 32.33,52.75 49.58,64.67 66.83,52.75"/>
@@ -9,7 +9,7 @@
         </g>
     </symbol>
 
-    <symbol id="d20" viewBox="0 0 100 100">
+    <symbol id="icon-d20" viewBox="0 0 100 100">
         <g>
             <polygon points="56.59,30.56 73.01,59.7 84.35,33.11"/>
             <polygon points="55.38,27.44 79.87,29.69 55.38,15.54"/>
@@ -23,4 +23,5 @@
             <polygon points="70.17,64.59 37.58,64.59 53.88,85.91"/>
         </g>
     </symbol>
+
 </svg>
