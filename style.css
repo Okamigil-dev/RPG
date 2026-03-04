@@ -90,7 +90,7 @@
         /* Class for Hiding Elements */        
         .hide-default { display: none !important; } 
 
-
+        .icon-svg{ fill:"currentColor"; color: var(--color-accent); }
         .flex-row { display: flex; align-items: center; gap: var(--gap-s) }
         .flex-grow { flex-grow: 1; }
         .flex-1 { flex: 1; }
@@ -348,7 +348,7 @@
             /* Ensure the Clock doesn't have double borders */
             .game-ui { 
                 text-align: center; 
-                padding: 15px 0; 
+                padding: 0px; 
             }
 
             .clock-control { 
@@ -356,6 +356,15 @@
                 align-items: center; 
                 gap: 5px; 
                 justify-content: center;
+            }
+
+            .clock-btn{
+                display:grid;
+                align-items:center;
+                justify-content: center;
+                height: 15px;
+                gap: var(--gap-s);
+
             }
 
             .time-text {  
@@ -448,7 +457,7 @@
 
             
             /* World Clock Speed Control */
-            #speed-label {
+            /* #speed-label {
                 font-weight: bold; 
                 color: var(--system-text);
                 font-family: monospace; 
@@ -456,7 +465,7 @@
                 padding: 4px 10px;
                 border-radius: 4px; 
                 border: 1px solid #27272a;
-            }
+            } */
 
         
         /* backup bars
