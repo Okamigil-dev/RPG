@@ -19,10 +19,19 @@
         <div class="nav-left">
             <div class="brand-logo">WORLD VTT</div>
             <div id="main-nav-tabs" class="nav-tabs hide-default">
-                <button onclick="openTab('tab-character')" class="tab-btn"><i class="fa-regular fa-id-card"></i> Character</button>
-                <button onclick="openTab('tab-backpack')" class="tab-btn"><i class="ph ph-briefcase"></i> Backpack</button>
-                <button onclick="openTab('tab-skills')" class="tab-btn"><i class="fa-solid fa-khanda"></i> Skills</button>
-                <button onclick="openTab('tab-control-panel')" id="nav-control-panel" class="tab-btn hide-default"><i class="fa-solid fa-gear"></i> Master</button>
+                <button onclick="openTab('tab-character')" class="tab-btn">
+                    <i class="fa-regular fa-id-card"></i> Character
+                </button>
+                <button onclick="openTab('tab-backpack')" class="tab-btn">
+                    <i class="ph ph-briefcase"></i> Backpack
+                </button>
+                <button onclick="openTab('tab-skills')" class="tab-btn">
+                    <i class="fa-solid fa-khanda"></i> Skills
+                </button>
+                <!-- plan to change how this works to use class gm-only instead of hide-default -->
+                <button onclick="openTab('tab-control-panel')" id="nav-control-panel" class="tab-btn hide-default"> 
+                    <i class="fa-solid fa-gear"></i> Master
+                </button>
             </div>
         </div>
         <div id="user-header" class="user-header">
@@ -35,9 +44,15 @@
     </div>
 
     <div class="app-body">
+
+    <!--===============================================================
+        --- Section 1. Side Bar ---------------------------------------
+        ===============================================================--->        
         <div id="sidebar" class="sidebar">
 
-            <!-- ACTIVE CHARACTER HUD -->
+        <!--===============================================================
+            --- A. Active Char --------------------------------------------
+            ===============================================================--->
             <div id="active-char-hud" class="active-char-hud hide-default">
                 <div id="hud-portrait" class="portrait-main-hud"></div>
                 
@@ -74,44 +89,56 @@
 
 
 
-            <!--===========================
-            ---- 1. WORLD CLOCK ----
-            ============================-->
+    <!--===============================================================
+        --- A. WORLD CLOCK --------------------------------------------
+        ===============================================================--->
             
             <div class="sidebar-panel">
+
                 <div id="game-ui" class="game-ui">
+                
                     <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
                     <div id="time-display" class="time-text">09:00:17</div>
                     
                     <div id="master-quick-controls" class="mt-m">
+                        
                         <div class="flex-row" style="justify-content: center; gap: 8px;">
+                            
                             <button onclick="toggleTime()" id="sidebar-play-btn" class="btn-small">
                                 <i class="fa-solid fa-play"></i>
                             </button>
                             <button onclick="setSpeed(1)" class="btn-small">1x</button>
                             <button onclick="setSpeed(10)" class="btn-small">10x</button>
+                            <button onclick="setSpeed(60)" class="btn-small">1h/min</button>
+                            
                         </div>
                     </div>
                 </div>
             </div>
 
             
-            <!--===========================
-            ---- 2. CHATBOX & DICE TRAY ----
-            ============================-->
+    <!--===============================================================
+        --- Section 2. Chat Log, Chat Box and  Dices ------------------
+        ===============================================================--->
+
             <div class="sidebar-panel flex-grow">
+
                 <div id="chat-log" class="dice-tray">
+                    
                     <div id="dice-log" class="dice-log">
                         <div class="dice-log-placeholder">No messages yet</div>
                     </div>
                     
                     <div class="chat-input-area flex-row gap-s">
                         <input type="text" id="chat-msg-input" class="form-input flex-grow" placeholder="Type a message..." onkeypress="handleChatEnter(event)">
-                        <button onclick="sendChatMessage()" class="btn-primary"><i class="fa-solid fa-paper-plane"></i></button>
+                        <button onclick="sendChatMessage()" class="btn-primary">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
                     </div>
+
                 </div>
             </div>   
-            <div class="sidebar-panel flex-grow">
+            <div class="sidebar-panel">
                 <div class="dice-grid">
                     <button onclick="rollDice(6, this)" class="dice-btn">
                         <i class="fa-solid fa-dice-d6"></i>

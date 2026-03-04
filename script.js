@@ -1193,7 +1193,6 @@ function syncSheetDashboardUI(char, totals, bonuses, raceName) {
 function openMasterPanel() {
     const role = window.currentUserRole;
     if (role !== 'Master' && role !== 'Admin') {
-        alert("Access Denied: Specialized clearance required.");
         openTab('tab-character'); 
         return;
     }

@@ -1,167 +1,192 @@
+/*  ==========================================================================
+    ---Section 1. Variables --------------------------------------------------
+    ==========================================================================   */
+    :root {
+        /* Colors */
+        --color-bg: #09090b;        /* A very dark gray for the main background */
+        --color-bg-alt: #111;       /* Slightly lighter for panels and cards */
+        --color-border: #27272a;    /* Dark gray for borders and dividers */
+        --color-text: #bcc6cc;      /* A soft off-white for better readability */
+        --color-muted: #9da8ae;     /* For less important text and labels */
+        --color-accent: #8e630c;    /* A vibrant purple for highlights and accents */
+        --color-hp: #ef4444;        /* Bright red for HP bars and icons */
+        --color-mp: #3b82f6;        /* Bright blue for MP bars and icons */
+        --color-success: #00ff88;       /* Bright green for success messages and indicators */
+        
+        /* Shadow Color */
+        --color-shadow: rgba(0, 0, 0, 0.5); /* For consistent shadow effects across the app */
+        --success-shadow: rgba(0, 255, 136, 0.5); /* A bright green shadow for success indicators */
+        
+        /* System Colors */
+        --system-text: #34d399;
+        --system-bg: #065f46;
+        --color-danger: #450a0a;
+        --color-danger-hover: #f87171;
+        
+        /* Money Colors */
+        --color-gold:   #ffd700; /* Rich, classic gold */
+        --color-silver: #c0c0c0; /* Clean, polished silver/steel */
+        --color-copper: #b87333; /* Warm, earthy copper/bronze */
+
+        /* Font */
+        --font-family: 'Inter', sans-serif; /* A modern, clean font for the entire app */
+        
+        /* Spacing */
+        --gap-s: 10px;
+        --gap-m: 15px;
+        --gap-l: 30px;
+
+        /* Border Radius */
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+
+        /* Scrollbar */
+        --color-scrollbar:#202020;
+        --hover-scrollbar: #303030;
+        --width-scrollbar: 8px;
+        --radius-scrollbar: 4px;
+
+
+        /* Transition */
+        --transition-fast: 0.2s ease; /* For quick hover effects */
+    }
+
+/*  ==========================================================================
+    --- Section 2. Global ----------------------------------------------------
+    ==========================================================================   */
+
     /*  ==========================================================================
-        ---Section 1. Variables --------------------------------------------------
+        --- A. Base --------------------------------------------------------------
         ==========================================================================   */
-        :root {
-            /* Colors */
-            --color-bg: #09090b;        /* A very dark gray for the main background */
-            --color-bg-alt: #111;       /* Slightly lighter for panels and cards */
-            --color-border: #27272a;    /* Dark gray for borders and dividers */
-            --color-text: #bcc6cc;      /* A soft off-white for better readability */
-            --color-muted: #9da8ae;     /* For less important text and labels */
-            --color-accent: #8e630c;    /* A vibrant purple for highlights and accents */
-            --color-hp: #ef4444;        /* Bright red for HP bars and icons */
-            --color-mp: #3b82f6;        /* Bright blue for MP bars and icons */
-            --color-success: #00ff88;       /* Bright green for success messages and indicators */
-            --color-shadow: rgba(0, 0, 0, 0.5); /* For consistent shadow effects across the app */
-            
+        body {                                  
+            margin: 0;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-family);
+            overflow: hidden;
+        }
+        
+        * { box-sizing: border-box; }
 
-            /* System Colors */
-            --system-text: #34d399;
-            --system-bg: #065f46;
-            --color-danger: #450a0a;
-            --color-danger-hover: #f87171;
-            
-            /* Money Colors */
-            --color-gold:   #ffd700; /* Rich, classic gold */
-            --color-silver: #c0c0c0; /* Clean, polished silver/steel */
-            --color-copper: #b87333; /* Warm, earthy copper/bronze */
+    /*  ==========================================================================
+        --- B. Scroll Bars --------------------------------------------------------
+        ==========================================================================   */
+        ::-webkit-scrollbar { width: var(--width-scrollbar); }    /* Slim scrollbar for a more modern look */
+        ::-webkit-scrollbar-track { background: transparent ; }  /* Keeps the track invisible for a cleaner look */
+        ::-webkit-scrollbar-thumb { background: var(--color-scrollbar);  border-radius: var(--radius-scrollbar); } /* Matches the panel background for a cohesive look */
+        ::-webkit-scrollbar-thumb:hover { background: var(--hover-scrollbar); } /* Darkens on hover for better visibility */
 
-            /* Font */
-            --font-family: 'Inter', sans-serif; /* A modern, clean font for the entire app */
-            
-            /* Spacing */
-            --gap-s: 10px;
-            --gap-m: 15px;
-            --gap-l: 30px;
+        /* Chat Log Scrollbar
+        .dice-log::-webkit-scrollbar { width: 6px; }
+        .dice-log::-webkit-scrollbar-track { background: transparent; }
+        .dice-log::-webkit-scrollbar-thumb { background: var(--color-bg-alt); border-radius: 10px; }
+        .dice-log::-webkit-scrollbar-thumb:hover { background: #555; }
+        */
 
-            /* Border Radius */
-            --radius-sm: 4px;
-            --radius-md: 8px;
-            --radius-lg: 12px;
-
-            /* Scrollbar */
-            --color-scrollbar:#202020;
-            --hover-scrollbar: #303030;
-            --width-scrollbar: 8px;
-            --radius-scrollbar: 4px;
+    /*  ==========================================================================
+        --- C. Global Classes ----------------------------------------------------
+        ========================================================================== */
+        /* Class for Hiding Elements */        
+        .gm-only{ display: none !important; } /*not in use yet*/
+        .hide-default { display: none !important; } 
 
 
-            /* Transition */
-            --transition-fast: 0.2s ease; /* For quick hover effects */
+        .flex-row { display: flex; align-items: center; gap: 15px; }
+        .flex-grow { flex-grow: 1; }
+        .flex-1 { flex: 1; }
+        .flex-end { justify-content: flex-end; }
+
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .btn-full { width: 100%; }
+        .w-100 { width: 100%; }
+        .mt-m { margin-top: 20px; }
+        .mt-l { margin-top: 20px; }
+        .mb-m { margin-bottom: 15px; }
+        .gap-s { gap: 10px; }
+        .gap-m { gap: 15px; }
+
+    /*  ==========================================================================
+        --- D. Animations --------------------------------------------------------
+        ========================================================================== */
+        /* A simple fade-in and slight upward movement for the login form to give it a more dynamic entrance */
+        @keyframes login-fade-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
+        /* A quick pop effect for dice rolls to make them feel more impactful */
+        @keyframes dice-pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* A subtle fade-in for character cards and gallery items to make them feel more alive when they appear */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Hexagonal Image Container - For character portraits or gallery items that want a unique shape 
+        .shape-hex {
+            width: 64px;
+            aspect-ratio: 1 / 1; 
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+            overflow: hidden;
+        }
+        .shape-hex img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }   
+        */
+
+
     /*  ==========================================================================
-        --- Section 2. Global ----------------------------------------------------
-        ==========================================================================   */
-        /*  ==========================================================================
-            --- A. Base --------------------------------------------------------------
-            ==========================================================================   */
-            body {                                  
-                margin: 0;
-                background-color: var(--color-bg);
-                color: var(--color-text);
-                font-family: var(--font-family);
-                overflow: hidden;
-            }
-            
-            * { box-sizing: border-box; }
+        --- E. Bars --------------------------------------------------------------
+        ========================================================================== */
+        /* A consistent label style for all bars (HP, MP, EXP) that includes the name and current/max values */
+        .bar-label { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 0.75rem; 
+            font-weight: bold; 
+            margin-bottom: 4px; 
+            color: var(--color-muted);
+        }
 
-        /*  ==========================================================================
-            --- B. Scroll Bars --------------------------------------------------------
-            ==========================================================================   */
-            ::-webkit-scrollbar { width: var(--width-scrollbar); }    /* Slim scrollbar for a more modern look */
-            ::-webkit-scrollbar-track { background: transparent ; }  /* Keeps the track invisible for a cleaner look */
-            ::-webkit-scrollbar-thumb { background: var(--color-scrollbar);  border-radius: var(--radius-scrollbar); } /* Matches the panel background for a cohesive look */
-            ::-webkit-scrollbar-thumb:hover { background: var(--hover-scrollbar); } /* Darkens on hover for better visibility */
-
-            /* Chat Log Scrollbar
-            .dice-log::-webkit-scrollbar { width: 6px; }
-            .dice-log::-webkit-scrollbar-track { background: transparent; }
-            .dice-log::-webkit-scrollbar-thumb { background: var(--color-bg-alt); border-radius: 10px; }
-            .dice-log::-webkit-scrollbar-thumb:hover { background: #555; }
-            */
-
-        /*  ==========================================================================
-            --- C. Global Classes ----------------------------------------------------
-            ========================================================================== */
-            .hide-default { display: none !important; }
-            
-            .flex-row { display: flex; align-items: center; gap: 15px; }
-            .flex-grow { flex-grow: 1; }
-            .flex-1 { flex: 1; }
-            .flex-end { justify-content: flex-end; }
-
-            .text-center { text-align: center; }
-            .text-right { text-align: right; }
-            .btn-full { width: 100%; }
-            .w-100 { width: 100%; }
-            .mt-m { margin-top: 20px; }
-            .mt-l { margin-top: 20px; }
-            .mb-m { margin-bottom: 15px; }
-            .gap-s { gap: 10px; }
-            .gap-m { gap: 15px; }
-
-            
+        /* A more versatile bar structure that can be used for HP, MP, and EXP with different color fills */
+        .bar-body { 
+            width: 100%; 
+            height: 14px; 
+            background: var(--color-bg); 
+            border-radius: var(--radius-sm); 
+            overflow: hidden; 
+            position: relative;
+            border: 1px solid var(--color-border); 
+        }
         
-            /* Hexagonal Image Container - For character portraits or gallery items that want a unique shape 
-            .shape-hex {
-                width: 64px;
-                aspect-ratio: 1 / 1; 
-                clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
-                overflow: hidden;
-            }
-            .shape-hex img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                display: block;
-            }   
-            */
+        .bar-inner { height: 100%; transition: width 0.3s; }
 
-
-        /*  ==========================================================================
-            --- D. Bars --------------------------------------------------------------
-            ========================================================================== */
-            /* A consistent label style for all bars (HP, MP, EXP) that includes the name and current/max values */
-            .bar-label { 
-                display: flex; 
-                justify-content: space-between; 
-                font-size: 0.75rem; 
-                font-weight: bold; 
-                margin-bottom: 4px; 
-                color: var(--color-muted);
-            }
-
-            /* A more versatile bar structure that can be used for HP, MP, and EXP with different color fills */
-            .bar-body { 
-                width: 100%; 
-                height: 14px; 
-                background: var(--color-bg); 
-                border-radius: var(--radius-sm); 
-                overflow: hidden; 
-                position: relative;
-                border: 1px solid var(--color-border); 
-            }
-            
-            .bar-inner { height: 100%; transition: width 0.3s; }
-
-            .hp-fill { 
-                background: linear-gradient(90deg, var(--color-hp), #b91c1c); 
-                transition: width 0.3s; 
-            }
-            .mp-fill { 
-                background: linear-gradient(90deg, var(--color-mp), #1d4ed8); 
-            }
-            .exp-fill { 
-                background: linear-gradient(180deg,var(--color-success), #10b981); 
-            }
-        
-            .exp-overlay-grid {
-                position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
-                display: flex; align-items: center; justify-content: center;
-                font-size: 0.6rem; font-weight: 800; color: white; text-shadow: 0 1px 2px black;
-                pointer-events: none;
-            }
+        .hp-fill { 
+            background: linear-gradient(90deg, var(--color-hp), #b91c1c); 
+            transition: width 0.3s; 
+        }
+        .mp-fill { 
+            background: linear-gradient(90deg, var(--color-mp), #1d4ed8); 
+        }
+        .exp-fill { 
+            background: linear-gradient(180deg,var(--color-success), #10b981); 
+        }
+    
+        .exp-overlay-grid {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.6rem; font-weight: 800; color: white; text-shadow: 0 1px 2px black;
+            pointer-events: none;
+        }
             
 /*  ==========================================================================
     --- Section 3. Layout ----------------------------------------------------
@@ -170,66 +195,66 @@
     /*  ==========================================================================
         --- A. Top Bar -----------------------------------------------------------
         ==========================================================================   */
-            .top-nav {                              
-                background: var(--color-bg-alt); 
-                padding: 0 20px; 
-                border-bottom: 1px solid var(--color-border); 
-                height: 60px; 
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center; 
-                box-sizing: border-box; 
-                z-index: 100;
-            }
+        .top-nav {                              
+            background: var(--color-bg-alt); 
+            padding: 0 20px; 
+            border-bottom: 1px solid var(--color-border); 
+            height: 60px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-sizing: border-box; 
+            z-index: 100;
+        }
 
-            .top-nav.hide-default, .app-body.hide-default { /* Utility class to hide elements that are not needed in certain views (like the Master Dashboard) */
-                display: none !important;
-            }
+        .top-nav.hide-default, .app-body.hide-default { /* Utility class to hide elements that are not needed in certain views (like the Master Dashboard) */
+            display: none !important;
+        }
 
-            .brand-logo { font-weight: bold; color: var(--color-accent); letter-spacing: 1px; } /* A simple, bold logo style that matches the accent color of the app */
-            .nav-left { display: flex; align-items: center; gap: 20px; }
+        .brand-logo { font-weight: bold; color: var(--color-accent); letter-spacing: 1px; } /* A simple, bold logo style that matches the accent color of the app */
+        .nav-left { display: flex; align-items: center; gap: 20px; }
 
-            .nav-tabs { display: flex; gap: 5px; } /* Added gap between tabs for better separation */
+        .nav-tabs { display: flex; gap: 5px; } /* Added gap between tabs for better separation */
 
-            /* Login and Logoff Button + User Box */
-            .user-header { display: flex; align-items: center; gap: 15px; }
-            
-            /* User Info Styling */
-            .user-info { text-align: right; line-height: 1.2; }
-            .user-name { font-weight: bold; font-size: 0.9em; }
-            .user-role { font-weight: bold; font-size: 0.7em; color: var(--color-accent); text-transform: none; }
+        /* Login and Logoff Button + User Box */
+        .user-header { display: flex; align-items: center; gap: 15px; }
+        
+        /* User Info Styling */
+        .user-info { text-align: right; line-height: 1.2; }
+        .user-name { font-weight: bold; font-size: 0.9em; }
+        .user-role { font-weight: bold; font-size: 0.7em; color: var(--color-accent); text-transform: none; }
 
-            .btn-danger { 
-                background: var(--color-danger); 
-                color: var(--color-danger-hover); 
-                border: 1px solid var(--color-danger); 
-                padding: 6px 12px; 
-                border-radius: 4px; 
-                cursor: pointer; font-size: 0.75rem; 
-                font-weight: bold; 
-                transition: 0.2s; 
-            }
-            .btn-danger:hover { background: var(--color-danger); color: white; }
+        .btn-danger { 
+            background: var(--color-danger); 
+            color: var(--color-danger-hover); 
+            border: 1px solid var(--color-danger); 
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            cursor: pointer; font-size: 0.75rem; 
+            font-weight: bold; 
+            transition: 0.2s; 
+        }
+        .btn-danger:hover { background: var(--color-danger); color: white; }
 
     /*  ==========================================================================
         --- B. Main Body ---------------------------------------------------------
         ==========================================================================   */
-            .app-body { 
-                display: flex; 
-                width: 100%;
-                height: calc(100vh - 60px); 
-            }
+        .app-body { 
+            display: flex; 
+            width: 100%;
+            height: calc(100vh - 60px); 
+        }
 
-            .main-content {
-                flex-grow: 1;
-                padding: 30px;
-                overflow-y: auto;
-                background-color: var(--color-bg);
-            }
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background-color: var(--color-bg);
+        }
 
-            /*  ==========================================================================
-                --- Character Sheet Tab --------------------------------------------------
-                ==========================================================================   */
+        /*  ==========================================================================
+            --- Character Sheet Tab --------------------------------------------------
+            ==========================================================================   */
                 
     /*  ==========================================================================
         --- C. Sidebar Body ------------------------------------------------------
@@ -258,69 +283,91 @@
                 flex-direction: column;
             }
 
-            /*  ==========================================================================
-                --- Active Character -----------------------------------------------------
-                ==========================================================================   */
-                .active-char-hud { 
-                    background: var(--color-bg-alt); 
-                    border-radius: var(--radius-lg); 
-                    border: 1px solid var(--color-border); 
-                    margin: 5px 0; 
-                    overflow: hidden; 
-                    box-shadow: 0 10px 25px var(--color-shadow);
-                }
+        /*  ==========================================================================
+            --- Active Character -----------------------------------------------------
+            ==========================================================================   */
+            .active-char-hud { 
+                background: var(--color-bg-alt); 
+                border-radius: var(--radius-lg); 
+                border: 1px solid var(--color-border); 
+                margin: 5px 0; 
+                overflow: hidden; 
+                box-shadow: 0 10px 25px var(--color-shadow);
+            }
+        
+            /* Character Portrait: Full width of the sidebar card */
+            .portrait-main-hud {
+                display: flex;
+                text-align: center;
+                font-size: 10rem;
+                width: 100%;
+                height: 200px;
+                margin: 20px auto;
+                border-radius: var(--radius-lg);
+                background-size: cover;
+                background-position: center;
+                border: 2px solid var(--color-accent);
+                image-rendering: auto;
+                align-items: center;
+                justify-content: center;
+            }
             
-                /* Character Portrait: Full width of the sidebar card */
-                .portrait-main-hud {
-                    width: 200px;
-                    height: 200px;
-                    margin: 20px auto; 
-                    border-radius: var(--radius-lg); 
-                    background-size: cover; 
-                    background-position: center;
-                    border: 2px solid var(--color-accent);
-                    image-rendering: auto;
-                    display: block; 
-                }
-                
-                .hud-identity-block {
-                    text-align: center;
-                }
-                
-                .hud-name { margin: 0; font-size: 1.2rem; color: var(--color-text); }
-                .hud-meta { font-size: 0.8rem; color: var(--color-accent); font-weight: bold; }
-                .hud-resource { padding: 0 15px; margin-bottom: 10px; }
-                
-            /*  ==========================================================================
-                --- World Clock ----------------------------------------------------------
-                ==========================================================================   */
-                /* Ensure the Clock doesn't have double borders */
-                .game-ui { 
-                    text-align: center; 
-                    padding: 15px 0; 
-                }
+            .hud-identity-block {
+                text-align: center;
+            }
+            
+            .hud-name { margin: 0; font-size: 1.2rem; color: var(--color-text); }
+            .hud-meta { font-size: 0.8rem; color: var(--color-accent); font-weight: bold; }
+            .hud-resource { padding: 0 15px; margin-bottom: 10px; }
 
-                .time-text {  
-                    color: var(--color-accent); 
-                    font-weight: bold; 
-                    font-variant-numeric: 
-                    tabular-nums; 
-                }
+            /* Sidebar Stats Grid */
+            .hud-stats-row { 
+                display: grid; 
+                grid-template-columns: 1fr 1fr 1fr; 
+                gap: 1px;
+                background: var(--color-border); /* Grid gap color */
+                margin-top: 10px;
+                border-top: 1px solid var(--color-border); /* Top border for the first row */
+            }
+            
+            .hud-stat-box {
+                background: var(--color-bg-alt); 
+                padding: 10px 5px; 
+                text-align: center; 
+                font-size: 0.7rem; 
+                color: var(--color-text); 
+                font-weight: bold;
+            }
 
-                .date-text { 
-                    color: var(--color-muted); 
-                    font-size: 0.75rem; 
-                    margin: 4px; 
-                }
+        /*  ==========================================================================
+            --- World Clock ----------------------------------------------------------
+            ==========================================================================   */
+            /* Ensure the Clock doesn't have double borders */
+            .game-ui { 
+                text-align: center; 
+                padding: 15px 0; 
+            }
 
-            /*  ==========================================================================
-                --- Chat Log -------------------------------------------------------------
-                ==========================================================================   */
-                .dice-tray { 
+            .time-text {  
+                color: var(--color-accent); 
+                font-weight: bold; 
+                font-variant-numeric: 
+                tabular-nums; 
+            }
+
+            .date-text { 
+                color: var(--color-muted); 
+                font-size: 0.75rem; 
+                margin: 4px; 
+            }
+
+        /*  ==========================================================================
+            --- Chat Log -------------------------------------------------------------
+            ==========================================================================   */
+            .dice-tray { 
                 display: flex;
                 flex-direction: column;
                 flex-grow: 1;
-                max-height: 450px;
             }
 
             .dice-log {
@@ -342,6 +389,7 @@
             }
 
             .dice-grid {
+                flex: 1;
                 border-radius: 4px;
                 display: grid;
                 grid-template-columns: 1fr 1fr;
@@ -349,32 +397,33 @@
                 margin: 10px 0;
             }
 
-            
+            /* Dice Buttons */
+            .dice-btn {
+                position: relative; display: flex; align-items: center; justify-content: center;
+                aspect-ratio: 1/1; background: #18181b; border: 1px solid #27272a;
+                border-radius: 12px; cursor: pointer; overflow: hidden; transition: all 0.2s ease;
+            }
 
-            
+            .dice-btn i { font-size: 3rem; color: var(--color-accent); transition: all 0.2s ease; }
+
+            .dice-btn.active-roll i { opacity: 0.1; transform: scale(0.8); }
+            .dice-btn.active-roll .roll-number { display: block; animation: dice-pop 0.2s ease-out; }
+
+            .roll-number {
+                position: absolute; font-size: 3rem; font-weight: 800; color: var(--color-success);
+                display: none; text-shadow: 0 0 10px var(--success-shadow); z-index: 2;
+            }
+
+
+
 
             
 
             
         
-            /* Sidebar Stats Grid */
-            .hud-stats-row { 
-                display: grid; 
-                grid-template-columns: 1fr 1fr 1fr; 
-                gap: 1px;
-                background: var(--color-border); /* Grid gap color */
-                margin-top: 10px;
-                border-top: 1px solid var(--color-border); /* Top border for the first row */
-            }
+           
 
-            .hud-stat-box {
-                background: var(--color-bg-alt); 
-                padding: 10px 5px; 
-                text-align: center; 
-                font-size: 0.7rem; 
-                color: var(--color-text); 
-                font-weight: bold;
-            }
+            
 
             
             /* World Clock Speed Control */
@@ -422,32 +471,7 @@
 
 
 
-/* Dice Buttons */
-.dice-btn {
-    position: relative; display: flex; align-items: center; justify-content: center;
-    aspect-ratio: 1/1; background: #18181b; border: 1px solid #27272a;
-    border-radius: 12px; cursor: pointer; overflow: hidden; transition: all 0.2s ease;
-}
 
-.dice-btn i { font-size: 3rem; color: #3f3f46; transition: all 0.2s ease; }
-
-.roll-number {
-    position: absolute; font-size: 1.5rem; font-weight: 800; color: var(--color-success);
-    display: none; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); z-index: 2;
-}
-
-.dice-btn.active-roll i { opacity: 0.1; transform: scale(0.8); }
-.dice-btn.active-roll .roll-number { display: block; animation: dice-pop 0.2s ease-out; }
-
-@keyframes dice-pop {
-    0% { transform: scale(0.5); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
 
 
 
@@ -511,6 +535,8 @@
 }
 
 .char-card-portrait {
+    display: flex;
+    font-size: 6rem;
     width: 120px;
     height: 120px;
     margin: 0 auto 15px;
@@ -518,6 +544,8 @@
     background-size: cover;
     background-position: center;
     border: 2px solid #a855f7;
+    align-items: center;
+    justify-content: center;
 }
 
 .char-card-meta { font-size: 0.8rem; color: #a855f7; font-weight: 700; }
@@ -1209,10 +1237,7 @@ select.form-input {
 .login-box h2 { margin-bottom: 30px; text-align: center; color: #00ff88; letter-spacing: 1px; font-size: 1.5rem; }
 .login-box .form-input { margin-bottom: 15px; background: #09090b; }
 
-@keyframes login-fade-up {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+
 
 /* ==========================================================================
    --- 16. TAB LOGIC ---
