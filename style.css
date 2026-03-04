@@ -91,7 +91,7 @@
         .hide-default { display: none !important; } 
 
 
-        .flex-row { display: flex; align-items: center; gap: 15px; }
+        .flex-row { display: flex; align-items: center; gap: var(--gap-s) }
         .flex-grow { flex-grow: 1; }
         .flex-1 { flex: 1; }
         .flex-end { justify-content: flex-end; }
@@ -321,7 +321,7 @@
             
             .hud-name { margin: 0; font-size: 1.2rem; color: var(--color-text); }
             .hud-meta { font-size: 0.8rem; color: var(--color-accent); font-weight: bold; }
-            .hud-resource { padding: 0 15px; margin-bottom: 10px; }
+            .hud-resource { padding: 0 15px; margin-bottom: 5px; }
 
             /* Sidebar Stats Grid */
             .hud-stats-row { 
@@ -349,6 +349,13 @@
             .game-ui { 
                 text-align: center; 
                 padding: 15px 0; 
+            }
+
+            .clock-control { 
+                display: flex; 
+                align-items: center; 
+                gap: 5px; 
+                justify-content: center;
             }
 
             .time-text {  
@@ -442,9 +449,13 @@
             
             /* World Clock Speed Control */
             #speed-label {
-                margin-left: 15px; font-weight: bold; color: var(--system-text);
-                font-family: monospace; background: var(--color-bg); padding: 4px 10px;
-                border-radius: 4px; border: 1px solid #27272a;
+                font-weight: bold; 
+                color: var(--system-text);
+                font-family: monospace; 
+                background: var(--color-bg); 
+                padding: 4px 10px;
+                border-radius: 4px; 
+                border: 1px solid #27272a;
             }
 
         
