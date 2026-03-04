@@ -79,10 +79,10 @@
         ::-webkit-scrollbar-thumb:hover { background: var(--hover-scrollbar); } /* Darkens on hover for better visibility */
 
         /* Chat Log Scrollbar
-        .chat-log::-webkit-scrollbar { width: 6px; }
-        .chat-log::-webkit-scrollbar-track { background: transparent; }
-        .chat-log::-webkit-scrollbar-thumb { background: var(--color-bg-alt); border-radius: 10px; }
-        .chat-log::-webkit-scrollbar-thumb:hover { background: #555; }
+        .dice-log::-webkit-scrollbar { width: 6px; }
+        .dice-log::-webkit-scrollbar-track { background: transparent; }
+        .dice-log::-webkit-scrollbar-thumb { background: var(--color-bg-alt); border-radius: 10px; }
+        .dice-log::-webkit-scrollbar-thumb:hover { background: #555; }
         */
 
     /*  ==========================================================================
@@ -259,8 +259,6 @@
         /*  ==========================================================================
             --- Character Sheet Tab --------------------------------------------------
             ==========================================================================   */
-
-            
                 
     /*  ==========================================================================
         --- C. Sidebar Body ------------------------------------------------------
@@ -413,15 +411,15 @@
         /*  ==========================================================================
             --- Chat Log -------------------------------------------------------------
             ==========================================================================   */
-            .chat-box { 
+            .dice-tray { 
                 display: flex;
                 flex-direction: column;
                 flex-grow: 1;
             }
 
-            .chat-log-placeholder { text-align: center; opacity: 0.3; padding-top: 15px; }
+            .dice-log-placeholder { text-align: center; opacity: 0.3; padding-top: 15px; }
 
-            .chat-log {
+            .dice-log {
                 border-radius: var(--radius-sm);
                 border: 1px solid var(--color-border);
                 flex-grow: 1;
@@ -453,6 +451,7 @@
             .chat-entry.roll-type .roll-result { font-weight: bold; color: var(--color-accent); font-size: 1rem; }
             .chat-entry.system-type { background: var(--system-bg); border-left: 3px solid #10b981; color: var(--system-text); font-style: italic; }
 
+            
             .chat-input-area {
                 border-radius: 4px;
                 margin: 10px 0;
@@ -461,6 +460,7 @@
         /*  ==========================================================================
             --- Dice Tray ------------------------------------------------------------
             ==========================================================================   */
+
             .dice-grid {
                 flex: 1;
                 border-radius: 4px;
@@ -508,27 +508,7 @@
                 display: none; text-shadow: 0 0 10px var(--color-accent); z-index: 2;
             }
         
-          
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+           
 
             
 
@@ -546,6 +526,36 @@
         /*  ==========================================================================
             ---  ----------------------------------------------------------
             ==========================================================================   */
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ==========================================================================
+   --- 7. CHATBOX & DICE TRAY ---
+   ========================================================================== */
+
+
+
+
+
+
+
+
 
 /* ==========================================================================
    --- 8. CHARACTER DASHBOARD & GALLERY ---
@@ -655,76 +665,6 @@
 .gallery-item:hover .delete-img-btn { 
     opacity: 1; 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* ==========================================================================
    --- 9. SKILLS & PYRAMID ---
