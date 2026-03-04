@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg">
-
-    <symbol id="d10" viewBox= "0 0 100 100">
+    <symbol id="d10" viewBox="0 0 100 100">
         <g>
             <polygon points="37.75,16.9 4.34,55.41 6.01,56.96 25.26,51.21 	"/>
             <polygon points="49.58,5.35 32.33,52.75 49.58,64.67 66.83,52.75 	"/>
@@ -9,20 +8,18 @@
             <polygon points="71.77,58.05 53.17,70.91 53.17,94.45 87.32,62.7 	"/>
         </g>
     </symbol>
-
-    <symbol id="d20" viewBox= "0 0 100 100">
+    <symbol id="d20" viewBox="0 0 100 100">
         <g>
-            <polygon style="fill:#FFFFFF;" points="56.59,30.56 73.01,59.7 84.35,33.11 		"/>
-            <polygon style="fill:#FFFFFF;" points="55.38,27.44 79.87,29.69 55.38,15.54 		"/>
-            <polygon style="fill:#FFFFFF;" points="23.4,33.11 34.73,59.71 51.16,30.56 		"/>
-            <polygon style="fill:#FFFFFF;" points="53.88,31.86 37.11,61.59 70.63,61.59 		"/>
-            <polygon style="fill:#FFFFFF;" points="52.38,27.44 52.38,15.54 27.88,29.69 		"/>
-            <polygon style="fill:#FFFFFF;" points="32.6,62.36 22.71,39.15 22.71,67.13 		"/>
-            <polygon style="fill:#FFFFFF;" points="34.09,64.97 24.42,69.64 48.13,83.33 		"/>
-            <polygon style="fill:#FFFFFF;" points="75.14,62.36 85.04,67.13 85.04,39.15 		"/>
-            <polygon style="fill:#FFFFFF;" points="73.65,64.97 59.62,83.33 83.33,69.64 		"/>
-            <polygon style="fill:#FFFFFF;" points="70.17,64.59 37.58,64.59 53.88,85.91 		"/>
+            <polygon points="56.59,30.56 73.01,59.7 84.35,33.11 		"/>
+            <polygon points="55.38,27.44 79.87,29.69 55.38,15.54 		"/>
+            <polygon points="23.4,33.11 34.73,59.71 51.16,30.56 		"/>
+            <polygon points="53.88,31.86 37.11,61.59 70.63,61.59 		"/>
+            <polygon points="52.38,27.44 52.38,15.54 27.88,29.69 		"/>
+            <polygon points="32.6,62.36 22.71,39.15 22.71,67.13 		"/>
+            <polygon points="34.09,64.97 24.42,69.64 48.13,83.33 		"/>
+            <polygon points="75.14,62.36 85.04,67.13 85.04,39.15 		"/>
+            <polygon points="73.65,64.97 59.62,83.33 83.33,69.64 		"/>
+            <polygon points="70.17,64.59 37.58,64.59 53.88,85.91 		"/>
         </g>
     </symbol>
-
 </svg>
