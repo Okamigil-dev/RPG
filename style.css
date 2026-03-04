@@ -127,6 +127,10 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
+        @keyframes rotate-360 {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
         /* Hexagonal Image Container - For character portraits or gallery items that want a unique shape 
         .shape-hex {
             width: 64px;
@@ -403,7 +407,7 @@
                 border-radius: 12px; cursor: pointer; overflow: hidden; transition: all 0.2s ease;
             }
 
-            .dice-btn i { font-size: 3rem; color: var(--color-accent); transition: all 0.2s ease; }
+            .dice-btn i { font-size: 2rem; color: var(--color-accent); transition: all 0.2s ease; }
             .dice-btn.active-roll i { opacity: 0.1; transform: scale(0.8); }
 
             .dice-btn svg{ 
