@@ -3,7 +3,7 @@
    DATE: 2026-03-02 
    ========================================================= */
 
-   
+
 
 /* ==========================================================================
    SECTION 1: CONFIGURATION, STATE & FIREBASE
@@ -201,7 +201,6 @@ auth.onAuthStateChanged((user) => {
             openTab(savedTab);
         }
         
-        document.getElementById('d10-test').innerHTML = IconsMap.d10;
         
         topNav.classList.remove('hide-default');
         appBody.classList.remove('hide-default');
