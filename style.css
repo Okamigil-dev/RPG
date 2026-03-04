@@ -260,25 +260,7 @@
             --- Character Sheet Tab --------------------------------------------------
             ==========================================================================   */
 
-            .panel-card { 
-                background: rgba(17, 17, 17, 0.8); 
-                backdrop-filter: blur(10px);
-                padding: 24px; 
-                border-radius: 16px; 
-                border: 1px solid rgba(168, 85, 247, 0.15); 
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            }
-
-            .panel-subtitle {
-                margin-top: 0; 
-                margin-bottom: 20px; 
-                color: #71717a; 
-                font-size: 0.75rem;
-                text-transform: uppercase; 
-                letter-spacing: 1px; 
-                font-weight: bold;
-            }
-
+            
                 
     /*  ==========================================================================
         --- C. Sidebar Body ------------------------------------------------------
@@ -674,6 +656,114 @@
     opacity: 1; 
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ==========================================================================
+   --- 9. SKILLS & PYRAMID ---
+   ========================================================================== */
+.skills-pyramid-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    padding: 20px 0;
+}
+
+.skill-tier-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    width: 100%;
+}
+
+.skill-slot-card {
+    background: #111;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+    padding: 12px;
+    width: 160px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+.skill-exp-bg { background: #09090b; border-radius: 2px; overflow: hidden; }
+.skill-exp-fill { transition: width 0.4s ease-out; }
+/*.sp-indicator {
+    background: #1e1b4b; color: #a5b4fc; padding: 4px 12px;
+    border-radius: 99px; font-size: 0.75rem; font-weight: bold; border: 1px solid #312e81;
+}*/
+
+/* ==========================================================================
+   --- 10. CHARACTER SHEET (Inside Dashboard) ---
+   ========================================================================== */
 .stats-resources-wrapper {
     display: grid;
     grid-template-columns: 1fr 1.2fr;
@@ -681,10 +771,20 @@
     margin-bottom: 20px;
 }
 
-
+.panel-card { 
+    background: rgba(17, 17, 17, 0.8); 
+    backdrop-filter: blur(10px);
+    padding: 24px; 
+    border-radius: 16px; 
+    border: 1px solid rgba(168, 85, 247, 0.15); 
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
 
 /* Typography & Headers */
-
+.panel-subtitle {
+    margin-top: 0; margin-bottom: 20px; color: #71717a; font-size: 0.75rem;
+    text-transform: uppercase; letter-spacing: 1px; font-weight: bold;
+}
 
 .panel-header-row {
     display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
@@ -940,108 +1040,6 @@
     min-height: 300px; /* Adjust this number to match the gallery height */
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* ==========================================================================
-   --- 9. SKILLS & PYRAMID ---
-   ========================================================================== */
-.skills-pyramid-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    align-items: center;
-    padding: 20px 0;
-}
-
-.skill-tier-section {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    justify-content: center;
-    width: 100%;
-}
-
-.skill-slot-card {
-    background: #111;
-    border: 1px solid #27272a;
-    border-radius: 8px;
-    padding: 12px;
-    width: 160px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-}
-
-.skill-exp-bg { background: #09090b; border-radius: 2px; overflow: hidden; }
-.skill-exp-fill { transition: width 0.4s ease-out; }
-/*.sp-indicator {
-    background: #1e1b4b; color: #a5b4fc; padding: 4px 12px;
-    border-radius: 99px; font-size: 0.75rem; font-weight: bold; border: 1px solid #312e81;
-}*/
 
 /* ==========================================================================
    --- 11. MASTER CONTROL PANEL ---

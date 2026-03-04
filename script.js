@@ -429,8 +429,8 @@ function setSpeed(multiplier) {
 
 // --- CHAT LOGIC ---
 function initDiceLogListener() {
-    const log = document.getElementById('chat-log');
-    if (log) log.innerHTML = '<div class="chat-log-placeholder">Loading history...</div>';
+    const log = document.getElementById('dice-log');
+    if (log) log.innerHTML = '<div class="dice-log-placeholder">Loading history...</div>';
     
     rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).off();
     rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).limitToLast(50).on('child_added', (snapshot) => {
@@ -508,9 +508,9 @@ function handleChatEnter(event) {
 }
 
 function renderChatLogEntry(data) {
-    const log = document.getElementById('chat-log');
+    const log = document.getElementById('dice-log');
     if (!log) return;
-    const placeholder = log.querySelector('.chat-log-placeholder');
+    const placeholder = log.querySelector('.dice-log-placeholder');
     if (placeholder) placeholder.remove();
 
     const entry = document.createElement('div');
