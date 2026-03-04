@@ -5,6 +5,7 @@
         /* Colors */
         --color-bg: #09090b;        /* A very dark gray for the main background */
         --color-bg-alt: #111;       /* Slightly lighter for panels and cards */
+        --color-bg-alt2: #18181b;
         --color-border: #27272a;    /* Dark gray for borders and dividers */
         --color-text: #bcc6cc;      /* A soft off-white for better readability */
         --color-muted: #9da8ae;     /* For less important text and labels */
@@ -78,10 +79,10 @@
         ::-webkit-scrollbar-thumb:hover { background: var(--hover-scrollbar); } /* Darkens on hover for better visibility */
 
         /* Chat Log Scrollbar
-        .dice-log::-webkit-scrollbar { width: 6px; }
-        .dice-log::-webkit-scrollbar-track { background: transparent; }
-        .dice-log::-webkit-scrollbar-thumb { background: var(--color-bg-alt); border-radius: 10px; }
-        .dice-log::-webkit-scrollbar-thumb:hover { background: #555; }
+        .chat-log::-webkit-scrollbar { width: 6px; }
+        .chat-log::-webkit-scrollbar-track { background: transparent; }
+        .chat-log::-webkit-scrollbar-thumb { background: var(--color-bg-alt); border-radius: 10px; }
+        .chat-log::-webkit-scrollbar-thumb:hover { background: #555; }
         */
 
     /*  ==========================================================================
@@ -89,8 +90,8 @@
         ========================================================================== */
         /* Class for Hiding Elements */        
         .hide-default { display: none !important; } 
-
-        .icon-svg{ fill:"currentColor"; color: var(--color-accent); }
+        .icon {fill: currentColor; color: var(--color-accent);}
+        .icon svg { height:100%; width:100% }
         .flex-row { display: flex; align-items: center; gap: var(--gap-s) }
         .flex-grow { flex-grow: 1; }
         .flex-1 { flex: 1; }
@@ -258,27 +259,47 @@
         /*  ==========================================================================
             --- Character Sheet Tab --------------------------------------------------
             ==========================================================================   */
+
+            .panel-card { 
+                background: rgba(17, 17, 17, 0.8); 
+                backdrop-filter: blur(10px);
+                padding: 24px; 
+                border-radius: 16px; 
+                border: 1px solid rgba(168, 85, 247, 0.15); 
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            }
+
+            .panel-subtitle {
+                margin-top: 0; 
+                margin-bottom: 20px; 
+                color: #71717a; 
+                font-size: 0.75rem;
+                text-transform: uppercase; 
+                letter-spacing: 1px; 
+                font-weight: bold;
+            }
+
                 
     /*  ==========================================================================
         --- C. Sidebar Body ------------------------------------------------------
         ==========================================================================   */
-            .sidebar { 
-                width: 260px; 
+            .sidebar {
+                width: 260px;
                 min-width: 260px;
-                background: var(--color-bg-alt); 
-                padding: 10px; 
-                border-right: 1px solid var(--color-border); 
-                display: flex; 
-                flex-direction: column; 
-                box-sizing: border-box; 
+                background: var(--color-bg);
+                padding: 10px;
+                border-right: 1px solid var(--color-border);
+                display: flex;
+                flex-direction: column;
+                box-sizing: border-box;
             }
             
             /* Sidebar Module Wrapper - Matches Active Char HUD */
-            .sidebar-panel {        
+            .sidebar-panel {
                 background: var(--color-bg-alt);
                 border-radius: 12px;
                 border: 1px solid var(--color-border);
-                padding: 15px; 
+                padding: 15px;
                 margin: 5px 0;
                 overflow: hidden;
                 box-shadow: 0 10px 25px var(--color-shadow);
@@ -289,13 +310,16 @@
         /*  ==========================================================================
             --- Active Character -----------------------------------------------------
             ==========================================================================   */
-            .active-char-hud { 
-                background: var(--color-bg-alt); 
-                border-radius: var(--radius-lg); 
-                border: 1px solid var(--color-border); 
-                margin: 5px 0; 
-                overflow: hidden; 
+            .active-char-hud {
+                display: grid;
+                background: var(--color-bg-alt);
+                border-radius: var(--radius-lg);
+                border: 1px solid var(--color-border);
+                margin: 5px;
+                overflow: hidden;
                 box-shadow: 0 10px 25px var(--color-shadow);
+                align-content: end;
+                justify-content: center;
             }
         
             /* Character Portrait: Full width of the sidebar card */
@@ -352,44 +376,70 @@
             }
 
             .clock-control { 
-                display: flex; 
-                align-items: center; 
+                display:grid;
+                grid-template-columns:1fr 1fr 1fr;
+                align-items:center;
+                justify-content: center;
                 gap: 5px; 
                 justify-content: center;
             }
 
             .clock-btn{
                 display:grid;
-                align-items:center;
-                justify-content: center;
-                height: 15px;
-                gap: var(--gap-s);
-
+                height: 30px;
+                color: var(--color-text);
+                background: var(--color-bg-alt2);
+                border: 1px solid var(--color-border);
+                border-radius: 4px;
+                font-size: 0.8rem;
+                font-weight:bold;
+                cursor: pointer;
+                place-items: center;
+                transition: 0.2s;
             }
 
-            .time-text {  
-                color: var(--color-accent); 
-                font-weight: bold; 
+            .clock-btn:hover { background: var(--color-border) }
+
+            .clock-speed {
+                display:grid;
+                height: 30px;
+                color: var(--color-accent);
+                background: var(--color-bg);
+                border: 1px solid var(--color-border);
+                border-radius: 4px;
+                font-size: 0.8rem;
+                font-weight:900;
+                place-items: center;
+                transition: 0.2s;
+            }
+
+            .time-text {
+                color: var(--color-accent);
+                font-weight: 900;
+                /* font-size: 1rem; */
                 font-variant-numeric: 
-                tabular-nums; 
+                tabular-nums;
             }
 
-            .date-text { 
-                color: var(--color-muted); 
-                font-size: 0.75rem; 
-                margin: 4px; 
+            .date-text {
+                color: var(--color-muted);
+                font-weight: 900;
+                font-size: 0.9rem;
+                margin: 4px;
             }
 
         /*  ==========================================================================
             --- Chat Log -------------------------------------------------------------
             ==========================================================================   */
-            .dice-tray { 
+            .chat-box { 
                 display: flex;
                 flex-direction: column;
                 flex-grow: 1;
             }
 
-            .dice-log {
+            .chat-log-placeholder { text-align: center; opacity: 0.3; padding-top: 15px; }
+
+            .chat-log {
                 border-radius: var(--radius-sm);
                 border: 1px solid var(--color-border);
                 flex-grow: 1;
@@ -402,11 +452,33 @@
                 gap: 2px;/* Space between chat entries */
             }
 
+            .chat-entry {
+                font-size: 0.85rem;
+                padding: 6px 10px;
+                border-radius: 6px;
+                background: #1e1e1e;
+                color: #e4e4e7;
+                word-wrap: break-word;
+            }
+
+            .chat-entry .chat-name {
+                font-weight: bold;
+                color: var(--color-accent);
+                margin-right: 5px;
+            }
+
+            .chat-entry.roll-type { background: #2a2a35; border-left: 3px solid #3b82f6; }
+            .chat-entry.roll-type .roll-result { font-weight: bold; color: var(--color-accent); font-size: 1rem; }
+            .chat-entry.system-type { background: var(--system-bg); border-left: 3px solid #10b981; color: var(--system-text); font-style: italic; }
+
             .chat-input-area {
                 border-radius: 4px;
                 margin: 10px 0;
             }
 
+        /*  ==========================================================================
+            --- Dice Tray ------------------------------------------------------------
+            ==========================================================================   */
             .dice-grid {
                 flex: 1;
                 border-radius: 4px;
@@ -418,9 +490,18 @@
 
             /* Dice Buttons */
             .dice-btn {
-                position: relative; display: flex; align-items: center; justify-content: center;
-                aspect-ratio: 1/1; background: #18181b; border: 1px solid #27272a;
-                border-radius: 12px; cursor: pointer; overflow: hidden; transition: all 0.2s ease;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                aspect-ratio: 1/1;
+                background: var(--color-bg-alt2);
+                border: 1px solid #27272a;
+                border-radius: 12px;
+                cursor: pointer;
+                overflow: hidden;
+                transition: all 0.2s ease;
+                box-shadow: 0 0 15px var(--color-shadow);
             }
 
             .dice-btn i { font-size: 2rem; color: var(--color-accent); transition: all 0.2s ease; }
@@ -430,8 +511,9 @@
                 fill:currentColor;
                 color: var(--color-accent); 
                 transition: all 0.2s ease;
+                
             }
-
+            .dice-btn:hover {  box-shadow: 0 0 15px var(--color-accent); }
             .dice-btn.active-roll svg { 
                 opacity: 0.1; 
                 transform: scale(0.8); 
@@ -440,105 +522,48 @@
             .dice-btn.active-roll .roll-number { display: block; animation: dice-pop 0.2s ease-out; }
 
             .roll-number {
-                position: absolute; font-size: 1.5rem; font-weight: 800; color: var(--color-success);
-                display: none; text-shadow: 0 0 10px var(--success-shadow); z-index: 2;
+                position: absolute; font-size: 1.5rem; font-weight: 800; color: var(--color-gold);
+                display: none; text-shadow: 0 0 10px var(--color-accent); z-index: 2;
             }
+        
+          
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 
             
 
+            
             
         
-           
-
-            
-
-            
-            /* World Clock Speed Control */
-            /* #speed-label {
-                font-weight: bold; 
-                color: var(--system-text);
-                font-family: monospace; 
-                background: var(--color-bg); 
-                padding: 4px 10px;
-                border-radius: 4px; 
-                border: 1px solid #27272a;
-            } */
-
         
-        /* backup bars
 
-            .hp-bar-bg { width: 100%; height: 10px; background: #09090b; border-radius: 4px; overflow: hidden; border: 1px solid #27272a; }
-            .hp-bar-fill { height: 100%; background: #ef4444; transition: width 0.3s; }
 
-            .mp-bar-bg { width: 100%; height: 10px; background: #09090b; border-radius: 4px; overflow: hidden; border: 1px solid #27272a; }
-            .mp-bar-fill { height: 100%; background: #3b82f6; transition: width 0.3s; }
 
-            .exp-bar-thick-bg {
-                width: 100%; height: 12px; background: #09090b; border-radius: 4px; overflow: hidden;
-                position: relative; border: 1px solid #27272a; margin-top: 5px;
-            }
 
-            .exp-bar-thick-fill {
-                height: 100%; background: linear-gradient(180deg, #a855f7, #7e22ce);
-                width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-        */
+
+
         
         /*  ==========================================================================
             ---  ----------------------------------------------------------
             ==========================================================================   */
-
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* ==========================================================================
-   --- 7. CHATBOX & DICE TRAY ---
-   ========================================================================== */
-
-
-
-
-
-
-.chat-entry {
-    font-size: 0.85rem;
-    padding: 6px 10px;
-    border-radius: 6px;
-    background: #1e1e1e;
-    color: #e4e4e7;
-    word-wrap: break-word;
-}
-
-.chat-entry .chat-name {
-    font-weight: bold;
-    color: #a855f7;
-    margin-right: 5px;
-}
-
-.chat-entry.roll-type { background: #2a2a35; border-left: 3px solid #3b82f6; }
-.chat-entry.roll-type .roll-result { font-weight: bold; color: #60a5fa; font-size: 1rem; }
-.chat-entry.system-type { background: #064e3b; border-left: 3px solid #10b981; color: #a7f3d0; font-style: italic; }
-
-.dice-log-placeholder { text-align: center; opacity: 0.3; padding-top: 15px; }
-
 
 /* ==========================================================================
    --- 8. CHARACTER DASHBOARD & GALLERY ---
@@ -649,44 +674,6 @@
     opacity: 1; 
 }
 
-/* ==========================================================================
-   --- 9. SKILLS & PYRAMID ---
-   ========================================================================== */
-.skills-pyramid-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    align-items: center;
-    padding: 20px 0;
-}
-
-.skill-tier-section {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    justify-content: center;
-    width: 100%;
-}
-
-.skill-slot-card {
-    background: #111;
-    border: 1px solid #27272a;
-    border-radius: 8px;
-    padding: 12px;
-    width: 160px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-}
-
-.skill-exp-bg { background: #09090b; border-radius: 2px; overflow: hidden; }
-.skill-exp-fill { transition: width 0.4s ease-out; }
-/*.sp-indicator {
-    background: #1e1b4b; color: #a5b4fc; padding: 4px 12px;
-    border-radius: 99px; font-size: 0.75rem; font-weight: bold; border: 1px solid #312e81;
-}*/
-
-/* ==========================================================================
-   --- 10. CHARACTER SHEET (Inside Dashboard) ---
-   ========================================================================== */
 .stats-resources-wrapper {
     display: grid;
     grid-template-columns: 1fr 1.2fr;
@@ -694,20 +681,10 @@
     margin-bottom: 20px;
 }
 
-.panel-card { 
-    background: rgba(17, 17, 17, 0.8); 
-    backdrop-filter: blur(10px);
-    padding: 24px; 
-    border-radius: 16px; 
-    border: 1px solid rgba(168, 85, 247, 0.15); 
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
+
 
 /* Typography & Headers */
-.panel-subtitle {
-    margin-top: 0; margin-bottom: 20px; color: #71717a; font-size: 0.75rem;
-    text-transform: uppercase; letter-spacing: 1px; font-weight: bold;
-}
+
 
 .panel-header-row {
     display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
@@ -963,6 +940,108 @@
     min-height: 300px; /* Adjust this number to match the gallery height */
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ==========================================================================
+   --- 9. SKILLS & PYRAMID ---
+   ========================================================================== */
+.skills-pyramid-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    padding: 20px 0;
+}
+
+.skill-tier-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    width: 100%;
+}
+
+.skill-slot-card {
+    background: #111;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+    padding: 12px;
+    width: 160px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+.skill-exp-bg { background: #09090b; border-radius: 2px; overflow: hidden; }
+.skill-exp-fill { transition: width 0.4s ease-out; }
+/*.sp-indicator {
+    background: #1e1b4b; color: #a5b4fc; padding: 4px 12px;
+    border-radius: 99px; font-size: 0.75rem; font-weight: bold; border: 1px solid #312e81;
+}*/
 
 /* ==========================================================================
    --- 11. MASTER CONTROL PANEL ---
