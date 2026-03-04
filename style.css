@@ -408,6 +408,11 @@
             .dice-btn.active-roll i { opacity: 0.1; transform: scale(0.8); }
             .dice-btn.active-roll .roll-number { display: block; animation: dice-pop 0.2s ease-out; }
 
+            .dices {
+                width: 1.2rem;
+                height: 1.2rem;
+                fill: currentColor; /* Ensures the icon matches button text color */
+            }
             .roll-number {
                 position: absolute; font-size: 3rem; font-weight: 800; color: var(--color-success);
                 display: none; text-shadow: 0 0 10px var(--success-shadow); z-index: 2;

@@ -139,9 +139,13 @@
                     <button onclick="rollDice(6, this)" class="dice-btn">
                         <i class="fa-solid fa-dice-d6"></i>
                         <span class="roll-number"></span>
-                    </button><button onclick="rollDice(10, this)" class="dice-btn">
-                        <i id="d10-test"></i>
-                        <span class="roll-number">3</span>
+                    </button>
+                    
+                    <button onclick="rollDice(10, this)" class="dice-btn">
+                        <svg id="d10" class="dices">
+                            <use href="icons.svg#d10"></use>
+                        </svg>
+                        <span class="roll-number"></span>
                     </button>
                     
                     <button onclick="rollDice(20, this)" class="dice-btn">
