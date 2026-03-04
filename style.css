@@ -303,9 +303,9 @@
                 display: flex;
                 text-align: center;
                 font-size: 10rem;
-                width: 100%;
+                width: 200px;
                 height: 200px;
-                margin: 20px auto;
+                margin: 20px 20px 5px 20px;
                 border-radius: var(--radius-lg);
                 background-size: cover;
                 background-position: center;
@@ -424,7 +424,7 @@
             .dice-btn.active-roll .roll-number { display: block; animation: dice-pop 0.2s ease-out; }
 
             .roll-number {
-                position: absolute; font-size: 3rem; font-weight: 800; color: var(--color-success);
+                position: absolute; font-size: 1.5rem; font-weight: 800; color: var(--color-success);
                 display: none; text-shadow: 0 0 10px var(--success-shadow); z-index: 2;
             }
 
