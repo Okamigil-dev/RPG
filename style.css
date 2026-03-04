@@ -404,6 +404,7 @@
             }
 
             .dice-btn i { font-size: 3rem; color: var(--color-accent); transition: all 0.2s ease; }
+            .dice-btn.active-roll i { opacity: 0.1; transform: scale(0.8); }
 
             .dice-btn svg{ 
                 fill:currentColor;
@@ -416,7 +417,6 @@
                 transform: scale(0.8); 
             }
 
-            .dice-btn.active-roll i { opacity: 0.1; transform: scale(0.8); }
             .dice-btn.active-roll .roll-number { display: block; animation: dice-pop 0.2s ease-out; }
 
             .roll-number {
