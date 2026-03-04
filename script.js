@@ -201,7 +201,6 @@ auth.onAuthStateChanged((user) => {
             openTab(savedTab);
         }
         
-        
         topNav.classList.remove('hide-default');
         appBody.classList.remove('hide-default');
         sidebar.classList.remove('hide-default'); 
