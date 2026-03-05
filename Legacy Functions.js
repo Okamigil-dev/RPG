@@ -89,7 +89,7 @@ function loadUserCharacters() {
                 <strong>${d.name || 'New Hero'}</strong>
                 <div class="char-card-meta">Lv.${d.charLevel || 1} ${d.class || ''}</div>
                 <div class="char-realm-tag"><i class="fa-solid fa-globe"></i> ${d.instanceName || 'Global'}</div>
-                <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')"><i class="fa-solid fa-trash"></i> Delete</button>
+                <button class="btn-danger-small" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')"><i class="fa-solid fa-trash"></i> Delete</button>
             `;
             grid.appendChild(card);
         });

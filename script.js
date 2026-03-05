@@ -1056,7 +1056,7 @@ function renderSkills(charData) {
     tiers.forEach(tier => {
         const section = document.createElement('div');
         section.className = 'skill-tier-section';
-        section.innerHTML = `<h4 class="m-m mb-s">${tier.label}</h4>`;
+        section.innerHTML = `<h4 class="m-m m-s">${tier.label}</h4>`;
         
         // Read from the new registry
         const skills = skillRegistry[tier.key] || [];
@@ -1491,7 +1491,7 @@ async function renderModalClassList(uid, cid) {
     container.innerHTML = "";
     Object.keys(classes).forEach(className => {
         const row = document.createElement('div');
-        row.className = "flex-row mb-s";
+        row.className = "flex-row m-s";
         row.style.cssText = "justify-content: space-between; background: #111; padding: 8px; border-radius: 4px;";
         row.innerHTML = `<span><strong>${className}</strong> (Lv.${classes[className].level})</span>
                          <button class="btn-danger-small" onclick="removeClassFromCharacter('${className}')">Remove</button>`;
@@ -1808,7 +1808,7 @@ function renderRaceAttributes() {
         const name = attributeDefinitions[key] || key; // Use nice name if available
         
         const div = document.createElement('div');
-        div.className = "flex-row space-between p-s trait-item-border mb-s";
+        div.className = "flex-row space-between p-s trait-item-border m-s";
         div.style.background = "#27272a";
         div.innerHTML = `
             <strong class="text-muted" style="width: 120px;">${name}</strong>
@@ -1925,7 +1925,7 @@ async function loadMasterRaceList() {
         const r = doc.data();
         if (r.name.toLowerCase().includes(searchTerm)) {
             const card = document.createElement('div');
-            card.className = "panel-card mb-s trait-item-border";
+            card.className = "panel-card m-s trait-item-border";
             
             // 1. Generate the individual tooltip sections
             const descSection = buildUniversalTooltip(r.description || "No description.", "DESCRIPTION");
@@ -1939,7 +1939,7 @@ async function loadMasterRaceList() {
             const traitBadges = (r.traits || []).map(t => `<span class="badge-stat" style="font-size:0.7rem; margin-right:4px;">${t}</span>`).join("");
 
             card.innerHTML = `
-                <div class="flex-row space-between mb-s">
+                <div class="flex-row space-between m-s">
                     <strong class="text-success" style="cursor: help;">
                         ${r.name} <i class="fa-solid fa-circle-info" style="font-size:0.7rem; opacity:0.5;"></i>
                     </strong>
@@ -1948,7 +1948,7 @@ async function loadMasterRaceList() {
                         <button class="btn-icon-tiny btn-danger" onclick="deleteMasterAsset('master_races', '${doc.id}', loadMasterRaceList)"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
-                <div class="flex-row flex-wrap mb-s">${traitBadges}</div>
+                <div class="flex-row flex-wrap m-s">${traitBadges}</div>
                 <div class="text-muted" style="font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90%;">
                     ${r.description || "No description provided."}
                 </div>
@@ -2036,7 +2036,7 @@ async function loadMasterRaceList() {
         for (const [key, value] of Object.entries(currentClassAttributes)) {
             const name = attributeDefinitions[key] || key;
             const div = document.createElement('div');
-            div.className = "flex-row space-between p-s trait-item-border mb-s";
+            div.className = "flex-row space-between p-s trait-item-border m-s";
             div.style.background = "#27272a";
             div.innerHTML = `
                 <strong class="text-muted" style="width: 140px;">${name}</strong>
@@ -2174,7 +2174,7 @@ async function loadMasterRaceList() {
             const attrSection = buildUniversalTooltip(d.attributes, "STAT BONUSES");
             
             const card = document.createElement('div');
-            card.className = "panel-card mb-s";
+            card.className = "panel-card m-s";
             card.style.background = "#18181b";
             card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#3f3f46'}`;
             
@@ -2383,7 +2383,7 @@ async function loadSkillRegistry() {
             const d = doc.data();
             const icon = d.iconData ? `<img src="${d.iconData}" class="registry-icon">` : `<div class="registry-icon-placeholder"><i class="fa-solid fa-image"></i></div>`;
             html += `
-            <div class="panel-card mb-s registry-skill-card">
+            <div class="panel-card m-s registry-skill-card">
                 <div class="flex-row align-start space-between">
                     <div class="flex-row align-start gap-m">
                         ${icon}
@@ -2484,14 +2484,14 @@ async function loadMasterTraitList() {
             const t = doc.data();
             if (t.name.toLowerCase().includes(searchTerm) && (filterSource === "All" || t.sourceType === filterSource)) {
                 const card = document.createElement('div');
-                card.className = "panel-card mb-s trait-item-border"; 
+                card.className = "panel-card m-s trait-item-border"; 
                 card.style.borderLeftColor = getSourceColor(t.sourceType);
 
                 // Added logic fallback to fix the "(undefined)" labels
                 const sourceDisplay = t.sourceType || "General";
 
                 card.innerHTML = `
-                    <div class="trait-card-header mb-s">
+                    <div class="trait-card-header m-s">
                         <div>
                             <strong class="text-success">${t.name}</strong>
                             <span class="text-muted ml-s" style="font-size: 0.7rem;">(${sourceDisplay})</span>
@@ -2592,7 +2592,7 @@ async function loadAttributeList() {
         snap.forEach(doc => {
             const d = doc.data();
             const div = document.createElement('div');
-            div.className = "panel-card mb-s flex-row space-between trait-item-border";
+            div.className = "panel-card m-s flex-row space-between trait-item-border";
             div.innerHTML = `
                 <div>
                     <strong class="text-success">${d.name}</strong>
