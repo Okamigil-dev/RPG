@@ -198,14 +198,12 @@ auth.onAuthStateChanged((user) => {
     const topNav = document.getElementById('top-nav');
     const appBody = document.querySelector('.app-body');
     const loginTab = document.getElementById('tab-login'); // renamed for clarity
-    const sidebar = document.getElementById('sidebar');
 
     if (user) {
         // 1. Reveal the "Mother" containers first
         topNav.classList.remove('hide-default');
         appBody.classList.remove('hide-default');
-        sidebar.classList.remove('hide-default'); 
-
+        
         // 2. Clear login splash effects
         loginTab.classList.remove('login-splash-mode');
         
@@ -260,7 +258,6 @@ auth.onAuthStateChanged((user) => {
         
         // Hide mothers (children like logout-btn inherit this)
         topNav.classList.add('hide-default');
-        sidebar.classList.add('hide-default');
         appBody.classList.add('hide-default');
         
         // Prepare login screen

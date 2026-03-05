@@ -287,11 +287,10 @@
         --- 3-C. Sidebar Body ----------------------------------------------------
         ==========================================================================   */
             .sidebar {
-                width: 260px;
                 min-width: 260px;
                 background: var(--color-bg);
                 padding: 10px;
-                border-right: 1px solid var(--color-border);
+                border-inline: 1px solid var(--color-border);
                 display: flex;
                 flex-direction: column;
             }
@@ -317,7 +316,6 @@
                 background: var(--color-bg-alt);
                 border-radius: var(--radius-lg);
                 border: 1px solid var(--color-border);
-                margin: 5px;
                 overflow: hidden;
                 box-shadow: 0 10px 25px var(--color-shadow);
                 align-content: end;
@@ -345,7 +343,7 @@
                 text-align: center;
             }
             
-            .hud-name { margin: 0; font-size: 1.2rem; color: var(--color-text); }
+            .hud-name { margin: 0; font-size: 1.2rem; }
             .hud-meta { font-size: 0.8rem; color: var(--color-accent); font-weight: bold; }
             .hud-resource { padding: 0 15px; margin-bottom: 5px; }
 
