@@ -1,7 +1,4 @@
-/* =========================================================
-   SCRIPT VERSION: 0.4.6
-   DATE: 2026-03-02 
-   ========================================================= */
+/*  ===================== Version 0.4.X ======================================   */
 
 
 
@@ -183,7 +180,7 @@ function loginUser() {
 }
 
 function logoutUser() { 
-    auth.signOut().then(() => location.reload()); 
+    auth.signOut(); 
 }
 
 auth.onAuthStateChanged((user) => {
@@ -269,7 +266,7 @@ auth.onAuthStateChanged((user) => {
    ========================================================================== */
 
 function openTab(tabId) {
-    document.querySelectorAll('.open-tab').forEach(tab => {
+    document.querySelectorAll('.closed-tab').forEach(tab => {
         tab.classList.add('hide-default');
     });
 
@@ -284,10 +281,19 @@ function openTab(tabId) {
     
     if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
         loadInstanceList();
-        const savedSubTab = localStorage.getItem('activeMasterSubTab') || 'sub-instances';
+        
+        let savedSubTab = localStorage.getItem('activeMasterSubTab') || 'sub-instances';
+        if (window.currentUserRole === 'Master' && savedSubTab === 'sub-accounts') {
+            savedSubTab = 'sub-instances';
+        }
+
         openControlSubTab(null, savedSubTab); 
     }
 }
+
+
+
+
 
 function openControlSubTab(evt, subTabId) {
     localStorage.setItem('activeMasterSubTab', subTabId);

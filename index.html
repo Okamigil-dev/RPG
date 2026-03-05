@@ -1,4 +1,4 @@
-<!-- Version 0.3.1 -->
+<!-- Version 0.4.X -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,14 +19,14 @@
     --- Main Section A. Login Tab ---------------------------------
     ===============================================================--->
 
-    <div id="tab-login" class="open-tab hide-default">
+    <div id="tab-login" class="closed-tab hide-default">
         <div class="login-box">
-            <div class="brand-logo" style="text-align: center; margin-bottom: 10px; font-size: 1.8rem;">WORLD VTT</div>
+            <h1 class="brand-logo text-center" >WORLD VTT</h1>
             <h2>Sign In</h2>
             <input type="email" id="email-input" class="form-input" placeholder="Email">
             <input type="password" id="password-input" class="form-input" placeholder="Password">
             <button onclick="loginUser()" class="btn-primary w-100">Access Realm</button>
-            <div style="margin: 20px 0; text-align: center; opacity: 0.3;">OR</div>
+            <h3 class="text-center opacity-50">OR</div>
             <button onclick="registerUser()" class="btn-secondary w-100">Create New Account</button>
         </div>
     </div>
@@ -68,14 +68,13 @@
     <div class="app-body hide-default">
 
     <!--===============================================================
-        --- Section 2. Side Bar ---------------------------------------
+        --- Section 1. Side Bar ---------------------------------------
         ===============================================================--->        
         <div id="sidebar" class="sidebar">
 
         <!--===============================================================
-            --- Section 2-a. Active Char ----------------------------------
+            --- Section 1-A. Active Char ----------------------------------
             ===============================================================--->
-                
             <div id="active-char-hud" class="active-char-hud hide-default">
                 <div id="hud-portrait" class="portrait-main-hud"></div>
                 
@@ -111,27 +110,18 @@
             </div>
 
         <!--===============================================================
-            --- 2-b. World Clock ------------------------------------------
+            --- 1-B. World Clock ------------------------------------------
             ===============================================================--->
-                
             <div class="sidebar-panel">
-
                 <div id="game-ui" class="game-ui">
-                
                     <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
-                    
                     <div id="time-display" class="time-text">09:00:17</div>
-                    
                     <div id="master-quick-controls" class="m-m hide-default">
-                        
                         <div class="clock-control">
-                            
                             <button onclick="toggleTime()" id="sidebar-play-btn" class="clock-btn">
                                 <i class="fa-solid fa-play"></i>
                             </button>
-
                             <span id="speed-label" class="clock-speed">1x</span>
-
                             <button onclick="setSpeed(0.2)" class="clock-btn icon">
                                 <svg viewBox="0 0 100 100">
                                     <g>
@@ -148,23 +138,17 @@
                                     </g>
                                 </svg>
                             </button>
-
                             <button onclick="setSpeed(1)" class="clock-btn">1x</button>
-
                             <button onclick="setSpeed(10)" class="clock-btn">10x</button>
-                            
                             <button onclick="setSpeed(60)" class="clock-btn">1h/min</button>
-                            
                         </div>
                     </div>
                 </div>
             </div>
-
             
-    <!--===============================================================
-        --- Section 2. Chat Log, Chat Box and  Dices ------------------
-        ===============================================================--->
-
+        <!--===============================================================
+            --- Section 1-C. Chat Log -------------------------------------
+            ===============================================================--->
             <div class="sidebar-panel flex-grow">
 
                 <div id="chat-log" class="chat-tray">
@@ -186,6 +170,9 @@
                 </div>
             </div>   
 
+        <!--===============================================================
+            --- Section 1-D. Dice Grid ------------------------------------
+            ===============================================================--->
             <div class="sidebar-panel">
                 <div class="dice-grid">
                     
@@ -266,23 +253,26 @@
                         </svg>
                         <span class="roll-number"></span>
                     </button>
+
                 </div>
             </div>
-
-            
         </div>
+
+    <!--===============================================================
+        --- Section 2. Main Body --------------------------------------
+        ===============================================================--->
         <div id="main-content" class="main-content">
+            <!--===============================================================
+                --- Section 2-A. Character Dashboard --------------------------
+                ===============================================================--->
 
-
             
             
 
             
             
-            <!--===========================
-            ---- 4. CHARACTER TAB ----
-            ============================-->
-            <div id="tab-character" class="open-tab hide-default">
+            
+            <div id="tab-character" class="closed-tab hide-default">
                 <div id="char-selection-view">
                     <div class="flex-row">
                         <h2 class="tab-title">Character Dashboard</h2>
@@ -473,7 +463,7 @@
             <!--===========================
             ---- 5. BACKPACK TAB ----
             ============================-->
-            <div id="tab-backpack" class="open-tab hide-default">
+            <div id="tab-backpack" class="closed-tab hide-default">
                 <h2 class="tab-title">Backpack</h2>
                 <div class="panel-card">
                     <p>Inventory system coming soon...</p>
@@ -485,7 +475,7 @@
             <!--===========================
             ---- 6. SKILLS TAB ----
             ============================-->
-            <div id="tab-skills" class="open-tab hide-default">
+            <div id="tab-skills" class="closed-tab hide-default">
                 <div class="flex-row">
                     <h2 class="tab-title">Skill Pyramid</h2>
                     <div class="char-level-badge">SP: <span id="char-sp-total">0</span> / Spent: <span id="char-sp-spent">0</span></div>
@@ -503,7 +493,7 @@
             ---- 7. CONTROL PANEL TAB ----
             ============================-->
             
-            <div id="tab-control-panel" class="open-tab hide-default">
+            <div id="tab-control-panel" class="closed-tab hide-default">
                 <div class="master-dashboard-layout">
                     
                     <div class="master-nav-sidebar">
@@ -520,7 +510,7 @@
                             <i class="fa-solid fa-user-shield"></i> Characters
                         </button>
                         
-                        <button class="sub-nav-btn" onclick="openControlSubTab(event, 'sub-accounts')">
+                        <button class="sub-nav-btn admin-only" onclick="openControlSubTab(event, 'sub-accounts')">
                             <i class="fa-solid fa-users-gear"></i> User Access
                         </button>
                         
@@ -885,6 +875,11 @@
 
             
         </div>
+    
+        <div id=" sidebar-right" class="sidebar">
+
+        </div>
+
     </div>
 
 
