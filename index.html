@@ -99,7 +99,7 @@
                     <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
                     <div id="time-display" class="time-text">09:00:17</div>
                     
-                    <div id="master-quick-controls" class="mt-m">
+                    <div id="master-quick-controls" class="m-m">
                         
                         <div class="clock-control">
                             
@@ -286,7 +286,7 @@
                     </div>                        
 
                     <!-- Name, Race, Level Box -->
-                    <div class="panel-card mb-m">
+                    <div class="panel-card m-m">
                         <h3 class="panel-subtitle">Identity</h3>
                         <div class="identity-grid">
                             <div class="field-group">
@@ -344,7 +344,7 @@
                                 </div>
                             </div>
                             
-                            <div id="attr-confirm-area" class="mt-m hide-default">
+                            <div id="attr-confirm-area" class="m-m hide-default">
                                 <button class="btn-primary btn-full" onclick="confirmAttributeChanges()">Commit Changes</button>
                             </div>
                         </div>
@@ -402,7 +402,7 @@
 
                     
                     <!-- CLASSES, TRAITS -->
-                    <div class="panel-card mt-m">
+                    <div class="panel-card m-m">
                         <div class="identity-grid">
                             <div class="field-group">
                                 <label class="text-muted">Classes</label>
@@ -683,7 +683,7 @@
                                         
                                     </div>
                         
-                                    <div class="field-group mb-m">
+                                    <div class="field-group m-m">
                                         <label class="text-muted">Description</label>
                                         <textarea id="reg-skill-desc" class="form-input" rows="2" placeholder="Describe the effect..."></textarea>
                                     </div>
@@ -743,7 +743,7 @@
                                         </div>
                                     </div>
                         
-                                    <div class="flex-row flex-end mt-m">
+                                    <div class="flex-row flex-end m-m">
                                         <button id="skill-cancel-btn" onclick="resetSkillForm()" class="btn-secondary hide-default">Cancel Edit</button>
                                         <button id="skill-save-btn" onclick="saveSkillToRegistry()" class="btn-success">Save Skill to Library</button>
                                     </div>
@@ -762,7 +762,7 @@
                         -------------------------->
                         <div id="sub-classes" class="control-sub-content hide-default">
                             <div class="panel-card trait-panel-layout">
-                                <div class="trait-list-header mb-m">
+                                <div class="trait-list-header m-m">
                                     <div class="flex-row space-between w-100">
                                         <h3 style="margin:0;">Class Registry</h3>
                                         <button class="btn-success" onclick="openClassModal()">
@@ -782,7 +782,7 @@
                         -------------------------->
                         <div id="sub-races" class="control-sub-content hide-default">
                             <div class="panel-card trait-panel-layout">
-                                <div class="trait-list-header mb-m">
+                                <div class="trait-list-header m-m">
                                     <div class="flex-row space-between w-100">
                                         <h3 style="margin:0;">Race Library</h3>
                                         <button class="btn-success" onclick="openRaceModal()">
@@ -806,7 +806,7 @@
                         <!-- 8. Trait Management -->
                         <div id="sub-traits" class="control-sub-content hide-default">
                             <div class="panel-card trait-panel-layout">
-                                <div class="trait-list-header mb-m">
+                                <div class="trait-list-header m-m">
                                     <div class="flex-row space-between w-100">
                                         <h3 style="margin:0;">Trait Library</h3>
                                         <button class="btn-success" onclick="openTraitModal()">
@@ -841,7 +841,7 @@
                         <!-- 9. Attribute Management -->
                         <div id="sub-attributes" class="control-sub-content hide-default">
                             <div class="panel-card trait-panel-layout">
-                                <div class="trait-list-header mb-m">
+                                <div class="trait-list-header m-m">
                                     <div class="flex-row space-between w-100">
                                         <h3 style="margin:0;">Attribute Library</h3>
                                         <button class="btn-success" onclick="openAttributeModal()">
@@ -894,7 +894,7 @@
                         <input type="hidden" id="edit-modal-uid">
                         <input type="hidden" id="edit-modal-cid">
             
-                        <div class="form-group mb-m">
+                        <div class="form-group m-m">
                             <label class="text-muted">Award / Remove EXP (Current: <span id="modal-current-exp-display" class="text-highlight">0</span>)</label>
                             <input type="hidden" id="edit-modal-exp">
             
@@ -905,16 +905,16 @@
                             </div>
                         </div>
             
-                        <div class="panel-header-small mt-l mb-s">
+                        <div class="panel-header-small m-m">
                             <span class="section-label">Class Management</span>
                         </div>
-                        <div class="flex-row gap-s mb-m">
+                        <div class="flex-row gap-s m-m">
                             <select id="modal-class-picker" class="form-input flex-grow"></select>
                             <button class="btn-success" onclick="assignClassToCharacter()">Add Class</button>
                         </div>
                         <div id="modal-active-classes" class="master-asset-list"></div>
             
-                        <div class="flex-row gap-m mb-m">
+                        <div class="flex-row gap-m m-m">
                             <div class="form-group flex-1">
                                 <label class="text-muted">Current HP</label>
                                 <input type="number" id="edit-modal-hp" class="form-input w-100">
@@ -925,22 +925,22 @@
                             </div>
                         </div>
             
-                        <div class="form-group mb-m">
+                        <div class="form-group m-m">
                             <label class="text-muted">Gold / Currency</label>
                             <input type="number" id="edit-modal-gold" class="form-input w-100">
                         </div>
             
-                        <div class="panel-header-small mt-l mb-s">
+                        <div class="panel-header-small m-m">
                             <span class="section-label">Core Attributes</span>
                         </div>
                         
-                        <div class="flex-row mb-m flex-end">
+                        <div class="flex-row m-m flex-end">
                             <button class="btn-danger-small" onclick="respecCharacterAttributes()">
                                 <i class="fa-solid fa-rotate-left"></i> Respec (Reset to 0)
                             </button>
                         </div>
             
-                        <div class="flex-row gap-m mb-m">
+                        <div class="flex-row gap-m m-m">
                             <div class="form-group flex-1">
                                 <label class="text-muted">Body</label>
                                 <input type="number" id="edit-modal-body" class="form-input w-100">
@@ -955,10 +955,10 @@
                             </div>
                         </div>
             
-                        <div class="panel-header-small mt-l mb-s">
+                        <div class="panel-header-small m-m">
                             <span class="section-label">Equipment Modifiers (Manual)</span>
                         </div>
-                        <div class="flex-row gap-m mb-m">
+                        <div class="flex-row gap-m m-m">
                             <div class="form-group flex-1">
                                 <label class="text-muted">Flat HP Bonus</label>
                                 <input type="number" id="edit-modal-hp-flat" class="form-input w-100">
@@ -968,7 +968,7 @@
                                 <input type="number" id="edit-modal-hp-perc" class="form-input w-100">
                             </div>
                         </div>
-                        <div class="flex-row gap-m mb-m">
+                        <div class="flex-row gap-m m-m">
                             <div class="form-group flex-1">
                                 <label class="text-muted">Flat MP Bonus</label>
                                 <input type="number" id="edit-modal-mp-flat" class="form-input w-100">
@@ -981,7 +981,7 @@
                         
                     </div>
                     
-                    <div class="modal-footer text-right mt-l">
+                    <div class="modal-footer text-right m-m">
                         <button class="btn-primary" onclick="saveCharacterManagerEdits()">Save Changes</button>
                     </div>
                 </div>
@@ -1002,12 +1002,12 @@
                     <div class="modal-body">
                         <input type="hidden" id="m-trait-id">
                         
-                        <div class="field-group mb-m">
+                        <div class="field-group m-m">
                             <label class="text-muted">Trait Name</label>
                             <input type="text" id="reg-trait-name" class="form-input" placeholder="e.g. Darkvision">
                         </div>
             
-                        <div class="field-group mb-m">
+                        <div class="field-group m-m">
                             <label class="text-muted">Primary Source</label>
                             <select id="reg-trait-source" class="form-input">
                                 <option value="General">General</option>
@@ -1017,7 +1017,7 @@
                             </select>
                         </div>
             
-                        <div class="field-group mb-m">
+                        <div class="field-group m-m">
                             <label class="text-muted">Description</label>
                             <textarea id="reg-trait-desc" class="form-input" rows="6" placeholder="Describe the effect..."></textarea>
                         </div>
@@ -1046,12 +1046,12 @@
                     <div class="modal-body">
                         <input type="hidden" id="m-race-id">
                         
-                        <div class="field-group mb-m">
+                        <div class="field-group m-m">
                             <label class="text-muted">Race Name</label>
                             <input type="text" id="m-race-name" class="form-input" placeholder="e.g. High Elf">
                         </div>
             
-                        <div class="panel-header-small mt-m mb-s"><span class="section-label">Race Attributes</span></div>
+                        <div class="panel-header-small m-m"><span class="section-label">Race Attributes</span></div>
 
                         <div class="flex-row gap-s mb-s">
                             <select id="race-attr-picker" class="form-input flex-grow">
@@ -1059,10 +1059,10 @@
                             <button class="btn-success" onclick="addAttrToRace()">Add</button>
                         </div>
                         
-                        <div id="race-dynamic-attributes" class="flex-column gap-s mb-m">
+                        <div id="race-dynamic-attributes" class="flex-column gap-s m-m">
                             </div>
             
-                        <div class="panel-header-small mt-m mb-s"><span class="section-label">Racial Traits</span></div>
+                        <div class="panel-header-small m-m"><span class="section-label">Racial Traits</span></div>
                         
                         <input type="text" id="trait-checklist-search" class="form-input mb-s" 
                                placeholder="Search traits..." onkeyup="filterTraitChecklist()">
@@ -1070,9 +1070,9 @@
                         <div id="trait-checklist-container" class="checklist-container mb-s">
                             </div>
                         
-                        <div id="race-active-traits" class="flex-row gap-s flex-wrap mb-m"></div>
+                        <div id="race-active-traits" class="flex-row gap-s flex-wrap m-m"></div>
             
-                        <div class="field-group mb-m">
+                        <div class="field-group m-m">
                             <label class="text-muted">Description</label>
                             <textarea id="m-race-desc" class="form-input" rows="3"></textarea>
                         </div>
@@ -1097,18 +1097,18 @@
                     <div class="modal-body">
                         <input type="hidden" id="m-attr-id">
                         
-                        <div class="field-group mb-m">
+                        <div class="field-group m-m">
                             <label class="text-muted">Display Name</label>
                             <input type="text" id="m-attr-name" class="form-input" placeholder="e.g. Health Regeneration">
                         </div>
                         
-                        <div class="field-group mb-m">
+                        <div class="field-group m-m">
                             <label class="text-muted">System Key (Unique ID)</label>
                             <input type="text" id="m-attr-key" class="form-input" placeholder="e.g. hp_regen">
                             <small class="text-muted" style="font-size:0.7rem;">Used by code. No spaces (use _).</small>
                         </div>
             
-                        <div class="field-group mb-m">
+                        <div class="field-group m-m">
                             <label class="text-muted">Default Value</label>
                             <input type="number" id="m-attr-default" class="form-input" value="0">
                         </div>
@@ -1152,7 +1152,7 @@
                         <input type="text" id="m-class-reqs" class="form-input" placeholder="Requirements (e.g. Spirit 5+)">
                     </div>
                     
-                    <div class="mb-m p-s">
+                    <div class="m-m p-s">
                         <label class="form-label text-muted small" style="display:block; margin-bottom:5px;">Class Growth & Bonuses</label>
                         <div class="flex-row gap-s mb-s">
                             <select id="class-attr-picker" class="form-input" style="flex-grow: 1;">
@@ -1166,7 +1166,7 @@
                         </div>
                     </div>
 
-                    <div class="mb-m">
+                    <div class="m-m">
                         <label class="form-label text-muted small">Class Traits & Abilities</label>
                         
                         <div class="flex-row gap-s mb-s">
@@ -1194,7 +1194,7 @@
                         <div id="class-active-traits" class="registry-box"></div>
                     </div>
                     
-                    <textarea id="m-class-desc" class="form-input mb-m" style="height: 80px;" placeholder="Class Description..."></textarea>
+                    <textarea id="m-class-desc" class="form-input m-m" style="height: 80px;" placeholder="Class Description..."></textarea>
                     
                     <div class="modal-footer text-right">
                         <button class="btn-success" onclick="saveMasterClass()">Save Class Archetype</button>

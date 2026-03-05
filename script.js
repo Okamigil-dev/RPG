@@ -711,7 +711,7 @@ function loadUserCharacters() {
                 </div>
                 <strong>${d.name || 'New Hero'}</strong>
                 <div class="char-card-meta">Lv.${d.charLevel || 1}</div>
-                <button class="btn-danger-small mt-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">Delete</button>
+                <button class="btn-danger-small m-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">Delete</button>
             `;
             grid.appendChild(card);
         });
@@ -1056,7 +1056,7 @@ function renderSkills(charData) {
     tiers.forEach(tier => {
         const section = document.createElement('div');
         section.className = 'skill-tier-section';
-        section.innerHTML = `<h4 class="mt-m mb-s">${tier.label}</h4>`;
+        section.innerHTML = `<h4 class="m-m mb-s">${tier.label}</h4>`;
         
         // Read from the new registry
         const skills = skillRegistry[tier.key] || [];

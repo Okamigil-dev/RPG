@@ -32,11 +32,6 @@
         /* Font */
         --font-family: 'Inter', sans-serif; /* A modern, clean font for the entire app */
         
-        /* Spacing */
-        --gap-s: 10px;
-        --gap-m: 15px;
-        --gap-l: 30px;
-
         /* Border Radius */
         --radius-sm: 4px;
         --radius-md: 8px;
@@ -90,9 +85,14 @@
         ========================================================================== */
         /* Class for Hiding Elements */        
         .hide-default { display: none !important; } 
+        
+        
+        
+        
+        
         .icon {fill: currentColor; color: var(--color-accent);}
         .icon svg { height:100%; width:100% }
-        .flex-row { display: flex; align-items: center; gap: var(--gap-s) }
+        .flex-row { display: flex; align-items: center; gap: 10px }
         .flex-grow { flex-grow: 1; }
         .flex-1 { flex: 1; }
         .flex-end { justify-content: flex-end; }
@@ -101,11 +101,23 @@
         .text-right { text-align: right; }
         .btn-full { width: 100%; }
         .w-100 { width: 100%; }
-        .mt-m { margin-top: 20px; }
+
+        /* Margin Global Functions */
+        
+        .m-s { margin: 5px; }
+        .m-m { margin: 10px; }
+        .m-l { margin: 20px; }
+
+        
+        /* .mt-m { margin-top: 10px; }
         .mt-l { margin-top: 20px; }
-        .mb-m { margin-bottom: 15px; }
-        .gap-s { gap: 10px; }
-        .gap-m { gap: 15px; }
+        .mb-m { margin-bottom: 15px; } */ 
+        
+        /* Gap Global Functions */
+        .gap-s { gap: 5px; }
+        .gap-m { gap: 10px; }
+        .gap-l { gap:20px; }
+        .gap-el { gap: 30px; }
 
     /*  ==========================================================================
         --- D. Animations --------------------------------------------------------
@@ -466,7 +478,7 @@
                 border-radius: 4px;
                 display: grid;
                 grid-template-columns: 1fr 1fr 1fr;
-                gap: var(--gap-m);
+                gap: 15px;
                 margin: 10px 0;
             }
 
