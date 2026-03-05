@@ -86,7 +86,7 @@
         ========================================================================== */
         /* Class for Hiding Elements */        
         .hide-default { display: none !important; } 
-        .admin-only { display: none !important; } 
+        
         
         
         /* Opacity Global Classes */
