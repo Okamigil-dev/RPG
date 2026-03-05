@@ -210,7 +210,7 @@ auth.onAuthStateChanged((user) => {
                 // Set UI labels
                 document.getElementById('user-display-name').innerText = user.email.split('@')[0];
                 document.getElementById('user-role-label').innerText = data.role;
-                
+
                 // --- LEVEL 1: MASTER & ADMIN (Common GM Tools) ---
                 const isMasterOrAbove = (data.role === 'Master' || data.role === 'Admin'); //
                 if (isMasterOrAbove) {
@@ -233,11 +233,9 @@ auth.onAuthStateChanged((user) => {
                     openTab(savedTab);
                 }
 
-                if (data.role === 'Admin') {
-                    // You can now target specific admin-only elements here
-                    const adminElements = document.querySelectorAll('.admin-only'); //
-                    adminElements.forEach(el => el.classList.remove('hide-default')); //
-                }
+
+
+
                 // 5. Start listeners
                 initClockListener();
                 initDiceLogListener();
@@ -286,7 +284,6 @@ function openTab(tabId) {
     
     if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
         loadInstanceList();
-        openMasterPanel();
         const savedSubTab = localStorage.getItem('activeMasterSubTab') || 'sub-instances';
         openControlSubTab(null, savedSubTab); 
     }
@@ -1204,24 +1201,24 @@ function syncSheetDashboardUI(char, totals, bonuses, raceName) {
    SECTION 9: MASTER PANEL LOGIC
    ========================================================================== */
 
-function openMasterPanel() {
-    const role = window.currentUserRole;
-    if (role !== 'Master' && role !== 'Admin') {
-        openTab('tab-character'); 
-        return;
-    }
-    const accountBtn = document.querySelector('[onclick*="sub-accounts"]');
-    if (accountBtn) {
-        if (role === 'Admin') {
-            accountBtn.classList.remove('hide-default');
-            loadUserList(); 
-        } else {
-            accountBtn.classList.add('hide-default');
-            const groupsBtn = document.querySelector('[onclick*="sub-instances"]');
-            if (groupsBtn) groupsBtn.click(); 
-        }
-    }
-}
+// function openMasterPanel() {
+//     const role = window.currentUserRole;
+//     if (role !== 'Master' && role !== 'Admin') {
+//         openTab('tab-character'); 
+//         return;
+//     }
+//     const accountBtn = document.querySelector('[onclick*="sub-accounts"]');
+//     if (accountBtn) {
+//         if (role === 'Admin') {
+//             accountBtn.classList.remove('hide-default');
+//             loadUserList(); 
+//         } else {
+//             accountBtn.classList.add('hide-default');
+//             const groupsBtn = document.querySelector('[onclick*="sub-instances"]');
+//             if (groupsBtn) groupsBtn.click(); 
+//         }
+//     }
+// }
 
 // --- INSTANCE MANAGEMENT ---
 async function loadInstanceList() {
