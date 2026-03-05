@@ -189,7 +189,7 @@ function logoutUser() {
 auth.onAuthStateChanged((user) => {
     const topNav = document.getElementById('top-nav');
     const appBody = document.querySelector('.app-body');
-    const mainContent = document.getElementById('main-content');
+    const mainContent = document.getElementById('tab-login');
     const sidebar = document.getElementById('sidebar');
 
     if (user) {
@@ -241,8 +241,11 @@ auth.onAuthStateChanged((user) => {
         window.currentUserRole = null;
         topNav.classList.add('hide-default');
         sidebar.classList.add('hide-default');
-        appBody.classList.remove('hide-default'); 
+        appBody.classList.remove('hide-default');
+
+        mainContent.classList.remove('hide-default'); 
         mainContent.classList.add('login-splash-mode'); 
+        
         document.getElementById('active-char-hud').classList.add('hide-default');
         openTab('tab-login');
     }
