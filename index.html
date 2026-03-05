@@ -15,6 +15,9 @@
 </head>
 <body>
 
+<!--===============================================================
+    --- Main Section A. Top Bar -----------------------------------
+    ===============================================================--->
     <div id="top-nav" class="top-nav">
         <div class="nav-left">
             <div class="brand-logo">WORLD VTT</div>
@@ -43,50 +46,69 @@
         </div>
     </div>
 
+<!--===============================================================
+    --- Main Section B. Main Body ---------------------------------
+    ===============================================================--->
     <div class="app-body">
 
-<!--===============================================================
-    --- Section 1. Side Bar ---------------------------------------
-    ===============================================================--->        
-        <div id="sidebar" class="sidebar">
-
     <!--===============================================================
-        --- A. Active Char --------------------------------------------
+        --- Section 1. Login Tab --------------------------------------
         ===============================================================--->
-            
-        <div id="active-char-hud" class="active-char-hud hide-default">
-            <div id="hud-portrait" class="portrait-main-hud"></div>
-            
-            <div class="hud-identity-block">
-                <h3 id="hud-name" class="hud-name">Unnamed</h3>
-                <span id="hud-meta" class="hud-meta">Level 1</span>
-            </div>
-            
-            <div class="hud-resource">
-                <div class="bar-label"><span>Health</span><span id="hud-hp-text">0/0</span></div>
-                <div class="bar-body"><div id="hud-hp-fill" class="bar-inner hp-fill"></div></div>
-            </div>
-        
-            <div class="hud-resource">
-                <div class="bar-label"><span>Mana</span><span id="hud-mp-text">0/0</span></div>
-                <div class="bar-body">
-                    <div id="hud-mp-fill" class="bar-inner mp-fill"></div></div>
-            </div>
-        
-            <div class="hud-resource" style="margin-bottom: 20px;">
-                <div class="bar-label"><span>Experience</span></div>
-                <div class="bar-body">
-                    <div id="hud-exp-fill" class="bar-inner exp-fill"></div>
-                    <div id="hud-exp-text" class="exp-overlay-grid">0%</div>
-                </div>
-            </div>
-        
-            <div class="hud-stats-row">
-                <div id="hud-mod-body" class="hud-stat-box">BOD +0</div>
-                <div id="hud-mod-mind" class="hud-stat-box">MIN +0</div>
-                <div id="hud-mod-spirit" class="hud-stat-box">SPI +0</div>
+
+        <div id="tab-login" class="open-tab hide-default">
+            <div class="login-box">
+                <div class="brand-logo" style="text-align: center; margin-bottom: 10px; font-size: 1.8rem;">WORLD VTT</div>
+                <h2>Sign In</h2>
+                <input type="email" id="email-input" class="form-input" placeholder="Email">
+                <input type="password" id="password-input" class="form-input" placeholder="Password">
+                <button onclick="loginUser()" class="btn-primary w-100">Access Realm</button>
+                <div style="margin: 20px 0; text-align: center; opacity: 0.3;">OR</div>
+                <button onclick="registerUser()" class="btn-secondary w-100">Create New Account</button>
             </div>
         </div>
+
+    <!--===============================================================
+        --- Section 2. Side Bar ---------------------------------------
+        ===============================================================--->        
+            <div id="sidebar" class="sidebar">
+
+        <!--===============================================================
+            --- Section 2-a. Active Char ----------------------------------
+            ===============================================================--->
+                
+            <div id="active-char-hud" class="active-char-hud hide-default">
+                <div id="hud-portrait" class="portrait-main-hud"></div>
+                
+                <div class="hud-identity-block">
+                    <h3 id="hud-name" class="hud-name">Unnamed</h3>
+                    <span id="hud-meta" class="hud-meta">Level 1</span>
+                </div>
+                
+                <div class="hud-resource">
+                    <div class="bar-label"><span>Health</span><span id="hud-hp-text">0/0</span></div>
+                    <div class="bar-body"><div id="hud-hp-fill" class="bar-inner hp-fill"></div></div>
+                </div>
+            
+                <div class="hud-resource">
+                    <div class="bar-label"><span>Mana</span><span id="hud-mp-text">0/0</span></div>
+                    <div class="bar-body">
+                        <div id="hud-mp-fill" class="bar-inner mp-fill"></div></div>
+                </div>
+            
+                <div class="hud-resource" style="margin-bottom: 20px;">
+                    <div class="bar-label"><span>Experience</span></div>
+                    <div class="bar-body">
+                        <div id="hud-exp-fill" class="bar-inner exp-fill"></div>
+                        <div id="hud-exp-text" class="exp-overlay-grid">0%</div>
+                    </div>
+                </div>
+            
+                <div class="hud-stats-row">
+                    <div id="hud-mod-body" class="hud-stat-box">BOD +0</div>
+                    <div id="hud-mod-mind" class="hud-stat-box">MIN +0</div>
+                    <div id="hud-mod-spirit" class="hud-stat-box">SPI +0</div>
+                </div>
+            </div>
 
     <!--===============================================================
         --- A. WORLD CLOCK --------------------------------------------
@@ -248,20 +270,7 @@
 
 
             
-            <!--===========================
-            ---- 3. LOGIN TAB ----
-            ============================-->
-            <div id="tab-login" class="open-tab hide-default">
-                <div class="login-box">
-                    <div class="brand-logo" style="text-align: center; margin-bottom: 10px; font-size: 1.8rem;">WORLD VTT</div>
-                    <h2>Sign In</h2>
-                    <input type="email" id="email-input" class="form-input" placeholder="Email">
-                    <input type="password" id="password-input" class="form-input" placeholder="Password">
-                    <button onclick="loginUser()" class="btn-primary w-100">Access Realm</button>
-                    <div style="margin: 20px 0; text-align: center; opacity: 0.3;">OR</div>
-                    <button onclick="registerUser()" class="btn-secondary w-100">Create New Account</button>
-                </div>
-            </div>
+            
 
             
             
