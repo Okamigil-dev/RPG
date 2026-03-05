@@ -37,7 +37,7 @@
     <div id="top-nav" class="top-nav">
         <div class="nav-left">
             <div class="brand-logo">WORLD VTT</div>
-            <div id="main-nav-tabs" class="nav-tabs hide-default">
+            <div id="main-nav-tabs" class="nav-tabs">
                 <button onclick="openTab('tab-character')" class="tab-btn">
                     <i class="fa-regular fa-id-card"></i> Character
                 </button>
@@ -47,7 +47,6 @@
                 <button onclick="openTab('tab-skills')" class="tab-btn">
                     <i class="fa-solid fa-khanda"></i> Skills
                 </button>
-                <!-- plan to change how this works to use class gm-only instead of hide-default -->
                 <button onclick="openTab('tab-control-panel')" id="nav-control-panel" class="tab-btn hide-default"> 
                     <i class="fa-solid fa-gear"></i> Master
                 </button>
@@ -58,7 +57,7 @@
                 <div id="user-display-name" class="user-name">Guest</div>
                 <div id="user-role-label" class="user-role">Offline</div>
             </div>
-            <button onclick="logoutUser()" id="logout-btn" class="btn-danger hide-default">Logout</button>
+            <button onclick="logoutUser()" id="logout-btn" class="btn-danger">Logout</button>
         </div>
     </div>
 
@@ -66,7 +65,7 @@
     --- Main Section C. Main Body ---------------------------------
     ===============================================================--->
 
-    <div class="app-body">
+    <div class="app-body hide-default">
 
     <!--===============================================================
         --- Section 2. Side Bar ---------------------------------------
@@ -123,7 +122,7 @@
                     
                     <div id="time-display" class="time-text">09:00:17</div>
                     
-                    <div id="master-quick-controls" class="m-m">
+                    <div id="master-quick-controls" class="m-m hide-default">
                         
                         <div class="clock-control">
                             
@@ -606,7 +605,7 @@
                         <!-------------------------
                         --- 2. User Management --- 
                         -------------------------->
-                        <div id="sub-accounts" class="control-sub-content hide-default">
+                        <div id="sub-accounts" class="control-sub-content admin-only">
                             <div class="panel-card">
                                 <div class="flex-row" style="justify-content: space-between; margin-bottom: 20px;">
                                     <h3>Account Permissions</h3>

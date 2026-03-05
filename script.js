@@ -251,7 +251,7 @@ auth.onAuthStateChanged((user) => {
         // Hide mothers (children like logout-btn inherit this)
         topNav.classList.add('hide-default');
         sidebar.classList.add('hide-default');
-        appBody.classList.add('hide-default'); // Cleaned up
+        appBody.classList.add('hide-default');
         
         // Prepare login screen
         loginTab.classList.add('login-splash-mode');
