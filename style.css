@@ -125,13 +125,6 @@
         .gap-el { gap: 30px; }
 
     /*  ==========================================================================
-        --- D. Empty Javascript Classes ----------------------------------------------------
-        ========================================================================== */
-        .open-tab { display:block; /* Default Display*/ }       /* Class for tabs for opentab function to have a target */ 
-        .master-only { display:block; /* Default Display*/ }    /* Target Class */ 
-        .admin-only { display:block; /* Default Display*/ }     /* Target Class */ 
-
-    /*  ==========================================================================
         --- D. Animations --------------------------------------------------------
         ========================================================================== */
         /* A simple fade-in and slight upward movement for the login form to give it a more dynamic entrance */

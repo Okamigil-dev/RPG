@@ -186,33 +186,6 @@ function logoutUser() {
     auth.signOut().then(() => location.reload()); 
 }
 
-//not in use yet
-function applyPermissions() {
-    const role = window.currentUserRole;
-
-    // Grab everything that has a restriction
-    const restrictedElements = document.querySelectorAll('.master-only, .admin-only');
-
-    restrictedElements.forEach(el => {
-        // Default state: Hide it first
-        el.classList.add('hide-default');
-
-        if (role === 'Admin') {
-            // Admins see everything (GM and Admin stuff)
-            el.classList.remove('hide-default');
-        } 
-        else if (role === 'Master' && el.classList.contains('master-only')) {
-            // Masters ONLY see GM stuff
-            el.classList.remove('hide-default');
-        }
-        // Players (or anyone else) stay hidden
-    });
-}
-
-
-
-
-
 auth.onAuthStateChanged((user) => {
     const topNav = document.getElementById('top-nav');
     const appBody = document.querySelector('.app-body');
@@ -281,23 +254,22 @@ auth.onAuthStateChanged((user) => {
    ========================================================================== */
 
 function openTab(tabId) {
+    const allTabs = document.querySelectorAll('.hide-default');
+    
     const target = document.getElementById(tabId);
-    if (!target) return;
-    
-    target.classList.remove('hide-default');
-    
+    if (target) {
+        target.classList.remove('hide-default');
+    }
 
-    const gmonly = document.getElementsByClassName(gm-only) ; 
+    if (tabId !== 'tab-login') {
+        localStorage.setItem('activeMainTab', tabId);
+    }
     
     if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
         loadInstanceList();
         openMasterPanel();
         const savedSubTab = localStorage.getItem('activeMasterSubTab') || 'sub-instances';
         openControlSubTab(null, savedSubTab); 
-    }
-    
-    if (tabId !== 'tab-login') {
-        localStorage.setItem('activeMainTab', tabId);
     }
 }
 
