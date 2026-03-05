@@ -180,7 +180,18 @@ function loginUser() {
 }
 
 function logoutUser() { 
-    auth.signOut(); 
+    // 1. Check if the "Stop Button" exists
+    if (characterListener && typeof characterListener === 'function') {
+        console.log("Stopping active character listener...");
+        characterListener(); // This kills the live stream
+        characterListener = null; // Clears the variable
+    }
+
+    // 2. Now sign out safely
+    auth.signOut().then(() => {
+        console.log("User signed out successfully.");
+        // No location.reload() needed anymore!
+    }).catch(err => console.error("Logout Error:", err));
 }
 
 auth.onAuthStateChanged((user) => {
