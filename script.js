@@ -254,7 +254,7 @@ auth.onAuthStateChanged((user) => {
    ========================================================================== */
 
 function openTab(tabId) {
-    document.querySelectorAll('.openTab').forEach(tab => {
+    document.querySelectorAll('.open-tab').forEach(tab => {
         tab.classList.add('hide-default');
     });
 
