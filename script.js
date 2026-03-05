@@ -207,6 +207,10 @@ auth.onAuthStateChanged((user) => {
                 const data = doc.data();
                 window.currentUserRole = data.role || 'Player'; //
                 
+                // Set UI labels
+                document.getElementById('user-display-name').innerText = user.email.split('@')[0];
+                document.getElementById('user-role-label').innerText = data.role;
+                
                 // --- LEVEL 1: MASTER & ADMIN (Common GM Tools) ---
                 const isMasterOrAbove = (data.role === 'Master' || data.role === 'Admin'); //
                 if (isMasterOrAbove) {
