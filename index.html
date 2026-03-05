@@ -109,153 +109,7 @@
                 </div>
             </div>
 
-        <!--===============================================================
-            --- 1-B. World Clock ------------------------------------------
-            ===============================================================--->
-            <div class="sidebar-panel">
-                <div id="game-ui" class="game-ui">
-                    <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
-                    <div id="time-display" class="time-text">09:00:17</div>
-                    <div id="master-quick-controls" class="m-m hide-default">
-                        <div class="clock-control">
-                            <button onclick="toggleTime()" id="sidebar-play-btn" class="clock-btn">
-                                <i class="fa-solid fa-play"></i>
-                            </button>
-                            <span id="speed-label" class="clock-speed">1x</span>
-                            <button onclick="setSpeed(0.2)" class="clock-btn icon">
-                                <svg viewBox="0 0 100 100">
-                                    <g>
-                                        <polygon points="81.89,64.95 79.76,57.97 58,79.73 64.98,81.86"/>
-                                        <polygon points="18.11,64.95 35.01,81.86 42,79.73 20.24,57.97"/>
-                                        <polygon points="86.5,24.79 85.73,14.24 75.18,13.47 28.49,60.15 39.82,71.48"/>
-                                        <polygon points="24.82,13.47 14.27,14.24 13.5,24.79 35.64,46.93 46.96,35.61"/>
-                                        
-                                            <rect x="57.22" y="54.23" transform="matrix(0.7071 0.7071 -0.7071 0.7071 62.2496 -25.8024)" width="10.11" height="16.01"/>
-                                        <path d="M83.61,86.54c0.67,0,1.71-0.47,2.1-0.86c0.47-0.47,0.89-1.61,0.86-2.11l-8.61-8.61l-2.97,2.97
-                                            l8.61,8.61C83.6,86.53,83.61,86.54,83.61,86.54z"/>
-                                        <path d="M16.39,86.54c0.01,0,0.01,0,0.02,0l8.61-8.61l-2.98-2.97l-8.61,8.61c-0.02,0.5,0.4,1.64,0.86,2.11
-                                            C14.68,86.06,15.72,86.54,16.39,86.54z"/>
-                                    </g>
-                                </svg>
-                            </button>
-                            <button onclick="setSpeed(1)" class="clock-btn">1x</button>
-                            <button onclick="setSpeed(10)" class="clock-btn">10x</button>
-                            <button onclick="setSpeed(60)" class="clock-btn">1h/min</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-        <!--===============================================================
-            --- Section 1-C. Chat Log -------------------------------------
-            ===============================================================--->
-            <div class="sidebar-panel flex-grow">
-
-                <div id="chat-log" class="chat-tray">
-                    
-                    <div id="dice-log" class="dice-log">
-                        <div class="dice-log-placeholder">No messages yet</div>
-                    </div>
-                
-                </div>
-                <div>
-
-                    <div class="chat-input-area flex-row gap-s">
-                        <input type="text" id="chat-msg-input" class="form-input flex-grow" autocomplete="off" placeholder="Type a message..." onkeypress="handleChatEnter(event)">
-                        <button onclick="sendChatMessage()" class="btn-primary">
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
-                    </div>
-
-                </div>
-            </div>   
-
-        <!--===============================================================
-            --- Section 1-D. Dice Grid ------------------------------------
-            ===============================================================--->
-            <div class="sidebar-panel">
-                <div class="dice-grid">
-                    
-                    <button onclick="rollDice(4, this)" class="dice-btn">
-                        <svg viewBox="0 0 100 100">
-                            <g>
-                                <polygon points="48.93,12.73 5.45,65.47 58.19,90.42"/>
-                                <polygon points="61.12,89.69 94.81,56 52,13.19"/>
-                            </g>
-                        </svg>
-                        <span class="roll-number"></span>
-                    </button>
-
-                    <button onclick="rollDice(6, this)" class="dice-btn">
-                        <svg viewBox="0 0 100 100">
-                            <g>
-                                <polygon points="89.14,28.84 51.5,45.48 51.5,91.5 89.14,72.54"/>
-                                <polygon points="12.87,26.45 50,42.86 87.13,26.45 50,7.75"/>
-                                <polygon points="48.5,45.48 10.86,28.84 10.86,72.54 48.5,91.5"/>
-                            </g>
-                        </svg>
-                        <span class="roll-number"></span>
-                    </button>
-                    
-                    <button onclick="rollDice(8, this)" class="dice-btn">
-                        <svg viewBox="0 0 100 100">
-                            <g>
-                                <polygon points="51.5,62.16 51.5,91.19 88.23,52.75"/>
-                                <polygon points="48.5,59.07 48.5,8.81 9.92,49.18"/>
-                                <polygon points="48.5,62.16 11.78,52.75 48.5,91.19"/>
-                                <polygon points="51.5,59.07 90.08,49.18 51.5,8.81"/>
-                            </g>
-                        </svg>
-                        <span class="roll-number"></span>
-                    </button>
-
-                    <button onclick="rollDice(10, this)" class="dice-btn">
-                        <svg viewBox="0 0 100 100">
-                            <g>
-                                <polygon points="49.82,68.93 30.03,51.6 11.59,54.67 49.82,90.46"/>
-                                <polygon points="52.83,90.47 91.07,54.68 72.62,51.6 52.83,68.93"/>
-                                <polygon points="29.44,48.65 46.66,9.87 6.56,49.96 8.83,52.09"/>
-                                <polygon points="73.21,48.65 93.83,52.09 96.11,49.96 55.98,9.83"/>
-                                <polygon points="32.3,49.6 51.32,66.27 70.35,49.6 51.32,6.75"/>
-                            </g>
-                        </svg>
-                        <span class="roll-number"></span>
-                    </button>
-                    
-                    <button onclick="rollDice(12, this)" class="dice-btn">
-                        <svg viewBox="0 0 100 100">
-                            <g>
-                                <polygon points="86.35,60.77 86.35,38.24 70.12,45.23 62.95,67.28 72.91,79.28"/>
-                                <polygon points="50.43,9.74 50.42,28.85 69.09,42.41 85.54,35.32 72.06,16.77"/>
-                                <polygon points="67.14,44.69 48.92,31.46 30.72,44.69 37.67,66.1 60.18,66.1"/>
-                                <polygon points="70.42,80.98 60.56,69.1 37.29,69.1 27.43,80.98 48.93,87.96"/>
-                                <polygon points="24.95,79.28 34.9,67.28 27.74,45.23 11.5,38.24 11.5,60.77"/>
-                                <polygon points="28.76,42.41 47.42,28.85 47.43,9.74 25.79,16.77 12.31,35.32"/>
-                            </g>
-                        </svg>
-                        <span class="roll-number"></span>
-                    </button>
-                    
-                    <button onclick="rollDice(20, this)" class="dice-btn">
-                        <svg viewBox="0 0 100 100">
-                            <g>
-                                <polygon points="53.31,25.39 73.36,60.95 87.19,28.5"/>
-                                <polygon points="51.83,21.58 81.72,24.32 51.83,7.07"/>
-                                <polygon points="12.81,28.5 26.64,60.96 46.69,25.39"/>
-                                <polygon points="50,26.98 29.54,63.26 70.45,63.25"/>
-                                <polygon points="48.17,21.58 48.17,7.07 18.28,24.32"/>
-                                <polygon points="24.04,64.2 11.97,35.87 11.97,70.02"/>
-                                <polygon points="25.86,67.39 14.06,73.08 42.98,89.78"/>
-                                <polygon points="75.95,64.2 88.03,70.02 88.03,35.87"/>
-                                <polygon points="74.13,67.38 57.01,89.78 85.95,73.08"/>
-                                <polygon points="69.88,66.92 30.11,66.92 50,92.93"/>
-                            </g>
-                        </svg>
-                        <span class="roll-number"></span>
-                    </button>
-
-                </div>
-            </div>
+        
         </div>
 
     <!--===============================================================
@@ -876,7 +730,155 @@
             
         </div>
     
-        <div id=" sidebar-right" class="sidebar">
+        <div id="sidebar-right" class="sidebar">
+
+        <!--===============================================================
+            --- 1-B. World Clock ------------------------------------------
+            ===============================================================--->
+            <div class="sidebar-panel">
+                <div id="game-ui" class="game-ui">
+                    <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
+                    <div id="time-display" class="time-text">09:00:17</div>
+                    <div id="master-quick-controls" class="m-m hide-default">
+                        <div class="clock-control">
+                            <button onclick="toggleTime()" id="sidebar-play-btn" class="clock-btn">
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                            <span id="speed-label" class="clock-speed">1x</span>
+                            <button onclick="setSpeed(0.2)" class="clock-btn icon">
+                                <svg viewBox="0 0 100 100">
+                                    <g>
+                                        <polygon points="81.89,64.95 79.76,57.97 58,79.73 64.98,81.86"/>
+                                        <polygon points="18.11,64.95 35.01,81.86 42,79.73 20.24,57.97"/>
+                                        <polygon points="86.5,24.79 85.73,14.24 75.18,13.47 28.49,60.15 39.82,71.48"/>
+                                        <polygon points="24.82,13.47 14.27,14.24 13.5,24.79 35.64,46.93 46.96,35.61"/>
+                                        
+                                            <rect x="57.22" y="54.23" transform="matrix(0.7071 0.7071 -0.7071 0.7071 62.2496 -25.8024)" width="10.11" height="16.01"/>
+                                        <path d="M83.61,86.54c0.67,0,1.71-0.47,2.1-0.86c0.47-0.47,0.89-1.61,0.86-2.11l-8.61-8.61l-2.97,2.97
+                                            l8.61,8.61C83.6,86.53,83.61,86.54,83.61,86.54z"/>
+                                        <path d="M16.39,86.54c0.01,0,0.01,0,0.02,0l8.61-8.61l-2.98-2.97l-8.61,8.61c-0.02,0.5,0.4,1.64,0.86,2.11
+                                            C14.68,86.06,15.72,86.54,16.39,86.54z"/>
+                                    </g>
+                                </svg>
+                            </button>
+                            <button onclick="setSpeed(1)" class="clock-btn">1x</button>
+                            <button onclick="setSpeed(10)" class="clock-btn">10x</button>
+                            <button onclick="setSpeed(60)" class="clock-btn">1h/min</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        <!--===============================================================
+            --- Section 1-C. Chat Log -------------------------------------
+            ===============================================================--->
+            <div class="sidebar-panel flex-grow">
+
+                <div id="chat-log" class="chat-tray">
+                    
+                    <div id="dice-log" class="dice-log">
+                        <div class="dice-log-placeholder">No messages yet</div>
+                    </div>
+                
+                </div>
+                <div>
+
+                    <div class="chat-input-area flex-row gap-s">
+                        <input type="text" id="chat-msg-input" class="form-input flex-grow" autocomplete="off" placeholder="Type a message..." onkeypress="handleChatEnter(event)">
+                        <button onclick="sendChatMessage()" class="btn-primary">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+
+                </div>
+            </div>   
+
+        <!--===============================================================
+            --- Section 1-D. Dice Grid ------------------------------------
+            ===============================================================--->
+            <div class="sidebar-panel">
+                <div class="dice-grid">
+                    
+                    <button onclick="rollDice(4, this)" class="dice-btn">
+                        <svg viewBox="0 0 100 100">
+                            <g>
+                                <polygon points="48.93,12.73 5.45,65.47 58.19,90.42"/>
+                                <polygon points="61.12,89.69 94.81,56 52,13.19"/>
+                            </g>
+                        </svg>
+                        <span class="roll-number"></span>
+                    </button>
+
+                    <button onclick="rollDice(6, this)" class="dice-btn">
+                        <svg viewBox="0 0 100 100">
+                            <g>
+                                <polygon points="89.14,28.84 51.5,45.48 51.5,91.5 89.14,72.54"/>
+                                <polygon points="12.87,26.45 50,42.86 87.13,26.45 50,7.75"/>
+                                <polygon points="48.5,45.48 10.86,28.84 10.86,72.54 48.5,91.5"/>
+                            </g>
+                        </svg>
+                        <span class="roll-number"></span>
+                    </button>
+                    
+                    <button onclick="rollDice(8, this)" class="dice-btn">
+                        <svg viewBox="0 0 100 100">
+                            <g>
+                                <polygon points="51.5,62.16 51.5,91.19 88.23,52.75"/>
+                                <polygon points="48.5,59.07 48.5,8.81 9.92,49.18"/>
+                                <polygon points="48.5,62.16 11.78,52.75 48.5,91.19"/>
+                                <polygon points="51.5,59.07 90.08,49.18 51.5,8.81"/>
+                            </g>
+                        </svg>
+                        <span class="roll-number"></span>
+                    </button>
+
+                    <button onclick="rollDice(10, this)" class="dice-btn">
+                        <svg viewBox="0 0 100 100">
+                            <g>
+                                <polygon points="49.82,68.93 30.03,51.6 11.59,54.67 49.82,90.46"/>
+                                <polygon points="52.83,90.47 91.07,54.68 72.62,51.6 52.83,68.93"/>
+                                <polygon points="29.44,48.65 46.66,9.87 6.56,49.96 8.83,52.09"/>
+                                <polygon points="73.21,48.65 93.83,52.09 96.11,49.96 55.98,9.83"/>
+                                <polygon points="32.3,49.6 51.32,66.27 70.35,49.6 51.32,6.75"/>
+                            </g>
+                        </svg>
+                        <span class="roll-number"></span>
+                    </button>
+                    
+                    <button onclick="rollDice(12, this)" class="dice-btn">
+                        <svg viewBox="0 0 100 100">
+                            <g>
+                                <polygon points="86.35,60.77 86.35,38.24 70.12,45.23 62.95,67.28 72.91,79.28"/>
+                                <polygon points="50.43,9.74 50.42,28.85 69.09,42.41 85.54,35.32 72.06,16.77"/>
+                                <polygon points="67.14,44.69 48.92,31.46 30.72,44.69 37.67,66.1 60.18,66.1"/>
+                                <polygon points="70.42,80.98 60.56,69.1 37.29,69.1 27.43,80.98 48.93,87.96"/>
+                                <polygon points="24.95,79.28 34.9,67.28 27.74,45.23 11.5,38.24 11.5,60.77"/>
+                                <polygon points="28.76,42.41 47.42,28.85 47.43,9.74 25.79,16.77 12.31,35.32"/>
+                            </g>
+                        </svg>
+                        <span class="roll-number"></span>
+                    </button>
+                    
+                    <button onclick="rollDice(20, this)" class="dice-btn">
+                        <svg viewBox="0 0 100 100">
+                            <g>
+                                <polygon points="53.31,25.39 73.36,60.95 87.19,28.5"/>
+                                <polygon points="51.83,21.58 81.72,24.32 51.83,7.07"/>
+                                <polygon points="12.81,28.5 26.64,60.96 46.69,25.39"/>
+                                <polygon points="50,26.98 29.54,63.26 70.45,63.25"/>
+                                <polygon points="48.17,21.58 48.17,7.07 18.28,24.32"/>
+                                <polygon points="24.04,64.2 11.97,35.87 11.97,70.02"/>
+                                <polygon points="25.86,67.39 14.06,73.08 42.98,89.78"/>
+                                <polygon points="75.95,64.2 88.03,70.02 88.03,35.87"/>
+                                <polygon points="74.13,67.38 57.01,89.78 85.95,73.08"/>
+                                <polygon points="69.88,66.92 30.11,66.92 50,92.93"/>
+                            </g>
+                        </svg>
+                        <span class="roll-number"></span>
+                    </button>
+
+                </div>
+            </div>
 
         </div>
 
