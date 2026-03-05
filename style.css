@@ -99,21 +99,26 @@
 
         .text-center { text-align: center; }
         .text-right { text-align: right; }
-        .btn-full { width: 100%; }
-        .w-100 { width: 100%; }
 
-        /* Margin Global Functions */
-        
+        /* Display Global Classes */
+        .flex { display: flex; }
+        .grid { display: grid; }
+
+        /* Sizing Global Classes */
+        .w-100 { width: 100%; }
+        .h-100 { height: 100%; }
+
+        /* Border Global Classes */
+        .border-s { border: 1px solid var(--color-border); }
+        .border-m { border: 3px solid var(--color-border); }
+        .border-l { border: 5px solid var(--color-border); }
+
+        /* Margin Global Classes */
         .m-s { margin: 5px; }
         .m-m { margin: 10px; }
         .m-l { margin: 20px; }
-
         
-        /* .mt-m { margin-top: 10px; }
-        .mt-l { margin-top: 20px; }
-        .mb-m { margin-bottom: 15px; } */ 
-        
-        /* Gap Global Functions */
+        /* Gap Global Classes */
         .gap-s { gap: 5px; }
         .gap-m { gap: 10px; }
         .gap-l { gap:20px; }
@@ -1251,6 +1256,7 @@ select.form-input {
 }
 
 .checklist-item {
+    display: flex;
     padding: 4px 0;
     border-bottom: 1px solid #27272a;
     display: flex;
@@ -1299,11 +1305,3 @@ select.form-input {
 
 .login-box h2 { margin-bottom: 30px; text-align: center; color: #00ff88; letter-spacing: 1px; font-size: 1.5rem; }
 .login-box .form-input { margin-bottom: 15px; background: #09090b; }
-
-
-
-/* ==========================================================================
-   --- 16. TAB LOGIC ---
-   ========================================================================== */
-.tab-content { display: none; }
-.tab-content:not(.hide-default) { display: block !important; }

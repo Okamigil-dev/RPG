@@ -254,15 +254,10 @@ auth.onAuthStateChanged((user) => {
    ========================================================================== */
 
 function openTab(tabId) {
-    const allTabs = document.querySelectorAll('.tab-content');
-    allTabs.forEach(tab => {
-        tab.style.display = 'none';
-        tab.classList.add('hide-default');
-    });
+    const allTabs = document.querySelectorAll('.hide-default');
     
     const target = document.getElementById(tabId);
     if (target) {
-        target.style.display = 'block';
         target.classList.remove('hide-default');
     }
 
@@ -1199,10 +1194,10 @@ function openMasterPanel() {
     const accountBtn = document.querySelector('[onclick*="sub-accounts"]');
     if (accountBtn) {
         if (role === 'Admin') {
-            accountBtn.style.display = 'block';
+            accountBtn.classList.remove('hide-default');
             loadUserList(); 
         } else {
-            accountBtn.style.display = 'none';
+            accountBtn.classList.add('hide-default');
             const groupsBtn = document.querySelector('[onclick*="sub-instances"]');
             if (groupsBtn) groupsBtn.click(); 
         }
@@ -1404,7 +1399,7 @@ function filterCharacterTable() {
     const rows = document.getElementById('admin-char-table').getElementsByTagName('tr');
     for (let i = 1; i < rows.length; i++) {
         const text = rows[i].textContent.toLowerCase();
-        rows[i].style.display = text.includes(filter) ? "" : "none";
+        rows[i].classList.toggle('hide-default', !text.includes(filter));
     }
 }
 
@@ -1725,7 +1720,7 @@ function filterTraitChecklist() {
     const items = document.querySelectorAll('.checklist-item');
     items.forEach(div => {
         const text = div.innerText.toLowerCase();
-        div.style.display = text.includes(filter) ? "flex" : "none";
+        item.classList.toggle('hide-default', !text.includes(filter));
     });
 }
 
