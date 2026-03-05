@@ -189,64 +189,74 @@ function logoutUser() {
 auth.onAuthStateChanged((user) => {
     const topNav = document.getElementById('top-nav');
     const appBody = document.querySelector('.app-body');
-    const mainContent = document.getElementById('tab-login');
+    const loginTab = document.getElementById('tab-login'); // renamed for clarity
     const sidebar = document.getElementById('sidebar');
 
     if (user) {
-        // --- LOGGED IN ---
-        const savedTab = localStorage.getItem('activeMainTab');
-        if (!savedTab || savedTab === 'tab-login') {
-            openTab('tab-character');
-        } else {
-            openTab(savedTab);
-        }
-        
+        // 1. Reveal the "Mother" containers first
         topNav.classList.remove('hide-default');
         appBody.classList.remove('hide-default');
         sidebar.classList.remove('hide-default'); 
 
-        mainContent.style.width = "";
-        mainContent.style.display = "";
-        mainContent.style.justifyContent = "";
-        mainContent.style.alignItems = "";
-        mainContent.classList.remove('login-splash-mode');
+        // 2. Clear login splash effects
+        loginTab.classList.remove('login-splash-mode');
         
-        document.getElementById('main-nav-tabs').classList.remove('hide-default');
-        document.getElementById('logout-btn').classList.remove('hide-default');
-        document.getElementById('game-ui').classList.remove('hide-default');
-        document.getElementById('user-display-name').innerText = user.email.split('@')[0];
-
+        // 3. Get Role from Firestore BEFORE opening any tabs
         firestore.collection('users').doc(user.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
-                window.currentUserRole = data.role || 'Player';
+                window.currentUserRole = data.role || 'Player'; //
                 
-                const isMaster = (data.role === 'Master' || data.role === 'Admin');
-                if (isMaster) {
+                // --- LEVEL 1: MASTER & ADMIN (Common GM Tools) ---
+                const isMasterOrAbove = (data.role === 'Master' || data.role === 'Admin'); //
+                if (isMasterOrAbove) {
                     document.getElementById('nav-control-panel').classList.remove('hide-default');
                     document.getElementById('master-quick-controls').classList.remove('hide-default');
                 }
 
-                document.getElementById('user-role-label').innerText = data.role;
+                // --- LEVEL 2: ADMIN ONLY (Sensitive Tools) ---
+                if (data.role === 'Admin') {
+                    // You can now target specific admin-only elements here
+                    const adminElements = document.querySelectorAll('.admin-only'); //
+                    adminElements.forEach(el => el.classList.remove('hide-default')); //
+                }
+                
+                // 4. NOW open the tab. window.currentUserRole is finally ready!
+                const savedTab = localStorage.getItem('activeMainTab');
+                if (!savedTab || savedTab === 'tab-login') {
+                    openTab('tab-character');
+                } else {
+                    openTab(savedTab);
+                }
+
+                if (data.role === 'Admin') {
+                    // You can now target specific admin-only elements here
+                    const adminElements = document.querySelectorAll('.admin-only'); //
+                    adminElements.forEach(el => el.classList.remove('hide-default')); //
+                }
+                // 5. Start listeners
                 initClockListener();
                 initDiceLogListener();
-                
                 if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
             }
         });
+
         syncRegistryToDropdowns();
         loadUserCharacters();
+
     } else {
         // --- LOGGED OUT ---
         window.currentUserRole = null;
+        
+        // Hide mothers (children like logout-btn inherit this)
         topNav.classList.add('hide-default');
         sidebar.classList.add('hide-default');
-        appBody.classList.remove('hide-default');
-
-        mainContent.classList.remove('hide-default'); 
-        mainContent.classList.add('login-splash-mode'); 
+        appBody.classList.add('hide-default'); // Cleaned up
         
-        document.getElementById('active-char-hud').classList.add('hide-default');
+        // Prepare login screen
+        loginTab.classList.add('login-splash-mode');
+        loginTab.classList.remove('hide-default'); 
+        
         openTab('tab-login');
     }
 });
