@@ -189,7 +189,7 @@ function logoutUser() {
 auth.onAuthStateChanged((user) => {
     const topNav = document.getElementById('top-nav');
     const appBody = document.querySelector('.app-body');
-    const mainContent = document.getElementById('main-content');
+    const mainContent = document.getElementById('login-tab');
     const sidebar = document.getElementById('sidebar');
 
     if (user) {
@@ -205,10 +205,10 @@ auth.onAuthStateChanged((user) => {
         appBody.classList.remove('hide-default');
         sidebar.classList.remove('hide-default'); 
 
-        mainContent.style.width = "";
-        mainContent.style.display = "";
-        mainContent.style.justifyContent = "";
-        mainContent.style.alignItems = "";
+        // mainContent.style.width = "";
+        // mainContent.style.display = "";
+        // mainContent.style.justifyContent = "";
+        // mainContent.style.alignItems = "";
         mainContent.classList.remove('login-splash-mode');
         
         document.getElementById('main-nav-tabs').classList.remove('hide-default');

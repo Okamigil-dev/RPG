@@ -1290,6 +1290,9 @@ select.form-input {
 /* ==========================================================================
    --- 15. LOGIN SPLASH SCREEN ---
    ========================================================================== */
+
+   .login-mode {display:block;}
+
 .login-splash-mode {
     display: flex !important; justify-content: center; align-items: center;
     height: 100vh; width: 100vw; padding: 0 !important;
