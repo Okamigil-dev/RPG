@@ -14,9 +14,24 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
+<!--===============================================================
+    --- Main Section A. Login Tab ---------------------------------
+    ===============================================================--->
+
+    <div id="tab-login" class="open-tab hide-default">
+        <div class="login-box">
+            <div class="brand-logo" style="text-align: center; margin-bottom: 10px; font-size: 1.8rem;">WORLD VTT</div>
+            <h2>Sign In</h2>
+            <input type="email" id="email-input" class="form-input" placeholder="Email">
+            <input type="password" id="password-input" class="form-input" placeholder="Password">
+            <button onclick="loginUser()" class="btn-primary w-100">Access Realm</button>
+            <div style="margin: 20px 0; text-align: center; opacity: 0.3;">OR</div>
+            <button onclick="registerUser()" class="btn-secondary w-100">Create New Account</button>
+        </div>
+    </div>
 
 <!--===============================================================
-    --- Main Section A. Top Bar -----------------------------------
+    --- Main Section B. Top Bar -----------------------------------
     ===============================================================--->
     <div id="top-nav" class="top-nav">
         <div class="nav-left">
@@ -47,30 +62,15 @@
     </div>
 
 <!--===============================================================
-    --- Main Section B. Main Body ---------------------------------
+    --- Main Section C. Main Body ---------------------------------
     ===============================================================--->
+
     <div class="app-body">
-
-    <!--===============================================================
-        --- Section 1. Login Tab --------------------------------------
-        ===============================================================--->
-
-        <div id="tab-login" class="open-tab hide-default">
-            <div class="login-box">
-                <div class="brand-logo" style="text-align: center; margin-bottom: 10px; font-size: 1.8rem;">WORLD VTT</div>
-                <h2>Sign In</h2>
-                <input type="email" id="email-input" class="form-input" placeholder="Email">
-                <input type="password" id="password-input" class="form-input" placeholder="Password">
-                <button onclick="loginUser()" class="btn-primary w-100">Access Realm</button>
-                <div style="margin: 20px 0; text-align: center; opacity: 0.3;">OR</div>
-                <button onclick="registerUser()" class="btn-secondary w-100">Create New Account</button>
-            </div>
-        </div>
 
     <!--===============================================================
         --- Section 2. Side Bar ---------------------------------------
         ===============================================================--->        
-            <div id="sidebar" class="sidebar">
+        <div id="sidebar" class="sidebar">
 
         <!--===============================================================
             --- Section 2-a. Active Char ----------------------------------
@@ -110,15 +110,16 @@
                 </div>
             </div>
 
-    <!--===============================================================
-        --- A. WORLD CLOCK --------------------------------------------
-        ===============================================================--->
-            
+        <!--===============================================================
+            --- 2-b. World Clock ------------------------------------------
+            ===============================================================--->
+                
             <div class="sidebar-panel">
 
                 <div id="game-ui" class="game-ui">
                 
                     <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
+                    
                     <div id="time-display" class="time-text">09:00:17</div>
                     
                     <div id="master-quick-controls" class="m-m">
@@ -130,6 +131,7 @@
                             </button>
 
                             <span id="speed-label" class="clock-speed">1x</span>
+
                             <button onclick="setSpeed(0.2)" class="clock-btn icon">
                                 <svg viewBox="0 0 100 100">
                                     <g>
@@ -146,8 +148,11 @@
                                     </g>
                                 </svg>
                             </button>
+
                             <button onclick="setSpeed(1)" class="clock-btn">1x</button>
+
                             <button onclick="setSpeed(10)" class="clock-btn">10x</button>
+                            
                             <button onclick="setSpeed(60)" class="clock-btn">1h/min</button>
                             
                         </div>
