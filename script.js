@@ -28,7 +28,7 @@ window.RPG_APP = {
     isLoaded: false,
     
     clock:{
-        totalCustomSeconds: 0,
+        totalSeconds: 0,
         speedMultiplier: 1,
         isRunning: false,
         lastRealTime: Date.now(),
@@ -447,7 +447,7 @@ function saveTimeState() {
         isRunning: isRunning,
         lastRealWorldSaveTime: Date.now()
     };
-    rtdb.ref(`instance_clocks/${RPG_APP.campaignId}`).update(timeData);
+    rtdb.ref(`instance_clocks/${window.RPG_APP.campaignId}`).update(timeData);
 }
 
 // --- TICK LOOP ---
@@ -475,6 +475,8 @@ function tick() {
                 saveTimeState(); 
                 syncCounter = 0;
             }
+
+
         }
         updateDisplay();
     }
@@ -844,83 +846,7 @@ function loadUserCharacters() {
 
 
 
-async function loadInstanceList() {
-    const listContainer = document.getElementById('admin-instance-list');
-    const user = auth.currentUser;
 
-    // Safety check: Stop if no container or no user
-    if (!listContainer || !user) return;
-
-    // We use the global role you set in the Auth function
-    const isAdmin = (window.RPG_APP.role === 'Admin');
-
-    try {
-        let snapshot;
-        
-        // LOGIC: Admins see all. Masters only see worlds where they are listed.
-        if (isAdmin) {
-            snapshot = await firestore.collection('instances').get();
-        } else {
-            snapshot = await firestore.collection('instances')
-                                .where('masters', 'array-contains', user.uid)
-                                .get();
-        }
-
-        if (snapshot.empty) {
-            listContainer.innerHTML = `<p class="text-center opacity-50 p-l" >No active instances found.</p>`;
-            return;
-        }
-
-        // Start building the table string
-        let html = `
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>World Name</th>
-                        <th>Join Code</th>
-                        <th>Masters</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const id = doc.id;
-            
-            // CHECK: Is this MY world, or am I just seeing it because I'm an Admin?
-            const isMyWorld = data.masters && data.masters.includes(user.uid);
-            
-            // CLEAN STYLING: Assign classes instead of inline styles
-            const rowClass = (isAdmin && !isMyWorld) ? 'class="admin-view-row"' : '';
-            const adminBadge = (isAdmin && !isMyWorld) ? '<span class="admin-badge">(ADMIN VIEW)</span>' : '';
-            
-            // SAFETY: Fix names like "Wizard's Tower" so they don't crash the delete button
-            const cleanName = (data.name || 'Unnamed World').replace(/'/g, "\\'");
-
-            html += `
-                <tr ${rowClass}>
-                    <td><strong>${data.name || 'Unnamed World'}</strong> ${adminBadge}</td>
-                    <td><code class="join-code-pill">${data.joinCode || 'N/A'}</code></td>
-                    <td>${data.masters ? data.masters.length : 1}</td>
-                    <td>
-                        <div class="instance-actions">
-                            <button class="btn-small" onclick="viewInstanceDetails('${id}')">Manage</button>
-                            <button class="btn-danger-small" onclick="deleteInstance('${id}', '${cleanName}')">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>`;
-        });
-
-        html += `</tbody></table>`;
-        listContainer.innerHTML = html;
-
-    } catch (error) { 
-        console.error("Instance Load Error:", error); 
-    }
-}
 
 
 
@@ -1348,42 +1274,84 @@ function syncSheetDashboardUI(char, totals, bonuses, raceName) {
    ========================================================================== */
 
 // // --- INSTANCE MANAGEMENT ---
-// async function loadInstanceList() {
-//     const listContainer = document.getElementById('admin-instance-list');
-//     const user = auth.currentUser;
-//     if (!listContainer || !user) return;
-//     const isAdmin = (window.currentUserRole === 'Admin');
 
-//     try {
-//         let snapshot;
-//         if (isAdmin) snapshot = await firestore.collection('instances').get();
-//         else snapshot = await firestore.collection('instances').where('masters', 'array-contains', user.uid).get();
+async function loadInstanceList() {
+    const listContainer = document.getElementById('admin-instance-list');
+    const user = auth.currentUser;
 
-//         if (snapshot.empty) {
-//             listContainer.innerHTML = `<p class="text-center" style="opacity: 0.5; padding: 20px;">No active instances found.</p>`;
-//             return;
-//         }
+    // Safety check: Stop if no container or no user
+    if (!listContainer || !user) return;
 
-//         let html = `<table class="admin-table"><thead><tr><th>World Name</th><th>Join Code</th><th>Masters</th><th>Actions</th></tr></thead><tbody>`;
-//         snapshot.forEach(doc => {
-//             const data = doc.data();
-//             const id = doc.id;
-//             const isMyWorld = data.masters && data.masters.includes(user.uid);
-//             const rowStyle = (isAdmin && !isMyWorld) ? 'class="admin-view-row"' : '';
+    // We use the global role you set in the Auth function
+    const isAdmin = (window.RPG_APP.role === 'Admin');
 
-//             html += `<tr ${rowStyle}>
-//                     <td><strong>${data.name || 'Unnamed World'}</strong> ${(isAdmin && !isMyWorld) ? '<span style="font-size:0.6rem; color:#facc15; margin-left:5px;">(ADMIN VIEW)</span>' : ''}</td>
-//                     <td><code class="join-code-pill">${data.joinCode || 'N/A'}</code></td>
-//                     <td>${data.masters ? data.masters.length : 1}</td>
-//                     <td><div class="flex-row" style="gap: 5px;">
-//                             <button class="btn-small" onclick="viewInstanceDetails('${id}')">Manage</button>
-//                             <button class="btn-danger-small" onclick="deleteInstance('${id}', '${data.name}')"><i class="fa-solid fa-trash"></i></button>
-//                         </div></td></tr>`;
-//         });
-//         html += `</tbody></table>`;
-//         listContainer.innerHTML = html;
-//     } catch (error) { console.error("Registry Error:", error); }
-// }
+    try {
+        let snapshot;
+        
+        // LOGIC: Admins see all. Masters only see worlds where they are listed.
+        if (isAdmin) {
+            snapshot = await firestore.collection('instances').get();
+        } else {
+            snapshot = await firestore.collection('instances')
+                                .where('masters', 'array-contains', user.uid)
+                                .get();
+        }
+
+        if (snapshot.empty) {
+            listContainer.innerHTML = `<p class="text-center opacity-50 p-l" >No active instances found.</p>`;
+            return;
+        }
+
+        // Start building the table string
+        let html = `
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>World Name</th>
+                        <th>Join Code</th>
+                        <th>Masters</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const id = doc.id;
+            
+            // CHECK: Is this MY world, or am I just seeing it because I'm an Admin?
+            const isMyWorld = data.masters && data.masters.includes(user.uid);
+            
+            // CLEAN STYLING: Assign classes instead of inline styles
+            const rowClass = (isAdmin && !isMyWorld) ? 'class="admin-view-row"' : '';
+            const adminBadge = (isAdmin && !isMyWorld) ? '<span class="admin-badge">(ADMIN VIEW)</span>' : '';
+            
+            // SAFETY: Fix names like "Wizard's Tower" so they don't crash the delete button
+            const cleanName = (data.name || 'Unnamed World').replace(/'/g, "\\'");
+
+            html += `
+                <tr ${rowClass}>
+                    <td><strong>${data.name || 'Unnamed World'}</strong> ${adminBadge}</td>
+                    <td><code class="join-code-pill">${data.joinCode || 'N/A'}</code></td>
+                    <td>${data.masters ? data.masters.length : 1}</td>
+                    <td>
+                        <div class="instance-actions">
+                            <button class="btn-small" onclick="viewInstanceDetails('${id}')">Manage</button>
+                            <button class="btn-danger-small" onclick="deleteInstance('${id}', '${cleanName}')">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+        });
+
+        html += `</tbody></table>`;
+        listContainer.innerHTML = html;
+
+    } catch (error) { 
+        console.error("Instance Load Error:", error); 
+    }
+}
 
 async function spawnInstance() {
     const instanceName = document.getElementById('new-instance-name').value.trim();
@@ -1404,43 +1372,6 @@ async function spawnInstance() {
 }
 
 
-// async function viewInstanceDetails(instanceId) {
-//     // 1. Admin Auto-Join (Ensures permissions are set)
-//     if (window.RPG_APP.role === 'Admin') {
-//         try {
-//             await firestore.collection('instances').doc(instanceId).update({
-//                 masters: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
-//             });
-//         } catch (e) { console.error("Auto-join failed:", e); }
-//     }
-
-//     // 2. Fetch the actual World Name
-//     let worldName = instanceId; // Fallback to ID if fetch fails
-//     try {
-//         const doc = await firestore.collection('instances').doc(instanceId).get();
-//         if (doc.exists) {
-//             worldName = doc.data().name || 'Unnamed World';
-//         }
-//     } catch (e) { console.error("Error fetching instance name:", e); }
-
-//     // 3. Update the "Context" Folder
-//     window.RPG_APP.campaignId = instanceId; 
-
-//     // 4. Re-sync the Listeners (Clock, etc.)
-//     initClockListener();
-
-//     // 5. Update UI with the real Name
-//     const label = document.getElementById('current-instance-name');
-//     if (label) label.innerText = worldName; 
-
-//     // 6. User Feedback
-//     if (typeof showToast === "function") {
-//         showToast(`Controls synced to: ${worldName}`);
-//     } else {
-//         alert(`Controls synced to: ${worldName}`);
-//     }
-// }
-
 // NEW: Helper to go back to the default state
 function deselectInstance() {
     window.RPG_APP.campaignId = "global";
@@ -1457,6 +1388,12 @@ function deselectInstance() {
 
 // UPDATED: viewInstanceDetails with Existence Check
 async function viewInstanceDetails(instanceId) {
+    // Runs the deselect
+    if (window.RPG_APP.campaignId === instanceId) {
+        deselectInstance();
+        return; // Stop here, don't re-load the same data
+    }
+
     // If someone calls this with null/empty, just deselect
     if (!instanceId || instanceId === 'global') {
         deselectInstance();

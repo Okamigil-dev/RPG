@@ -370,7 +370,7 @@
 
 
 
-                
+
         /*  ==========================================================================
             --- Section 2-C. Sidebar Left --------------------------------------------
             ==========================================================================   */
@@ -915,6 +915,8 @@
 
 /* Base style for all three "buttons" */
 .combat-item {
+    display: grid;
+    align-content: space-between;
     background: linear-gradient(145deg, #111113, #09090b);
     border: 1px solid #27272a;
     border-radius: 10px;
