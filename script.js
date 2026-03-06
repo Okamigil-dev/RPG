@@ -18,6 +18,15 @@ let speedMultiplier = 1;
 let isRunning = false;
 let lastRealTime = Date.now();
 
+
+window.RPG_APP = {
+    role: null,                     // replace currentUserRole
+    activeCharId: null,             // replace currentCharacterId 
+    campainId: "global",            // replace currentCampaignId
+    themeColor: '#3498db',         // new theme color for the future WIP
+    isLoaded: false 
+};
+
 let currentCampaignId = "global"; 
 let currentCharacterId = null; 
 let activeCharLevel = 1; 
@@ -1237,7 +1246,7 @@ async function loadInstanceList() {
             const data = doc.data();
             const id = doc.id;
             const isMyWorld = data.masters && data.masters.includes(user.uid);
-            const rowStyle = (isAdmin && !isMyWorld) ? 'style="background: #1e1e24;"' : '';
+            const rowStyle = (isAdmin && !isMyWorld) ? 'class="admin-view-row"' : '';
 
             html += `<tr ${rowStyle}>
                     <td><strong>${data.name || 'Unnamed World'}</strong> ${(isAdmin && !isMyWorld) ? '<span style="font-size:0.6rem; color:#facc15; margin-left:5px;">(ADMIN VIEW)</span>' : ''}</td>

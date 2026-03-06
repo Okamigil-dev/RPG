@@ -1024,6 +1024,31 @@
 
 .master-workspace { flex-grow: 1; overflow-y: auto; padding-right: 10px; }
 
+
+
+
+/* INSTANCE TABLE */
+.admin-view-row {
+    background-color: #1e1e24;
+}
+
+/* The small yellow badge for Admin view */
+.admin-badge {
+    font-size: 0.6rem;
+    color: #facc15;
+    margin-left: 5px;
+}
+
+/* The container for action buttons */
+.instance-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+/* INSTANCE TABLE */
+
+
+
 .admin-table {
     width: 100%; border-collapse: collapse; margin-top: 10px;
     background: #111; border-radius: 8px; overflow: hidden;
