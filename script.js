@@ -20,11 +20,29 @@ let lastRealTime = Date.now();
 
 
 window.RPG_APP = {
-    role: null,                     // replace currentUserRole
-    activeCharId: null,             // replace currentCharacterId 
-    campainId: "global",            // replace currentCampaignId
-    themeColor: '#3498db',         // new theme color for the future WIP
-    isLoaded: false 
+    // 1. Session & Auth Data
+    role: null,            // replaces currentUserRole
+    isLoaded: false,
+    
+    // 2. Navigation & Context
+    campaignId: "global",  // replaces currentCampaignId (fixed typo: campaign)
+    activeCharId: null,    // replaces currentCharacterId
+    
+    // 3. Live Character State
+    character: {
+        level: 1,          // replaces activeCharLevel
+        traits: [],        // replaces currentRaceTraits
+        attributes: {},    // replaces currentRaceAttributes
+        listener: null     // replaces characterListener
+    },
+    
+    // 4. Game Rules & Definitions
+    definitions: {
+        attributes: {}     // replaces attributeDefinitions
+    },
+    
+    // 5. Visuals
+    themeColor: '#8e630c'
 };
 
 let currentUserRole = null;
