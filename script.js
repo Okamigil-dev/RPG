@@ -33,6 +33,7 @@ window.RPG_APP = {
         notPaused: false,
         lastTickStamp: Date.now(),
         regenTimer: 0,
+        regenSaveCd: 0,
         saveDelay: 0      
     },
 
@@ -929,36 +930,47 @@ async function deleteCharacter(event, charId, name) {
 // Updated to use the new resolveAllStats engine
 async function applyPassiveRegen() {
     if (!currentCharacterId) return;
+
+    // 1. Fetch fresh data (Necessary to ensure we have the latest HP/MP from DB)
     const charSnap = await firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get();
     const charData = charSnap.data();
     
-    // 1. Resolve all dynamic bonuses (Speed, Regen, etc.)
+    // 2. Resolve bonuses and Max Stats (Your existing engine)
     const bonuses = await resolveAllStats(charData);
-
-    // 2. USE YOUR ENGINE: Get the true Max HP/MP for this character
     const maxStats = await getFinalMaxStats(charData); 
     const hpMax = maxStats.finalHP;
     const mpMax = maxStats.finalMP;
 
-    // 3. Calculate Regen amounts (Now using real numbers, not undefined/NaN)
+    // 3. Calculate Regen amounts
     const totalHPRegen = (hpMax * 0.00208333) + (bonuses.totals['hp_regen'] || 0);
     const totalMPRegen = (mpMax * 0.00208333) + (bonuses.totals['mp_regen'] || 0);
 
-    // 4. Fallback Logic: Always start with Database values to prevent "Zeroing" bugs
+    // 4. Determine new values
     let hpCur = charData.hpCurrent || 0;
     let mpCur = charData.mpCurrent || 0;
 
     const newHP = Math.min(hpCur + totalHPRegen, hpMax);
     const newMP = Math.min(mpCur + totalMPRegen, mpMax);
 
-    // 5. Sync to Database immediately so the change is permanent
-    firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).update({
-        hpCurrent: newHP,
-        mpCurrent: newMP
-    });
+    // --- THE FIX STARTS HERE ---
     
-    // 6. Push to HUD (This will update sidebar and bars automatically)
+    // 5. HUD Update (ALWAYS happens so the player sees the bar move)
     updateHUD({ ...charData, hpCurrent: newHP, mpCurrent: newMP });
+
+    // 6. Conditional Sync (The "Save Guard")
+    let now = Date.now();
+    // Only open the "Vault" if 60 real seconds have passed
+    if (now - window.RPG_APP.clock.regenSaveCd > 60000) {
+        
+        firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).update({
+            hpCurrent: newHP,
+            mpCurrent: newMP
+        });
+
+        // Reset the cooldown
+        window.RPG_APP.clock.regenSaveCd = now;
+        console.log("Firestore Quota Saved: Regen synced to database.");
+    }
 }
 
 function refreshStatDisplay() {
