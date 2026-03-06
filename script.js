@@ -27,6 +27,7 @@ window.RPG_APP = {
     isLoaded: false 
 };
 
+let currentUserRole = null;
 let currentCampaignId = "global"; 
 let currentCharacterId = null; 
 let activeCharLevel = 1; 
@@ -753,54 +754,139 @@ function loadUserCharacters() {
 }
 
     // SELECT CHARACTER FUNCTION
-    async function selectCharacter(id) {
-    if (characterListener) characterListener(); 
-    const allInputs = document.querySelectorAll('#char-sheet-view input');
-    allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
+//     async function selectCharacter(id) {
+//     if (characterListener) characterListener(); 
+//     const allInputs = document.querySelectorAll('#char-sheet-view input');
+//     allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
 
-    currentCharacterId = id;
+//     currentCharacterId = id;
+//     const user = auth.currentUser;
+//     const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
+
+//     characterListener = charRef.onSnapshot(async (doc) => {
+//         if (doc.exists) {
+//             const d = doc.data();
+//             if (currentCampaignId !== (d.instanceId || "global")) {
+//                 currentCampaignId = d.instanceId || "global"; 
+//                 initClockListener(); initDiceLogListener();
+//             }
+//             setSafeValue('char-name', d.name || "");
+//             setSafeValue('char-race', d.race || "");
+//             activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
+//             setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
+            
+//             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
+//             pendingStats = { ...originalStats };
+//             totalAP = Math.max(0, activeCharLevel - (originalStats.body + originalStats.mind + originalStats.spirit)); 
+
+//             renderClassPills(d);
+//             refreshStatDisplay();
+//             renderGallery(d.gallery || [], d.portrait !== undefined ? d.portrait : 0);
+//             renderSkills(d);
+
+//             const notesEl = document.getElementById('char-notes');
+//             if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
+
+//             setSafeValue('char-hp-current', Math.floor(d.hpCurrent || 0));
+//             setSafeValue('char-mp-current', Math.floor(d.mpCurrent || 0));
+
+//             const nextLevelExp = (activeCharLevel + 1) * 200;
+//             updateHUD({ ...d, charLevel: activeCharLevel, expMax: nextLevelExp });
+            
+//             const selectionView = document.getElementById('char-selection-view');
+//             if (selectionView && !selectionView.classList.contains('hide-default')) {
+//                 selectionView.classList.add('hide-default');
+//                 document.getElementById('char-sheet-view').classList.remove('hide-default');
+//             }
+//         }
+//     });
+//     firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
+// }
+
+
+
+
+
+async function loadInstanceList() {
+    const listContainer = document.getElementById('admin-instance-list');
     const user = auth.currentUser;
-    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
 
-    characterListener = charRef.onSnapshot(async (doc) => {
-        if (doc.exists) {
-            const d = doc.data();
-            if (currentCampaignId !== (d.instanceId || "global")) {
-                currentCampaignId = d.instanceId || "global"; 
-                initClockListener(); initDiceLogListener();
-            }
-            setSafeValue('char-name', d.name || "");
-            setSafeValue('char-race', d.race || "");
-            activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
-            setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
-            
-            originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
-            pendingStats = { ...originalStats };
-            totalAP = Math.max(0, activeCharLevel - (originalStats.body + originalStats.mind + originalStats.spirit)); 
+    // Safety check: Stop if no container or no user
+    if (!listContainer || !user) return;
 
-            renderClassPills(d);
-            refreshStatDisplay();
-            renderGallery(d.gallery || [], d.portrait !== undefined ? d.portrait : 0);
-            renderSkills(d);
+    // We use the global role you set in the Auth function
+    const isAdmin = (window.currentUserRole === 'Admin');
 
-            const notesEl = document.getElementById('char-notes');
-            if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
-
-            setSafeValue('char-hp-current', Math.floor(d.hpCurrent || 0));
-            setSafeValue('char-mp-current', Math.floor(d.mpCurrent || 0));
-
-            const nextLevelExp = (activeCharLevel + 1) * 200;
-            updateHUD({ ...d, charLevel: activeCharLevel, expMax: nextLevelExp });
-            
-            const selectionView = document.getElementById('char-selection-view');
-            if (selectionView && !selectionView.classList.contains('hide-default')) {
-                selectionView.classList.add('hide-default');
-                document.getElementById('char-sheet-view').classList.remove('hide-default');
-            }
+    try {
+        let snapshot;
+        
+        // LOGIC: Admins see all. Masters only see worlds where they are listed.
+        if (isAdmin) {
+            snapshot = await firestore.collection('instances').get();
+        } else {
+            snapshot = await firestore.collection('instances')
+                                .where('masters', 'array-contains', user.uid)
+                                .get();
         }
-    });
-    firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
+
+        if (snapshot.empty) {
+            listContainer.innerHTML = `<p class="text-center opacity-50 p-l" >No active instances found.</p>`;
+            return;
+        }
+
+        // Start building the table string
+        let html = `
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>World Name</th>
+                        <th>Join Code</th>
+                        <th>Masters</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const id = doc.id;
+            
+            // CHECK: Is this MY world, or am I just seeing it because I'm an Admin?
+            const isMyWorld = data.masters && data.masters.includes(user.uid);
+            
+            // CLEAN STYLING: Assign classes instead of inline styles
+            const rowClass = (isAdmin && !isMyWorld) ? 'class="admin-view-row"' : '';
+            const adminBadge = (isAdmin && !isMyWorld) ? '<span class="admin-badge">(ADMIN VIEW)</span>' : '';
+            
+            // SAFETY: Fix names like "Wizard's Tower" so they don't crash the delete button
+            const cleanName = (data.name || 'Unnamed World').replace(/'/g, "\\'");
+
+            html += `
+                <tr ${rowClass}>
+                    <td><strong>${data.name || 'Unnamed World'}</strong> ${adminBadge}</td>
+                    <td><code class="join-code-pill">${data.joinCode || 'N/A'}</code></td>
+                    <td>${data.masters ? data.masters.length : 1}</td>
+                    <td>
+                        <div class="instance-actions">
+                            <button class="btn-small" onclick="viewInstanceDetails('${id}')">Manage</button>
+                            <button class="btn-danger-small" onclick="deleteInstance('${id}', '${cleanName}')">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+        });
+
+        html += `</tbody></table>`;
+        listContainer.innerHTML = html;
+
+    } catch (error) { 
+        console.error("Instance Load Error:", error); 
+    }
 }
+
+
+
 
 async function saveCharacter() {
     if (!currentCharacterId) return;
@@ -1224,43 +1310,43 @@ function syncSheetDashboardUI(char, totals, bonuses, raceName) {
    SECTION 9: MASTER PANEL LOGIC
    ========================================================================== */
 
-// --- INSTANCE MANAGEMENT ---
-async function loadInstanceList() {
-    const listContainer = document.getElementById('admin-instance-list');
-    const user = auth.currentUser;
-    if (!listContainer || !user) return;
-    const isAdmin = (window.currentUserRole === 'Admin');
+// // --- INSTANCE MANAGEMENT ---
+// async function loadInstanceList() {
+//     const listContainer = document.getElementById('admin-instance-list');
+//     const user = auth.currentUser;
+//     if (!listContainer || !user) return;
+//     const isAdmin = (window.currentUserRole === 'Admin');
 
-    try {
-        let snapshot;
-        if (isAdmin) snapshot = await firestore.collection('instances').get();
-        else snapshot = await firestore.collection('instances').where('masters', 'array-contains', user.uid).get();
+//     try {
+//         let snapshot;
+//         if (isAdmin) snapshot = await firestore.collection('instances').get();
+//         else snapshot = await firestore.collection('instances').where('masters', 'array-contains', user.uid).get();
 
-        if (snapshot.empty) {
-            listContainer.innerHTML = `<p class="text-center" style="opacity: 0.5; padding: 20px;">No active instances found.</p>`;
-            return;
-        }
+//         if (snapshot.empty) {
+//             listContainer.innerHTML = `<p class="text-center" style="opacity: 0.5; padding: 20px;">No active instances found.</p>`;
+//             return;
+//         }
 
-        let html = `<table class="admin-table"><thead><tr><th>World Name</th><th>Join Code</th><th>Masters</th><th>Actions</th></tr></thead><tbody>`;
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const id = doc.id;
-            const isMyWorld = data.masters && data.masters.includes(user.uid);
-            const rowStyle = (isAdmin && !isMyWorld) ? 'class="admin-view-row"' : '';
+//         let html = `<table class="admin-table"><thead><tr><th>World Name</th><th>Join Code</th><th>Masters</th><th>Actions</th></tr></thead><tbody>`;
+//         snapshot.forEach(doc => {
+//             const data = doc.data();
+//             const id = doc.id;
+//             const isMyWorld = data.masters && data.masters.includes(user.uid);
+//             const rowStyle = (isAdmin && !isMyWorld) ? 'class="admin-view-row"' : '';
 
-            html += `<tr ${rowStyle}>
-                    <td><strong>${data.name || 'Unnamed World'}</strong> ${(isAdmin && !isMyWorld) ? '<span style="font-size:0.6rem; color:#facc15; margin-left:5px;">(ADMIN VIEW)</span>' : ''}</td>
-                    <td><code class="join-code-pill">${data.joinCode || 'N/A'}</code></td>
-                    <td>${data.masters ? data.masters.length : 1}</td>
-                    <td><div class="flex-row" style="gap: 5px;">
-                            <button class="btn-small" onclick="viewInstanceDetails('${id}')">Manage</button>
-                            <button class="btn-danger-small" onclick="deleteInstance('${id}', '${data.name}')"><i class="fa-solid fa-trash"></i></button>
-                        </div></td></tr>`;
-        });
-        html += `</tbody></table>`;
-        listContainer.innerHTML = html;
-    } catch (error) { console.error("Registry Error:", error); }
-}
+//             html += `<tr ${rowStyle}>
+//                     <td><strong>${data.name || 'Unnamed World'}</strong> ${(isAdmin && !isMyWorld) ? '<span style="font-size:0.6rem; color:#facc15; margin-left:5px;">(ADMIN VIEW)</span>' : ''}</td>
+//                     <td><code class="join-code-pill">${data.joinCode || 'N/A'}</code></td>
+//                     <td>${data.masters ? data.masters.length : 1}</td>
+//                     <td><div class="flex-row" style="gap: 5px;">
+//                             <button class="btn-small" onclick="viewInstanceDetails('${id}')">Manage</button>
+//                             <button class="btn-danger-small" onclick="deleteInstance('${id}', '${data.name}')"><i class="fa-solid fa-trash"></i></button>
+//                         </div></td></tr>`;
+//         });
+//         html += `</tbody></table>`;
+//         listContainer.innerHTML = html;
+//     } catch (error) { console.error("Registry Error:", error); }
+// }
 
 async function spawnInstance() {
     const instanceName = document.getElementById('new-instance-name').value.trim();
