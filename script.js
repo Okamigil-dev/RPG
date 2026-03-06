@@ -1384,21 +1384,61 @@ async function spawnInstance() {
     } catch (error) { console.error("Spawn Error:", error); }
 }
 
+// async function viewInstanceDetails(instanceId) {
+//     if (window.currentUserRole === 'Admin') {
+//         try {
+//             await firestore.collection('instances').doc(instanceId).update({
+//                 masters: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
+//             });
+//         } catch (e) { console.error("Auto-join failed:", e); }
+//     }
+//     RPG_APP.campaignId = instanceId; 
+//     initClockListener();
+//     const label = document.getElementById('current-instance-name');
+//     if(label) label.innerText = instanceId; 
+//     if (typeof showToast === "function") showToast(`Controls synced to: ${instanceId}`);
+//     else alert(`Controls synced to: ${instanceId}`);
+// }
+
 async function viewInstanceDetails(instanceId) {
-    if (window.currentUserRole === 'Admin') {
+    // 1. Admin Auto-Join (Ensures permissions are set)
+    if (window.RPG_APP.role === 'Admin') {
         try {
             await firestore.collection('instances').doc(instanceId).update({
                 masters: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
             });
         } catch (e) { console.error("Auto-join failed:", e); }
     }
-    RPG_APP.campaignId = instanceId; 
+
+    // 2. Fetch the actual World Name
+    let worldName = instanceId; // Fallback to ID if fetch fails
+    try {
+        const doc = await firestore.collection('instances').doc(instanceId).get();
+        if (doc.exists) {
+            worldName = doc.data().name || 'Unnamed World';
+        }
+    } catch (e) { console.error("Error fetching instance name:", e); }
+
+    // 3. Update the "Context" Folder
+    window.RPG_APP.campaignId = instanceId; 
+
+    // 4. Re-sync the Listeners (Clock, etc.)
     initClockListener();
+
+    // 5. Update UI with the real Name
     const label = document.getElementById('current-instance-name');
-    if(label) label.innerText = instanceId; 
-    if (typeof showToast === "function") showToast(`Controls synced to: ${instanceId}`);
-    else alert(`Controls synced to: ${instanceId}`);
+    if (label) label.innerText = worldName; 
+
+    // 6. User Feedback
+    if (typeof showToast === "function") {
+        showToast(`Controls synced to: ${worldName}`);
+    } else {
+        alert(`Controls synced to: ${worldName}`);
+    }
 }
+
+
+
 
 async function deleteInstance(instanceId, name) {
     if (!confirm(`Are you sure you want to PERMANENTLY delete "${name}"?`)) return;
