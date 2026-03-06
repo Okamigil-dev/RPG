@@ -197,41 +197,37 @@ function logoutUser() {
 auth.onAuthStateChanged((user) => {
     const topNav = document.getElementById('top-nav');
     const appBody = document.querySelector('.app-body');
-    const loginTab = document.getElementById('tab-login'); // renamed for clarity
+    const loginTab = document.getElementById('tab-login');
 
     if (user) {
-        // 1. Reveal the "Mother" containers first
-        topNav.classList.remove('hide-default');
-        appBody.classList.remove('hide-default');
         
-        // 2. Clear login splash effects
-        loginTab.classList.remove('login-splash-mode');
         
         // 3. Get Role from Firestore BEFORE opening any tabs
         firestore.collection('users').doc(user.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
                 window.currentUserRole = data.role || 'Player'; //
-                
-                // Set UI labels
+                              
+                // Step 1- Set UI labels
                 document.getElementById('user-display-name').innerText = user.email.split('@')[0];
                 document.getElementById('user-role-label').innerText = data.role;
 
-                // --- LEVEL 1: MASTER & ADMIN (Common GM Tools) ---
+                syncRegistryToDropdowns();
+                loadUserCharacters();
+
+                // Step 2- Master and Admin Check
                 const isMasterOrAbove = (data.role === 'Master' || data.role === 'Admin'); //
                 if (isMasterOrAbove) {
                     document.getElementById('nav-control-panel').classList.remove('hide-default');
                     document.getElementById('master-quick-controls').classList.remove('hide-default');
                 }
 
-                // --- LEVEL 2: ADMIN ONLY (Sensitive Tools) ---
                 if (data.role === 'Admin') {
-                    // You can now target specific admin-only elements here
                     const adminElements = document.querySelectorAll('.admin-only'); //
                     adminElements.forEach(el => el.classList.remove('hide-default')); //
                 }
                 
-                // 4. NOW open the tab. window.currentUserRole is finally ready!
+                // Step 3- openTab function runs the check to load the correct tab
                 const savedTab = localStorage.getItem('activeMainTab');
                 if (!savedTab || savedTab === 'tab-login') {
                     openTab('tab-character');
@@ -239,18 +235,22 @@ auth.onAuthStateChanged((user) => {
                     openTab(savedTab);
                 }
 
+                // Step 4- Reveal the "Mother" containers first
+                topNav.classList.remove('hide-default');
+                appBody.classList.remove('hide-default');
+                
+                // Step 5- Clear login splash effects
+                loginTab.classList.remove('login-splash-mode');
+                loginTab.classList.add('hide-default');
 
-
-
-                // 5. Start listeners
+                // Step 6- Start listeners
                 initClockListener();
                 initDiceLogListener();
                 if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
             }
         });
 
-        syncRegistryToDropdowns();
-        loadUserCharacters();
+        
 
     } else {
         // --- LOGGED OUT ---
@@ -1214,25 +1214,6 @@ function syncSheetDashboardUI(char, totals, bonuses, raceName) {
 /* ==========================================================================
    SECTION 9: MASTER PANEL LOGIC
    ========================================================================== */
-
-// function openMasterPanel() {
-//     const role = window.currentUserRole;
-//     if (role !== 'Master' && role !== 'Admin') {
-//         openTab('tab-character'); 
-//         return;
-//     }
-//     const accountBtn = document.querySelector('[onclick*="sub-accounts"]');
-//     if (accountBtn) {
-//         if (role === 'Admin') {
-//             accountBtn.classList.remove('hide-default');
-//             loadUserList(); 
-//         } else {
-//             accountBtn.classList.add('hide-default');
-//             const groupsBtn = document.querySelector('[onclick*="sub-instances"]');
-//             if (groupsBtn) groupsBtn.click(); 
-//         }
-//     }
-// }
 
 // --- INSTANCE MANAGEMENT ---
 async function loadInstanceList() {
