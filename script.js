@@ -24,6 +24,13 @@ window.RPG_APP = {
     role: null,            // replaces currentUserRole
     isLoaded: false,
     
+    clock:{
+        totalCustomSeconds = 0,
+        speedMultiplier = 1,
+        isRunning = false,
+        lastRealTime = Date.now(),
+    },
+
     // 2. Navigation & Context
     campaignId: "global",  // replaces currentCampaignId (fixed typo: campaign)
     activeCharId: null,    // replaces currentCharacterId
@@ -389,7 +396,7 @@ function goBackToSelection() {
 
 function initClockListener() {
     rtdb.ref(`instance_clocks`).off(); 
-    rtdb.ref(`instance_clocks/${RPG_APP.campaignId}`).on('value', (snapshot) => {
+    rtdb.ref("instance_clocks/" + window.RPG_APP.campaignId).on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
 
@@ -409,6 +416,26 @@ function initClockListener() {
         lastRealTime = now;
         updateDisplay();
     });
+}
+
+function updateDisplay() {
+    let h = Math.floor((totalCustomSeconds / 3600) % 24);
+    let m = Math.floor((totalCustomSeconds / 60) % 60);
+    let s = Math.floor(totalCustomSeconds % 60);
+    // Hypothetical logic for a 30-day month, 12-month year
+    let totalDays = Math.floor(totalCustomSeconds / ( 24 * 60 * 60 ));
+    let year = Math.floor(totalDays / 360) + 1; // Starting at Year 1
+    let month = Math.floor((totalDays % 360) / 30) + 1;
+    let day = (totalDays % 30) + 1;
+
+    if(document.getElementById('date-display')) {
+        document.getElementById('date-display').innerText = `Day ${day}, Month ${month}, Year ${year}`;
+    }
+    
+    if(document.getElementById('time-display')) {
+        document.getElementById('time-display').innerText = 
+            `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
 }
 
 function saveTimeState() {
@@ -452,17 +479,7 @@ function tick() {
 }
 setInterval(tick, 100);
 
-function updateDisplay() {
-    let tDays = Math.floor(totalCustomSeconds / 86400);
-    let h = Math.floor((totalCustomSeconds / 3600) % 24);
-    let m = Math.floor((totalCustomSeconds / 60) % 60);
-    let s = Math.floor(totalCustomSeconds % 60);
-    
-    if(document.getElementById('time-display')) {
-        document.getElementById('time-display').innerText = 
-            `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    }
-}
+
 
 function toggleTime() { 
     isRunning = !isRunning; 
@@ -1384,58 +1401,104 @@ async function spawnInstance() {
     } catch (error) { console.error("Spawn Error:", error); }
 }
 
+
 // async function viewInstanceDetails(instanceId) {
-//     if (window.currentUserRole === 'Admin') {
+//     // 1. Admin Auto-Join (Ensures permissions are set)
+//     if (window.RPG_APP.role === 'Admin') {
 //         try {
 //             await firestore.collection('instances').doc(instanceId).update({
 //                 masters: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
 //             });
 //         } catch (e) { console.error("Auto-join failed:", e); }
 //     }
-//     RPG_APP.campaignId = instanceId; 
+
+//     // 2. Fetch the actual World Name
+//     let worldName = instanceId; // Fallback to ID if fetch fails
+//     try {
+//         const doc = await firestore.collection('instances').doc(instanceId).get();
+//         if (doc.exists) {
+//             worldName = doc.data().name || 'Unnamed World';
+//         }
+//     } catch (e) { console.error("Error fetching instance name:", e); }
+
+//     // 3. Update the "Context" Folder
+//     window.RPG_APP.campaignId = instanceId; 
+
+//     // 4. Re-sync the Listeners (Clock, etc.)
 //     initClockListener();
+
+//     // 5. Update UI with the real Name
 //     const label = document.getElementById('current-instance-name');
-//     if(label) label.innerText = instanceId; 
-//     if (typeof showToast === "function") showToast(`Controls synced to: ${instanceId}`);
-//     else alert(`Controls synced to: ${instanceId}`);
+//     if (label) label.innerText = worldName; 
+
+//     // 6. User Feedback
+//     if (typeof showToast === "function") {
+//         showToast(`Controls synced to: ${worldName}`);
+//     } else {
+//         alert(`Controls synced to: ${worldName}`);
+//     }
 // }
 
+// NEW: Helper to go back to the default state
+function deselectInstance() {
+    window.RPG_APP.campaignId = "global";
+    
+    // Reset UI Labels
+    const label = document.getElementById('current-instance-name');
+    if (label) label.innerText = "Global (No Instance Selected)";
+    
+    // Restart listeners for the global context
+    initClockListener();
+    
+    if (typeof showToast === "function") showToast("Returned to Global context.");
+}
+
+// UPDATED: viewInstanceDetails with Existence Check
 async function viewInstanceDetails(instanceId) {
-    // 1. Admin Auto-Join (Ensures permissions are set)
-    if (window.RPG_APP.role === 'Admin') {
-        try {
-            await firestore.collection('instances').doc(instanceId).update({
-                masters: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
-            });
-        } catch (e) { console.error("Auto-join failed:", e); }
+    // If someone calls this with null/empty, just deselect
+    if (!instanceId || instanceId === 'global') {
+        deselectInstance();
+        return;
     }
 
-    // 2. Fetch the actual World Name
-    let worldName = instanceId; // Fallback to ID if fetch fails
     try {
-        const doc = await firestore.collection('instances').doc(instanceId).get();
-        if (doc.exists) {
-            worldName = doc.data().name || 'Unnamed World';
+        const docRef = firestore.collection('instances').doc(instanceId);
+        const doc = await docRef.get();
+
+        // CHECK: If it's gone, go back to global and stop
+        if (!doc.exists) {
+            console.warn("Instance not found. Rolling back to global.");
+            deselectInstance();
+            return;
         }
-    } catch (e) { console.error("Error fetching instance name:", e); }
 
-    // 3. Update the "Context" Folder
-    window.RPG_APP.campaignId = instanceId; 
+        const worldName = doc.data().name || 'Unnamed World';
 
-    // 4. Re-sync the Listeners (Clock, etc.)
-    initClockListener();
+        // Admin Auto-Join (Existing Logic)
+        if (window.RPG_APP.role === 'Admin') {
+            await docRef.update({
+                masters: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
+            }).catch(e => console.error("Auto-join failed:", e));
+        }
 
-    // 5. Update UI with the real Name
-    const label = document.getElementById('current-instance-name');
-    if (label) label.innerText = worldName; 
+        // Update the "Folder"
+        window.RPG_APP.campaignId = instanceId; 
 
-    // 6. User Feedback
-    if (typeof showToast === "function") {
-        showToast(`Controls synced to: ${worldName}`);
-    } else {
-        alert(`Controls synced to: ${worldName}`);
+        // Re-sync UI and Listeners
+        initClockListener();
+        const label = document.getElementById('current-instance-name');
+        if (label) label.innerText = worldName; 
+
+        if (typeof showToast === "function") showToast(`Controls synced to: ${worldName}`);
+
+    } catch (e) { 
+        console.error("Error fetching instance:", e); 
+        deselectInstance(); // Safety fallback on network error
     }
 }
+
+
+
 
 
 
