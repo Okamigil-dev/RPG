@@ -18,6 +18,9 @@ let speedMultiplier = 1;
 let isRunning = false;
 let lastRealTime = Date.now();
 
+// Tick variables
+let lastRegenMinute = 0;
+let syncCounter = 0;
 
 window.RPG_APP = {
     // 1. Session & Auth Data
@@ -25,10 +28,10 @@ window.RPG_APP = {
     isLoaded: false,
     
     clock:{
-        totalCustomSeconds = 0,
-        speedMultiplier = 1,
-        isRunning = false,
-        lastRealTime = Date.now(),
+        totalCustomSeconds: 0,
+        speedMultiplier: 1,
+        isRunning: false,
+        lastRealTime: Date.now(),
     },
 
     // 2. Navigation & Context
@@ -448,8 +451,7 @@ function saveTimeState() {
 }
 
 // --- TICK LOOP ---
-let lastRegenMinute = 0;
-let syncCounter = 0;
+
 
 function tick() {
     let now = Date.now();
