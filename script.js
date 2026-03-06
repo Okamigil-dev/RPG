@@ -45,7 +45,7 @@ window.RPG_APP = {
     themeColor: '#8e630c'
 };
 
-let currentUserRole = null;
+// let currentUserRole = null;
 let currentCampaignId = "global"; 
 let currentCharacterId = null; 
 let activeCharLevel = 1; 
@@ -234,7 +234,7 @@ auth.onAuthStateChanged((user) => {
         firestore.collection('users').doc(user.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
-                window.currentUserRole = data.role || 'Player'; //
+                window.RPG_APP.role = data.role || 'Player'; //
                               
                 // Step 1- Set UI labels
                 document.getElementById('user-display-name').innerText = user.email.split('@')[0];
@@ -282,7 +282,7 @@ auth.onAuthStateChanged((user) => {
 
     } else {
         // --- LOGGED OUT ---
-        window.currentUserRole = null;
+        window.RPG_APP.role = null;
         
         // Hide mothers (children like logout-btn inherit this)
         topNav.classList.add('hide-default');
@@ -315,11 +315,11 @@ function openTab(tabId) {
         localStorage.setItem('activeMainTab', tabId);
     }
     
-    if (tabId === 'tab-control-panel' && (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin')) {
+    if (tabId === 'tab-control-panel' && (window.RPG_APP.role === 'Master' || window.RPG_APP.role === 'Admin')) {
         loadInstanceList();
         
         let savedSubTab = localStorage.getItem('activeMasterSubTab') || 'sub-instances';
-        if (window.currentUserRole === 'Master' && savedSubTab === 'sub-accounts') {
+        if (window.RPG_APP.role === 'Master' && savedSubTab === 'sub-accounts') {
             savedSubTab = 'sub-instances';
         }
 
@@ -389,7 +389,7 @@ function goBackToSelection() {
 
 function initClockListener() {
     rtdb.ref(`instance_clocks`).off(); 
-    rtdb.ref(`instance_clocks/${currentCampaignId}`).on('value', (snapshot) => {
+    rtdb.ref(`instance_clocks/${RPG_APP.campaignID}`).on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
 
@@ -417,7 +417,7 @@ function saveTimeState() {
         isRunning: isRunning,
         lastRealWorldSaveTime: Date.now()
     };
-    rtdb.ref(`instance_clocks/${currentCampaignId}`).update(timeData);
+    rtdb.ref(`instance_clocks/${RPG_APP.campaignID}`).update(timeData);
 }
 
 // --- TICK LOOP ---
@@ -440,7 +440,7 @@ function tick() {
         }
 
         // Master Sync
-        if (window.currentUserRole === 'Master' || window.currentUserRole === 'Admin') {
+        if (window.RPG_APP.role === 'Master' || window.RPG_APP.role === 'Admin') {
             syncCounter += deltaRealSeconds;
             if (syncCounter > 5) {
                 saveTimeState(); 
@@ -473,7 +473,7 @@ function toggleTime() {
 
 function setSpeed(multiplier) {
     speedMultiplier = multiplier;
-    rtdb.ref(`instance_clocks/${currentCampaignId}`).update({
+    rtdb.ref(`instance_clocks/${RPG_APP.campaignID}`).update({
         speedMultiplier: multiplier,
         totalCustomSeconds: totalCustomSeconds,
         lastRealWorldSaveTime: Date.now()
@@ -485,8 +485,8 @@ function initDiceLogListener() {
     const log = document.getElementById('dice-log');
     if (log) log.innerHTML = '<div class="dice-log-placeholder">Loading history...</div>';
     
-    rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).off();
-    rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).limitToLast(50).on('child_added', (snapshot) => {
+    rtdb.ref(`instance_logs/${RPG_APP.campaignID}/chatbox`).off();
+    rtdb.ref(`instance_logs/${RPG_APP.campaignID}/chatbox`).limitToLast(50).on('child_added', (snapshot) => {
         renderChatLogEntry(snapshot.val());
     });
 }
@@ -497,15 +497,15 @@ function sendChatMessage() {
     if (!text || !currentCharacterId) return; 
     
     const charName = document.getElementById('hud-name').innerText || "Unknown";
-    rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).push({
+    rtdb.ref(`instance_logs/${RPG_APP.campaignID}/chatbox`).push({
         type: 'chat', name: charName, text: text, timestamp: firebase.database.ServerValue.TIMESTAMP
     });
     input.value = ''; 
 }
 
 function sendSystemMessage(text) {
-    if (!currentCampaignId) return;
-    rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).push({
+    if (!RPG_APP.campaignID) return;
+    rtdb.ref(`instance_logs/${RPG_APP.campaignID}/chatbox`).push({
         type: 'system', name: 'System', text: text, timestamp: firebase.database.ServerValue.TIMESTAMP
     });
 }
@@ -539,7 +539,7 @@ function rollDice(sides, btn, modifier = 0, label = "Roll") {
                     `${finalTotal} (${naturalRoll} ${sign}${modifier})` : 
                     `${finalTotal}`;
 
-                rtdb.ref(`instance_logs/${currentCampaignId}/chatbox`).push({
+                rtdb.ref(`instance_logs/${RPG_APP.campaignID}/chatbox`).push({
                     type: 'roll', 
                     name: charName, 
                     sides: sides,       // Required to prevent "dundefined" in chat
@@ -784,8 +784,8 @@ function loadUserCharacters() {
     characterListener = charRef.onSnapshot(async (doc) => {
         if (doc.exists) {
             const d = doc.data();
-            if (currentCampaignId !== (d.instanceId || "global")) {
-                currentCampaignId = d.instanceId || "global"; 
+            if (RPG_APP.campaignID !== (d.instanceId || "global")) {
+                RPG_APP.campaignID = d.instanceId || "global"; 
                 initClockListener(); initDiceLogListener();
             }
             setSafeValue('char-name', d.name || "");
@@ -833,7 +833,7 @@ async function loadInstanceList() {
     if (!listContainer || !user) return;
 
     // We use the global role you set in the Auth function
-    const isAdmin = (window.currentUserRole === 'Admin');
+    const isAdmin = (window.RPG_APP.role === 'Admin');
 
     try {
         let snapshot;
@@ -1385,14 +1385,14 @@ async function spawnInstance() {
 }
 
 async function viewInstanceDetails(instanceId) {
-    if (window.currentUserRole === 'Admin') {
+    if (window.RPG_APP.role === 'Admin') {
         try {
             await firestore.collection('instances').doc(instanceId).update({
                 masters: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)
             });
         } catch (e) { console.error("Auto-join failed:", e); }
     }
-    currentCampaignId = instanceId; 
+    RPG_APP.campaignID = instanceId; 
     initClockListener();
     const label = document.getElementById('current-instance-name');
     if(label) label.innerText = instanceId; 
@@ -1504,8 +1504,8 @@ async function saveAllCharacterInstances() {
         const charRef = firestore.collection('users').doc(userId).collection('characters').doc(charId);
         batch.update(charRef, { instanceId: newInstanceId, instanceName: newInstanceName });
 
-        if (currentCharacterId === charId && currentCampaignId !== newInstanceId) {
-            currentCampaignId = newInstanceId;
+        if (currentCharacterId === charId && RPG_APP.campaignID !== newInstanceId) {
+            RPG_APP.campaignID = newInstanceId;
             activeCharMoved = true;
         }
     });
