@@ -754,54 +754,54 @@ function loadUserCharacters() {
 }
 
     // SELECT CHARACTER FUNCTION
-//     async function selectCharacter(id) {
-//     if (characterListener) characterListener(); 
-//     const allInputs = document.querySelectorAll('#char-sheet-view input');
-//     allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
+    async function selectCharacter(id) {
+    if (characterListener) characterListener(); 
+    const allInputs = document.querySelectorAll('#char-sheet-view input');
+    allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
 
-//     currentCharacterId = id;
-//     const user = auth.currentUser;
-//     const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
+    currentCharacterId = id;
+    const user = auth.currentUser;
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
 
-//     characterListener = charRef.onSnapshot(async (doc) => {
-//         if (doc.exists) {
-//             const d = doc.data();
-//             if (currentCampaignId !== (d.instanceId || "global")) {
-//                 currentCampaignId = d.instanceId || "global"; 
-//                 initClockListener(); initDiceLogListener();
-//             }
-//             setSafeValue('char-name', d.name || "");
-//             setSafeValue('char-race', d.race || "");
-//             activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
-//             setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
+    characterListener = charRef.onSnapshot(async (doc) => {
+        if (doc.exists) {
+            const d = doc.data();
+            if (currentCampaignId !== (d.instanceId || "global")) {
+                currentCampaignId = d.instanceId || "global"; 
+                initClockListener(); initDiceLogListener();
+            }
+            setSafeValue('char-name', d.name || "");
+            setSafeValue('char-race', d.race || "");
+            activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
+            setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
             
-//             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
-//             pendingStats = { ...originalStats };
-//             totalAP = Math.max(0, activeCharLevel - (originalStats.body + originalStats.mind + originalStats.spirit)); 
+            originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
+            pendingStats = { ...originalStats };
+            totalAP = Math.max(0, activeCharLevel - (originalStats.body + originalStats.mind + originalStats.spirit)); 
 
-//             renderClassPills(d);
-//             refreshStatDisplay();
-//             renderGallery(d.gallery || [], d.portrait !== undefined ? d.portrait : 0);
-//             renderSkills(d);
+            renderClassPills(d);
+            refreshStatDisplay();
+            renderGallery(d.gallery || [], d.portrait !== undefined ? d.portrait : 0);
+            renderSkills(d);
 
-//             const notesEl = document.getElementById('char-notes');
-//             if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
+            const notesEl = document.getElementById('char-notes');
+            if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
 
-//             setSafeValue('char-hp-current', Math.floor(d.hpCurrent || 0));
-//             setSafeValue('char-mp-current', Math.floor(d.mpCurrent || 0));
+            setSafeValue('char-hp-current', Math.floor(d.hpCurrent || 0));
+            setSafeValue('char-mp-current', Math.floor(d.mpCurrent || 0));
 
-//             const nextLevelExp = (activeCharLevel + 1) * 200;
-//             updateHUD({ ...d, charLevel: activeCharLevel, expMax: nextLevelExp });
+            const nextLevelExp = (activeCharLevel + 1) * 200;
+            updateHUD({ ...d, charLevel: activeCharLevel, expMax: nextLevelExp });
             
-//             const selectionView = document.getElementById('char-selection-view');
-//             if (selectionView && !selectionView.classList.contains('hide-default')) {
-//                 selectionView.classList.add('hide-default');
-//                 document.getElementById('char-sheet-view').classList.remove('hide-default');
-//             }
-//         }
-//     });
-//     firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
-// }
+            const selectionView = document.getElementById('char-selection-view');
+            if (selectionView && !selectionView.classList.contains('hide-default')) {
+                selectionView.classList.add('hide-default');
+                document.getElementById('char-sheet-view').classList.remove('hide-default');
+            }
+        }
+    });
+    firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
+}
 
 
 
