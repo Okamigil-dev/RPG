@@ -24,14 +24,16 @@ let syncCounter = 0;
 
 window.RPG_APP = {
     // 1. Session & Auth Data
-    role: null,            // replaces currentUserRole
+    role: null,            
     isLoaded: false,
     
     clock:{
         totalSeconds: 0,
-        speedMultiplier: 1,
-        isRunning: false,
-        lastRealTime: Date.now(),
+        multiplier: 1,
+        notPaused: false,
+        lastTickStamp: Date.now(),
+        regenTimer: 0, 
+        saveDelay: 0      
     },
 
     // 2. Navigation & Context
@@ -403,7 +405,7 @@ function initClockListener() {
         const data = snapshot.val();
         if (!data) return;
 
-        isRunning = data.isRunning;
+        window.RPG_APP.clock.notPaused = data.isRunning;
         speedMultiplier = data.speedMultiplier || 1;
         
         const label = document.getElementById('speed-label');
@@ -412,9 +414,9 @@ function initClockListener() {
         let now = Date.now();
         if (data.isRunning) {
             let deltaRealSeconds = (now - data.lastRealWorldSaveTime) / 1000;
-            totalCustomSeconds = (data.totalCustomSeconds || 0) + (deltaRealSeconds * speedMultiplier);
+            window.RPG_APP.clock.totalSeconds = (data.totalCustomSeconds || 0) + (deltaRealSeconds * speedMultiplier);
         } else {
-            totalCustomSeconds = data.totalCustomSeconds || 0;
+            window.RPG_APP.clock.totalSeconds = data.totalCustomSeconds || 0;
         }
         lastRealTime = now;
         updateDisplay();
@@ -422,11 +424,11 @@ function initClockListener() {
 }
 
 function updateDisplay() {
-    let h = Math.floor((totalCustomSeconds / 3600) % 24);
-    let m = Math.floor((totalCustomSeconds / 60) % 60);
-    let s = Math.floor(totalCustomSeconds % 60);
+    let h = Math.floor((window.RPG_APP.clock.totalSeconds / 3600) % 24);
+    let m = Math.floor((window.RPG_APP.clock.totalSeconds / 60) % 60);
+    let s = Math.floor(window.RPG_APP.clock.totalSeconds % 60);
     // Hypothetical logic for a 30-day month, 12-month year
-    let totalDays = Math.floor(totalCustomSeconds / ( 24 * 60 * 60 ));
+    let totalDays = Math.floor(window.RPG_APP.clock.totalSeconds / ( 24 * 60 * 60 ));
     let year = Math.floor(totalDays / 360) + 1; // Starting at Year 1
     let month = Math.floor((totalDays % 360) / 30) + 1;
     let day = (totalDays % 30) + 1;
@@ -443,7 +445,7 @@ function updateDisplay() {
 
 function saveTimeState() {
     const timeData = {
-        totalCustomSeconds: totalCustomSeconds,
+        totalCustomSeconds: window.RPG_APP.clock.totalSeconds,
         isRunning: isRunning,
         lastRealWorldSaveTime: Date.now()
     };
@@ -459,10 +461,10 @@ function tick() {
     lastRealTime = now;
 
     if (isRunning) {
-        totalCustomSeconds += (deltaRealSeconds * speedMultiplier);
+        window.RPG_APP.clock.totalSeconds += (deltaRealSeconds * speedMultiplier);
         
         // Passive Regen
-        let currentMinute = Math.floor(totalCustomSeconds / 60);
+        let currentMinute = Math.floor(window.RPG_APP.clock.totalSeconds / 60);
         if (currentMinute > lastRegenMinute) {
             applyPassiveRegen();
             lastRegenMinute = currentMinute;
@@ -481,6 +483,7 @@ function tick() {
         updateDisplay();
     }
 }
+//set tick interval only affects browser
 setInterval(tick, 100);
 
 
@@ -496,7 +499,7 @@ function setSpeed(multiplier) {
     speedMultiplier = multiplier;
     rtdb.ref(`instance_clocks/${RPG_APP.campaignId}`).update({
         speedMultiplier: multiplier,
-        totalCustomSeconds: totalCustomSeconds,
+        totalCustomSeconds: window.RPG_APP.clock.totalSeconds,
         lastRealWorldSaveTime: Date.now()
     });
 }
