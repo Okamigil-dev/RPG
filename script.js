@@ -13,18 +13,18 @@ const MAX_GALLERY_SLOTS = 8;
 const STAT_RESOURCE_MULT = 5;
 
 // --- 1.2 STATE VARIABLES ---
-let totalCustomSeconds = 0; 
-let speedMultiplier = 1;
-let isRunning = false;
-let lastRealTime = Date.now();
+// let totalCustomSeconds = 0; 
+// let speedMultiplier = 1;
+// let isRunning = false;
+// let lastRealTime = Date.now();
 
 // Tick variables
-let lastRegenMinute = 0;
-let syncCounter = 0;
+// let lastRegenMinute = 0;
+// let syncCounter = 0;
 
 window.RPG_APP = {
     // 1. Session & Auth Data
-    role: null,            
+    role: null,            // replaces currentUserRole
     isLoaded: false,
     
     clock:{
@@ -32,7 +32,7 @@ window.RPG_APP = {
         multiplier: 1,
         notPaused: false,
         lastTickStamp: Date.now(),
-        regenTimer: 0, 
+        regenTimer: 0,
         saveDelay: 0      
     },
 
@@ -405,31 +405,42 @@ function initClockListener() {
         const data = snapshot.val();
         if (!data) return;
 
+        // 1. Map Database to Folder
         window.RPG_APP.clock.notPaused = data.isRunning;
-        speedMultiplier = data.speedMultiplier || 1;
+        window.RPG_APP.clock.multiplier = data.speedMultiplier || 1;
         
         const label = document.getElementById('speed-label');
-        if (label) label.innerText = speedMultiplier + "x";
+        if (label) label.innerText = window.RPG_APP.clock.multiplier + "x";
 
         let now = Date.now();
+        
+        // 2. Use the database's key (isRunning) to check state
         if (data.isRunning) {
             let deltaRealSeconds = (now - data.lastRealWorldSaveTime) / 1000;
-            window.RPG_APP.clock.totalSeconds = (data.totalCustomSeconds || 0) + (deltaRealSeconds * speedMultiplier);
+            // Use the new local multiplier for the calculation
+            window.RPG_APP.clock.totalSeconds = (data.totalCustomSeconds || 0) + (deltaRealSeconds * window.RPG_APP.clock.multiplier);
         } else {
             window.RPG_APP.clock.totalSeconds = data.totalCustomSeconds || 0;
         }
-        lastRealTime = now;
+
+        // 3. Update the pulse marker
+        window.RPG_APP.clock.lastTickStamp = now;
+        
         updateDisplay();
     });
 }
 
 function updateDisplay() {
-    let h = Math.floor((window.RPG_APP.clock.totalSeconds / 3600) % 24);
-    let m = Math.floor((window.RPG_APP.clock.totalSeconds / 60) % 60);
-    let s = Math.floor(window.RPG_APP.clock.totalSeconds % 60);
-    // Hypothetical logic for a 30-day month, 12-month year
-    let totalDays = Math.floor(window.RPG_APP.clock.totalSeconds / ( 24 * 60 * 60 ));
-    let year = Math.floor(totalDays / 360) + 1; // Starting at Year 1
+    // 1. Grab the current value from the folder
+    const total = window.RPG_APP.clock.totalSeconds;
+
+    // 2. Use that 'total' for all the math below
+    let h = Math.floor((total / 3600) % 24);
+    let m = Math.floor((total / 60) % 60);
+    let s = Math.floor(total % 60);
+
+    let totalDays = Math.floor(total / (24 * 60 * 60));
+    let year = Math.floor(totalDays / 360) + 1; 
     let month = Math.floor((totalDays % 360) / 30) + 1;
     let day = (totalDays % 30) + 1;
 
@@ -445,59 +456,80 @@ function updateDisplay() {
 
 function saveTimeState() {
     const timeData = {
+        // Map your new folder names back to the database keys
         totalCustomSeconds: window.RPG_APP.clock.totalSeconds,
-        isRunning: isRunning,
+        isRunning: window.RPG_APP.clock.notPaused, 
+        
+        // This stays a fresh timestamp of 'Right Now'
         lastRealWorldSaveTime: Date.now()
     };
+
     rtdb.ref(`instance_clocks/${window.RPG_APP.campaignId}`).update(timeData);
 }
 
-// --- TICK LOOP ---
 
 
 function tick() {
     let now = Date.now();
-    let deltaRealSeconds = (now - lastRealTime) / 1000;
-    lastRealTime = now;
+    // 1. lastTickStamp: Using the new local millisecond anchor
+    let deltaRealSeconds = (now - window.RPG_APP.clock.lastTickStamp) / 1000;
+    window.RPG_APP.clock.lastTickStamp = now;
 
-    if (isRunning) {
-        window.RPG_APP.clock.totalSeconds += (deltaRealSeconds * speedMultiplier);
+    // 2. notPaused: The new boolean name
+    if (window.RPG_APP.clock.notPaused) {
         
-        // Passive Regen
+        // 3. totalSeconds & multiplier: Updating the core game time
+        window.RPG_APP.clock.totalSeconds += (deltaRealSeconds * window.RPG_APP.clock.multiplier);
+        
+        // 4. Passive Regen: Using the new 'regenTimer' name
         let currentMinute = Math.floor(window.RPG_APP.clock.totalSeconds / 60);
-        if (currentMinute > lastRegenMinute) {
+        if (currentMinute > window.RPG_APP.clock.regenTimer) {
             applyPassiveRegen();
-            lastRegenMinute = currentMinute;
+            window.RPG_APP.clock.regenTimer = currentMinute;
         }
 
-        // Master Sync
+        // 5. Master Sync: Using the new 'saveDelay' name
         if (window.RPG_APP.role === 'Master' || window.RPG_APP.role === 'Admin') {
-            syncCounter += deltaRealSeconds;
-            if (syncCounter > 5) {
+            window.RPG_APP.clock.saveDelay += deltaRealSeconds;
+            
+            if (window.RPG_APP.clock.saveDelay > 5) {
                 saveTimeState(); 
-                syncCounter = 0;
+                window.RPG_APP.clock.saveDelay = 0;
             }
-
-
         }
+
+        // 6. Update the face of the clock
         updateDisplay();
     }
 }
-//set tick interval only affects browser
 setInterval(tick, 100);
 
 
 
 function toggleTime() { 
-    isRunning = !isRunning; 
+    // 1. Flip the switch in the Golden Folder
+    window.RPG_APP.clock.notPaused = !window.RPG_APP.clock.notPaused; 
+    
+    // 2. Immediate Save to RTDB
     saveTimeState(); 
+    
+    // 3. UI Feedback
     const btn = document.getElementById('sidebar-play-btn');
-    if (btn) btn.innerHTML = isRunning ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+    if (btn) {
+        // If notPaused is true, show the Pause icon. If false, show Play.
+        btn.innerHTML = window.RPG_APP.clock.notPaused 
+            ? '<i class="fa-solid fa-pause"></i>' 
+            : '<i class="fa-solid fa-play"></i>';
+    }
 }
 
 function setSpeed(multiplier) {
-    speedMultiplier = multiplier;
-    rtdb.ref(`instance_clocks/${RPG_APP.campaignId}`).update({
+    // 1. Update the local folder
+    window.RPG_APP.clock.multiplier = multiplier;
+
+    // 2. Push to RTDB immediately
+    // We update all three to prevent the 'Time Teleportation' bug
+    rtdb.ref(`instance_clocks/${window.RPG_APP.campaignId}`).update({
         speedMultiplier: multiplier,
         totalCustomSeconds: window.RPG_APP.clock.totalSeconds,
         lastRealWorldSaveTime: Date.now()
