@@ -434,6 +434,24 @@
                     padding: 20px 0;
                 }
 
+                .char-card { 
+                    background: rgba(17, 17, 17, 0.7); 
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(168, 85, 247, 0.2); 
+                    border-radius: 16px; 
+                    padding: 25px; 
+                    text-align: center; 
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+                    cursor: pointer; 
+                    position: relative;
+                }
+
+                .char-card:hover { 
+                    border-color: #a855f7; 
+                    transform: translateY(-8px); 
+                    box-shadow: 0 12px 40px rgba(168, 85, 247, 0.2);
+                }
+
                 .char-card-portrait {
                     display: flex;
                     font-size: 6rem;
@@ -451,6 +469,21 @@
                 .char-card-meta { font-size: 0.8rem; 
                     color: #a855f7; 
                     font-weight: 700; 
+                }
+
+                .btn-danger-small { 
+                    background: #450a0a; 
+                    color: #f87171; 
+                    border: 1px solid #7f1d1d; 
+                    padding: 4px 8px; 
+                    border-radius: 4px; 
+                    cursor: pointer; 
+                    font-size: 0.7rem; 
+                    transition: 0.2s; 
+                }
+                .btn-danger-small:hover { 
+                    background: #ef4444; 
+                    color: white; 
                 }
 
 
