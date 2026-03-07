@@ -411,11 +411,47 @@
             /*  ==========================================================================
                 --- Character Tab --------------------------------------------------------
                 ==========================================================================   */
+                .btn-newChar { 
+                    background: #065f46; 
+                    color: #34d399; 
+                    border: 1px solid #064e3b; 
+                    padding: 10px 20px; 
+                    border-radius: 4px; 
+                    cursor: pointer; 
+                    font-weight: bold; 
+                    transition: 0.2s; 
+                }
 
+                .btn-newChar:hover { 
+                    background: #059669; 
+                    color: white; 
+                }
 
+                .char-list-grid { 
+                    display: grid; 
+                    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); 
+                    gap: 30px; 
+                    padding: 20px 0;
+                }
 
+                .char-card-portrait {
+                    display: flex;
+                    font-size: 6rem;
+                    width: 120px;
+                    height: 120px;
+                    margin: 0 auto 15px;
+                    border-radius: 12px;
+                    background-size: cover;
+                    background-position: center;
+                    border: 2px solid #a855f7;
+                    align-items: center;
+                    justify-content: center;
+                }
 
-
+                .char-card-meta { font-size: 0.8rem; 
+                    color: #a855f7; 
+                    font-weight: 700; 
+                }
 
 
         /*  ==========================================================================

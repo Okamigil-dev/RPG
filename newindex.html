@@ -133,7 +133,7 @@
                     <div id="char-selection-view">
                         <div class="flex-row">
                             <h2 class="tab-title">Character Dashboard</h2>
-                            <button onclick="createNewCharacter()" class="btn-success">New Character</button>
+                            <button onclick="createNewCharacter()" class="btn-newChar">New Character</button>
                         </div>
                         <div id="char-list-grid" class="char-list-grid"></div>
                     </div>
@@ -377,7 +377,7 @@
                 <div class="flex-row">
 
                     <div class="chat-input-area grid gap-s">
-                        <select id="chat-target-select">
+                        <select id="chat-target-select" class="form-input">
                         <option value="all">Everyone</option>
                         </select>
                         <input type="text" id="chat-msg-input" class="form-input flex-grow" autocomplete="off" placeholder="Type a message..." onkeypress="handleChatEnter(event)">
