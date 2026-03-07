@@ -447,7 +447,7 @@
                 }
                 
                 if (tabId === 'tab-control-panel' && (users.role === 'Master' || users.role === 'Admin')) {
-                    loadInstanceList();
+                    // loadInstanceList();
                     
                     let savedSubTab = localStorage.getItem('activeMasterSubTab') || 'sub-instances';
                     if (users.role === 'Master' && savedSubTab === 'sub-accounts') {
