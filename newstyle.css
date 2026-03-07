@@ -67,11 +67,24 @@
         
         * { box-sizing: border-box; }
 
-        /* Scroll Bars */
+        /* Scroll Bar */
         ::-webkit-scrollbar { width: var(--width-scrollbar); }    
         ::-webkit-scrollbar-track { background: transparent ; }  
         ::-webkit-scrollbar-thumb { background: var(--color-scrollbar);  border-radius: var(--radius-scrollbar); } 
         ::-webkit-scrollbar-thumb:hover { background: var(--hover-scrollbar); } 
+
+        /* Text Input Bar */
+        .form-input {
+            background: var(--color-bg) !important;
+            color: var(--color-text) !important;
+            border: 1px solid var(--color-border);
+            padding: 10px;
+            border-radius: 6px;
+            box-sizing: border-box;
+            height: 40px;                 /* Forces consistency for the Tier box */
+            width: 100%;
+            transition: border-color 0.2s;
+        }
 
     /*  ==========================================================================
         --- Section 2. Global Classes --------------------------------------------
