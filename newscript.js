@@ -432,8 +432,64 @@
     /*  ==========================================================================
         --- Section 2. Open Tab --------------------------------------------------
         ==========================================================================  */
-            function openTab {}
+            function openTab(tabId) {
+                document.querySelectorAll('.closed-tab').forEach(tab => {
+                    tab.classList.add('hide-default');
+                });
 
+                const target = document.getElementById(tabId);
+                if (target) {
+                    target.classList.remove('hide-default');
+                }
+
+                if (tabId !== 'tab-login') {
+                    localStorage.setItem('activeMainTab', tabId);
+                }
+                
+                if (tabId === 'tab-control-panel' && (users.role === 'Master' || users.role === 'Admin')) {
+                    loadInstanceList();
+                    
+                    let savedSubTab = localStorage.getItem('activeMasterSubTab') || 'sub-instances';
+                    if (users.role === 'Master' && savedSubTab === 'sub-accounts') {
+                        savedSubTab = 'sub-instances';
+                    }
+
+                    openControlSubTab(null, savedSubTab); 
+                }
+            }
+
+            function openControlSubTab(evt, subTabId) {
+                localStorage.setItem('activeMasterSubTab', subTabId);
+
+                const contents = document.getElementsByClassName("control-sub-content");
+                for (let content of contents) {
+                    content.classList.add("hide-default");
+                }
+
+                const buttons = document.getElementsByClassName("sub-nav-btn");
+                for (let btn of buttons) {
+                    btn.classList.remove("active");
+                }
+
+                document.getElementById(subTabId).classList.remove("hide-default");
+                
+                if (evt) {
+                    evt.currentTarget.classList.add("active");
+                } else {
+                    const targetBtn = document.querySelector(`[onclick*="${subTabId}"]`);
+                    if (targetBtn) targetBtn.classList.add("active");
+                }
+
+                // --- LOADER SWITCHBOARD ---
+                // if (subTabId === 'sub-instances') loadInstanceList();
+                // if (subTabId === 'sub-accounts') loadUserList();
+                // if (subTabId === 'sub-characters') loadGlobalCharacterManager();
+                // if (subTabId === 'sub-classes') loadMasterClassList(); // This triggers Section 10.2
+                // if (subTabId === 'sub-races') loadMasterRaceList();    // This triggers Section 10.1
+                // if (subTabId === 'sub-skills') { refreshSkillClassDropdown(); loadSkillRegistry(); }
+                // if (subTabId === 'sub-traits') loadMasterTraitList();
+                // if (subTabId === 'sub-attributes') loadAttributeList();
+            }
 
 
 
@@ -460,4 +516,26 @@
 
 
 
-        
+        //simple clear chat funtion
+        function clearInstanceLog(targetId) {
+            // 1. Safety Check: If no ID is provided, don't guess.
+            if (!targetId) {
+                console.error("Clear failed: No Campaign ID provided.");
+                return;
+            }
+
+            // 2. The Confirmation: A simple browser pop-up to prevent accidents.
+            const confirmClear = confirm(`Are you sure you want to PERMANENTLY delete all logs for [${targetId}]?`);
+            
+            if (confirmClear) {
+                // 3. The Eraser: Set the entire folder to null
+                rtdb.ref(`instance_logs/${targetId}`).set(null)
+                    .then(() => {
+                        console.log(`Logs for ${targetId} have been cleared.`);
+                        alert("Logs wiped successfully.");
+                    })
+                    .catch((error) => {
+                        console.error("Error clearing logs:", error);
+                    });
+            }
+        }
