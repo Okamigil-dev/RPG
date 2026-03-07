@@ -81,13 +81,14 @@
     function registerUser() {
         const email = document.getElementById('email-input').value;
         const pass = document.getElementById('password-input').value;
-        const username = document.getElementById('username-input').value;
-        
         const display = document.getElementById('message-display');
+        
+        const loginTab = document.getElementById('tab-login');
+        const setupTab = document.getElementById('tab-username-setup');
 
-        if (!email || !pass || !username) {
-            display.textContent = "All fields are required!"; 
-            display.classList = "dangerColor";              
+        if (!email || !pass) {
+            display.textContent = "Email and Password are required!"; 
+            display.classList = "dangerColor";               
             return;
         }
 
@@ -95,15 +96,49 @@
             firestore.collection('users').doc(res.user.uid).set({ 
                 email: email, 
                 role: 'Player',
-                username: username 
+                username: ""
             });
-            display.textContent = "Registration Successful!";
+            display.textContent = "Account Created! Setting up profile...";
             display.classList = "successColor";
+            setTimeout(() => {
+            loginTab.classList.replace('login-splash-mode', 'hide-default');
+            setupTab.classList.replace('hide-default', 'login-splash-mode');
+        }, 1500);
         }).catch(err => {
             display.textContent = err.message;
             display.classList= "errorColor" ;
         });
 
+    }
+    // Update User Name
+    function finalizeProfile() {
+        const newUsername = document.getElementById('username-setup-input').value;
+        const display = document.getElementById('setup-message-display');
+
+        if (!newUsername) {
+            display.textContent = "Please choose a name!";
+            return;
+        }
+
+        // Update the briefcase and Firestore
+        users.username = newUsername;
+        
+        firestore.collection('users').doc(auth.currentUser.uid).update({
+            username: newUsername
+        }).then(() => {
+            document.getElementById('top-nav').classList.remove('hide-default');
+            document.getElementById('app-body').classList.remove('hide-default');
+
+            document.getElementById('user-display-name').innerText = newUsername;
+            const setupTab = document.getElementById('tab-username-setup');
+            setupTab.classList.replace('login-splash-mode', 'hide-default');
+
+            const destination = localStorage.getItem('activeMainTab') || 'tab-character';
+            openTab(destination);
+
+        }).catch(err => {
+            console.error("Profile update failed:", err);
+        });
     }
     // --- Login User to Firebase --------------------------------------------- //
     function loginUser() {
@@ -151,16 +186,20 @@
             const topNav = document.getElementById('top-nav');
             const appBody = document.getElementById('app-body');
             const loginTab = document.getElementById('tab-login');
+            const setupTab = document.getElementById('tab-username-setup');
                         
             if (user) {
                 users.uid = user.uid;
                 firestore.collection('users').doc(user.uid).get().then(doc => {
                     if (doc.exists) {
                         const data = doc.data();
-                        users.role = data.role || 'Player'; //
-                        users.username = data.username || "Unnamed User";
-                                    
-                        document.getElementById('user-display-name').innerText = data.username || "Unnamed User";
+
+                        if (data.username) {
+                        users.role = data.role || 'Player';
+                        users.username = data.username;
+                        
+                        
+                        document.getElementById('user-display-name').innerText = data.username;
                         document.getElementById('user-role-label').innerText = data.role;
 
                         syncRegistryToDropdowns();
@@ -188,8 +227,13 @@
                         initChatLogListener();
                         initInstanceCharactersListener();
                         if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
-                    }
-                });
+                    } 
+                else {
+                    loginTab.classList.replace('login-splash-mode', 'hide-default');
+                    setupTab.classList.replace('hide-default', 'login-splash-mode');
+                }
+            }
+        });
 
             } else {
                 // --- LOGGED OUT ---
