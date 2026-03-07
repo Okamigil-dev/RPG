@@ -373,11 +373,11 @@
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
             }
-            // Press Enter to Send 
+        // Press Enter to Send 
             function handleChatEnter(event) {
                 if (event.key === "Enter") sendChatMessage();
             }
-            // Render the Chat Log Itself
+        // Render the Chat Log Itself
             function renderChatLogEntry(data) {
                 const log = document.getElementById('chat-log');
                 if (!log) return;
@@ -429,7 +429,6 @@
                 log.prepend(entry); 
                 if (log.children.length > 20) log.removeChild(log.lastChild);
             }
-
     /*  ==========================================================================
         --- Section 2. Open Tab --------------------------------------------------
         ==========================================================================  */
@@ -540,3 +539,10 @@
                     });
             }
         }
+
+
+        function selectCharacter(charId) {
+    // This is a placeholder. 
+    // It exists so the app doesn't crash when a character is clicked.
+    console.log("selectCharacter triggered for ID:", charId);
+}
