@@ -150,57 +150,36 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-
-    /*  ==========================================================================
-        --- Section 4. Bars ------------------------------------------------------
-        ========================================================================== */
-        /* A consistent label style for all bars (HP, MP, EXP) that includes the name and current/max values */
-        .bar-label { 
-            display: flex; 
-            justify-content: space-between; 
-            font-size: 0.75rem; 
-            font-weight: bold; 
-            margin-bottom: 4px; 
-            color: var(--color-muted);
-        }
-
-        /* A more versatile bar structure that can be used for HP, MP, and EXP with different color fills */
-        .bar-body { 
-            width: 100%; 
-            height: 14px; 
-            background: var(--color-bg); 
-            border-radius: var(--radius-sm); 
-            overflow: hidden; 
-            position: relative;
-            border: 1px solid var(--color-border); 
-        }
-        
-        .bar-inner { height: 100%; transition: width 0.3s; }
-
-        .hp-fill { 
-            background: linear-gradient(90deg, var(--color-hp), #b91c1c); 
-            transition: width 0.3s; 
-        }
-        .mp-fill { 
-            background: linear-gradient(90deg, var(--color-mp), #1d4ed8); 
-        }
-        .exp-fill { 
-            background: linear-gradient(180deg,var(--color-success), #10b981); 
-        }
-    
-        .exp-overlay-grid {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.6rem; font-weight: 800; color: white; text-shadow: 0 1px 2px black;
-            pointer-events: none;
-        }
             
 /*  ==========================================================================
     --- Main Section 3. Layout -----------------------------------------------
     ==========================================================================   */
 
     /*  ==========================================================================
-        --- Section 1. Top Bar ---------------------------------------------------
+        --- Section 1. Login Tab -------------------------------------------------
+        ==========================================================================   */
+
+        .login-mode {display:block;}
+
+        .login-splash-mode {
+            display: flex !important; justify-content: center; align-items: center;
+            height: 100vh; width: 100vw; padding: 0 !important;
+            background: radial-gradient(circle at center, #18181b 0%, #09090b 100%);
+        }
+
+        .login-box {
+            width: 100%; max-width: 400px; padding: 40px; background: #111;
+            border: 1px solid #27272a; border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: login-fade-up 0.5s ease-out;
+        }
+
+        .login-box h2 { margin-bottom: 30px; text-align: center; color: #00ff88; letter-spacing: 1px; font-size: 1.5rem; }
+        .login-box .form-input { margin-bottom: 15px; background: #09090b; }
+
+
+    /*  ==========================================================================
+        --- Section 2. Top Bar ---------------------------------------------------
         ==========================================================================   */
         .top-nav {                              
             background: var(--color-bg-alt); 
@@ -222,6 +201,14 @@
         .nav-left { display: flex; align-items: center; gap: 20px; }
 
         .nav-tabs { display: flex; gap: 5px; } /* Added gap between tabs for better separation */
+
+        .tab-btn { 
+            background: transparent; color: #a1a1aa; border: none; 
+            cursor: pointer; padding: 8px 12px; font-weight: 600; 
+            text-transform: uppercase; font-size: 11px; transition: 0.2s;
+        }
+        .tab-btn:hover { color: #00ff88; }
+        .tab-btn.active { color: #00ff88; border-bottom: 2px solid #00ff88; }
 
         /* Login and Logoff Button + User Box */
         .user-header { display: flex; align-items: center; gap: 15px; }
@@ -334,6 +321,49 @@
                     color: var(--color-text); 
                     font-weight: bold;
                 }            
+                /*  ==========================================================================
+                    --- Bars -----------------------------------------------------------------
+                    ========================================================================== */
+                    /* A consistent label style for all bars (HP, MP, EXP) that includes the name and current/max values */
+                    .bar-label { 
+                        display: flex; 
+                        justify-content: space-between; 
+                        font-size: 0.75rem; 
+                        font-weight: bold; 
+                        margin-bottom: 4px; 
+                        color: var(--color-muted);
+                    }
+
+                    /* A more versatile bar structure that can be used for HP, MP, and EXP with different color fills */
+                    .bar-body { 
+                        width: 100%; 
+                        height: 14px; 
+                        background: var(--color-bg); 
+                        border-radius: var(--radius-sm); 
+                        overflow: hidden; 
+                        position: relative;
+                        border: 1px solid var(--color-border); 
+                    }
+                    
+                    .bar-inner { height: 100%; transition: width 0.3s; }
+
+                    .hp-fill { 
+                        background: linear-gradient(90deg, var(--color-hp), #b91c1c); 
+                        transition: width 0.3s; 
+                    }
+                    .mp-fill { 
+                        background: linear-gradient(90deg, var(--color-mp), #1d4ed8); 
+                    }
+                    .exp-fill { 
+                        background: linear-gradient(180deg,var(--color-success), #10b981); 
+                    }
+                
+                    .exp-overlay-grid {
+                        position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 0.6rem; font-weight: 800; color: white; text-shadow: 0 1px 2px black;
+                        pointer-events: none;
+                    }
 
         /*  ==========================================================================
             --- Section 2-B. Main Content --------------------------------------------
