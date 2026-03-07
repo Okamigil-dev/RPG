@@ -493,7 +493,7 @@
                     flex-grow: 1;
                 }
 
-                .dice-log-placeholder { text-align: center; opacity: 0.3; padding-top: 15px; }
+                .chat-log-placeholder { text-align: center; opacity: 0.3; padding-top: 15px; }
 
                 .dice-log {
                     border-radius: var(--radius-sm);
@@ -525,7 +525,7 @@
 
                 .chat-entry.roll-type { background: #2a2a35; border-left: 3px solid #3b82f6; }
                 .chat-entry.roll-type .roll-result { font-weight: bold; color: var(--color-accent); font-size: 1rem; }
-                .chat-entry.system-type { background: var(--system-bg); border-left: 3px solid #10b981; color: var(--system-text); font-style: italic; }
+                .chat-entry.gm-type { background: var(--system-bg); border-left: 3px solid #10b981; color: var(--system-text); font-style: italic; }
 
                 
                 .chat-input-area {

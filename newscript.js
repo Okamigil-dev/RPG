@@ -1,9 +1,7 @@
 /*  ===================== Version 0.5 ======================================   */
 
-
-
 /*  ==========================================================================
-    --- Main Section 1: Global Variables -------------------------------------
+    --- Main Section 1. Global Variables -------------------------------------
     ========================================================================== */
         /*  ==========================================================================
             --- Firebase Initializer -------------------------------------------------
@@ -23,7 +21,7 @@
             const rtdb = firebase.database();        
             const firestore = firebase.firestore(); 
 
-        // Max Stats Const
+        // Rules Related Variables
         const rules = {
             maxStats:{
                 maxBaseLevel: 60,
@@ -38,10 +36,11 @@
                 attributes: {}     // replaces attributeDefinitions
             },
         };
-
+        // Users Related Variables
         const users = {
-            // User Related Variables
+            uid: null,
             role: null,      
+            username: null,
 
             character: {
                 activeId: null,
@@ -53,21 +52,20 @@
 
             themeColor: '#8e630c'
         };
-
+        // Instances Related Variables
         const instances = {
             
             campaignId: "global",
             
-            // Clock Related Variables
-                clock:{
-                    totalSeconds: 0,
-                    multiplier: 1,
-                    notPaused: false,
-                    lastTickStamp: Date.now(),
-                    regenTimer: 0,
-                    regenSaveCd: 0,
-                    saveDelay: 0      
-                },
+            clock:{
+                totalSeconds: 0,
+                multiplier: 1,
+                notPaused: false,
+                lastTickStamp: Date.now(),
+                regenTimer: 0,
+                regenSaveCd: 0,
+                saveDelay: 0      
+            },
         };
 
     
@@ -77,7 +75,7 @@
     // let totalAP = 0;
 
 /*  ==========================================================================
-    --- Main Section 2: User Authentication ----------------------------------
+    --- Main Section 2. User Authentication ----------------------------------
     ==========================================================================  */
     // --- Register User to Firebase -----------------------------------------  //
     function registerUser() {
@@ -107,8 +105,6 @@
         });
 
     }
-
-
     // --- Login User to Firebase --------------------------------------------- //
     function loginUser() {
         const email = document.getElementById('email-input').value;
@@ -134,9 +130,7 @@
             display.className = "dangerColor";
         });
     }
-
-
-
+    // --- Logout User to Firebase -------------------------------------------- //
     function logoutUser() { 
         const logout = users.character.listener;
         if (logout && typeof logout === 'function') {
@@ -149,70 +143,293 @@
             console.log("User signed out successfully.");
         }).catch(err => console.error("Logout Error:", err));
     }
+/*  ==========================================================================
+    --- Main Section 3. Authentication Live Function ------------------------------
+    ==========================================================================  */
+        auth.onAuthStateChanged((user) => {
+            const topNav = document.getElementById('top-nav');
+            const appBody = document.getElementById('app-body');
+            const loginTab = document.getElementById('tab-login');
+                        
+            if (user) {
+                users.uid = user.uid;
+                firestore.collection('users').doc(user.uid).get().then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        users.role = data.role || 'Player'; //
+                        users.username = data.username || "Unnamed User";
+                                    
+                        document.getElementById('user-display-name').innerText = data.username || "Unnamed User";
+                        document.getElementById('user-role-label').innerText = data.role;
 
+                        syncRegistryToDropdowns();
+                        loadUserCharacters();
 
+                        const isMasterOrAbove = (data.role === 'Master' || data.role === 'Admin'); //
+                        if (isMasterOrAbove) {
+                            document.querySelectorAll('.master-only').forEach(el => el.classList.remove('hide-default'));
+                        }
 
+                        if (data.role === 'Admin') {
+                            document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hide-default'));
+                        }
 
+                        let targetTab = localStorage.getItem('activeMainTab') || 'tab-character';
+                        if (targetTab === 'tab-login') targetTab = 'tab-character';
+                        openTab(targetTab);
 
-    auth.onAuthStateChanged((user) => {
-        const topNav = document.getElementById('top-nav');
-        const appBody = document.getElementById('app-body');
-        const loginTab = document.getElementById('tab-login');
-                    
-        if (user) {
-            
-            firestore.collection('users').doc(user.uid).get().then(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    window.RPG_APP.role = data.role || 'Player'; //
-                                
-                    document.getElementById('user-display-name').innerText = data.username || "Unnamed User";
-                    document.getElementById('user-role-label').innerText = data.role;
+                        topNav.classList.remove('hide-default');
+                        appBody.classList.remove('hide-default');
 
-                    syncRegistryToDropdowns();
-                    loadUserCharacters();
+                        loginTab.classList.replace('login-splash-mode', 'hide-default');
 
-                    const isMasterOrAbove = (data.role === 'Master' || data.role === 'Admin'); //
-                    if (isMasterOrAbove) {
-                        document.getElementById('nav-control-panel').classList.remove('hide-default');
-                        document.getElementById('master-quick-controls').classList.remove('hide-default');
+                        initClockListener();
+                        initChatLogListener();
+                        initInstanceCharactersListener();
+                        if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
                     }
+                });
 
-                    if (data.role === 'Admin') {
-                        const adminElements = document.querySelectorAll('.admin-only'); //
-                        adminElements.forEach(el => el.classList.remove('hide-default')); //
-                    }
+            } else {
+                // --- LOGGED OUT ---
+                users.uid = null;
+                users.role = null;
+                
+                loginTab.classList.replace('hide-default', 'login-splash-mode');
 
-                    const savedTab = localStorage.getItem('activeMainTab');
+                topNav.classList.add('hide-default');
+                appBody.classList.add('hide-default');
+                
+                openTab('tab-login');
+            }
+        });  
+    /*  ==========================================================================
+        --- Section 1. Load Races Menu -----------------------------------------
+        ==========================================================================  */
+            async function syncRegistryToDropdowns() {
+                const raceSelect = document.getElementById('char-race');
+                if (!raceSelect) return; 
+                try {
+                    const raceSnap = await firestore.collection('master_races').orderBy('name').get();
+                    raceSelect.innerHTML = '<option value="">Select Race</option>';
+                    raceSnap.forEach(doc => {
+                        const d = doc.data();
+                        raceSelect.innerHTML += `<option value="${d.name}">${d.name}</option>`;
+                    });
+                } catch (error) { console.error("Error syncing registry:", error); }
+            } 
+    /*  ==========================================================================
+        --- Section 2. Load User Character ---------------------------------------
+        ==========================================================================  */
+            function loadUserCharacters() {
+                if (!users.uid) return;
+                firestore.collection('users').doc(users.uid).collection('characters').get().then(snap => {
+                    const grid = document.getElementById('char-list-grid');
+                    if (!grid) return;
+                    grid.innerHTML = "";
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        const gallery = d.gallery || [];
+                        const activeIdx = d.portrait !== undefined ? d.portrait : 0;
+                        const displayImg = gallery[activeIdx] || ''; 
+                        const card = document.createElement('div');
+                        card.className = 'char-card';
+                        card.onclick = () => selectCharacter(doc.id);
+                        card.innerHTML = `
+                            <div class="char-card-portrait" style="background-image: url('${displayImg}');">
+                                ${!displayImg ? '<i class="fa-solid fa-user"></i>' : ''}
+                            </div>
+                            <strong>${d.name || 'New Hero'}</strong>
+                            <div class="char-card-meta">Lv.${d.charLevel || 1}</div>
+                            <button class="btn-danger-small m-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">Delete</button>
+                        `;
+                        grid.appendChild(card);
+                    });
+                });
+            }
+    /*  ==========================================================================
+        --- Section 3. Init Clock Listener ---------------------------------------
+        ==========================================================================  */
+            function initClockListener() {
+                rtdb.ref(`instance_clocks`).off(); 
+                rtdb.ref("instance_clocks/" + instances.campaignId).on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (!data) return;
+
+                    // 1. Map Database to Folder
+                    instances.clock.notPaused = data.isRunning;
+                    instances.clock.multiplier = data.speedMultiplier || 1;
                     
-                    if (!savedTab || savedTab === 'tab-login') {
-                        openTab('tab-character');
+                    const label = document.getElementById('speed-label');
+                    if (label) label.innerText = instances.clock.multiplier + "x";
+
+                    let now = Date.now();
+                    
+                    // 2. Use the database's key (isRunning) to check state
+                    if (data.isRunning) {
+                        let deltaRealSeconds = (now - data.lastRealWorldSaveTime) / 1000;
+                        // Use the new local multiplier for the calculation
+                        instances.clock.totalSeconds = (data.totalCustomSeconds || 0) + (deltaRealSeconds * instances.clock.multiplier);
                     } else {
-                        openTab(savedTab);
+                        instances.clock.totalSeconds = data.totalCustomSeconds || 0;
                     }
 
-                    topNav.classList.remove('hide-default');
-                    appBody.classList.remove('hide-default');
+                    // 3. Update the pulse marker
+                    instances.clock.lastTickStamp = now;
+                    
+                    updateDisplay();
+                });
+            }
+            /*  ==========================================================================
+                --- Section 3-A. Update Display ------------------------------------------
+                ==========================================================================  */
+                function updateDisplay() {
+                    const total = instances.clock.totalSeconds;
 
-                    loginTab.classList.replace('login-splash-mode', 'hide-default');
+                    // 2. Use that 'total' for all the math below
+                    let h = Math.floor((total / 3600) % 24);
+                    let m = Math.floor((total / 60) % 60);
+                    let s = Math.floor(total % 60);
 
-                    initClockListener();
-                    initDiceLogListener();
-                    if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
+                    let totalDays = Math.floor(total / (24 * 60 * 60));
+                    let year = Math.floor(totalDays / 360) + 1; 
+                    let month = Math.floor((totalDays % 360) / 30) + 1;
+                    let day = (totalDays % 30) + 1;
+
+                    if(document.getElementById('date-display')) {
+                        document.getElementById('date-display').innerText = `Day ${day}, Month ${month}, Year ${year}`;
+                    }
+                    
+                    if(document.getElementById('time-display')) {
+                        document.getElementById('time-display').innerText = 
+                            `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                    }
+                }       
+    /*  ==========================================================================
+        --- Section 4. Chat Log --------------------------------------------------
+        ==========================================================================  */
+        // Loads Chat Log from database
+            function initChatLogListener() {
+                const log = document.getElementById('chat-log');
+                if (log) log.innerHTML = '<div class="chat-log-placeholder">Loading history...</div>';
+                
+                rtdb.ref(`instance_logs/${instances.campaignId}/chatbox`).off();
+                rtdb.ref(`instance_logs/${instances.campaignId}/chatbox`).limitToLast(20).on('child_added', (snapshot) => {
+                    renderChatLogEntry(snapshot.val());
+                });
+            }
+        // Loads Characters in Instance Dropdown
+            function initInstanceCharactersListener() {
+                const selector = document.getElementById('chat-target-select');
+                if (!selector) return;
+
+                rtdb.ref(`instance_logs/${instances.campaignId}/present_characters`).on('value', (snapshot) => {
+                    selector.innerHTML = '<option value="all">Everyone</option>';
+                    snapshot.forEach(child => {
+                        const char = child.val();
+                        // Don't list yourself
+                        if (char.id !== users.character.activeId) {
+                            const opt = document.createElement('option');
+                            opt.value = char.id;   // The "Target ID"
+                            opt.innerText = char.name; // The "Display Name"
+                            selector.appendChild(opt);
+                        }
+                    });
+                });
+            }
+        // Send Message
+            function sendChatMessage() {
+                const targetSelect = document.getElementById('chat-target-select');
+                const input = document.getElementById('chat-msg-input');
+                const text = input.value.trim();
+                if (!text) return;
+
+                let senderName = "Unknown";
+                let senderType = "chat"; // Default type
+
+                if (users.character.name) {
+                    senderName = users.character.name;
+                    senderType = "chat";
+                } 
+                else if (users.role === 'Admin' || users.role === 'Master') {
+                    senderName = users.username || "GM";
+                    senderType = "gm-chat";
+                } 
+                else {
+                    return;
                 }
+                
+                let targetId = null; 
+                if (targetSelect.value !== 'all') {
+                    targetId = targetSelect.value;
+                }
+                
+                rtdb.ref(`instance_logs/${instances.campaignId}/chatbox`).push({
+                    type: senderType, 
+                    name: senderName,
+                    text: text,
+                    target: targetId,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
+            // Press Enter to Send 
+            function handleChatEnter(event) {
+                if (event.key === "Enter") sendChatMessage();
+            }
+            // Render the Chat Log Itself
+            function renderChatLogEntry(data) {
+                const log = document.getElementById('chat-log');
+                if (!log) return;
+                const placeholder = log.querySelector('.chat-log-placeholder');
+                if (placeholder) placeholder.remove();
+
+                const entry = document.createElement('div');
+                if (data.type === 'gm-chat') {
+                    entry.className = 'chat-entry gm-type';
+                    entry.innerHTML = `<span><strong>${data.name}:</strong> ${data.text}</span>`;
+                } else if (data.type === 'roll') {
+                    entry.className = 'chat-entry roll-type';
+                    entry.innerHTML = `<span class="chat-name">${data.name}</span> rolled a d${data.sides}: <span class="roll-result">${data.result}</span>`;
+                } else if (data.type === 'initiative') { 
+                    entry.className = 'chat-entry roll-type';
+                    entry.innerHTML = `<span class="chat-name">${data.name}</span> Initiative Roll: <span class="roll-result">${data.result}</span>`;
+                } else {
+                    entry.className = 'chat-entry';
+                    entry.innerHTML = `<span class="chat-name">${data.name}:</span> <span>${data.text}</span>`;
+                }
+                log.prepend(entry); 
+                if (log.children.length > 20) log.removeChild(log.lastChild);
+            }
+
+    /*  ==========================================================================
+        --- Section 2. Open Tab --------------------------------------------------
+        ==========================================================================  */
+
+
+
+
+
+
+
+
+    /*  ==========================================================================
+        --- Section X. Instance Management ---------------------------------------
+        ==========================================================================  */
+        function enterInstance(charId, charName) {
+            const path = `instance_logs/${instances.campaignId}/present_characters/${charId}`;
+            const presenceRef = rtdb.ref(path);
+
+            presenceRef.set({
+                name: charName,
+                id: charId,
+                uid: users.uid 
             });
 
-            
-
-        } else {
-            // --- LOGGED OUT ---
-            window.RPG_APP.role = null;
-            
-            loginTab.classList.replace('hide-default', 'login-splash-mode');
-
-            topNav.classList.add('hide-default');
-            appBody.classList.add('hide-default');
-            
-            openTab('tab-login');
+            // Cleanup if they leave/close tab
+            presenceRef.onDisconnect().remove();
         }
-    });
+        
+
+
+
+        
