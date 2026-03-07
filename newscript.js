@@ -380,21 +380,49 @@
             function renderChatLogEntry(data) {
                 const log = document.getElementById('chat-log');
                 if (!log) return;
+
+                let shouldShow = false;
+                let isWhisper = false; // We start assuming it's NOT a whisper
+
+                if (!data.target) {
+                    shouldShow = true; // Public
+                } else {
+                    isWhisper = true; 
+
+                    if (data.target === users.character.activeId) {
+                        shouldShow = true; // For me
+                    } else if (data.name === users.character.name || data.name === users.username) {
+                        shouldShow = true; // From me
+                    } else if (users.role === 'Master' || users.role === 'Admin') {
+                        shouldShow = true; // GM eyes only
+                    }
+                }
+
+                if (!shouldShow) return;
+                
                 const placeholder = log.querySelector('.chat-log-placeholder');
                 if (placeholder) placeholder.remove();
 
                 const entry = document.createElement('div');
+                let classList = 'chat-entry';
                 if (data.type === 'gm-chat') {
-                    entry.className = 'chat-entry gm-type';
+                    classList += ' gm-type';
+                } else if (data.type === 'roll' || data.type === 'initiative') {
+                    classList += ' roll-type';
+                }
+                if (isWhisper) {
+                    classList += ' whisper-type';
+                }
+
+                entry.className = classList;
+
+                if (data.type === 'gm-chat') {
                     entry.innerHTML = `<span><strong>${data.name}:</strong> ${data.text}</span>`;
                 } else if (data.type === 'roll') {
-                    entry.className = 'chat-entry roll-type';
                     entry.innerHTML = `<span class="chat-name">${data.name}</span> rolled a d${data.sides}: <span class="roll-result">${data.result}</span>`;
                 } else if (data.type === 'initiative') { 
-                    entry.className = 'chat-entry roll-type';
                     entry.innerHTML = `<span class="chat-name">${data.name}</span> Initiative Roll: <span class="roll-result">${data.result}</span>`;
                 } else {
-                    entry.className = 'chat-entry';
                     entry.innerHTML = `<span class="chat-name">${data.name}:</span> <span>${data.text}</span>`;
                 }
                 log.prepend(entry); 
@@ -404,7 +432,7 @@
     /*  ==========================================================================
         --- Section 2. Open Tab --------------------------------------------------
         ==========================================================================  */
-
+            function openTab {}
 
 
 

@@ -125,7 +125,7 @@
         /* Text Alignment Global Classes */
         .text-center { text-align: center; }
         .text-right { text-align: right; }
-
+        
         /* Display Global Classes */
         .flex { display: flex; }
         .grid { display: grid; }
