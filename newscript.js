@@ -109,6 +109,7 @@
     function loginUser() {
         const email = document.getElementById('email-input').value;
         const pass = document.getElementById('password-input').value;
+        const display = document.getElementById('message-display');
         
         display.className = "";
 
