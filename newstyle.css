@@ -110,9 +110,9 @@
         .opacity-100 { opacity: 1 }
         
         /* Color Global Classes */
-        .errorColor { color: var(--color-error); }
+        .errorColor { color: var(--color-error); }      
+        .dangerColor { color: var(--color-danger); }
         .successColor { color: var(--color-success); }
-        .dangerColor { color: var(--color-danger)}
 
         .icon {fill: currentColor; color: var(--color-accent);}
         .icon svg { height:100%; width:100% }

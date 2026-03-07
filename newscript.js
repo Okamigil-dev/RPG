@@ -52,23 +52,23 @@
             },
 
             themeColor: '#8e630c'
-    };
+        };
 
-    const instances = {
-        
-        campaignId: "global",
-        
-        // Clock Related Variables
-            clock:{
-                totalSeconds: 0,
-                multiplier: 1,
-                notPaused: false,
-                lastTickStamp: Date.now(),
-                regenTimer: 0,
-                regenSaveCd: 0,
-                saveDelay: 0      
-            },
-    };
+        const instances = {
+            
+            campaignId: "global",
+            
+            // Clock Related Variables
+                clock:{
+                    totalSeconds: 0,
+                    multiplier: 1,
+                    notPaused: false,
+                    lastTickStamp: Date.now(),
+                    regenTimer: 0,
+                    regenSaveCd: 0,
+                    saveDelay: 0      
+                },
+        };
 
     
     // dont know what these are for yet
@@ -78,7 +78,8 @@
 
 /*  ==========================================================================
     --- Main Section 2: User Authentication ----------------------------------
-    ========================================================================== */
+    ==========================================================================  */
+    // --- Register User to Firebase -----------------------------------------  //
     function registerUser() {
         const email = document.getElementById('email-input').value;
         const pass = document.getElementById('password-input').value;
@@ -87,9 +88,9 @@
         const display = document.getElementById('message-display');
 
         if (!email || !pass || !username) {
-            display.textContent = "All fields are required!"; // Write to the page
-            display.classList.add("dangerColor");               // Make it visible/clear
-            return; // STOP the function here so it doesn't talk to Firebase
+            display.textContent = "All fields are required!"; 
+            display.classList = "dangerColor";              
+            return;
         }
 
         auth.createUserWithEmailAndPassword(email, pass).then((res) => {
@@ -99,56 +100,78 @@
                 username: username 
             });
             display.textContent = "Registration Successful!";
-            display.classList.add("successColor");
+            display.classList = "successColor";
         }).catch(err => {
             display.textContent = err.message;
-            display.classList.add("errorColor");
+            display.classList= "errorColor" ;
         });
+
     }
 
+
+    // --- Login User to Firebase --------------------------------------------- //
     function loginUser() {
         const email = document.getElementById('email-input').value;
         const pass = document.getElementById('password-input').value;
-        auth.signInWithEmailAndPassword(email, pass).catch(err => alert(err.message));
-    }
+        
+        display.className = "";
 
-    function logoutUser() { 
-        // 1. Check if the "Stop Button" exists
-        if (characterListener && typeof characterListener === 'function') {
-            console.log("Stopping active character listener...");
-            characterListener(); // This kills the live stream
-            characterListener = null; // Clears the variable
+        // 3. Simple Requirement Check
+        if (!email || !pass) {
+            display.textContent = "Enter email and password.";
+            display.className = "dangerColor";
+            return;
         }
 
-        // 2. Now sign out safely
+        auth.signInWithEmailAndPassword(email, pass)
+        .then(() => {
+            display.textContent = "Welcome back!";
+            display.className = "successColor";
+        })
+        .catch(err => {
+            // Replace the alert with your CSS class
+            display.textContent = err.message;
+            display.className = "dangerColor";
+        });
+    }
+
+
+
+    function logoutUser() { 
+        const logout = users.character.listener;
+        if (logout && typeof logout === 'function') {
+            console.log("Stopping active character listener...");
+            logout(); 
+            users.character.listener = null; 
+        }
+
         auth.signOut().then(() => {
             console.log("User signed out successfully.");
-            // No location.reload() needed anymore!
         }).catch(err => console.error("Logout Error:", err));
     }
 
+
+
+
+
     auth.onAuthStateChanged((user) => {
         const topNav = document.getElementById('top-nav');
-        const appBody = document.querySelector('.app-body');
+        const appBody = document.getElementById('app-body');
         const loginTab = document.getElementById('tab-login');
-
+                    
         if (user) {
             
-            
-            // 3. Get Role from Firestore BEFORE opening any tabs
             firestore.collection('users').doc(user.uid).get().then(doc => {
                 if (doc.exists) {
                     const data = doc.data();
                     window.RPG_APP.role = data.role || 'Player'; //
                                 
-                    // Step 1- Set UI labels
-                    document.getElementById('user-display-name').innerText = user.email.split('@')[0];
+                    document.getElementById('user-display-name').innerText = data.username || "Unnamed User";
                     document.getElementById('user-role-label').innerText = data.role;
 
                     syncRegistryToDropdowns();
                     loadUserCharacters();
 
-                    // Step 2- Master and Admin Check
                     const isMasterOrAbove = (data.role === 'Master' || data.role === 'Admin'); //
                     if (isMasterOrAbove) {
                         document.getElementById('nav-control-panel').classList.remove('hide-default');
@@ -159,24 +182,20 @@
                         const adminElements = document.querySelectorAll('.admin-only'); //
                         adminElements.forEach(el => el.classList.remove('hide-default')); //
                     }
-                    
-                    // Step 3- openTab function runs the check to load the correct tab
+
                     const savedTab = localStorage.getItem('activeMainTab');
+                    
                     if (!savedTab || savedTab === 'tab-login') {
                         openTab('tab-character');
                     } else {
                         openTab(savedTab);
                     }
 
-                    // Step 4- Reveal the "Mother" containers first
                     topNav.classList.remove('hide-default');
                     appBody.classList.remove('hide-default');
-                    
-                    // Step 5- Clear login splash effects
-                    loginTab.classList.remove('login-splash-mode');
-                    loginTab.classList.add('hide-default');
 
-                    // Step 6- Start listeners
+                    loginTab.classList.replace('login-splash-mode', 'hide-default');
+
                     initClockListener();
                     initDiceLogListener();
                     if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
@@ -189,13 +208,10 @@
             // --- LOGGED OUT ---
             window.RPG_APP.role = null;
             
-            // Hide mothers (children like logout-btn inherit this)
+            loginTab.classList.replace('hide-default', 'login-splash-mode');
+
             topNav.classList.add('hide-default');
             appBody.classList.add('hide-default');
-            
-            // Prepare login screen
-            loginTab.classList.add('login-splash-mode');
-            loginTab.classList.remove('hide-default'); 
             
             openTab('tab-login');
         }
