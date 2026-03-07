@@ -110,7 +110,7 @@
         const email = document.getElementById('email-input').value;
         const pass = document.getElementById('password-input').value;
         const display = document.getElementById('message-display');
-        
+
         display.className = "";
 
         // 3. Simple Requirement Check
@@ -455,7 +455,7 @@
                         savedSubTab = 'sub-instances';
                     }
 
-                    openControlSubTab(null, savedSubTab); 
+                    // openControlSubTab(null, savedSubTab); 
                 }
             }
 
