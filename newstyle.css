@@ -208,8 +208,10 @@
         .login-box .form-input { margin-bottom: 15px; background: #09090b; }
 
         .btn-primary { background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-        /* .btn-primary:hover { background: #2563eb; } */
+        .btn-primary:hover { background: #2563eb; }
 
+        .btn-secondary { background: #27272a; color: white; border: 1px solid #3f3f46; padding: 10px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .btn-secondary:hover { background: #3f3f46; }
 
     /*  ==========================================================================
         --- Section 2. Top Bar ---------------------------------------------------
