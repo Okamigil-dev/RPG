@@ -1,0 +1,350 @@
+/*  ----------------------Version 0.5 --------------------------------------   */
+/*  ==========================================================================
+    --- Main Section 1. Variables --------------------------------------------
+    ==========================================================================   */
+    :root {
+        /* Colors */
+        --color-bg: #09090b;        /* A very dark gray for the main background */
+        --color-bg-alt: #111;       /* Slightly lighter for panels and cards */
+        --color-bg-alt2: #18181b;
+        --color-border: #27272a;    /* Dark gray for borders and dividers */
+        --color-text: #bcc6cc;      /* A soft off-white for better readability */
+        --color-muted: #9da8ae;     /* For less important text and labels */
+        --color-accent: #8e630c;    /* A vibrant purple for highlights and accents */
+        --color-hp: #ef4444;        /* Bright red for HP bars and icons */
+        --color-mp: #3b82f6;        /* Bright blue for MP bars and icons */
+        --color-success: #00ff88;       /* Bright green for success messages and indicators */
+        
+        /* Shadow Color */
+        --color-shadow: rgba(0, 0, 0, 0.5); /* For consistent shadow effects across the app */
+        --success-shadow: rgba(0, 255, 136, 0.5); /* A bright green shadow for success indicators */
+        
+        /* System Colors */
+        --system-text: #34d399;
+        --system-bg: #065f46;
+        --color-danger: #450a0a;
+        --color-danger-hover: #f87171;
+        
+        /* Money Colors */
+        --color-gold:   #ffd700; /* Rich, classic gold */
+        --color-silver: #c0c0c0; /* Clean, polished silver/steel */
+        --color-copper: #b87333; /* Warm, earthy copper/bronze */
+
+        /* Font */
+        --font-family: 'Inter', sans-serif; /* A modern, clean font for the entire app */
+        
+        /* Border Radius */
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+
+        /* Scrollbar */
+        --color-scrollbar:#202020;
+        --hover-scrollbar: #303030;
+        --width-scrollbar: 8px;
+        --radius-scrollbar: 4px;
+
+
+        /* Transition */
+        --transition-fast: 0.2s ease; /* For quick hover effects */
+    }
+
+
+/*  ==========================================================================
+    --- Main Section 2. Global -----------------------------------------------
+    ==========================================================================   */
+
+    /*  ==========================================================================
+        --- Section 1. Base ------------------------------------------------------
+        ==========================================================================   */
+        body {                                  
+            margin: 0;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-family);
+            overflow: hidden;
+        }
+        
+        * { box-sizing: border-box; }
+
+        /* Scroll Bars */
+        ::-webkit-scrollbar { width: var(--width-scrollbar); }    
+        ::-webkit-scrollbar-track { background: transparent ; }  
+        ::-webkit-scrollbar-thumb { background: var(--color-scrollbar);  border-radius: var(--radius-scrollbar); } 
+        ::-webkit-scrollbar-thumb:hover { background: var(--hover-scrollbar); } 
+
+    /*  ==========================================================================
+        --- Section 2. Global Classes --------------------------------------------
+        ========================================================================== */
+        /* Class for Hiding Elements */        
+        .hide-default { display: none !important; }  
+                
+        /* Opacity Global Classes */
+        .opacity-0 { opacity: 0 }
+        .opacity-50 { opacity: 0.5 }
+        .opacity-100 { opacity: 1 }
+        
+        .icon {fill: currentColor; color: var(--color-accent);}
+        .icon svg { height:100%; width:100% }
+
+        .flex-row { display: flex; align-items: center; gap: 10px }
+        .flex-grow { flex-grow: 1; }
+        .flex-1 { flex: 1; }
+        .flex-end { justify-content: flex-end; }
+
+        /* Text Alignment Global Classes */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+
+        /* Display Global Classes */
+        .flex { display: flex; }
+        .grid { display: grid; }
+
+        /* Sizing Global Classes */
+        .w-100 { width: 100%; }
+        .h-100 { height: 100%; }
+
+        /* Border Global Classes */
+        .border-s { border: 1px solid var(--color-border); }
+        .border-m { border: 3px solid var(--color-border); }
+        .border-l { border: 5px solid var(--color-border); }
+
+        /* Margin Global Classes */
+        .m-s { margin: 5px; }
+        .m-m { margin: 10px; }
+        .m-l { margin: 20px; }
+        
+        /* Padding Global Classes */
+        .p-s { margin: 5px; }
+        .p-m { margin: 10px; }
+        .p-l { margin: 20px; }
+
+        /* Gap Global Classes */
+        .gap-s { gap: 5px; }
+        .gap-m { gap: 10px; }
+        .gap-l { gap: 20px; }
+        .gap-el { gap: 30px; }
+
+    /*  ==========================================================================
+        --- Section 3. Animations ------------------------------------------------
+        ========================================================================== */
+        /* A simple fade-in and slight upward movement for the login form to give it a more dynamic entrance */
+        @keyframes login-fade-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* A quick pop effect for dice rolls to make them feel more impactful */
+        @keyframes dice-pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* A subtle fade-in for character cards and gallery items to make them feel more alive when they appear */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes rotate-360 {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+    /*  ==========================================================================
+        --- Section 4. Bars ------------------------------------------------------
+        ========================================================================== */
+        /* A consistent label style for all bars (HP, MP, EXP) that includes the name and current/max values */
+        .bar-label { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 0.75rem; 
+            font-weight: bold; 
+            margin-bottom: 4px; 
+            color: var(--color-muted);
+        }
+
+        /* A more versatile bar structure that can be used for HP, MP, and EXP with different color fills */
+        .bar-body { 
+            width: 100%; 
+            height: 14px; 
+            background: var(--color-bg); 
+            border-radius: var(--radius-sm); 
+            overflow: hidden; 
+            position: relative;
+            border: 1px solid var(--color-border); 
+        }
+        
+        .bar-inner { height: 100%; transition: width 0.3s; }
+
+        .hp-fill { 
+            background: linear-gradient(90deg, var(--color-hp), #b91c1c); 
+            transition: width 0.3s; 
+        }
+        .mp-fill { 
+            background: linear-gradient(90deg, var(--color-mp), #1d4ed8); 
+        }
+        .exp-fill { 
+            background: linear-gradient(180deg,var(--color-success), #10b981); 
+        }
+    
+        .exp-overlay-grid {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.6rem; font-weight: 800; color: white; text-shadow: 0 1px 2px black;
+            pointer-events: none;
+        }
+            
+/*  ==========================================================================
+    --- Main Section 3. Layout -----------------------------------------------
+    ==========================================================================   */
+
+    /*  ==========================================================================
+        --- Section 1. Top Bar ---------------------------------------------------
+        ==========================================================================   */
+        .top-nav {                              
+            background: var(--color-bg-alt); 
+            padding: 0 20px; 
+            border-bottom: 1px solid var(--color-border); 
+            height: 60px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-sizing: border-box; 
+            z-index: 100;
+        }
+
+        .top-nav.hide-default, .app-body.hide-default { /* Utility class to hide elements that are not needed in certain views (like the Master Dashboard) */
+            display: none !important;
+        }
+
+        .brand-logo { font-weight: bold; color: var(--color-accent); letter-spacing: 1px; } /* A simple, bold logo style that matches the accent color of the app */
+        .nav-left { display: flex; align-items: center; gap: 20px; }
+
+        .nav-tabs { display: flex; gap: 5px; } /* Added gap between tabs for better separation */
+
+        /* Login and Logoff Button + User Box */
+        .user-header { display: flex; align-items: center; gap: 15px; }
+        
+        /* User Info Styling */
+        .user-info { text-align: right; line-height: 1.2; }
+        .user-name { font-weight: bold; font-size: 0.9em; }
+        .user-role { font-weight: bold; font-size: 0.7em; color: var(--color-accent); text-transform: none; }
+
+        .btn-danger { 
+            background: var(--color-danger); 
+            color: var(--color-danger-hover); 
+            border: 1px solid var(--color-danger); 
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            cursor: pointer; font-size: 0.75rem; 
+            font-weight: bold; 
+            transition: 0.2s; 
+        }
+        .btn-danger:hover { background: var(--color-danger); color: white; }
+
+    /*  ==========================================================================
+        --- Section 2. Main Body -------------------------------------------------
+        ==========================================================================   */
+        .app-body { 
+            display: flex; 
+            width: 100%;
+            height: calc(100vh - 60px); 
+        }
+
+        /*  ==========================================================================
+            --- Section 2-A. Sidebar Left --------------------------------------------
+            ==========================================================================   */
+                .sidebar {
+                    min-width: 260px;
+                    background: var(--color-bg);
+                    padding: 10px;
+                    border-inline: 1px solid var(--color-border);
+                    display: flex;
+                    flex-direction: column;
+                }
+                
+                /* Sidebar Module Wrapper - Matches Active Char HUD */
+                .sidebar-panel {
+                    background: var(--color-bg-alt);
+                    border-radius: 12px;
+                    border: 1px solid var(--color-border);
+                    padding: 15px;
+                    margin: 5px 0;
+                    overflow: hidden;
+                    box-shadow: 0 10px 25px var(--color-shadow);
+                    display: flex;
+                    flex-direction: column;
+                }
+
+            /*  ==========================================================================
+                --- Active Character -----------------------------------------------------
+                ==========================================================================   */
+                .active-char-hud {
+                    display: grid;
+                    background: var(--color-bg-alt);
+                    border-radius: var(--radius-lg);
+                    border: 1px solid var(--color-border);
+                    overflow: hidden;
+                    box-shadow: 0 10px 25px var(--color-shadow);
+                    align-content: end;
+                    justify-content: center;
+                }
+            
+                /* Character Portrait: Full width of the sidebar card */
+                .portrait-main-hud {
+                    display: flex;
+                    text-align: center;
+                    font-size: 10rem;
+                    width: 200px;
+                    height: 200px;
+                    margin: 20px 20px 5px 20px;
+                    border-radius: var(--radius-lg);
+                    background-size: cover;
+                    background-position: center;
+                    border: 2px solid var(--color-accent);
+                    image-rendering: auto;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .hud-identity-block {
+                    text-align: center;
+                }
+                
+                .hud-name { margin: 0; font-size: 1.2rem; }
+                .hud-meta { font-size: 0.8rem; color: var(--color-accent); font-weight: bold; }
+                .hud-resource { padding: 0 15px; margin-bottom: 5px; }
+
+                /* Sidebar Stats Grid */
+                .hud-stats-row { 
+                    display: grid; 
+                    grid-template-columns: 1fr 1fr 1fr; 
+                    gap: 1px;
+                    background: var(--color-border); /* Grid gap color */
+                    margin-top: 10px;
+                    border-top: 1px solid var(--color-border); /* Top border for the first row */
+                }
+                
+                .hud-stat-box {
+                    background: var(--color-bg-alt); 
+                    padding: 10px 5px; 
+                    text-align: center; 
+                    font-size: 0.7rem; 
+                    color: var(--color-text); 
+                    font-weight: bold;
+                }            
+
+        /*  ==========================================================================
+            --- Section 2-B. Main Content --------------------------------------------
+            ==========================================================================   */
+            .main-content {
+                flex-grow: 1;
+                padding: 30px;
+                overflow-y: auto;
+                background-color: var(--color-bg);
+            }
+
+            /*  ==========================================================================
+                --- Character Tab --------------------------------------------------------
+                ==========================================================================   */
