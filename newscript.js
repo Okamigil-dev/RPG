@@ -187,7 +187,7 @@
             const appBody = document.getElementById('app-body');
             const loginTab = document.getElementById('tab-login');
             const setupTab = document.getElementById('tab-username-setup');
-
+                        
             if (user) {
                 users.uid = user.uid;
                 firestore.collection('users').doc(user.uid).get().then(doc => {
@@ -470,7 +470,7 @@
                 } else {
                     entry.innerHTML = `<span class="chat-name">${data.name}:</span> <span>${data.text}</span>`;
                 }
-                log.prepend(entry); 
+                log.appendChild(entry); 
                 if (log.children.length > 20) log.removeChild(log.lastChild);
             }
     /*  ==========================================================================

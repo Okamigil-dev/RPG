@@ -125,7 +125,7 @@
         /* Text Alignment Global Classes */
         .text-center { text-align: center; }
         .text-right { text-align: right; }
-        
+
         /* Display Global Classes */
         .flex { display: flex; }
         .grid { display: grid; }
@@ -529,6 +529,7 @@
 
                 
                 .chat-input-area {
+                    width:100%;
                     border-radius: 4px;
                     margin: 10px 0;
                 }

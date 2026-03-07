@@ -374,18 +374,18 @@
                     </div>
                 
                 </div>
-                <div>
+                <div class="flex-row">
 
-                    <div class="chat-input-area flex-row gap-s">
+                    <div class="chat-input-area grid gap-s">
                         <select id="chat-target-select">
                         <option value="all">Everyone</option>
                         </select>
                         <input type="text" id="chat-msg-input" class="form-input flex-grow" autocomplete="off" placeholder="Type a message..." onkeypress="handleChatEnter(event)">
-                        <button onclick="sendChatMessage()" class="btn-primary">
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
+                        
                     </div>
-
+                    <button onclick="sendChatMessage()" class="btn-primary">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
                 </div>
             </div>   
 
