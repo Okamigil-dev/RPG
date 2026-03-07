@@ -17,7 +17,6 @@
         --color-accent: #8e630c;    /* A vibrant purple for highlights and accents */
         --color-hp: #ef4444;        /* Bright red for HP bars and icons */
         --color-mp: #3b82f6;        /* Bright blue for MP bars and icons */
-        --color-success: #00ff88;       /* Bright green for success messages and indicators */
         
         /* Shadow Color */
         --color-shadow: rgba(0, 0, 0, 0.5); /* For consistent shadow effects across the app */
@@ -26,9 +25,12 @@
         /* System Colors */
         --system-text: #34d399;
         --system-bg: #065f46;
-        --color-danger: #450a0a;
-        --color-danger-hover: #f87171;
         
+        --color-error: #860000;
+        --color-danger: #d25700;
+        --color-success: #84ff00;       /* Bright green for success messages and indicators */
+        
+
         /* Money Colors */
         --color-gold:   #ffd700; /* Rich, classic gold */
         --color-silver: #c0c0c0; /* Clean, polished silver/steel */
@@ -107,6 +109,11 @@
         .opacity-50 { opacity: 0.5 }
         .opacity-100 { opacity: 1 }
         
+        /* Color Global Classes */
+        .errorColor { color: var(--color-error); }
+        .successColor { color: var(--color-success); }
+        .dangerColor { color: var(--color-danger)}
+
         .icon {fill: currentColor; color: var(--color-accent);}
         .icon svg { height:100%; width:100% }
 
