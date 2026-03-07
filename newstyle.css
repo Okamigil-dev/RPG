@@ -3,6 +3,10 @@
     --- Main Section 1. Variables --------------------------------------------
     ==========================================================================   */
     :root {
+        /* Default Behavior */
+        font-size: 62.5%;
+
+        
         /* Colors */
         --color-bg: #09090b;        /* A very dark gray for the main background */
         --color-bg-alt: #111;       /* Slightly lighter for panels and cards */
