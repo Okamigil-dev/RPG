@@ -187,7 +187,7 @@
             const appBody = document.getElementById('app-body');
             const loginTab = document.getElementById('tab-login');
             const setupTab = document.getElementById('tab-username-setup');
-                        
+
             if (user) {
                 users.uid = user.uid;
                 firestore.collection('users').doc(user.uid).get().then(doc => {
@@ -525,14 +525,14 @@
                 }
 
                 // --- LOADER SWITCHBOARD ---
-                // if (subTabId === 'sub-instances') loadInstanceList();
-                // if (subTabId === 'sub-accounts') loadUserList();
-                // if (subTabId === 'sub-characters') loadGlobalCharacterManager();
-                // if (subTabId === 'sub-classes') loadMasterClassList(); // This triggers Section 10.2
-                // if (subTabId === 'sub-races') loadMasterRaceList();    // This triggers Section 10.1
-                // if (subTabId === 'sub-skills') { refreshSkillClassDropdown(); loadSkillRegistry(); }
-                // if (subTabId === 'sub-traits') loadMasterTraitList();
-                // if (subTabId === 'sub-attributes') loadAttributeList();
+                if (subTabId === 'sub-instances') loadInstanceList();
+                if (subTabId === 'sub-accounts') loadUserList();
+                if (subTabId === 'sub-characters') loadGlobalCharacterManager();
+                if (subTabId === 'sub-classes') loadMasterClassList(); // This triggers Section 10.2
+                if (subTabId === 'sub-races') loadMasterRaceList();    // This triggers Section 10.1
+                if (subTabId === 'sub-skills') { refreshSkillClassDropdown(); loadSkillRegistry(); }
+                if (subTabId === 'sub-traits') loadMasterTraitList();
+                if (subTabId === 'sub-attributes') loadAttributeList();
             }
 
 

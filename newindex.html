@@ -125,6 +125,195 @@
     <!--===============================================================
         --- Section 2. Main Body --------------------------------------
         ===============================================================--->
+        <div id="main-content" class="main-content">
+            <!--===============================================================
+                --- Section 2-A. Character Dashboard --------------------------
+                ===============================================================--->
+                <div id="tab-character" class="closed-tab hide-default">
+                    <div id="char-selection-view">
+                        <div class="flex-row">
+                            <h2 class="tab-title">Character Dashboard</h2>
+                            <button onclick="createNewCharacter()" class="btn-success">New Character</button>
+                        </div>
+                        <div id="char-list-grid" class="char-list-grid"></div>
+                    </div>
+                
+                    <div id="char-sheet-view" class="hide-default">
+                        <div class="flex-row header-spacing" style="margin-bottom: 25px;">
+                            <button onclick="goBackToSelection()" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                            <div class="flex-row">
+                                <h2 class="tab-title" style="margin:0;">Character Sheet</h2>
+                            </div>
+                        </div>                        
+
+                        <!-- Name, Race, Level Box -->
+                        <div class="panel-card m-m">
+                            <h3 class="panel-subtitle">Identity</h3>
+                            <div class="identity-grid">
+                                <div class="field-group">
+                                    <label class="text-muted">Character Name</label>
+                                    <input type="text" id="char-name" onchange="saveCharacter()" class="form-input">
+                                </div>
+                                <div class="field-group">
+                                    <label class="text-muted">Race</label>
+                                    <select id="char-race" onchange="saveCharacter()" class="form-input"></select>
+                                </div>
+                                <div class="field-group">
+                                    <label class="text-muted">Current Level</label>
+                                    <div id="char-level-display" class="char-level-badge">Lv. 1</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attribute Box -->
+                        <div class="stats-resources-wrapper">
+                            <div class="panel-card">
+                                <div class="panel-header-row">
+                                    <h3 class="panel-subtitle">Attributes</h3>
+                                    <div id="char-ap-rem" class="char-level-badge">AP: 0</div>
+                                </div>
+                                
+                                <div class="attr-list-grid">
+                                    <div class="attr-row">
+                                        <span class="attr-name">BODY</span>
+                                        <div class="attr-controls">
+                                            <button class="btn-small" onclick="adjustPendingStat('body', -1)">-</button>
+                                            <span id="display-body" class="pending-stat-value">0</span>
+                                            <button class="btn-small" onclick="adjustPendingStat('body', 1)">+</button>
+                                            <span id="total-body-label" class="join-code-pill">0</span>
+                                        </div>
+                                    </div>
+                        
+                                    <div class="attr-row">
+                                        <span class="attr-name">MIND</span>
+                                        <div class="attr-controls">
+                                            <button class="btn-small" onclick="adjustPendingStat('mind', -1)">-</button>
+                                            <span id="display-mind" class="pending-stat-value">0</span>
+                                            <button class="btn-small" onclick="adjustPendingStat('mind', 1)">+</button>
+                                            <span id="total-mind-label" class="join-code-pill">0</span>
+                                        </div>
+                                    </div>
+                        
+                                    <div class="attr-row">
+                                        <span class="attr-name">SPIRIT</span>
+                                        <div class="attr-controls">
+                                            <button class="btn-small" onclick="adjustPendingStat('spirit', -1)">-</button>
+                                            <span id="display-spirit" class="pending-stat-value">0</span>
+                                            <button class="btn-small" onclick="adjustPendingStat('spirit', 1)">+</button>
+                                            <span id="total-spirit-label" class="join-code-pill">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="attr-confirm-area" class="m-m hide-default">
+                                    <button class="btn-primary w-100" onclick="confirmAttributeChanges()">Commit Changes</button>
+                                </div>
+                            </div>
+
+
+                            
+                            <!-- HP Bar, MP Bar -->
+                            <div class="panel-card">
+                                <h3 class="panel-subtitle">Vitals & Status</h3>
+                                
+                                <div class="status-unit">
+                                    <div class="status-header">
+                                        <div class="status-label"><i class="fa-solid fa-heart icon-hp"></i> Health</div>
+                                        <div class="status-values">
+                                            <input type="number" id="char-hp-current" onchange="saveCharacter()" class="resource-input-minimal">
+                                            <span class="resource-divider">/</span>
+                                            <input type="number" id="char-hp-max" class="resource-input-minimal" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="resource-bar-main"><div id="char-hp-fill-main" class="hp-bar-main"></div></div>
+                                </div>
+                            
+                                <div class="status-unit">
+                                    <div class="status-header">
+                                        <div class="status-label"><i class="fa-solid fa-droplet icon-mp"></i> Mana</div>
+                                        <div class="status-values">
+                                            <input type="number" id="char-mp-current" onchange="saveCharacter()" class="resource-input-minimal">
+                                            <span class="resource-divider">/</span>
+                                            <input type="number" id="char-mp-max" class="resource-input-minimal" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="resource-bar-main"><div id="char-mp-fill-main" class="mp-bar-main"></div></div>
+                                </div>
+                            
+                                <div class="combat-stats-row">
+                                    <div class="combat-item">
+                                        <label>Speed</label>
+                                        <div id="char-speed-display" class="combat-val">30m</div>
+                                    </div>
+                                
+                                    <div class="combat-item">
+                                        <label>Armor Class</label>
+                                        <div id="char-ac-display" class="combat-val">10</div>
+                                    </div>
+                                
+                                    <div class="combat-item clickable" onclick="triggerInitiative(this)">
+                                        <label><i class="fa-solid fa-dice-d20"></i> Initiative</label>
+                                        <div id="char-init-display" class="combat-val">+0</div>
+                                        <div class="roll-number"></div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        
+                        <!-- CLASSES, TRAITS -->
+                        <div class="panel-card m-m">
+                            <div class="identity-grid">
+                                <div class="field-group">
+                                    <label class="text-muted">Classes</label>
+                                    <div id="char-class-list-display" class="traits-flex-wrap"></div>
+                                </div>
+                                <div class="field-group">
+                                    <label class="text-muted">Traits</label>
+                                    <div id="char-traits-container" class="traits-flex-wrap"></div>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                    
+                        <!-- Gallery Box -->
+                        <div class="side-by-side-row">
+
+                            <div class="panel-card notes-column" style="margin-top: 0; display: flex; flex-direction: column;">
+                                <h3 class="panel-subtitle">Adventurer's Notes</h3>
+                                <textarea 
+                                    id="char-notes" 
+                                    class="notes-textarea" 
+                                    placeholder="Quest logs, inventory, or secrets..." 
+                                    onchange="saveCharacter()"
+                                    style="flex-grow: 1;"></textarea>
+                            </div>
+                            
+                            <div class="panel-card gallery-column" style="margin-top: 0;">
+                                <div class="panel-header-row">
+                                    <h3 class="panel-subtitle" style="margin:0;">Character Gallery</h3>
+                                </div>
+
+                                <input 
+                                    type="file" 
+                                    id="slot-upload" 
+                                    accept="image/*" 
+                                    style="display: none;" 
+                                    onchange="handleWebPUpload(this, saveImageToNextSlot, 512, 0.6)"
+                                >
+
+                                <div id="char-gallery-grid" class="gallery-grid">
+                                    </div>
+                            </div>
+
+                        </div>
+
+
+                    </div>
+                </div>
 
 
 
