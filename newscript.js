@@ -491,7 +491,7 @@
                 } else {
                     entry.innerHTML = `<span class="chat-name">${data.name}:</span> <span>${data.text}</span>`;
                 }
-                log.appendChild(entry); 
+                log.prepend(entry);     //prepend or appendChild
                 if (log.children.length > 20) log.removeChild(log.lastChild);
             }
     /*  ==========================================================================
