@@ -433,7 +433,7 @@
 
                 const entry = document.createElement('div');
                 let classList = 'chat-entry';
-                if (data.type === 'gm-chat') {
+                if (data.type === 'gm-chat' || 'gm-roll') {
                     classList += ' gm-type';
                 } else if (data.type === 'roll' || data.type === 'initiative') {
                     classList += ' roll-type';
@@ -450,6 +450,8 @@
                     entry.innerHTML = `<span class="chat-name">${data.name}</span> rolled a d${data.sides}: <span class="roll-result">${data.result}</span>`;
                 } else if (data.type === 'initiative') { 
                     entry.innerHTML = `<span class="chat-name">${data.name}</span> Initiative Roll: <span class="roll-result">${data.result}</span>`;
+                } else if (data.type === 'gm-roll') { 
+                    entry.innerHTML = `<span class="chat-name">${data.name}</span> rolled a d${data.sides}: <span class="roll-result">${data.result}</span>`;
                 } else {
                     entry.innerHTML = `<span class="chat-name">${data.name}:</span> <span>${data.text}</span>`;
                 }
@@ -526,7 +528,7 @@
                 senderName = users.character.name;
             } else if (users.role === 'Admin' || users.role === 'Master') {
                 senderName = users.username || "GM";
-                senderType = "gm-chat";
+                senderType = "gm-roll";
             }
 
             let targetId = null; 
@@ -539,7 +541,7 @@
             btn.rollInterval = setInterval(() => {
                 numDisplay.innerText = getRandomDice(sides);
                 
-                if (++rolls > 12) {
+                if (++rolls > 10) {
                     clearInterval(btn.rollInterval);
                     const naturalRoll = getRandomDice(sides);
                     const finalTotal = naturalRoll + modifier;
@@ -568,7 +570,7 @@
                             timestamp: firebase.database.ServerValue.TIMESTAMP
                         });
                     }
-                    
+                        
                     btn.resetTimeout = setTimeout(() => { 
                         btn.classList.remove('active-roll'); 
                     }, 2000);
