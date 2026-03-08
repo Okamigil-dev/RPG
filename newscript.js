@@ -43,6 +43,7 @@
             username: null,
 
             character: {
+                name: null,
                 activeId: null,
                 level: 1,          // replaces activeCharLevel
                 traits: [],        // replaces currentRaceTraits
@@ -57,6 +58,7 @@
             
             campaignId: "global",
             
+
             clock:{
                 totalSeconds: 0,
                 multiplier: 1,
@@ -402,46 +404,6 @@
                     });
                 });
             }
-        // Send Message
-            function sendChatMessage() {
-                const targetSelect = document.getElementById('chat-target-select');
-                const input = document.getElementById('chat-msg-input');
-                const text = input.value.trim();
-                if (!text) return;
-
-                let senderName = "Unknown";
-                let senderType = "chat"; // Default type
-
-                if (users.character.name) {
-                    senderName = users.character.name;
-                    senderType = "chat";
-                } 
-                else if (users.role === 'Admin' || users.role === 'Master') {
-                    senderName = users.username || "GM";
-                    senderType = "gm-chat";
-                } 
-                else {
-                    return;
-                }
-                
-                let targetId = null; 
-                if (targetSelect.value !== 'all') {
-                    targetId = targetSelect.value;
-                }
-                
-                rtdb.ref(`instance_logs/${instances.campaignId}/chatbox`).push({
-                    type: senderType, 
-                    name: senderName,
-                    text: text,
-                    target: targetId,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                });
-                input.value = '';
-            }
-        // Press Enter to Send 
-            function handleChatEnter(event) {
-                if (event.key === "Enter") sendChatMessage();
-            }
         // Render the Chat Log Itself
             function renderChatLogEntry(data) {
                 const log = document.getElementById('chat-log');
@@ -494,6 +456,111 @@
                 log.prepend(entry);     //prepend or appendChild
                 if (log.children.length > 20) log.removeChild(log.lastChild);
             }
+        // Send Message
+            function handleChatEnter(event) {
+                if (event.key === "Enter") sendChatMessage();
+            }
+            function sendChatMessage() {
+                const targetSelect = document.getElementById('chat-target-select');
+                const input = document.getElementById('chat-msg-input');
+                const text = input.value.trim();
+                if (!text) return;
+
+                let senderName = "Unknown";
+                let senderType = "chat"; // Default type
+
+                if (users.character.name) {
+                    senderName = users.character.name;
+                    senderType = "chat";
+                } 
+                else if (users.role === 'Admin' || users.role === 'Master') {
+                    senderName = users.username || "GM";
+                    senderType = "gm-chat";
+                } 
+                else {
+                    return;
+                }
+                
+                let targetId = null; 
+                if (targetSelect.value !== 'all') {
+                    targetId = targetSelect.value;
+                }
+                
+                rtdb.ref(`instance_logs/${instances.campaignId}/chatbox`).push({
+                    type: senderType, 
+                    name: senderName,
+                    text: text,
+                    target: targetId,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                input.value = '';
+            }
+
+        // Dice Roller
+        function getRandomDice(sides) {
+            return Math.floor(Math.random() * sides) + 1;
+        }
+        function rollDice(sides, btn, modifier = 0, label = "Roll") {
+            const numDisplay = btn.querySelector('.roll-number');
+            const targetSelect = document.getElementById('chat-target-select');
+
+            if (btn.rollInterval) clearInterval(btn.rollInterval);
+            if (btn.resetTimeout) clearTimeout(btn.resetTimeout);
+            let rolls = 0; //Resets the Animation
+            
+            let senderName = "Unknown";
+            let senderType = "roll";
+                
+            if (users.character.name) {
+                senderName = users.character.name;
+            } else if (users.role === 'Admin' || users.role === 'Master') {
+                senderName = users.username || "GM";
+            }
+
+            let targetId = null; 
+            if (targetSelect.value !== 'all') {
+                targetId = targetSelect.value;
+            }
+            btn.classList.add('active-roll');
+            
+            // Animation spinning
+            btn.rollInterval = setInterval(() => {
+                numDisplay.innerText = getRandomDice(sides);
+                
+                if (++rolls > 12) {
+                    clearInterval(btn.rollInterval);
+                    const naturalRoll = getRandomDice(sides);
+                    const finalTotal = naturalRoll + modifier;
+                    
+                    numDisplay.innerText = finalTotal;
+                    
+                    // Database Sync
+                    if (users.character.activeId || users.role === 'Master' || users.role === 'Admin') {
+                        
+                        
+                        // Format the result: "21 (18 +3)" or just "18"
+                        const sign = modifier >= 0 ? '+' : '';
+                        const resultText = modifier !== 0 ? 
+                            `${finalTotal} (${naturalRoll} ${sign}${modifier})` : 
+                            `${finalTotal}`;
+
+                        rtdb.ref(`instance_logs/${instances.campaignId}/chatbox`).push({
+                            type: senderType, 
+                            name: senderName, 
+                            sides: sides,       // Required to prevent "dundefined" in chat
+                            rollLabel: label,   // Uses the label (e.g., "Initiative")
+                            result: resultText,
+                            target: targetId, 
+                            timestamp: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    }
+                    
+                    btn.resetTimeout = setTimeout(() => { 
+                        btn.classList.remove('active-roll'); 
+                    }, 2000);
+                }
+            }, 40);
+        }
     /*  ==========================================================================
         --- Section 2. Open Tab --------------------------------------------------
         ==========================================================================  */
