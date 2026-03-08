@@ -451,7 +451,7 @@
                 } else if (data.type === 'initiative') { 
                     entry.innerHTML = `<span class="chat-name">${data.name}</span> Initiative Roll: <span class="roll-result">${data.result}</span>`;
                 } else if (data.type === 'gm-roll') { 
-                    entry.innerHTML = `<span class="chat-name">${data.name}</span> rolled a d${data.sides}: <span class="roll-result">${data.result}</span>`;
+                    entry.innerHTML = `<span><strong>${data.name}:</strong> rolled a d${data.sides}: <span class="roll-result">${data.result}</span>`;
                 } else {
                     entry.innerHTML = `<span class="chat-name">${data.name}:</span> <span>${data.text}</span>`;
                 }
@@ -541,7 +541,7 @@
             btn.rollInterval = setInterval(() => {
                 numDisplay.innerText = getRandomDice(sides);
                 
-                if (++rolls > 10) {
+                if (++rolls > 12) {
                     clearInterval(btn.rollInterval);
                     const naturalRoll = getRandomDice(sides);
                     const finalTotal = naturalRoll + modifier;
@@ -575,7 +575,7 @@
                         btn.classList.remove('active-roll'); 
                     }, 2000);
                 }
-            }, 100);
+            }, 40);
         }
     /*  ==========================================================================
         --- Section 5. Open Tab --------------------------------------------------
