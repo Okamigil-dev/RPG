@@ -453,10 +453,13 @@
                 } else {
                     entry.innerHTML = `<span class="chat-name">${data.name}:</span> <span>${data.text}</span>`;
                 }
+
+                const isAtBottom = Math.abs(log.scrollTop) < 10;
+                
                 log.prepend(entry);     //prepend or appendChild
                 if (log.children.length > 20) log.removeChild(log.lastChild);
                 
-                const isAtBottom = Math.abs(log.scrollTop) < 10;
+                
                 if (isAtBottom) {
                     log.scrollTop = 0;
                 }
