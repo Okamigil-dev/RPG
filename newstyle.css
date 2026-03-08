@@ -82,6 +82,8 @@
         ::-webkit-scrollbar-track { background: transparent ; }  
         ::-webkit-scrollbar-thumb { background: var(--color-scrollbar);  border-radius: var(--radius-sm); } 
         ::-webkit-scrollbar-thumb:hover { background: var(--hover-scrollbar); } 
+        
+        * { scroll-behavior: smooth; }
 
         /* Text Input Bar */
         .form-input {
@@ -181,7 +183,12 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-            
+
+        @keyframes crit-glow {
+            from { box-shadow: 0 0 5px gold; }
+            to { box-shadow: 0 0 20px yellow; }
+        }
+
 /*  ==========================================================================
     --- Main Section 3. Layout -----------------------------------------------
     ==========================================================================   */
@@ -406,11 +413,11 @@
                     .bar-inner { height: 100%; transition: width 0.3s; }
 
                     .hp-fill { 
-                        background: linear-gradient(90deg, var(--color-hp), var(--color-hp-dark)); 
+                        background: linear-gradient(180deg, var(--color-hp), var(--color-hp-dark)); 
                         transition: width 0.3s; 
                     }
                     .mp-fill { 
-                        background: linear-gradient(90deg, var(--color-mp), var(--color-mp-dark)); 
+                        background: linear-gradient(180deg, var(--color-mp), var(--color-mp-dark)); 
                         transition: width 0.3s; 
                     }
                     .exp-fill { 
@@ -683,4 +690,8 @@
                     display: none; text-shadow: 0 0 10px var(--color-accent); z-index: 2;
                 }
 
-    
+                .critical-success {
+                    animation: crit-glow 1.5s infinite alternate;
+                    font-weight: bold;
+                    color: gold;
+                }    

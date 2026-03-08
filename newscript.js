@@ -453,9 +453,12 @@
                 } else {
                     entry.innerHTML = `<span class="chat-name">${data.name}:</span> <span>${data.text}</span>`;
                 }
-
-                const isAtBottom = Math.abs(log.scrollTop) < 10;
                 
+                if (data.isCrit) {
+                    entry.classList.add('critical-success');
+                }
+                const isAtBottom = Math.abs(log.scrollTop) < 10;
+
                 log.prepend(entry);     //prepend or appendChild
                 if (log.children.length > 20) log.removeChild(log.lastChild);
                 
@@ -508,7 +511,7 @@
         function getRandomDice(sides) {
             return Math.floor(Math.random() * sides) + 1;
         }
-        function rollDice(sides, btn, modifier = 0, label = "Roll") {
+        function rollDice(sides, btn, modifier = 0) {
             const numDisplay = btn.querySelector('.roll-number');
             const targetSelect = document.getElementById('chat-target-select');
 
@@ -523,6 +526,7 @@
                 senderName = users.character.name;
             } else if (users.role === 'Admin' || users.role === 'Master') {
                 senderName = users.username || "GM";
+                senderType = "gm-chat";
             }
 
             let targetId = null; 
@@ -540,6 +544,8 @@
                     const naturalRoll = getRandomDice(sides);
                     const finalTotal = naturalRoll + modifier;
                     
+                    const isCrit = (sides === 20 && naturalRoll === 20); // Check for Natural 20
+
                     numDisplay.innerText = finalTotal;
                     
                     // Database Sync
@@ -556,7 +562,7 @@
                             type: senderType, 
                             name: senderName, 
                             sides: sides,       // Required to prevent "dundefined" in chat
-                            rollLabel: label,   // Uses the label (e.g., "Initiative")
+                            isCrit: isCrit,   // is Crit is true if the dice has 20 sides and naturalRoll is 20
                             result: resultText,
                             target: targetId, 
                             timestamp: firebase.database.ServerValue.TIMESTAMP
@@ -567,10 +573,10 @@
                         btn.classList.remove('active-roll'); 
                     }, 2000);
                 }
-            }, 40);
+            }, 100);
         }
     /*  ==========================================================================
-        --- Section 2. Open Tab --------------------------------------------------
+        --- Section 5. Open Tab --------------------------------------------------
         ==========================================================================  */
             function openTab(tabId) {
                 document.querySelectorAll('.closed-tab').forEach(tab => {
@@ -597,7 +603,9 @@
                     // openControlSubTab(null, savedSubTab); 
                 }
             }
-
+        /*  ==========================================================================
+            --- Section 5-A. Open SubTab ---------------------------------------------
+            ==========================================================================  */
             function openControlSubTab(evt, subTabId) {
                 localStorage.setItem('activeMasterSubTab', subTabId);
 
@@ -633,6 +641,67 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+            async function selectCharacter(id) {
+                if (characterListener) characterListener(); 
+                const allInputs = document.querySelectorAll('#char-sheet-view input');
+                allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
+
+                currentCharacterId = id;
+                const user = auth.currentUser;
+                const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
+
+                characterListener = charRef.onSnapshot(async (doc) => {
+                    if (doc.exists) {
+                        const d = doc.data();
+                        if (RPG_APP.campaignId !== (d.instanceId || "global")) {
+                            RPG_APP.campaignId = d.instanceId || "global"; 
+                            initClockListener(); initDiceLogListener();
+                        }
+                        setSafeValue('char-name', d.name || "");
+                        setSafeValue('char-race', d.race || "");
+                        activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
+                        setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
+                        
+                        originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
+                        pendingStats = { ...originalStats };
+                        totalAP = Math.max(0, activeCharLevel - (originalStats.body + originalStats.mind + originalStats.spirit)); 
+
+                        renderClassPills(d);
+                        refreshStatDisplay();
+                        renderGallery(d.gallery || [], d.portrait !== undefined ? d.portrait : 0);
+                        renderSkills(d);
+
+                        const notesEl = document.getElementById('char-notes');
+                        if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
+
+                        setSafeValue('char-hp-current', Math.floor(d.hpCurrent || 0));
+                        setSafeValue('char-mp-current', Math.floor(d.mpCurrent || 0));
+
+                        const nextLevelExp = (activeCharLevel + 1) * 200;
+                        updateHUD({ ...d, charLevel: activeCharLevel, expMax: nextLevelExp });
+                        
+                        const selectionView = document.getElementById('char-selection-view');
+                        if (selectionView && !selectionView.classList.contains('hide-default')) {
+                            selectionView.classList.add('hide-default');
+                            document.getElementById('char-sheet-view').classList.remove('hide-default');
+                        }
+                    }
+                });
+                firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
+            }
 
 
 
