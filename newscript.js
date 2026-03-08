@@ -767,10 +767,10 @@ function renderClassPills(charData) {
 }
 // Needs to be checked
 function refreshStatDisplay() {
-    setSafeText('display-body', pendingStats.body);
-    setSafeText('display-mind', pendingStats.mind);
-    setSafeText('display-spirit', pendingStats.spirit);
-    setSafeText('char-ap-rem', `AP: ${totalAP}`);
+    setText('display-body', pendingStats.body);
+    setText('display-mind', pendingStats.mind);
+    setText('display-spirit', pendingStats.spirit);
+    setText('char-ap-rem', `AP: ${totalAP}`);
 
     const confirmArea = document.getElementById('attr-confirm-area');
     if (confirmArea) {
