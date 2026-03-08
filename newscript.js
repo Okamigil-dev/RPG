@@ -728,7 +728,7 @@
 
 
         //simple clear chat funtion
-        function clearInstanceLog(targetId) {
+        function clearInstanceLog(targetId = 'global') {
             // 1. Safety Check: If no ID is provided, don't guess.
             if (!targetId) {
                 console.error("Clear failed: No Campaign ID provided.");
