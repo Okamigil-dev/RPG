@@ -455,6 +455,11 @@
                 }
                 log.prepend(entry);     //prepend or appendChild
                 if (log.children.length > 20) log.removeChild(log.lastChild);
+                
+                const isAtBottom = Math.abs(log.scrollTop) < 10;
+                if (isAtBottom) {
+                    log.scrollTop = 0;
+                }
             }
         // Send Message
             function handleChatEnter(event) {
