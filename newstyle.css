@@ -621,16 +621,38 @@
                     word-wrap: break-word;
                 }
 
+                .critical-success {
+                    animation: crit-glow 1.5s infinite alternate;
+                    font-weight: bold;
+                    color: gold;
+                }    
+
                 .chat-entry .chat-name {
                     font-weight: bold;
                     color: var(--color-accent);
                     margin-right: 5px;
                 }
 
-                .chat-entry.roll-type { background: #2a2a35; border-left: 3px solid #3b82f6; }
-                .chat-entry.roll-type .roll-result { font-weight: bold; color: var(--color-accent); font-size: 1rem; }
-                .chat-entry.gm-type { background: var(--system-bg); border-left: 3px solid #10b981; color: var(--system-text); font-style: italic; }
-
+                .chat-entry.roll-type { 
+                    background: #2a2a35; 
+                    border-left: 3px solid #3b82f6; 
+                }
+                .chat-entry.roll-type .roll-result { 
+                    font-weight: bold; 
+                    color: var(--color-accent); 
+                    font-size: 1rem; 
+                }
+                .chat-entry.gm-type { 
+                    background: var(--system-bg); 
+                    border-left: 3px solid #10b981; 
+                    color: var(--system-text); 
+                    font-style: italic; 
+                }
+                .chat-entry.gm-type.critical-success {
+                    border: 2px solid currentcolor;
+                    font-weight: bold;
+                    color: var(--color-gold);
+                }
                 
                 .chat-input-area {
 
@@ -690,8 +712,4 @@
                     display: none; text-shadow: 0 0 10px var(--color-accent); z-index: 2;
                 }
 
-                .critical-success {
-                    animation: crit-glow 1.5s infinite alternate;
-                    font-weight: bold;
-                    color: gold;
-                }    
+                
