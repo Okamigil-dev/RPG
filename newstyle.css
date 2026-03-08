@@ -4,38 +4,44 @@
     ==========================================================================   */
     :root {
         /* Default Behavior */
-        font-size: 62.5%;
+        /* font-size: 62.5%; */
 
-
-        /* Colors */
-        --color-bg: #09090b;        /* A very dark gray for the main background */
-        --color-bg-alt: #111;       /* Slightly lighter for panels and cards */
+        /* Blacks */
+        --color-bg: #09090b;                    /* A very dark gray for the main background */
+        --color-bg-alt: #111;                   /* Slightly lighter for panels and cards */
         --color-bg-alt2: #18181b;
-        --color-border: #27272a;    /* Dark gray for borders and dividers */
+        --color-border: #27272a;                /* Dark gray for borders and dividers */
+        --color-scrollbar:#202020;
+        --hover-scrollbar: #303030;
+        
+        /* Whites */
         --color-text: #bcc6cc;      /* A soft off-white for better readability */
         --color-muted: #9da8ae;     /* For less important text and labels */
-        --color-accent: #8e630c;    /* A vibrant purple for highlights and accents */
-        --color-hp: #ef4444;        /* Bright red for HP bars and icons */
-        --color-mp: #3b82f6;        /* Bright blue for MP bars and icons */
-        
-        /* Shadow Color */
-        --color-shadow: rgba(0, 0, 0, 0.5); /* For consistent shadow effects across the app */
-        --success-shadow: rgba(0, 255, 136, 0.5); /* A bright green shadow for success indicators */
+        --color-silver: #c0c0c0; /* Clean, polished silver/steel */
         
         /* System Colors */
         --system-text: #34d399;
         --system-bg: #065f46;
+        --color-error: #a00000;
+        --color-danger: #a05500;
+        --color-success: #00a000;       /* Bright green for success messages and indicators */
+        /* Theme Color */
+        --color-accent: #8e630c;    /* A vibrant purple for highlights and accents */
         
-        --color-error: #860000;
-        --color-danger: #d25700;
-        --color-success: #84ff00;       /* Bright green for success messages and indicators */
+        /* Resource Bars */
+        --color-hp-dark: #860000;
+        --color-hp: #ef4444;
+        --color-mp-dark: #003489;        /* Bright red for HP bars and icons */
+        --color-mp: #3b82f6;        /* Bright blue for MP bars and icons */
         
-
-        /* Money Colors */
+        /*  */
         --color-gold:   #ffd700; /* Rich, classic gold */
-        --color-silver: #c0c0c0; /* Clean, polished silver/steel */
         --color-copper: #b87333; /* Warm, earthy copper/bronze */
 
+        /* 50% Opacity Colors */
+        --color-shadow: rgba(0, 0, 0, 0.5);     /* For consistent shadow effects across the app */
+        --success-shadow: rgba(0, 255, 136, 0.5); /* A bright green shadow for success indicators */
+        
         /* Font */
         --font-family: 'Inter', sans-serif; /* A modern, clean font for the entire app */
         
@@ -43,13 +49,6 @@
         --radius-sm: 4px;
         --radius-md: 8px;
         --radius-lg: 12px;
-
-        /* Scrollbar */
-        --color-scrollbar:#202020;
-        --hover-scrollbar: #303030;
-        --width-scrollbar: 8px;
-        --radius-scrollbar: 4px;
-
 
         /* Transition */
         --transition-fast: 0.2s ease; /* For quick hover effects */
@@ -79,9 +78,9 @@
         }
 
         /* Scroll Bar */
-        ::-webkit-scrollbar { width: var(--width-scrollbar); }    
+        ::-webkit-scrollbar { width: var(--radius-md); }    
         ::-webkit-scrollbar-track { background: transparent ; }  
-        ::-webkit-scrollbar-thumb { background: var(--color-scrollbar);  border-radius: var(--radius-scrollbar); } 
+        ::-webkit-scrollbar-thumb { background: var(--color-scrollbar);  border-radius: var(--radius-sm); } 
         ::-webkit-scrollbar-thumb:hover { background: var(--hover-scrollbar); } 
 
         /* Text Input Bar */
@@ -110,7 +109,7 @@
         .opacity-100 { opacity: 1 }
         
         /* Color Global Classes */
-        .errorColor { color: var(--color-error); }      
+        .errorColor { color: var(--color-hp-dark); }      
         .dangerColor { color: var(--color-danger); }
         .successColor { color: var(--color-success); }
 
@@ -118,6 +117,8 @@
         .icon svg { height:100%; width:100% }
 
         .flex-row { display: flex; align-items: center; gap: 10px }
+        .flex-column { display: flex; align-items: center; gap: 10px }
+        
         .flex-grow { flex-grow: 1; }
         .flex-1 { flex: 1; }
         .flex-end { justify-content: flex-end; }
@@ -145,9 +146,9 @@
         .margin-l { margin: 20px; }
         
         /* Padding Global Classes */
-        .padd-s { margin: 5px; }
-        .padd-m { margin: 10px; }
-        .padd-l { margin: 20px; }
+        .padd-s { padding: 5px; }
+        .padd-m { padding: 10px; }
+        .padd-l { padding: 20px; }
 
         /* Gap Global Classes */
         .gap-s { gap: 5px; }
@@ -194,24 +195,46 @@
         .login-splash-mode {
             display: flex !important; justify-content: center; align-items: center;
             height: 100vh; width: 100vw; padding: 0 !important;
-            background: radial-gradient(circle at center, #18181b 0%, #09090b 100%);
+            background: radial-gradient(circle at center, var(--color-bg-alt2) 0%, var(--color-bg) 100%);
         }
 
         .login-box {
-            width: 100%; max-width: 400px; padding: 40px; background: #111;
-            border: 1px solid #27272a; border-radius: 12px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 100%; max-width: 400px; padding: 40px; background: var(--color-bg-alt);
+            border: 1px solid var(--color-border); border-radius: 12px;
+            box-shadow: 0 25px 50px -12px var(--color-shadow);
             animation: login-fade-up 0.5s ease-out;
         }
 
-        .login-box h2 { margin-bottom: 30px; text-align: center; color: #00ff88; letter-spacing: 1px; font-size: 1.5rem; }
-        .login-box .form-input { margin-bottom: 15px; background: #09090b; }
+        .login-box h2 { 
+            margin-bottom: 30px; 
+            text-align: center; 
+            color: var(--system-text); 
+            letter-spacing: 1px; 
+            font-size: 1.5rem; 
+        }
+        .login-box .form-input { margin-bottom: 15px; background: var(--color-bg); }
 
-        .btn-primary { background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-        .btn-primary:hover { background: #2563eb; }
+        .btn-primary { 
+            background: var(--color-mp); 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+        }
+        .btn-primary:hover { background: var(--color-mp-dark); }
 
-        .btn-secondary { background: #27272a; color: white; border: 1px solid #3f3f46; padding: 10px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-        .btn-secondary:hover { background: #3f3f46; }
+        .btn-secondary { 
+            background: var(--color-border); 
+            color: white; 
+            border: 1px solid var(--color-scrollbar); 
+            padding: 10px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+        }
+        .btn-secondary:hover { background: var(--color-scrollbar); }
 
     /*  ==========================================================================
         --- Section 2. Top Bar ---------------------------------------------------
@@ -238,12 +261,12 @@
         .nav-tabs { display: flex; gap: 5px; } /* Added gap between tabs for better separation */
 
         .tab-btn { 
-            background: transparent; color: #a1a1aa; border: none; 
+            background: transparent; color: var(--color-muted); border: none; 
             cursor: pointer; padding: 8px 12px; font-weight: 600; 
             text-transform: uppercase; font-size: 11px; transition: 0.2s;
         }
-        .tab-btn:hover { color: #00ff88; }
-        .tab-btn.active { color: #00ff88; border-bottom: 2px solid #00ff88; }
+        .tab-btn:hover { color: var(--system-text); }
+        .tab-btn.active { color: var(--system-text); border-bottom: 2px solid var(--system-text); }
 
         /* Login and Logoff Button + User Box */
         .user-header { display: flex; align-items: center; gap: 15px; }
@@ -383,14 +406,16 @@
                     .bar-inner { height: 100%; transition: width 0.3s; }
 
                     .hp-fill { 
-                        background: linear-gradient(90deg, var(--color-hp), #b91c1c); 
+                        background: linear-gradient(90deg, var(--color-hp), var(--color-hp-dark)); 
                         transition: width 0.3s; 
                     }
                     .mp-fill { 
-                        background: linear-gradient(90deg, var(--color-mp), #1d4ed8); 
+                        background: linear-gradient(90deg, var(--color-mp), var(--color-mp-dark)); 
+                        transition: width 0.3s; 
                     }
                     .exp-fill { 
-                        background: linear-gradient(180deg,var(--color-success), #10b981); 
+                        background: linear-gradient(180deg,var(--system-text), var(--system-bg)); 
+                        transition: width 0.3s; 
                     }
                 
                     .exp-overlay-grid {
@@ -414,9 +439,9 @@
                 --- Character Tab --------------------------------------------------------
                 ==========================================================================   */
                 .btn-newChar { 
-                    background: #065f46; 
-                    color: #34d399; 
-                    border: 1px solid #064e3b; 
+                    background: var(--system-bg); 
+                    color: var(--system-text); 
+                    border: 1px solid var(--system-bg); 
                     padding: 10px 20px; 
                     border-radius: 4px; 
                     cursor: pointer; 
@@ -497,7 +522,7 @@
                 --- World Clock ----------------------------------------------------------
                 ==========================================================================   */
                 /* Ensure the Clock doesn't have double borders */
-                .game-ui { 
+                .clock-ui { 
                     text-align: center; 
                     padding: 0px; 
                 }
@@ -559,14 +584,15 @@
                 --- Chat Log -------------------------------------------------------------
                 ==========================================================================   */
                 .chat-tray { 
+                    border-radius: 4px ;
                     display: flex;
-                    flex-direction: column;
+                    flex-direction: column-reverse;
                     flex-grow: 1;
                 }
 
                 .chat-log-placeholder { text-align: center; opacity: 0.3; padding-top: 15px; }
 
-                .dice-log {
+                .chat-log {
                     border-radius: var(--radius-sm);
                     border: 1px solid var(--color-border);
                     flex-grow: 1;
@@ -600,6 +626,7 @@
 
                 
                 .chat-input-area {
+
                     width:100%;
                     border-radius: 4px;
                     margin: 10px 0;

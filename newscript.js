@@ -202,7 +202,7 @@
                         document.getElementById('user-display-name').innerText = data.username;
                         document.getElementById('user-role-label').innerText = data.role;
 
-                        syncRegistryToDropdowns();
+                        populateDropdown( 'master_races', 'char-race', 'Select Race' );
                         loadUserCharacters();
 
                         const isMasterOrAbove = (data.role === 'Master' || data.role === 'Admin'); //
@@ -249,20 +249,40 @@
             }
         });  
     /*  ==========================================================================
-        --- Section 1. Load Races Menu -----------------------------------------
+        --- Section 1. Populate Drop Down ----------------------------------------
         ==========================================================================  */
-            async function syncRegistryToDropdowns() {
-                const raceSelect = document.getElementById('char-race');
-                if (!raceSelect) return; 
+            // async function syncRegistryToDropdowns() {
+            //     const raceSelect = document.getElementById('char-race');
+            //     if (!raceSelect) return; 
+            //     try {
+            //         const raceSnap = await firestore.collection('master_races').orderBy('name').get();
+            //         let racesArray = ['<option value="">Select Race</option>'];
+            //         raceSnap.forEach(doc => {
+            //             const d = doc.data();
+            //             racesArray.push(`<option value="${d.name}">${d.name}</option>`);
+            //         });
+            //         raceSelect.innerHTML = racesArray.join('');
+            //     } catch (error) { console.error("Error syncing registry:", error); }
+            // }
+            
+            async function populateDropdown(collectionName, elementId, defaultText) {
+                const select = document.getElementById(elementId);
+                if (!select) return;
+
                 try {
-                    const raceSnap = await firestore.collection('master_races').orderBy('name').get();
-                    raceSelect.innerHTML = '<option value="">Select Race</option>';
-                    raceSnap.forEach(doc => {
+                    const snap = await firestore.collection(collectionName).orderBy('name').get();
+                    let options = [`<option value="">${defaultText}</option>`];
+
+                    snap.forEach(doc => {
                         const d = doc.data();
-                        raceSelect.innerHTML += `<option value="${d.name}">${d.name}</option>`;
+                        options.push(`<option value="${d.name}">${d.name}</option>`);
                     });
-                } catch (error) { console.error("Error syncing registry:", error); }
-            } 
+
+                    select.innerHTML = options.join('');
+                } catch (error) {
+                    console.error(`Error syncing ${collectionName}:`, error);
+                }
+            }
     /*  ==========================================================================
         --- Section 2. Load User Character ---------------------------------------
         ==========================================================================  */
@@ -416,6 +436,7 @@
                     target: targetId,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
+                input.value = '';
             }
         // Press Enter to Send 
             function handleChatEnter(event) {

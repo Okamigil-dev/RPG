@@ -33,8 +33,6 @@
         </div>
         <div id="tab-username-setup" class="closed-tab hide-default">
             <div class="login-box">
-                <h2>Welcome to the Realm</h2>
-                <p>What should we call you in the chat?</p>
                 <p id="setup-message-display"></p>
                 <input type="text" id="username-setup-input" class="form-input" placeholder="Enter Username">
                 
@@ -328,7 +326,7 @@
             --- 3-A. World Clock ------------------------------------------
             ===============================================================--->
             <div class="sidebar-panel">
-                <div id="game-ui" class="game-ui">
+                <div id="clock-ui" class="clock-ui">
                     <h3>Instance: <span id="current-instance-name">Global</span></h3>
                     <div id="date-display" class="date-text">Year 1, Month 1, Day 1</div>
                     <div id="time-display" class="time-text">09:00:17</div>
@@ -365,9 +363,9 @@
         <!--===============================================================
             --- Section 2-B. Chat Log -------------------------------------
             ===============================================================--->
-            <div class="sidebar-panel flex-grow">
+            <div class="sidebar-panel flex-grow gap-s">
 
-                <div id="chat-log-box" class="chat-tray">
+                <div id="chat-log-box" class="chat-tray border-s">
                     
                     <div id="chat-log" class="chat-log">
                         <div class="chat-log-placeholder">No messages yet</div>
