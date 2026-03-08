@@ -72,11 +72,6 @@
         
         * { box-sizing: border-box; }
 
-        /*  Affects all <buttons> hover effect */
-        button:hover {
-        filter: brightness(0.8);
-        }
-
         /* Scroll Bar */
         ::-webkit-scrollbar { width: var(--radius-md); }    
         ::-webkit-scrollbar-track { background: transparent ; }  

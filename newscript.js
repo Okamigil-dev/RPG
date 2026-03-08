@@ -23,6 +23,7 @@
 
         // Rules Related Variables
         const rules = {
+            baseExp: 200,
             maxStats:{
                 maxBaseLevel: 60,
                 maxClassLevel: 10,
@@ -45,9 +46,13 @@
             character: {
                 name: null,
                 activeId: null,
+                pendingStats: { body: 0, mind: 0, spirit: 0 },  // pendingStats
+                originalStats: { body: 0, mind: 0, spirit: 0 }, // originalStats
                 level: 1,          // replaces activeCharLevel
+                totalAP: 0,         // totalAP
                 traits: [],        // replaces currentRaceTraits
                 attributes: {},    // replaces currentRaceAttributes
+                classLevels:{},
                 listener: null     // replaces characterListener
             },
 
@@ -69,12 +74,6 @@
                 saveDelay: 0      
             },
         };
-
-    
-    // dont know what these are for yet
-    // let pendingStats = { body: 0, mind: 0, spirit: 0 };
-    // let originalStats = { body: 0, mind: 0, spirit: 0 };
-    // let totalAP = 0;
 
 /*  ==========================================================================
     --- Main Section 2. User Authentication ----------------------------------
@@ -375,7 +374,9 @@
     /*  ==========================================================================
         --- Section 4. Chat Log --------------------------------------------------
         ==========================================================================  */
-        // Loads Chat Log from database
+        /*  ==========================================================================
+            --- Section 4-A. Chat Log Listener ---------------------------------------
+            ==========================================================================  */
             function initChatLogListener() {
                 const log = document.getElementById('chat-log');
                 if (log) log.innerHTML = '<div class="chat-log-placeholder">Loading history...</div>';
@@ -385,7 +386,9 @@
                     renderChatLogEntry(snapshot.val());
                 });
             }
-        // Loads Characters in Instance Dropdown
+        /*  ==========================================================================
+            --- Section 4-B. Instance Listener ---------------------------------------
+            ==========================================================================  */
             function initInstanceCharactersListener() {
                 const selector = document.getElementById('chat-target-select');
                 if (!selector) return;
@@ -404,7 +407,9 @@
                     });
                 });
             }
-        // Render the Chat Log Itself
+        /*  ==========================================================================
+            --- Section 4-C. Render Chat Log -----------------------------------------
+            ==========================================================================  */
             function renderChatLogEntry(data) {
                 const log = document.getElementById('chat-log');
                 if (!log) return;
@@ -469,7 +474,9 @@
                     log.scrollTop = 0;
                 }
             }
-        // Send Message
+        /*  ==========================================================================
+            --- Section 4-D. Send Message --------------------------------------------
+            ==========================================================================  */
             function handleChatEnter(event) {
                 if (event.key === "Enter") sendChatMessage();
             }
@@ -509,74 +516,76 @@
                 input.value = '';
             }
 
-        // Dice Roller
-        function getRandomDice(sides) {
-            return Math.floor(Math.random() * sides) + 1;
-        }
-        function rollDice(sides, btn, modifier = 0) {
-            const numDisplay = btn.querySelector('.roll-number');
-            const targetSelect = document.getElementById('chat-target-select');
-
-            if (btn.rollInterval) clearInterval(btn.rollInterval);
-            if (btn.resetTimeout) clearTimeout(btn.resetTimeout);
-            let rolls = 0; //Resets the Animation
-            
-            let senderName = "Unknown";
-            let senderType = "roll";
-                
-            if (users.character.name) {
-                senderName = users.character.name;
-            } else if (users.role === 'Admin' || users.role === 'Master') {
-                senderName = users.username || "GM";
-                senderType = "gm-roll";
+        /*  ==========================================================================
+            --- Section 4-E. Dice Roller ---------------------------------------------
+            ==========================================================================  */
+            function getRandomDice(sides) {
+                return Math.floor(Math.random() * sides) + 1;
             }
+            function rollDice(sides, btn, modifier = 0) {
+                const numDisplay = btn.querySelector('.roll-number');
+                const targetSelect = document.getElementById('chat-target-select');
 
-            let targetId = null; 
-            if (targetSelect.value !== 'all') {
-                targetId = targetSelect.value;
-            }
-            btn.classList.add('active-roll');
-            
-            // Animation spinning
-            btn.rollInterval = setInterval(() => {
-                numDisplay.innerText = getRandomDice(sides);
+                if (btn.rollInterval) clearInterval(btn.rollInterval);
+                if (btn.resetTimeout) clearTimeout(btn.resetTimeout);
+                let rolls = 0; //Resets the Animation
                 
-                if (++rolls > 12) {
-                    clearInterval(btn.rollInterval);
-                    const naturalRoll = getRandomDice(sides);
-                    const finalTotal = naturalRoll + modifier;
+                let senderName = "Unknown";
+                let senderType = "roll";
                     
-                    const isCrit = (sides === 20 && naturalRoll === 20); // Check for Natural 20
-
-                    numDisplay.innerText = finalTotal;
-                    
-                    // Database Sync
-                    if (users.character.activeId || users.role === 'Master' || users.role === 'Admin') {
-                        
-                        
-                        // Format the result: "21 (18 +3)" or just "18"
-                        const sign = modifier >= 0 ? '+' : '';
-                        const resultText = modifier !== 0 ? 
-                            `${finalTotal} (${naturalRoll} ${sign}${modifier})` : 
-                            `${finalTotal}`;
-
-                        rtdb.ref(`instance_logs/${instances.campaignId}/chatbox`).push({
-                            type: senderType, 
-                            name: senderName, 
-                            sides: sides,       // Required to prevent "dundefined" in chat
-                            isCrit: isCrit,   // is Crit is true if the dice has 20 sides and naturalRoll is 20
-                            result: resultText,
-                            target: targetId, 
-                            timestamp: firebase.database.ServerValue.TIMESTAMP
-                        });
-                    }
-                        
-                    btn.resetTimeout = setTimeout(() => { 
-                        btn.classList.remove('active-roll'); 
-                    }, 2000);
+                if (users.character.name) {
+                    senderName = users.character.name;
+                } else if (users.role === 'Admin' || users.role === 'Master') {
+                    senderName = users.username || "GM";
+                    senderType = "gm-roll";
                 }
-            }, 40);
-        }
+
+                let targetId = null; 
+                if (targetSelect.value !== 'all') {
+                    targetId = targetSelect.value;
+                }
+                btn.classList.add('active-roll');
+                
+                // Animation spinning
+                btn.rollInterval = setInterval(() => {
+                    numDisplay.innerText = getRandomDice(sides);
+                    
+                    if (++rolls > 12) {
+                        clearInterval(btn.rollInterval);
+                        const naturalRoll = getRandomDice(sides);
+                        const finalTotal = naturalRoll + modifier;
+                        
+                        const isCrit = (sides === 20 && naturalRoll === 20); // Check for Natural 20
+
+                        numDisplay.innerText = finalTotal;
+                        
+                        // Database Sync
+                        if (users.character.activeId || users.role === 'Master' || users.role === 'Admin') {
+                            
+                            
+                            // Format the result: "21 (18 +3)" or just "18"
+                            const sign = modifier >= 0 ? '+' : '';
+                            const resultText = modifier !== 0 ? 
+                                `${finalTotal} (${naturalRoll} ${sign}${modifier})` : 
+                                `${finalTotal}`;
+
+                            rtdb.ref(`instance_logs/${instances.campaignId}/chatbox`).push({
+                                type: senderType, 
+                                name: senderName, 
+                                sides: sides,       // Required to prevent "dundefined" in chat
+                                isCrit: isCrit,   // is Crit is true if the dice has 20 sides and naturalRoll is 20
+                                result: resultText,
+                                target: targetId, 
+                                timestamp: firebase.database.ServerValue.TIMESTAMP
+                            });
+                        }
+                            
+                        btn.resetTimeout = setTimeout(() => { 
+                            btn.classList.remove('active-roll'); 
+                        }, 2000);
+                    }
+                }, 40);
+            }
     /*  ==========================================================================
         --- Section 5. Open Tab --------------------------------------------------
         ==========================================================================  */
@@ -595,13 +604,14 @@
                 }
                 
                 if (tabId === 'tab-control-panel' && (users.role === 'Master' || users.role === 'Admin')) {
+                    // Load InstanceList Function
                     // loadInstanceList();
                     
                     let savedSubTab = localStorage.getItem('activeMasterSubTab') || 'sub-instances';
                     if (users.role === 'Master' && savedSubTab === 'sub-accounts') {
                         savedSubTab = 'sub-instances';
                     }
-
+                    //Open SubTab Function
                     // openControlSubTab(null, savedSubTab); 
                 }
             }
@@ -649,37 +659,55 @@
 
 
 
-
-
-
-
-
+            // --- Calculate Level from Exp function
+            function calculateLvl (exp, type = "base") {
+                if ( type="base" ) {
+                    const calculatedLevel = Math.floor(exp / rules.baseExp);
+                    let finalLevel = Math.max(1, calculateLvl);
+                    return Math.min(finalLevel,rules.maxStats.maxBaseLevel);
+                }else if( type="class" ) {
+                    const calculatedLevel = Math.floor(exp / rules.classExp);
+                    let finalLevel = Math.max(1, calculateLvl);
+                    return Math.min(finalLevel,rules.maxStats.maxClassLevel);
+                }else return;
+            }
+            // --- Set Text Helper Function
+            function setText(elementId, value) {
+                const element = document.getElementById(elementId);
+                element.innerText = value;
+            }
+            // --- Set Value Helper Function
+            function setValue(elementId, value) {
+                const element = document.getElementById(elementId);
+                element.value = value;
+            }
+            
 
 
             async function selectCharacter(id) {
-                if (characterListener) characterListener(); 
+                if (users.character.listener) users.character.listener(); 
                 const allInputs = document.querySelectorAll('#char-sheet-view input');
                 allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
 
-                currentCharacterId = id;
+                users.character.activeId = id;
                 const user = auth.currentUser;
                 const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
 
-                characterListener = charRef.onSnapshot(async (doc) => {
+                users.character.listener = charRef.onSnapshot(async (doc) => {
                     if (doc.exists) {
                         const d = doc.data();
-                        if (RPG_APP.campaignId !== (d.instanceId || "global")) {
-                            RPG_APP.campaignId = d.instanceId || "global"; 
-                            initClockListener(); initDiceLogListener();
+                        if (instances.campaignId !== (d.instanceId || "global")) {
+                            instances.campaignId = d.instanceId || "global"; 
+                            initClockListener(); initChatLogListener();
                         }
-                        setSafeValue('char-name', d.name || "");
-                        setSafeValue('char-race', d.race || "");
-                        activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
-                        setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
+                        setValue('char-name', d.name || "");
+                        setValue('char-race', d.race || "");
+                        users.character.level = calculateLvl(d.expCurrent || 0);
+                        setText('char-level-display', `Lv. ${users.character.level}`);
                         
-                        originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
-                        pendingStats = { ...originalStats };
-                        totalAP = Math.max(0, activeCharLevel - (originalStats.body + originalStats.mind + originalStats.spirit)); 
+                        users.character.originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
+                        users.character.pendingStats = { ...users.character.originalStats };
+                        users.character.totalAP = Math.max(0, users.character.level - (users.character.originalStats.body + users.character.originalStats.mind + users.character.originalStats.spirit)); 
 
                         renderClassPills(d);
                         refreshStatDisplay();
@@ -689,8 +717,8 @@
                         const notesEl = document.getElementById('char-notes');
                         if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
 
-                        setSafeValue('char-hp-current', Math.floor(d.hpCurrent || 0));
-                        setSafeValue('char-mp-current', Math.floor(d.mpCurrent || 0));
+                        setValue('char-hp-current', Math.floor(d.hpCurrent || 0));
+                        setValue('char-mp-current', Math.floor(d.mpCurrent || 0));
 
                         const nextLevelExp = (activeCharLevel + 1) * 200;
                         updateHUD({ ...d, charLevel: activeCharLevel, expMax: nextLevelExp });
@@ -703,7 +731,109 @@
                     }
                 });
                 firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
+
             }
+
+        // This is a placeholder. 
+        function renderSkills(charId) {
+            // It exists so the app doesn't crash when a character is clicked.
+            console.log("renderSkills triggered for ID:", charId);
+        }
+        // This is a placeholder. 
+        function updateHUD(charId) {
+            // It exists so the app doesn't crash when a character is clicked.
+            console.log("updateHUD triggered for ID:", charId);
+        }
+
+
+
+
+// Needs to be checked
+function renderClassPills(charData) {
+    const container = document.getElementById('char-class-list-display');
+    if(!container) return;
+    container.innerHTML = "";
+    const classes = charData.unlockedClasses || {};
+    if (Object.keys(classes).length === 0) {
+        container.innerHTML = '<span class="text-muted" style="font-size: 0.8rem;">No classes unlocked</span>';
+    } else {
+        Object.keys(classes).forEach(className => {
+            const pill = document.createElement('span');
+            pill.className = 'join-code-pill';
+            pill.innerText = `${className} Lv.${classes[className].level}`;
+            container.appendChild(pill);
+        });
+    }
+}
+// Needs to be checked
+function refreshStatDisplay() {
+    setSafeText('display-body', pendingStats.body);
+    setSafeText('display-mind', pendingStats.mind);
+    setSafeText('display-spirit', pendingStats.spirit);
+    setSafeText('char-ap-rem', `AP: ${totalAP}`);
+
+    const confirmArea = document.getElementById('attr-confirm-area');
+    if (confirmArea) {
+        const hasChanges = JSON.stringify(pendingStats) !== JSON.stringify(originalStats);
+        if (hasChanges) {
+            confirmArea.classList.remove('hide-default');
+        } else {
+            confirmArea.classList.add('hide-default');
+        }
+    }
+}
+// Needs to be checked
+function renderGallery(galleryArray, activeIndex) {
+    const container = document.getElementById('char-gallery-grid');
+    if (!container) return;
+    container.innerHTML = "";
+
+    const images = galleryArray || [];
+
+    for (let i = 0; i < MAX_GALLERY_SLOTS; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'gallery-item';
+
+        if (images[i]) {
+            // Compare the Index (Numbers), not the Strings!
+            if (i === activeIndex) {
+                slot.style.borderColor = "#10b981"; 
+                slot.style.boxShadow = "0 0 10px #10b981";
+            }
+
+            slot.innerHTML = `
+                <img src="${images[i]}" onclick="setActivePortrait(${i})">
+                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
+            `;
+        } else {
+            slot.className = 'gallery-item empty-slot';
+            slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
+            slot.onclick = () => document.getElementById('slot-upload').click();
+        }
+        container.appendChild(slot);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -751,9 +881,8 @@
             }
         }
 
-
-        function selectCharacter(charId) {
-    // This is a placeholder. 
-    // It exists so the app doesn't crash when a character is clicked.
-    console.log("selectCharacter triggered for ID:", charId);
-}
+        // // This is a placeholder. 
+        // function selectCharacter(charId) {
+        //     // It exists so the app doesn't crash when a character is clicked.
+        //     console.log("selectCharacter triggered for ID:", charId);
+        // }
