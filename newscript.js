@@ -24,6 +24,7 @@
         // Rules Related Variables
         const rules = {
             baseExp: 200,
+            classExp:100,
             maxGallerySlots: 8,
             maxStats:{
                 maxBaseStats: 20,
@@ -43,6 +44,7 @@
             uid: null,
             role: null,      
             username: null,
+            hudDefault: document.getElementById('active-char-hud').innerHTML,
 
             character: {
                 name: null,
@@ -53,7 +55,7 @@
                 totalAP: 0,         // totalAP
                 traits: [],        // replaces currentRaceTraits
                 attributes: {},    // replaces currentRaceAttributes
-                classNames: {},
+                classExp: {},
                 classLevels:{},
                 listener: null     // replaces characterListener
             },
@@ -171,11 +173,11 @@
     }
     // --- Logout User to Firebase -------------------------------------------- //
     function logoutUser() { 
-        const logout = users.character.listener;
-        if (logout && typeof logout === 'function') {
+        const char = users.character;
+        if (char.listener && typeof char.listener === 'function') {
             console.log("Stopping active character listener...");
-            logout(); 
-            users.character.listener = null; 
+            char.listener(); 
+            char.listener = null; 
         }
 
         auth.signOut().then(() => {
@@ -229,7 +231,10 @@
                         initClockListener();
                         initChatLogListener();
                         initInstanceCharactersListener();
-                        if (data.lastActiveCharacter) selectCharacter(data.lastActiveCharacter);
+                        const savedId = localStorage.getItem('lastActiveId');
+                        if (savedId) {
+                            selectCharacter(savedId);
+                        }
                     } 
                 else {
                     loginTab.classList.replace('login-splash-mode', 'hide-default');
@@ -252,22 +257,12 @@
             }
         });  
     /*  ==========================================================================
-        --- Section 1. Populate Drop Down ----------------------------------------
+        --- Section 1. General Use Functions ----------------------------------------
         ==========================================================================  */
-            // async function syncRegistryToDropdowns() {
-            //     const raceSelect = document.getElementById('char-race');
-            //     if (!raceSelect) return; 
-            //     try {
-            //         const raceSnap = await firestore.collection('master_races').orderBy('name').get();
-            //         let racesArray = ['<option value="">Select Race</option>'];
-            //         raceSnap.forEach(doc => {
-            //             const d = doc.data();
-            //             racesArray.push(`<option value="${d.name}">${d.name}</option>`);
-            //         });
-            //         raceSelect.innerHTML = racesArray.join('');
-            //     } catch (error) { console.error("Error syncing registry:", error); }
-            // }
             
+        /*  ==========================================================================
+            --- Section 1-A. Populate Dropdowns --------------------------------------
+            ==========================================================================  */
             async function populateDropdown(collectionName, elementId, defaultText) {
                 const select = document.getElementById(elementId);
                 if (!select) return;
@@ -285,6 +280,37 @@
                 } catch (error) {
                     console.error(`Error syncing ${collectionName}:`, error);
                 }
+            }
+        /*  ==========================================================================
+            --- Section 1-B. Dice Roller Helper --------------------------------------
+            ==========================================================================  */
+            function getRandomDice(sides) {
+                return Math.floor(Math.random() * sides) + 1;
+            }
+        /*  ==========================================================================
+            --- Section 1-C. Calculate Level -----------------------------------------
+            ==========================================================================  */
+            function calculateLvl (exp, type = "base") {
+                if ( type === "base" ) {
+                    const calculatedLevel = Math.floor(exp / rules.baseExp);
+                    let finalLevel = Math.max(1, calculatedLevel);
+                    return Math.min(finalLevel,rules.maxStats.maxBaseLevel);
+                }else if( type === "class" ) {
+                    const calculatedLevel = Math.floor(exp / rules.classExp);
+                    let finalLevel = Math.max(1, calculatedLevel);
+                    return Math.min(finalLevel,rules.maxStats.maxClassLevel);
+                }else return 1;
+            }
+        /*  ==========================================================================
+            --- Section 1-D. Set Text and Value --------------------------------------
+            ==========================================================================  */
+            function setText(elementId, value) {
+                const element = document.getElementById(elementId);
+                element.innerText = value;
+            }
+            function setValue(elementId, value) {
+                const element = document.getElementById(elementId);
+                element.value = value;
             }
     /*  ==========================================================================
         --- Section 2. Load User Character ---------------------------------------
@@ -308,7 +334,7 @@
                                 ${!displayImg ? '<i class="fa-solid fa-user"></i>' : ''}
                             </div>
                             <strong>${d.name || 'New Hero'}</strong>
-                            <div class="char-card-meta">Lv.${d.charLevel || 1}</div>
+                            <div class="char-card-meta">Lv.${calculateLvl(d.expCurrent || 0)}</div>
                             <button class="btn-danger-small m-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">Delete</button>
                         `;
                         grid.appendChild(card);
@@ -349,7 +375,7 @@
                 });
             }
             /*  ==========================================================================
-                --- Section 3-A. Update Display ------------------------------------------
+                --- Section 3-A. Update Clock Display ------------------------------------
                 ==========================================================================  */
                 function updateDisplay() {
                     const total = instances.clock.totalSeconds;
@@ -391,9 +417,6 @@
         /*  ==========================================================================
             --- Section 4-B. Instance Listener ---------------------------------------
             ==========================================================================  */
-            // -----------------------------------------------------------------------  //
-            // --- Listener to Populate Dropdown -------------------------------------  //
-            // -----------------------------------------------------------------------  //
             function initInstanceCharactersListener() {
                 const selector = document.getElementById('chat-target-select');
                 if (!selector) return;
@@ -530,12 +553,6 @@
         /*  ==========================================================================
             --- Section 4-E. Dice Roller ---------------------------------------------
             ==========================================================================  */
-            // -----------------------------------------------------------------------  //
-            // --- Dice Roller Helper ------------------------------------------------  //
-            // -----------------------------------------------------------------------  //
-            function getRandomDice(sides) {
-                return Math.floor(Math.random() * sides) + 1;
-            }
             // -----------------------------------------------------------------------  //
             // --- Dice Roller Animation and Roll ------------------------------------  //
             // -----------------------------------------------------------------------  //
@@ -676,28 +693,7 @@
 
 
 
-            // --- Calculate Level from Exp function
-            function calculateLvl (exp, type = "base") {
-                if ( type === "base" ) {
-                    const calculatedLevel = Math.floor(exp / rules.baseExp);
-                    let finalLevel = Math.max(1, calculatedLevel);
-                    return Math.min(finalLevel,rules.maxStats.maxBaseLevel);
-                }else if( type === "class" ) {
-                    const calculatedLevel = Math.floor(exp / rules.classExp);
-                    let finalLevel = Math.max(1, calculatedLevel);
-                    return Math.min(finalLevel,rules.maxStats.maxClassLevel);
-                }else return 1;
-            }
-            // --- Set Text Helper Function
-            function setText(elementId, value) {
-                const element = document.getElementById(elementId);
-                element.innerText = value;
-            }
-            // --- Set Value Helper Function
-            function setValue(elementId, value) {
-                const element = document.getElementById(elementId);
-                element.value = value;
-            }
+            
             
 
 
@@ -761,7 +757,7 @@
                         }
                     }
                 });
-                firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
+                localStorage.setItem('lastActiveId', id);
 
             }
             function goBackToSelection() {
@@ -769,8 +765,11 @@
                     users.character.listener();
                     users.character.listener = null;
                 }
+                localStorage.removeItem('activeCharId');
                 users.character.activeId = null;
-                document.getElementById('active-char-hud').innerHTML = HUD_TEMPLATE;
+
+                document.getElementById('active-char-hud').innerHTML = users.hudDefault;
+
                 document.getElementById('char-selection-view').classList.remove('hide-default');
                 document.getElementById('char-sheet-view').classList.add('hide-default');
             }
