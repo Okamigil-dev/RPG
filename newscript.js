@@ -764,7 +764,16 @@
                 firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
 
             }
-                
+            function goBackToSelection() {
+                if (users.character.listener) {
+                    users.character.listener();
+                    users.character.listener = null;
+                }
+                users.character.activeId = null;
+                document.getElementById('active-char-hud').innerHTML = HUD_TEMPLATE;
+                document.getElementById('char-selection-view').classList.remove('hide-default');
+                document.getElementById('char-sheet-view').classList.add('hide-default');
+            }
             
 
             function renderClassPills() {

@@ -443,7 +443,7 @@
             }
 
             /*  ==========================================================================
-                --- Character Tab --------------------------------------------------------
+                --- Character DashBoard --------------------------------------------------
                 ==========================================================================   */
                 .btn-newChar { 
                     background: var(--system-bg); 
@@ -518,6 +518,24 @@
                 .btn-danger-small:hover { 
                     background: #ef4444; 
                     color: white; 
+                }
+
+            /*  ==========================================================================
+                --- Character Sheet ------------------------------------------------------
+                ==========================================================================   */
+                .panel-card { 
+                    background: var(--color-bg); 
+                    backdrop-filter: blur(10px);
+                    padding: 24px; 
+                    border-radius: 16px; 
+                    border: 1px solid var(--color-border); 
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+                }
+
+                .identity-grid {
+                    display: grid;
+                    grid-template-columns: 2fr 1fr 100px;
+                    gap: 20px;
                 }
 
                 .gallery.active {
