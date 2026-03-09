@@ -103,7 +103,7 @@
                             <div id="hud-mp-fill" class="bar-inner mp-fill"></div></div>
                     </div>
                 
-                    <div class="hud-resource" style="margin-bottom: 20px;">
+                    <div class="hud-resource">
                         <div class="bar-label"><span>Experience</span></div>
                         <div class="bar-body">
                             <div id="hud-exp-fill" class="bar-inner exp-fill"></div>
@@ -137,15 +137,15 @@
                     </div>
                 
                     <div id="char-sheet-view" class="hide-default">
-                        <div class="flex-row header-spacing" style="margin-bottom: 25px;">
+                        <div class="flex-row header-spacing">
                             <button onclick="goBackToSelection()" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</button>
                             <div class="flex-row">
-                                <h2 class="tab-title" style="margin:0;">Character Sheet</h2>
+                                <h2 class="tab-title">Character Sheet</h2>
                             </div>
                         </div>                        
 
                         <!-- Name, Race, Level Box -->
-                        <div class="panel-card margin-m">
+                        <div class="panel-card">
                             <div class="panel-subtitle flex-row">Identity</div>
                             <div class="identity-grid">
                                 <div class="field-group">
@@ -168,6 +168,9 @@
                             <div class="panel-card">
                                 <div class="panel-header-row">
                                     <div class="panel-subtitle">Attributes</div>
+                                    <div id="attr-confirm-area" class="margin-m hide-default">
+                                        <button class="btn-primary w-100" onclick="confirmAttributeChanges()">Confirm</button>
+                                    </div>
                                     <div id="char-ap-rem" class="char-level-badge">AP: 0</div>
                                 </div>
                                 
@@ -203,9 +206,7 @@
                                     </div>
                                 </div>
                                 
-                                <div id="attr-confirm-area" class="margin-m hide-default">
-                                    <button class="btn-primary w-100" onclick="confirmAttributeChanges()">Commit Changes</button>
-                                </div>
+                                
                             </div>
 
 
@@ -261,7 +262,7 @@
 
                         
                         <!-- CLASSES, TRAITS -->
-                        <div class="panel-card margin-m">
+                        <div class="panel-card">
                             <div class="identity-grid">
                                 <div class="field-group">
                                     <label class="text-muted">Classes</label>
@@ -280,19 +281,18 @@
                         <!-- Gallery Box -->
                         <div class="side-by-side-row">
 
-                            <div class="panel-card notes-column" style="margin-top: 0; display: flex; flex-direction: column;">
+                            <div class="panel-card notes-column">
                                 <h3 class="panel-subtitle">Adventurer's Notes</h3>
                                 <textarea 
                                     id="char-notes" 
                                     class="notes-textarea" 
                                     placeholder="Quest logs, inventory, or secrets..." 
-                                    onchange="saveCharacter()"
-                                    style="flex-grow: 1;"></textarea>
+                                    onchange="saveCharacter()"></textarea>
                             </div>
                             
-                            <div class="panel-card gallery-column" style="margin-top: 0;">
+                            <div class="panel-card gallery-column">
                                 <div class="panel-header-row">
-                                    <h3 class="panel-subtitle" style="margin:0;">Character Gallery</h3>
+                                    <h3 class="panel-subtitle">Character Gallery</h3>
                                 </div>
 
                                 <input 

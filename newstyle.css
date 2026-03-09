@@ -538,12 +538,22 @@
                     gap: 20px;
                 }
 
+                .stats-resources-wrapper {
+                    display: grid;
+                    grid-template-columns: 1fr 1.2fr;
+                    gap: 20px;
+                    margin-bottom: 20px;
+                }
+                .panel-header-row {
+                    display: flex; justify-content: space-between; align-items: center; gap: 5px;
+                }
+                
                 .hud-portrait-image {
                     background-image: var(--char-portrait); 
                     background-size: cover;
                     background-position: center;
                 }
-                
+
                 .gallery.active {
                     border: 0.125rem solid #10b981;
                     box-shadow: 0 0 10px #10b981;
