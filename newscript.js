@@ -820,13 +820,14 @@
 
             async function confirmAttributeChanges() {
                 const user = auth.currentUser;
-                const charId = users.character.activeId;
+                const char = users.character;
+                const charId = char.activeId;
                 if (!user || !charId) return;
 
                 try {
                     await firestore.collection('users').doc(user.uid)
                         .collection('characters').doc(charId).update({
-                            body: tempStats.body, mind: tempStats.mind, spirit: tempStats.spirit
+                            body: char.tempStats.body, mind: char.tempStats.mind, spirit: char.tempStats.spirit
                         });
                     console.log("Attributes updated in Firestore.");
                 } catch (e) { 
