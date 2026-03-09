@@ -538,6 +538,12 @@
                     gap: 20px;
                 }
 
+                .hud-portrait-image {
+                    background-image: var(--char-portrait); 
+                    background-size: cover;
+                    background-position: center;
+                }
+                
                 .gallery.active {
                     border: 0.125rem solid #10b981;
                     box-shadow: 0 0 10px #10b981;

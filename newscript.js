@@ -28,6 +28,8 @@
             maxGallerySlots: 8,
             maxStats:{
                 maxBaseStats: 20,
+                minBaseStat: 10,
+
                 maxBaseLevel: 60,
                 maxClassLevel: 10,
             },
@@ -50,12 +52,13 @@
                 name: null,
                 activeId: null,
                 tempStats: { body: 0, mind: 0, spirit: 0 },  // pendingStats
-                baseStats: { body: 0, mind: 0, spirit: 0 }, // originalStats
+                baseStats: { body: 10, mind: 10, spirit: 10 }, // originalStats
                 level: 1,          // replaces activeCharLevel
                 totalAP: 0,         // totalAP
                 traits: [],        // replaces currentRaceTraits
+                modifiers: {},      // For Initiative saving throws.
                 attributes: {},    // replaces currentRaceAttributes
-                classExp: {},
+                className: {},
                 classLevels:{},
                 listener: null     // replaces characterListener
             },
@@ -179,7 +182,8 @@
             char.listener(); 
             char.listener = null; 
         }
-
+        char.activeId = null;
+        char.name = null;
         auth.signOut().then(() => {
             console.log("User signed out successfully.");
         }).catch(err => console.error("Logout Error:", err));
@@ -311,6 +315,43 @@
             function setValue(elementId, value) {
                 const element = document.getElementById(elementId);
                 element.value = value;
+            }
+        /*  ==========================================================================
+            --- Section 1-E. WebP Uploader -------------------------------------------
+            ==========================================================================  */
+            function handleWebPUpload(inputElement, callback, size = 128, quality = 1) {
+                const file = inputElement.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        canvas.width = size;
+                        canvas.height = size;
+
+                        // Your proven crop math
+                        let sourceSize = Math.min(img.width, img.height);
+                        let sourceX = (img.width - sourceSize) / 2;
+                        let sourceY = (img.height - sourceSize) / 2;
+
+                        ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
+                        
+                        // Generate the WebP string
+                        const optimizedBase64 = canvas.toDataURL('image/webp', quality);
+                        
+                        // FIX: Changed dataURL.length to optimizedBase64.length
+                        const kbSize = Math.round(optimizedBase64.length / 1024);
+                        console.log(`WebP ${size}x${size} Processed. Size: ${kbSize} KB | Qual: ${quality}`);
+                        
+                        callback(optimizedBase64);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
             }
     /*  ==========================================================================
         --- Section 2. Load User Character ---------------------------------------
@@ -466,7 +507,7 @@
 
                 const entry = document.createElement('div');
                 let classList = 'chat-entry';
-                if (data.type === 'gm-chat' || 'gm-roll') {
+                if (data.type === 'gm-chat' || data.type === 'gm-roll') {
                     classList += ' gm-type';
                 } else if (data.type === 'roll' || data.type === 'initiative') {
                     classList += ' roll-type';
@@ -508,8 +549,10 @@
             // -----------------------------------------------------------------------  //
             // --- Enter Key Chat Helper ---------------------------------------------  //
             // -----------------------------------------------------------------------  //
-            function handleChatEnter(event) {
-                if (event.key === "Enter") sendChatMessage();
+            function handleEnter(event, callback) {
+                if (event.key === "Enter") {
+                    callback();
+                }
             }
             // -----------------------------------------------------------------------  //
             // --- Send Message Function ---------------------------------------------  //
@@ -700,18 +743,19 @@
 
 
             async function selectCharacter(id) {
-                if (users.character.listener) users.character.listener(); 
+                const char = users.character;
+                if (char.listener) char.listener(); 
                 const allInputs = document.querySelectorAll('#char-sheet-view input');
                 allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
 
-                users.character.activeId = id;
+                char.activeId = id;
                 const user = auth.currentUser;
                 const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
 
-                users.character.listener = charRef.onSnapshot(async (doc) => {
+                char.listener = charRef.onSnapshot(async (doc) => {
                     if (doc.exists) {
                         const d = doc.data();
-                        users.character.name = d.name || "Unselected";
+                        char.name = d.name || "Unselected";
 
                         if (instances.campaignId !== (d.instanceId || "global")) {
                             instances.campaignId = d.instanceId || "global"; 
@@ -719,26 +763,26 @@
                         }
                         setValue('char-name', d.name || "");
                         setValue('char-race', d.race || "");
-                        users.character.level = calculateLvl(d.expCurrent || 0);
-                        setText('char-level-display', `Lv. ${users.character.level}`);
+                        char.level = calculateLvl(d.expCurrent || 0);
+                        setText('char-level-display', `Lv. ${char.level}`);
 
                         // 1. Get raw data
                         const rawClasses = d.unlockedClasses || {};
-                        users.character.classLevels = {}; 
+                        char.classLevels = {}; 
 
                         Object.keys(rawClasses).forEach(className => {
                             const exp = rawClasses[className].exp || 0;
-                            users.character.classLevels[className] = calculateLvl(exp, "class");
+                            char.classLevels[className] = calculateLvl(exp, "class");
                         });
                         renderClassPills();
                                                 
-                        users.character.baseStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
-                        users.character.tempStats = { ...users.character.baseStats };
-                        users.character.totalAP = Math.max(0, users.character.level - (users.character.baseStats.body + users.character.baseStats.mind + users.character.baseStats.spirit)); 
+                        char.baseStats = { body: d.body || 10, mind: d.mind || 10, spirit: d.spirit || 10 };
+                        char.tempStats = { ...char.baseStats };
+                        char.totalAP = Math.max(0, char.level - ((char.baseStats.body + char.baseStats.mind + char.baseStats.spirit) - 30 )); 
                         refreshStatDisplay();
 
-                        
-                        renderGallery(d.gallery, d.portrait);
+                        updatePortraitUI(d.gallery, d.portrait);
+
                         // renderSkills(d);
 
                         const notesEl = document.getElementById('char-notes');
@@ -747,8 +791,8 @@
                         setValue('char-hp-current', Math.floor(d.hpCurrent || 0));
                         setValue('char-mp-current', Math.floor(d.mpCurrent || 0));
 
-                        const nextLevelExp = (users.character.level + 1) * rules.baseExp;
-                        // updateHUD({ ...d, charLevel: users.character.level, expMax: nextLevelExp });
+                        const nextLevelExp = (char.level + 1) * rules.baseExp;
+                        // updateHUD({ ...d, charLevel: char.level, expMax: nextLevelExp });
                         
                         const selectionView = document.getElementById('char-selection-view');
                         if (selectionView && !selectionView.classList.contains('hide-default')) {
@@ -761,12 +805,14 @@
 
             }
             function goBackToSelection() {
-                if (users.character.listener) {
-                    users.character.listener();
-                    users.character.listener = null;
+                const char = users.character;
+                if (char.listener) {
+                    char.listener();
+                    char.listener = null;
                 }
                 localStorage.removeItem('activeCharId');
-                users.character.activeId = null;
+                char.activeId = null;
+                char.name = null;
 
                 document.getElementById('active-char-hud').innerHTML = users.hudDefault;
 
@@ -799,25 +845,26 @@
             }
 
             function refreshStatDisplay() {
-                const currentTotal = users.character.tempStats.body + 
-                                    users.character.tempStats.mind + 
-                                    users.character.tempStats.spirit;
+                const char = users.character;
+                const currentTotal = char.tempStats.body + 
+                                    char.tempStats.mind + 
+                                    char.tempStats.spirit;
                                     
-                const originalTotal = users.character.baseStats.body + 
-                                    users.character.baseStats.mind + 
-                                    users.character.baseStats.spirit;
+                const originalTotal = char.baseStats.body + 
+                                    char.baseStats.mind + 
+                                    char.baseStats.spirit;
 
-                const remainingAP = users.character.totalAP - (currentTotal - originalTotal);
+                const remainingAP = char.totalAP - (currentTotal - originalTotal);
 
-                setText('display-body', users.character.tempStats.body);
-                setText('display-mind', users.character.tempStats.mind);
-                setText('display-spirit', users.character.tempStats.spirit);
+                setText('display-body', char.tempStats.body);
+                setText('display-mind', char.tempStats.mind);
+                setText('display-spirit', char.tempStats.spirit);
 
                 setText('char-ap-rem', `AP: ${remainingAP}`);
 
                 const confirmArea = document.getElementById('attr-confirm-area');
                 if (confirmArea) {
-                    const hasChanges = JSON.stringify(users.character.tempStats) !== JSON.stringify(users.character.baseStats);
+                    const hasChanges = JSON.stringify(char.tempStats) !== JSON.stringify(char.baseStats);
                     if (hasChanges) {
                         confirmArea.classList.remove('hide-default');
                     } else {
@@ -849,12 +896,13 @@
 
                 const currentVal = char.tempStats[stat];
                 const maxVal = rules.maxStats.maxBaseStats;
-                
+                const minVal = rules.maxStats.minBaseStat;
+
                 if (amount > 0 && currentVal >= maxVal) {
                     console.log("Stat cap reached.");
                     return;
                 }
-                if (amount < 0 && currentVal <= 0) return;
+                if (amount < 0 && currentVal <= minVal) return;
 
                 const currentTotal = char.tempStats.body + char.tempStats.mind + char.tempStats.spirit;
                 const originalTotal = char.baseStats.body + char.baseStats.mind + char.baseStats.spirit;
@@ -869,88 +917,117 @@
                 refreshStatDisplay();
             }
 
+            function renderGallery(galleryArray = [], activeIndex = 0) {
+                const container = document.getElementById('char-gallery-grid');
+                if (!container) return;
+                container.innerHTML = "";
 
+                const images = galleryArray || [];
 
-// Needs to be checked
-function renderGallery(galleryArray = [], activeIndex = 0) {
-    const container = document.getElementById('char-gallery-grid');
-    if (!container) return;
-    container.innerHTML = "";
+                for (let i = 0; i < rules.maxGallerySlots; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'gallery-item';
 
-    const images = galleryArray || [];
+                    if (images[i]) {
+                        // Compare the Index (Numbers), not the Strings!
+                        if (i === activeIndex) {
+                            slot.classList.add('gallery-active');
+                        }
 
-    for (let i = 0; i < rules.maxGallerySlots; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'gallery-item';
-
-        if (images[i]) {
-            // Compare the Index (Numbers), not the Strings!
-            if (i === activeIndex) {
-                slot.classList.add('gallery-active');
+                        slot.innerHTML = `
+                            <img src="${images[i]}" onclick="setActivePortrait(${i})">
+                            <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
+                        `;
+                    } else {
+                        slot.className = 'gallery-item empty-slot';
+                        slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
+                        slot.onclick = () => document.getElementById('slot-upload').click();
+                    }
+                    container.appendChild(slot);
+                }
             }
 
-            slot.innerHTML = `
-                <img src="${images[i]}" onclick="setActivePortrait(${i})">
-                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
-            `;
-        } else {
-            slot.className = 'gallery-item empty-slot';
-            slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
-            slot.onclick = () => document.getElementById('slot-upload').click();
-        }
-        container.appendChild(slot);
-    }
-}
+            function updatePortraitUI(gallery, index) {
+                const images = gallery || [];
+                const activeIndex = index || 0;
+                const imgUrl = images[activeIndex];
+
+                renderGallery(images, activeIndex);
+
+                const hudEl = document.getElementById('hud-portrait');
+                if (hudEl) {
+                    if (imgUrl) {
+                        hudEl.style.setProperty('--char-portrait', `url(${imgUrl})`);
+                    } else {
+                        hudEl.style.removeProperty('--char-portrait');
+                    }
+                }
+            }
+
+            function setActivePortrait(index) {
+
+                const user = auth.currentUser;
+                const charId = users.character.activeId;
+                const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(charId);
+                
+                charRef.update({ portrait: index })  
+            }
 
 
-// needs checking
-function setActivePortrait(index) {
-    const user = auth.currentUser;
-    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
-    
-    charRef.update({ portrait: index }).then(() => {
-        charRef.get().then(doc => {
-            const data = doc.data();
-            const imgData = data.gallery[index];
-            document.getElementById('hud-portrait').style.backgroundImage = `url(${imgData})`;
-            loadUserCharacters(); 
-            renderGallery(data.gallery, index);
-        });
-    });
-}
-// NEEDS CHECKING
-function deleteImage(event, index) {
-    event.stopPropagation();
-    if (!confirm("Delete this image?")) return;
-    const user = auth.currentUser;
-    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
+            function deleteImage(event, index) {
+                event.stopPropagation();
+                
+                const user = auth.currentUser;
+                const char = users.character;
+                if (!user || !char.activeId) return;
 
-    charRef.get().then(doc => {
-        let gallery = doc.data().gallery || [];
-        let activeIdx = doc.data().portrait;
+                let gallery = [...(char.gallery || [])];
+                let activeIdx = char.portrait || 0;
 
-        gallery.splice(index, 1);
-        const updateData = { gallery: gallery };
+                gallery.splice(index, 1);
 
-        // Adjust index logic after a deletion
-        if (activeIdx === index) {
-            // If we deleted the active one, default to the first image or nothing
-            updateData.portrait = gallery.length > 0 ? 0 : -1;
-        } else if (index < activeIdx) {
-            // If we deleted an image BEFORE the active one, shift the index down
-            updateData.portrait = activeIdx - 1;
-        }
+                const updateData = { gallery: gallery };
 
-        charRef.update(updateData).then(() => {
-            const finalIdx = updateData.portrait !== undefined ? updateData.portrait : activeIdx;
-            const finalImg = gallery[finalIdx] || '';
-            
-            renderGallery(gallery, finalIdx);
-            document.getElementById('hud-portrait').style.backgroundImage = `url(${finalImg})`;
-            loadUserCharacters();
-        });
-    });
-}
+                if (activeIdx === index) {
+                    updateData.portrait = gallery.length > 0 ? 0 : -1;
+                } else if (index < activeIdx) {
+                    updateData.portrait = activeIdx - 1;
+                }
+
+                const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(char.activeId);
+
+                charRef.update(updateData);
+            }
+
+            function saveImageToNextSlot(base64Data) {
+                const user = auth.currentUser;
+                const char = users.character;
+
+                let gallery = [...(char.gallery || [])];
+                let activeIdx = char.portrait;
+
+
+                gallery.push(base64Data);
+                const updateData = { gallery: gallery };
+                
+                if (gallery.length === 1 || activeIdx === -1 || activeIdx === undefined) {
+                    updateData.portrait = 0;
+                }
+                
+                firestore.collection('users').doc(user.uid)
+                        .collection('characters').doc(char.activeId)
+                        .update(updateData);
+            }
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -378,7 +378,7 @@
                         <select id="chat-target-select" class="form-input">
                         <option value="all">Everyone</option>
                         </select>
-                        <input type="text" id="chat-msg-input" class="form-input flex-grow" autocomplete="off" placeholder="Type a message..." onkeypress="handleChatEnter(event)">
+                        <input type="text" id="chat-msg-input" class="form-input flex-grow" autocomplete="off" placeholder="Type a message..." onkeydown="handleEnter(event, sendChatMessage)">
                         
                     </div>
                     <button onclick="sendChatMessage()" class="btn-primary">
