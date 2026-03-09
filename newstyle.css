@@ -123,7 +123,12 @@
         /* Text Alignment Global Classes */
         .text-center { text-align: center; }
         .text-right { text-align: right; }
-
+        
+        /* Font Sizes */
+        .font-10 { font-size: 0.625rem; }
+        .font-20 { font-size: 1.25rem; }
+        .font-30 { font-size: 1.875rem; }
+        
         /* Display Global Classes */
         .flex { display: flex; }
         .grid { display: grid; }
@@ -515,6 +520,10 @@
                     color: white; 
                 }
 
+                .gallery.active {
+                    border: 0.125rem solid #10b981;
+                    box-shadow: 0 0 10px #10b981;
+                }
 
         /*  ==========================================================================
             --- Section 2-C. Sidebar Left --------------------------------------------

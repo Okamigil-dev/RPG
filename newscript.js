@@ -26,6 +26,7 @@
             baseExp: 200,
             maxGallerySlots: 8,
             maxStats:{
+                maxBaseStats: 20,
                 maxBaseLevel: 60,
                 maxClassLevel: 10,
             },
@@ -46,12 +47,13 @@
             character: {
                 name: null,
                 activeId: null,
-                pendingStats: { body: 0, mind: 0, spirit: 0 },  // pendingStats
-                originalStats: { body: 0, mind: 0, spirit: 0 }, // originalStats
+                tempStats: { body: 0, mind: 0, spirit: 0 },  // pendingStats
+                baseStats: { body: 0, mind: 0, spirit: 0 }, // originalStats
                 level: 1,          // replaces activeCharLevel
                 totalAP: 0,         // totalAP
                 traits: [],        // replaces currentRaceTraits
                 attributes: {},    // replaces currentRaceAttributes
+                classNames: {},
                 classLevels:{},
                 listener: null     // replaces characterListener
             },
@@ -276,7 +278,7 @@
 
                     snap.forEach(doc => {
                         const d = doc.data();
-                        options.push(`<option value="${d.name}">${d.name}</option>`);
+                        options.push(`<option value="${doc.id}">${d.name}</option>`);
                     });
 
                     select.innerHTML = options.join('');
@@ -389,6 +391,9 @@
         /*  ==========================================================================
             --- Section 4-B. Instance Listener ---------------------------------------
             ==========================================================================  */
+            // -----------------------------------------------------------------------  //
+            // --- Listener to Populate Dropdown -------------------------------------  //
+            // -----------------------------------------------------------------------  //
             function initInstanceCharactersListener() {
                 const selector = document.getElementById('chat-target-select');
                 if (!selector) return;
@@ -477,9 +482,15 @@
         /*  ==========================================================================
             --- Section 4-D. Send Message --------------------------------------------
             ==========================================================================  */
+            // -----------------------------------------------------------------------  //
+            // --- Enter Key Chat Helper ---------------------------------------------  //
+            // -----------------------------------------------------------------------  //
             function handleChatEnter(event) {
                 if (event.key === "Enter") sendChatMessage();
             }
+            // -----------------------------------------------------------------------  //
+            // --- Send Message Function ---------------------------------------------  //
+            // -----------------------------------------------------------------------  //
             function sendChatMessage() {
                 const targetSelect = document.getElementById('chat-target-select');
                 const input = document.getElementById('chat-msg-input');
@@ -519,9 +530,15 @@
         /*  ==========================================================================
             --- Section 4-E. Dice Roller ---------------------------------------------
             ==========================================================================  */
+            // -----------------------------------------------------------------------  //
+            // --- Dice Roller Helper ------------------------------------------------  //
+            // -----------------------------------------------------------------------  //
             function getRandomDice(sides) {
                 return Math.floor(Math.random() * sides) + 1;
             }
+            // -----------------------------------------------------------------------  //
+            // --- Dice Roller Animation and Roll ------------------------------------  //
+            // -----------------------------------------------------------------------  //
             function rollDice(sides, btn, modifier = 0) {
                 const numDisplay = btn.querySelector('.roll-number');
                 const targetSelect = document.getElementById('chat-target-select');
@@ -661,15 +678,15 @@
 
             // --- Calculate Level from Exp function
             function calculateLvl (exp, type = "base") {
-                if ( type="base" ) {
+                if ( type === "base" ) {
                     const calculatedLevel = Math.floor(exp / rules.baseExp);
-                    let finalLevel = Math.max(1, calculateLvl);
+                    let finalLevel = Math.max(1, calculatedLevel);
                     return Math.min(finalLevel,rules.maxStats.maxBaseLevel);
-                }else if( type="class" ) {
+                }else if( type === "class" ) {
                     const calculatedLevel = Math.floor(exp / rules.classExp);
-                    let finalLevel = Math.max(1, calculateLvl);
+                    let finalLevel = Math.max(1, calculatedLevel);
                     return Math.min(finalLevel,rules.maxStats.maxClassLevel);
-                }else return;
+                }else return 1;
             }
             // --- Set Text Helper Function
             function setText(elementId, value) {
@@ -684,6 +701,8 @@
             
 
 
+
+
             async function selectCharacter(id) {
                 if (users.character.listener) users.character.listener(); 
                 const allInputs = document.querySelectorAll('#char-sheet-view input');
@@ -696,6 +715,8 @@
                 users.character.listener = charRef.onSnapshot(async (doc) => {
                     if (doc.exists) {
                         const d = doc.data();
+                        users.character.name = d.name || "Unselected";
+
                         if (instances.campaignId !== (d.instanceId || "global")) {
                             instances.campaignId = d.instanceId || "global"; 
                             initClockListener(); initChatLogListener();
@@ -704,15 +725,25 @@
                         setValue('char-race', d.race || "");
                         users.character.level = calculateLvl(d.expCurrent || 0);
                         setText('char-level-display', `Lv. ${users.character.level}`);
-                        
-                        users.character.originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
-                        users.character.pendingStats = { ...users.character.originalStats };
-                        users.character.totalAP = Math.max(0, users.character.level - (users.character.originalStats.body + users.character.originalStats.mind + users.character.originalStats.spirit)); 
 
-                        renderClassPills(d);
+                        // 1. Get raw data
+                        const rawClasses = d.unlockedClasses || {};
+                        users.character.classLevels = {}; 
+
+                        Object.keys(rawClasses).forEach(className => {
+                            const exp = rawClasses[className].exp || 0;
+                            users.character.classLevels[className] = calculateLvl(exp, "class");
+                        });
+                        renderClassPills();
+                                                
+                        users.character.baseStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
+                        users.character.tempStats = { ...users.character.baseStats };
+                        users.character.totalAP = Math.max(0, users.character.level - (users.character.baseStats.body + users.character.baseStats.mind + users.character.baseStats.spirit)); 
                         refreshStatDisplay();
-                        renderGallery(d.gallery || [], d.portrait !== undefined ? d.portrait : 0);
-                        renderSkills(d);
+
+                        
+                        renderGallery(d.gallery, d.portrait);
+                        // renderSkills(d);
 
                         const notesEl = document.getElementById('char-notes');
                         if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
@@ -720,8 +751,8 @@
                         setValue('char-hp-current', Math.floor(d.hpCurrent || 0));
                         setValue('char-mp-current', Math.floor(d.mpCurrent || 0));
 
-                        const nextLevelExp = (activeCharLevel + 1) * 200;
-                        updateHUD({ ...d, charLevel: activeCharLevel, expMax: nextLevelExp });
+                        const nextLevelExp = (users.character.level + 1) * rules.baseExp;
+                        // updateHUD({ ...d, charLevel: users.character.level, expMax: nextLevelExp });
                         
                         const selectionView = document.getElementById('char-selection-view');
                         if (selectionView && !selectionView.classList.contains('hide-default')) {
@@ -733,57 +764,106 @@
                 firestore.collection('users').doc(user.uid).update({ lastActiveCharacter: id });
 
             }
+                
+            
 
-        // This is a placeholder. 
-        function renderSkills(charId) {
-            // It exists so the app doesn't crash when a character is clicked.
-            console.log("renderSkills triggered for ID:", charId);
-        }
-        // This is a placeholder. 
-        function updateHUD(charId) {
-            // It exists so the app doesn't crash when a character is clicked.
-            console.log("updateHUD triggered for ID:", charId);
-        }
+            function renderClassPills() {
+                const container = document.getElementById('char-class-list-display');
+                if(!container) return;
+                container.innerHTML = "";
 
+                const classes = users.character.classLevels; 
+                const classNames = Object.keys(classes);
+
+                if (classNames.length === 0) {
+                    container.innerHTML = '<span class="text-muted">No classes unlocked</span>';
+                } else {
+                    classNames.forEach(className => {
+                        const pill = document.createElement('span');
+                        pill.className = 'join-code-pill';
+
+                        const level = classes[className];
+                        pill.innerText = `${className} Lv.${level}`;
+                            
+                        container.appendChild(pill);
+                    });
+                }
+            }
+
+            function refreshStatDisplay() {
+                const currentTotal = users.character.tempStats.body + 
+                                    users.character.tempStats.mind + 
+                                    users.character.tempStats.spirit;
+                                    
+                const originalTotal = users.character.baseStats.body + 
+                                    users.character.baseStats.mind + 
+                                    users.character.baseStats.spirit;
+
+                const remainingAP = users.character.totalAP - (currentTotal - originalTotal);
+
+                setText('display-body', users.character.tempStats.body);
+                setText('display-mind', users.character.tempStats.mind);
+                setText('display-spirit', users.character.tempStats.spirit);
+
+                setText('char-ap-rem', `AP: ${remainingAP}`);
+
+                const confirmArea = document.getElementById('attr-confirm-area');
+                if (confirmArea) {
+                    const hasChanges = JSON.stringify(users.character.tempStats) !== JSON.stringify(users.character.baseStats);
+                    if (hasChanges) {
+                        confirmArea.classList.remove('hide-default');
+                    } else {
+                        confirmArea.classList.add('hide-default');
+                    }
+                }
+            }
+
+            async function confirmAttributeChanges() {
+                const user = auth.currentUser;
+                const charId = users.character.activeId;
+                if (!user || !charId) return;
+
+                try {
+                    await firestore.collection('users').doc(user.uid)
+                        .collection('characters').doc(charId).update({
+                            body: tempStats.body, mind: tempStats.mind, spirit: tempStats.spirit
+                        });
+                    console.log("Attributes updated in Firestore.");
+                } catch (e) { 
+                    console.error("Update failed:", e); 
+                }
+            }
+
+            function adjustPendingStat(stat, amount) {
+                const char = users.character;
+                if (!char.activeId) return;
+
+                const currentVal = tempStats[stat];
+                const maxVal = rules.maxStats.maxBaseStats;
+                
+                if (amount > 0 && currentVal >= maxVal) {
+                    console.log("Stat cap reached.");
+                    return;
+                }
+                if (amount < 0 && currentVal <= 0) return;
+
+                const currentTotal = char.tempStats.body + char.tempStats.mind + char.tempStats.spirit;
+                const originalTotal = char.baseStats.body + char.baseStats.mind + char.baseStats.spirit;
+                const remainingAP = char.totalAP - (currentTotal - originalTotal);
+
+                if (amount > 0 && remainingAP < amount) {
+                    console.log("Not enough AP.");
+                    return; 
+                }
+
+                users.character.tempStats[stat] += amount;
+                refreshStatDisplay();
+            }
 
 
 
 // Needs to be checked
-function renderClassPills(charData) {
-    const container = document.getElementById('char-class-list-display');
-    if(!container) return;
-    container.innerHTML = "";
-    const classes = charData.unlockedClasses || {};
-    if (Object.keys(classes).length === 0) {
-        container.innerHTML = '<span class="text-muted" style="font-size: 0.8rem;">No classes unlocked</span>';
-    } else {
-        Object.keys(classes).forEach(className => {
-            const pill = document.createElement('span');
-            pill.className = 'join-code-pill';
-            pill.innerText = `${className} Lv.${classes[className].level}`;
-            container.appendChild(pill);
-        });
-    }
-}
-// Needs to be checked
-function refreshStatDisplay() {
-    setText('display-body', users.character.pendingStats.body);
-    setText('display-mind', users.character.pendingStats.mind);
-    setText('display-spirit', users.character.pendingStats.spirit);
-    setText('char-ap-rem', `AP: ${users.character.totalAP}`);
-
-    const confirmArea = document.getElementById('attr-confirm-area');
-    if (confirmArea) {
-        const hasChanges = JSON.stringify(users.character.pendingStats) !== JSON.stringify(users.character.originalStats);
-        if (hasChanges) {
-            confirmArea.classList.remove('hide-default');
-        } else {
-            confirmArea.classList.add('hide-default');
-        }
-    }
-}
-// Needs to be checked
-function renderGallery(galleryArray, activeIndex) {
+function renderGallery(galleryArray = [], activeIndex = 0) {
     const container = document.getElementById('char-gallery-grid');
     if (!container) return;
     container.innerHTML = "";
@@ -797,8 +877,7 @@ function renderGallery(galleryArray, activeIndex) {
         if (images[i]) {
             // Compare the Index (Numbers), not the Strings!
             if (i === activeIndex) {
-                slot.style.borderColor = "#10b981"; 
-                slot.style.boxShadow = "0 0 10px #10b981";
+                slot.classList.add('gallery-active');
             }
 
             slot.innerHTML = `
@@ -815,9 +894,54 @@ function renderGallery(galleryArray, activeIndex) {
 }
 
 
+// needs checking
+function setActivePortrait(index) {
+    const user = auth.currentUser;
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
+    
+    charRef.update({ portrait: index }).then(() => {
+        charRef.get().then(doc => {
+            const data = doc.data();
+            const imgData = data.gallery[index];
+            document.getElementById('hud-portrait').style.backgroundImage = `url(${imgData})`;
+            loadUserCharacters(); 
+            renderGallery(data.gallery, index);
+        });
+    });
+}
+// NEEDS CHECKING
+function deleteImage(event, index) {
+    event.stopPropagation();
+    if (!confirm("Delete this image?")) return;
+    const user = auth.currentUser;
+    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(currentCharacterId);
 
+    charRef.get().then(doc => {
+        let gallery = doc.data().gallery || [];
+        let activeIdx = doc.data().portrait;
 
+        gallery.splice(index, 1);
+        const updateData = { gallery: gallery };
 
+        // Adjust index logic after a deletion
+        if (activeIdx === index) {
+            // If we deleted the active one, default to the first image or nothing
+            updateData.portrait = gallery.length > 0 ? 0 : -1;
+        } else if (index < activeIdx) {
+            // If we deleted an image BEFORE the active one, shift the index down
+            updateData.portrait = activeIdx - 1;
+        }
+
+        charRef.update(updateData).then(() => {
+            const finalIdx = updateData.portrait !== undefined ? updateData.portrait : activeIdx;
+            const finalImg = gallery[finalIdx] || '';
+            
+            renderGallery(gallery, finalIdx);
+            document.getElementById('hud-portrait').style.backgroundImage = `url(${finalImg})`;
+            loadUserCharacters();
+        });
+    });
+}
 
 
 
