@@ -24,10 +24,10 @@
         // Rules Related Variables
         const rules = {
             baseExp: 200,
+            maxGallerySlots: 8,
             maxStats:{
                 maxBaseLevel: 60,
                 maxClassLevel: 10,
-                maxGallerySlots: 8,
             },
             
             statMultiplier: 5,
@@ -767,14 +767,14 @@ function renderClassPills(charData) {
 }
 // Needs to be checked
 function refreshStatDisplay() {
-    setText('display-body', pendingStats.body);
-    setText('display-mind', pendingStats.mind);
-    setText('display-spirit', pendingStats.spirit);
-    setText('char-ap-rem', `AP: ${totalAP}`);
+    setText('display-body', users.character.pendingStats.body);
+    setText('display-mind', users.character.pendingStats.mind);
+    setText('display-spirit', users.character.pendingStats.spirit);
+    setText('char-ap-rem', `AP: ${users.character.totalAP}`);
 
     const confirmArea = document.getElementById('attr-confirm-area');
     if (confirmArea) {
-        const hasChanges = JSON.stringify(pendingStats) !== JSON.stringify(originalStats);
+        const hasChanges = JSON.stringify(users.character.pendingStats) !== JSON.stringify(users.character.originalStats);
         if (hasChanges) {
             confirmArea.classList.remove('hide-default');
         } else {
@@ -790,7 +790,7 @@ function renderGallery(galleryArray, activeIndex) {
 
     const images = galleryArray || [];
 
-    for (let i = 0; i < MAX_GALLERY_SLOTS; i++) {
+    for (let i = 0; i < rules.maxGallerySlots; i++) {
         const slot = document.createElement('div');
         slot.className = 'gallery-item';
 
