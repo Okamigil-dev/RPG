@@ -376,7 +376,7 @@
                             </div>
                             <strong>${d.name || 'New Hero'}</strong>
                             <div class="char-card-meta">Lv.${calculateLvl(d.expCurrent || 0)}</div>
-                            <button class="btn-danger-small m-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">Delete</button>
+                            <button class="btn-danger-small margin-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">Delete</button>
                         `;
                         grid.appendChild(card);
                     });
@@ -781,6 +781,9 @@
                         char.totalAP = Math.max(0, char.level - ((char.baseStats.body + char.baseStats.mind + char.baseStats.spirit) - 30 )); 
                         refreshStatDisplay();
 
+
+                        char.gallery = d.gallery || [];
+                        char.portrait = (d.portrait !== undefined) ? d.portrait : -1;
                         updatePortraitUI(d.gallery, d.portrait);
 
                         // renderSkills(d);
