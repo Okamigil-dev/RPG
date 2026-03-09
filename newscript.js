@@ -838,7 +838,7 @@
                 const char = users.character;
                 if (!char.activeId) return;
 
-                const currentVal = tempStats[stat];
+                const currentVal = char.tempStats[stat];
                 const maxVal = rules.maxStats.maxBaseStats;
                 
                 if (amount > 0 && currentVal >= maxVal) {
@@ -856,7 +856,7 @@
                     return; 
                 }
 
-                users.character.tempStats[stat] += amount;
+                char.tempStats[stat] += amount;
                 refreshStatDisplay();
             }
 
