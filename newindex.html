@@ -94,19 +94,19 @@
                     
                     <div class="hud-resource">
                         <div class="bar-label"><span>Health</span><span id="hud-hp-text">0/0</span></div>
-                        <div class="bar-body"><div id="hud-hp-fill" class="bar-inner hp-fill"></div></div>
+                        <div class="resource-bar-main"><div id="hud-hp-fill" class="hp-bar-main"></div></div>
                     </div>
                 
                     <div class="hud-resource">
                         <div class="bar-label"><span>Mana</span><span id="hud-mp-text">0/0</span></div>
-                        <div class="bar-body">
-                            <div id="hud-mp-fill" class="bar-inner mp-fill"></div></div>
+                        <div class="resource-bar-main">
+                            <div id="hud-mp-fill" class="mp-bar-main"></div></div>
                     </div>
                 
                     <div class="hud-resource">
                         <div class="bar-label"><span>Experience</span></div>
-                        <div class="bar-body">
-                            <div id="hud-exp-fill" class="bar-inner exp-fill"></div>
+                        <div class="resource-bar-main">
+                            <div id="hud-exp-fill" class="exp-fill"></div>
                             <div id="hud-exp-text" class="exp-overlay-grid">0%</div>
                         </div>
                     </div>
@@ -240,7 +240,9 @@
                                             <input type="number" id="char-mp-max" class="resource-input-minimal" readonly>
                                         </div>
                                     </div>
-                                    <div class="resource-bar-main"><div id="char-mp-fill-main" class="mp-bar-main"></div></div>
+                                    <div class="resource-bar-main">
+                                        <div id="char-mp-fill-main" class="mp-bar-main"></div>
+                                    </div>
                                 </div>
                             
                                 <div class="combat-stats-row">
