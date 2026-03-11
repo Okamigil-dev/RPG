@@ -118,14 +118,14 @@
             return;
         }
 
-        auth.createUserWithEmailAndPassword(email, pass).then((res) => {
+        auth.createUserWithEmailAndPassword(email, pass).then( async (res) => {
             const uid = res.user.uid;
             const initialData = { 
                 email: email, 
                 role: 'Player', 
                 username: "" 
             };
-
+            await res.user.getIdToken(true);
             // Use the standalone service
             return updateUserData(uid, initialData);
         }).then(() => {
