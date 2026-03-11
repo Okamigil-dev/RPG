@@ -896,6 +896,9 @@
         --- Section 5. Open Tab --------------------------------------------------
         ==========================================================================  */
             function openTab(tabId) {
+                if (tabId === 'tab-character' && !users.character.activeId) {
+                    tabId = 'tab-character-selection'; 
+                }
                 document.querySelectorAll('.closed-tab').forEach(tab => {
                     tab.classList.add('hide-default');
                 });
