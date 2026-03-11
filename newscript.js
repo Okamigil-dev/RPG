@@ -476,6 +476,8 @@
                 
                 const confirmed = await showConfirm("Delete Character", `Are you sure you want to delete ${name}?`, "Delete");
                 
+                if (!confirmed) return;
+
                 try {
                     const user = auth.currentUser;
                     // 1. Delete the "Identity" from Firestore
@@ -486,9 +488,10 @@
 
                     // Wait for both to finish
                     await Promise.all([deleteFS, deleteRTDB]);
-
-                    if (currentCharacterId === charId) { 
-                        currentCharacterId = null; 
+                    
+                    const char = users.character;
+                    if (char.activeId === charId) { 
+                        char.activeId = null; 
                         goBackToSelection(); 
                     }
 
