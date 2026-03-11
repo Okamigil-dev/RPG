@@ -501,6 +501,46 @@
                     alert("Error: " + err.message); 
                 }
             }
+        /*  ==========================================================================
+            --- Section 2-D. Save Character ----------------------------------------
+            ==========================================================================  */ 
+            async function saveCharacter() {
+                const id = users.character.activeId;
+                if (!id) return;
+                
+                const charRef = firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(id);
+                const pulseRef = rtdb.ref(`characters/${id}`);
+                
+                try {
+                    const char = users.character;
+                    
+
+                    const identityData = {
+                        name: document.getElementById('char-name').value,
+                        race: document.getElementById('char-race').value,
+                        notes: document.getElementById('char-notes').value,
+                        body: originalStats.body || 0,
+                        mind: originalStats.mind || 0,
+                        spirit: originalStats.spirit || 0,
+                        portrait: char.portrait !== undefined ? char.portrait : 0,
+                        gallery: char.gallery || [],
+                        unlockedClasses: char.unlockedClasses || {}
+                    };
+
+                    const pulseData = {
+                        hpCurrent: parseFloat(document.getElementById('char-hp-current').value) || 0,
+                        mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0
+                    };
+
+                    const saveIdentity = charRef.update(identityData);
+                    const savePulse = pulseRef.update(pulseData);
+
+                    await Promise.all([saveIdentity, savePulse]);
+
+                    console.log(`%c Save Successful for ${identityData.name} `);
+
+                } catch (e) { console.error("Save Error:", e); }
+            }
     /*  ==========================================================================
         --- Section 3. Listener Functions ----------------------------------------
         ==========================================================================  */
@@ -916,12 +956,13 @@
     --- Section 1. Character Tab ---------------------------------------------
     ==========================================================================  */
     async function selectCharacter(id) {
+        if (!charId) return;
         const char = users.character;
-
+        
         // 1. Kill old listeners
         if (char.listener) char.listener(); 
         if (char.rtdbListener) rtdb.ref('characters/' + char.activeId).off(); // Use that new variable we discussed
-
+        
         // 2. Reset UI state
         document.querySelectorAll('#char-sheet-view input:not([type="file"])')
                 .forEach(input => input.value = "");
