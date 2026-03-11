@@ -540,8 +540,12 @@
                     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
                 }
                 .panel-subtitle {
-                    margin-top: 0; margin-bottom: 20px; color: #71717a; font-size: 0.75rem;
-                    text-transform: uppercase; letter-spacing: 1px; font-weight: bold;
+                    margin-top: 0; 
+                    color: #71717a; 
+                    font-size: 0.75rem;
+                    text-transform: uppercase; 
+                    letter-spacing: 1px; 
+                    font-weight: bold;
                 }
                 .identity-grid {
                     display: grid;
@@ -556,18 +560,54 @@
                 }
 
                 .panel-header-row {
-                    display: grid; 
-                    grid-template-columns: 1fr 1fr 1fr;
-                    justify-content: space-between; 
-                    align-items: center; 
-                    gap: 5px;
+                    display: flex; 
+                    justify-content: space-between;
+                    align-items: center;
+                    background: rgba(255, 255, 255, 0.03); 
+                    padding: 10px;
+                    border-radius: 8px; 
+                    margin: 10px 0; 
+                    border: 1px solid #27272a;
                 }
-                .attr-row {
-                    display: flex; justify-content: space-between; align-items: center;
-                    background: rgba(255, 255, 255, 0.03); padding: 10px 15px;
-                    border-radius: 8px; margin-bottom: 10px; border: 1px solid #27272a;
+                .char-level-badge {
+                    background: #09090b;
+                    border: 1px solid #27272a;
+                    border-radius: 6px; /* Matches form-input radius */
+                    height: 40px;      /* Exact match for your form-input height */
+                    min-width: 80px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 800;
+                    color: white;    /* Purple accent to match the rest of the sheet */
+                    font-size: 0.95rem;
+                    padding: 0 10px;
+                    box-shadow: inset 0 0 10px rgba(168, 85, 247, 0.05); /* Very subtle glow */
                 }
 
+                .attr-row {
+                    display: flex; 
+                    justify-content: space-between;
+                    align-items: center;
+                    background: rgba(255, 255, 255, 0.03); 
+                    padding: 10px;
+                    border-radius: 8px; 
+                    margin: 10px 0; 
+                    border: 1px solid #27272a;
+                }
+
+                .btn-small { 
+                    background: #27272a; 
+                    color: white; 
+                    border: 1px solid #3f3f46; 
+                    padding: 4px 10px; 
+                    border-radius: 4px; 
+                    font-size: 0.8rem; 
+                    cursor: pointer; 
+                    transition: 0.2s; 
+                }
+                .btn-small:hover { background: #3f3f46; }
+                
                 .attr-name { font-weight: 800; font-size: 0.8rem; color: #a1a1aa; letter-spacing: 1px; }
                 .mind-stat {
                     color:#00348988
