@@ -400,31 +400,24 @@
                     }
 
                     /* A more versatile bar structure that can be used for HP, MP, and EXP with different color fills */
-                    .bar-body { 
-                        width: 100%; 
-                        height: 14px; 
-                        background: var(--color-bg); 
-                        border-radius: var(--radius-sm); 
-                        overflow: hidden; 
-                        position: relative;
-                        border: 1px solid var(--color-border); 
-                    }
-                    .resource-bar-main {
+                    .resource-bar {
                         width: 100%; height: 14px; background: #09090b;
                         border-radius: 4px; overflow: hidden; border: 1px solid #27272a;
                     }
-                    .hp-bar-main { height: 100%; background: linear-gradient(180deg, #ef4444, #b91c1c); transition: width 0.3s; }
-                    .mp-bar-main { height: 100%; background: linear-gradient(180deg, #3b82f6, #1d4ed8); transition: width 0.3s; }
-                    
-                    .hp-fill { 
+                    .hp-bar { 
+                        height: 100%; 
                         background: linear-gradient(180deg, var(--color-hp), var(--color-hp-dark)); 
                         transition: width 0.3s; 
                     }
-                    .mp-fill { 
+                    .mp-bar { 
+                        height: 100%; 
                         background: linear-gradient(180deg, var(--color-mp), var(--color-mp-dark)); 
                         transition: width 0.3s; 
                     }
-                    .exp-fill { 
+                    
+                    
+                    .exp-bar { 
+                        height: 100%;
                         background: linear-gradient(180deg,var(--system-text), var(--system-bg)); 
                         transition: width 0.3s; 
                     }
