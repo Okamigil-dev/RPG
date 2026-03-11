@@ -1069,7 +1069,12 @@
                     char.listener();
                     char.listener = null;
                 }
-                localStorage.removeItem('activeCharId');
+                if (char.rtdbListener && char.activeId) {
+                    rtdb.ref('characters/' + char.activeId).off();
+                    char.rtdbListener = null;
+                }
+
+                localStorage.removeItem('lastActiveId');
                 char.activeId = null;
                 char.name = null;
 
