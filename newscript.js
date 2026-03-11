@@ -262,9 +262,8 @@
                         }
                         if (savedId && savedId !== "null") {
                             selectCharacter(savedId); 
-                        }else {
-                            openTab(targetTab);
-                        }
+                        } openTab(targetTab);
+                        
 
                     } 
                 else {
