@@ -242,10 +242,8 @@
                             document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hide-default'));
                         }
 
-                        let targetTab = localStorage.getItem('activeMainTab') || 'tab-character';
-                        if (targetTab === 'tab-login') targetTab = 'tab-character';
-                        openTab(targetTab);
-
+                        
+                        
                         topNav.classList.remove('hide-default');
                         appBody.classList.remove('hide-default');
 
@@ -254,10 +252,19 @@
                         initClockListener();
                         initChatLogListener();
                         initInstanceCharactersListener();
+                        
+                        let targetTab = localStorage.getItem('activeMainTab') || 'tab-character';
+                        if (targetTab === 'tab-login') targetTab = 'tab-character';
                         const savedId = localStorage.getItem('lastActiveId');
-                        if (savedId) {
-                            selectCharacter(savedId);
+                        
+                        if (targetTab === 'tab-character' && (!savedId || savedId === "null")) {
+                            targetTab = 'tab-character-selection'; // Redirect to the list instead of showing a blank sheet
                         }
+                        if (savedId && savedId !== "null") {
+                            selectCharacter(savedId); 
+                        }
+
+                        openTab(targetTab);
                     } 
                 else {
                     loginTab.classList.replace('login-splash-mode', 'hide-default');
