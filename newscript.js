@@ -90,14 +90,15 @@
     // --- Update User to Firebase -------------------------------------------  //
     async function updateUserData(uid, data) {
         // 1. Update Firestore (The Identity)
-        const firestorePromise = firestore.collection('users').doc(uid).update(data);
+        const firestorePromise = firestore.collection('users').doc(uid).set(data, { merge: true });
 
         // 2. Update RTDB (The Security/Manifest)
         // We only mirror specific fields to RTDB to save bandwidth
         const rtdbData = {};
         if (data.username !== undefined) rtdbData.username = data.username;
         if (data.role !== undefined) rtdbData.role = data.role;
-
+        if (data.email !== undefined) rtdbData.email = data.email;
+        
         const rtdbPromise = rtdb.ref(`users/${uid}`).update(rtdbData);
 
         // 3. Wait for both to finish
