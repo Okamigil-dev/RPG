@@ -956,8 +956,9 @@
     --- Section 1. Character Tab ---------------------------------------------
     ==========================================================================  */
     async function selectCharacter(id) {
+        if (!id) return;
         const char = users.character;
-        if (!char.activeId) return;
+        
         
         // 1. Kill old listeners
         if (char.listener) char.listener(); 
