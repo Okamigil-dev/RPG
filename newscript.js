@@ -246,7 +246,7 @@
                         }
 
                         let targetTab = localStorage.getItem('activeMainTab') || 'tab-character';
-                        const savedId = localStorage.getItem('lastActiveId');
+                        const savedId = localStorage.getItem('activeCharId');
                         if (targetTab === 'tab-login') targetTab = 'tab-character';
                         
                         if (savedId && targetTab === 'tab-character') {
@@ -550,6 +550,117 @@
 
                 } catch (e) { console.error("Save Error:", e); }
             }
+        /*  ==========================================================================
+            --- Section 2-E. Gallery Logic --------------------------------------------
+            ==========================================================================  */ 
+            /*  ==========================================================================
+                --- Render Gallery -------------------------------------------------------
+                ==========================================================================  */ 
+                function renderGallery(galleryArray = [], activeIndex = 0) {
+                    const container = document.getElementById('char-gallery-grid');
+                    if (!container) return;
+                    container.innerHTML = "";
+
+                    const images = galleryArray || [];
+
+                    for (let i = 0; i < rules.maxGallerySlots; i++) {
+                        const slot = document.createElement('div');
+                        slot.className = 'gallery-item';
+
+                        if (images[i]) {
+                            // Compare the Index (Numbers), not the Strings!
+                            if (i === activeIndex) {
+                                slot.classList.add('gallery-active');
+                            }
+
+                            slot.innerHTML = `
+                                <img src="${images[i]}" onclick="setActivePortrait(${i})">
+                                <button class="btn-danger-small margin-m" onclick="deleteImage(event, ${i})">×</button>
+                            `;
+                        } else {
+                            slot.className = 'gallery-item empty-slot';
+                            slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
+                            slot.onclick = () => document.getElementById('slot-upload').click();
+                        }
+                        container.appendChild(slot);
+                    }
+                }
+            /*  ==========================================================================
+                --- Portrait -------------------------------------------------------
+                ==========================================================================  */ 
+                function updatePortraitUI(gallery, index) {
+                    const images = gallery || [];
+                    const activeIndex = index || 0;
+                    const imgUrl = images[activeIndex];
+
+                    renderGallery(images, activeIndex);
+
+                    const hudEl = document.getElementById('hud-portrait');
+                    if (hudEl) {
+                        if (imgUrl) {
+                            hudEl.style.setProperty('--char-portrait', `url(${imgUrl})`);
+                        } else {
+                            hudEl.style.removeProperty('--char-portrait');
+                        }
+                    }
+                }
+                function setActivePortrait(index) {
+
+                    const user = auth.currentUser;
+                    const charId = users.character.activeId;
+                    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(charId);
+                    
+                    charRef.update({ portrait: index })  
+                }
+            /*  ==========================================================================
+                --- Delete Image ---------------------------------------------------------
+                ==========================================================================  */ 
+                function deleteImage(event, index) {
+                    event.stopPropagation();
+                    
+                    const user = auth.currentUser;
+                    const char = users.character;
+                    if (!user || !char.activeId) return;
+
+                    let gallery = [...(char.gallery || [])];
+                    let activeIdx = char.portrait || 0;
+
+                    gallery.splice(index, 1);
+
+                    const updateData = { gallery: gallery };
+
+                    if (activeIdx === index) {
+                        updateData.portrait = gallery.length > 0 ? 0 : -1;
+                    } else if (index < activeIdx) {
+                        updateData.portrait = activeIdx - 1;
+                    }
+
+                    const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(char.activeId);
+
+                    charRef.update(updateData);
+                }
+            /*  ==========================================================================
+                --- Save Image to Next Slot ----------------------------------------------
+                ==========================================================================  */ 
+                function saveImageToNextSlot(base64Data) {
+                    const user = auth.currentUser;
+                    const char = users.character;
+
+                    let gallery = [...(char.gallery || [])];
+                    let activeIdx = char.portrait;
+
+
+                    gallery.push(base64Data);
+                    const updateData = { gallery: gallery };
+                    
+                    if (gallery.length === 1 || activeIdx === -1 || activeIdx === undefined) {
+                        updateData.portrait = 0;
+                    }
+                    
+                    firestore.collection('users').doc(user.uid)
+                            .collection('characters').doc(char.activeId)
+                            .update(updateData);
+                }
     /*  ==========================================================================
         --- Section 3. Listener Functions ----------------------------------------
         ==========================================================================  */
@@ -964,105 +1075,34 @@
 /*  ==========================================================================
     --- Section 1. Character Tab ---------------------------------------------
     ==========================================================================  */
-    async function selectCharacter(id) {
-        const char = users.character;
-        
-        // 1. Kill old listeners
-        if (char.listener) char.listener(); 
-        if (char.rtdbListener) rtdb.ref('characters/' + char.activeId).off(); // Use that new variable we discussed
-        
-        // 2. Reset UI state
-        document.querySelectorAll('#char-sheet-view input:not([type="file"])')
-                .forEach(input => input.value = "");
-
-        char.activeId = id;
-        localStorage.setItem('lastActiveId', id);
-
-        // 3. Start the new specialist listeners
-        initIdentityListener(id);
-        initPulseListener(id);
-
-        // 4. Handle Navigation
-        document.getElementById('char-selection-view').classList.add('hide-default');
-        document.getElementById('char-sheet-view').classList.remove('hide-default');
-    }
-
-    // async function selectCharacter(id) {
-    //         const char = users.character;
-    //         if (char.listener) char.listener(); 
-    //         const allInputs = document.querySelectorAll('#char-sheet-view input');
-    //         allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
-
-    //         char.activeId = id;
-    //         const user = auth.currentUser;
-    //         const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
-
-    //         char.listener = charRef.onSnapshot(async (doc) => {
-    //             if (doc.exists) {
-    //                 const d = doc.data();
-    //                 char.name = d.name || "Unselected";
-
-    //                 if (instances.campaignId !== (d.instanceId || "global")) {
-    //                     instances.campaignId = d.instanceId || "global"; 
-    //                     initClockListener(); initChatLogListener();
-    //                 }
-    //                 setValue('char-name', d.name || "");
-    //                 setValue('char-race', d.race || "");
-    //                 char.level = calculateLvl(d.expCurrent || 0);
-    //                 setText('char-level-display', `Lv. ${char.level}`);
-
-    //                 // 1. Get raw data
-    //                 const rawClasses = d.unlockedClasses || {};
-    //                 char.classLevels = {}; 
-
-    //                 Object.keys(rawClasses).forEach(className => {
-    //                     const exp = rawClasses[className].exp || 0;
-    //                     char.classLevels[className] = calculateLvl(exp, "class");
-    //                 });
-    //                 renderClassPills();
-                                            
-    //                 char.baseStats = { body: d.body || 10, mind: d.mind || 10, spirit: d.spirit || 10 };
-    //                 char.tempStats = { ...char.baseStats };
-    //                 char.totalAP = Math.max(0, char.level - ((char.baseStats.body + char.baseStats.mind + char.baseStats.spirit) - 30 )); 
-    //                 refreshStatDisplay();
-
-
-    //                 char.gallery = d.gallery || [];
-    //                 char.portrait = (d.portrait !== undefined) ? d.portrait : -1;
-    //                 updatePortraitUI(d.gallery, d.portrait);
-
-    //                 // renderSkills(d);
-
-    //                 const notesEl = document.getElementById('char-notes');
-    //                 if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
-
-    //                 setValue('char-hp-current', Math.floor(d.hpCurrent || 0));
-    //                 setValue('char-mp-current', Math.floor(d.mpCurrent || 0));
-
-    //                 const nextLevelExp = (char.level + 1) * rules.baseExp;
-    //                 // updateHUD({ ...d, charLevel: char.level, expMax: nextLevelExp });
-                    
-    //                 const selectionView = document.getElementById('char-selection-view');
-    //                 if (selectionView && !selectionView.classList.contains('hide-default')) {
-    //                     selectionView.classList.add('hide-default');
-    //                     document.getElementById('char-sheet-view').classList.remove('hide-default');
-    //                 }
-    //             }
-    //         });
-    //         localStorage.setItem('lastActiveId', id);
-
-    //     }
-
-
-
-
+    /*  ==========================================================================
+        --- Select Character -----------------------------------------------------
+        ==========================================================================  */
+        async function selectCharacter(id) {
+            const char = users.character;
             
+            // 1. Kill old listeners
+            if (char.listener) char.listener(); 
+            if (char.rtdbListener) rtdb.ref('characters/' + char.activeId).off(); // Use that new variable we discussed
             
+            // 2. Reset UI state
+            document.querySelectorAll('#char-sheet-view input:not([type="file"])')
+                    .forEach(input => input.value = "");
 
+            char.activeId = id;
+            localStorage.setItem('activeCharId', id);
 
+            // 3. Start the new specialist listeners
+            initIdentityListener(id);
+            initPulseListener(id);
 
-
-            
+            // 4. Handle Navigation
+            document.getElementById('char-selection-view').classList.add('hide-default');
+            document.getElementById('char-sheet-view').classList.remove('hide-default');
+        }
+        /*  ==========================================================================
+            --- Return to Selection --------------------------------------------------
+            ==========================================================================  */
             function goBackToSelection() {
                 const char = users.character;
                 if (char.listener) {
@@ -1073,8 +1113,8 @@
                     rtdb.ref('characters/' + char.activeId).off();
                     char.rtdbListener = null;
                 }
-
-                localStorage.removeItem('lastActiveId');
+                
+                localStorage.removeItem('activeCharId');
                 char.activeId = null;
                 char.name = null;
 
@@ -1083,8 +1123,9 @@
                 document.getElementById('char-selection-view').classList.remove('hide-default');
                 document.getElementById('char-sheet-view').classList.add('hide-default');
             }
-            
-
+        /*  ==========================================================================
+            --- Render Classes -------------------------------------------------------
+            ==========================================================================  */
             function renderClassPills() {
                 const container = document.getElementById('char-class-list-display');
                 if(!container) return;
@@ -1181,107 +1222,106 @@
                 refreshStatDisplay();
             }
 
-            function renderGallery(galleryArray = [], activeIndex = 0) {
-                const container = document.getElementById('char-gallery-grid');
-                if (!container) return;
-                container.innerHTML = "";
-
-                const images = galleryArray || [];
-
-                for (let i = 0; i < rules.maxGallerySlots; i++) {
-                    const slot = document.createElement('div');
-                    slot.className = 'gallery-item';
-
-                    if (images[i]) {
-                        // Compare the Index (Numbers), not the Strings!
-                        if (i === activeIndex) {
-                            slot.classList.add('gallery-active');
-                        }
-
-                        slot.innerHTML = `
-                            <img src="${images[i]}" onclick="setActivePortrait(${i})">
-                            <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
-                        `;
-                    } else {
-                        slot.className = 'gallery-item empty-slot';
-                        slot.innerHTML = `<i class="fa-solid fa-plus"></i>`;
-                        slot.onclick = () => document.getElementById('slot-upload').click();
-                    }
-                    container.appendChild(slot);
-                }
-            }
-
-            function updatePortraitUI(gallery, index) {
-                const images = gallery || [];
-                const activeIndex = index || 0;
-                const imgUrl = images[activeIndex];
-
-                renderGallery(images, activeIndex);
-
-                const hudEl = document.getElementById('hud-portrait');
-                if (hudEl) {
-                    if (imgUrl) {
-                        hudEl.style.setProperty('--char-portrait', `url(${imgUrl})`);
-                    } else {
-                        hudEl.style.removeProperty('--char-portrait');
-                    }
-                }
-            }
-
-            function setActivePortrait(index) {
-
-                const user = auth.currentUser;
-                const charId = users.character.activeId;
-                const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(charId);
-                
-                charRef.update({ portrait: index })  
-            }
+            
 
 
-            function deleteImage(event, index) {
-                event.stopPropagation();
-                
-                const user = auth.currentUser;
-                const char = users.character;
-                if (!user || !char.activeId) return;
-
-                let gallery = [...(char.gallery || [])];
-                let activeIdx = char.portrait || 0;
-
-                gallery.splice(index, 1);
-
-                const updateData = { gallery: gallery };
-
-                if (activeIdx === index) {
-                    updateData.portrait = gallery.length > 0 ? 0 : -1;
-                } else if (index < activeIdx) {
-                    updateData.portrait = activeIdx - 1;
-                }
-
-                const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(char.activeId);
-
-                charRef.update(updateData);
-            }
-
-            function saveImageToNextSlot(base64Data) {
-                const user = auth.currentUser;
-                const char = users.character;
-
-                let gallery = [...(char.gallery || [])];
-                let activeIdx = char.portrait;
 
 
-                gallery.push(base64Data);
-                const updateData = { gallery: gallery };
-                
-                if (gallery.length === 1 || activeIdx === -1 || activeIdx === undefined) {
-                    updateData.portrait = 0;
-                }
-                
-                firestore.collection('users').doc(user.uid)
-                        .collection('characters').doc(char.activeId)
-                        .update(updateData);
-            }
+
+
+
+async function updateHUD(char) {
+    if (!char) return;
+
+    // 1. Resolve general bonuses (BOD/MIN/SPI totals)
+    // const bonuses = await resolveAllStats(char);
+    const totals = {
+        body: (char.body || 0) + (bonuses.totals['body'] || 0),
+        mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
+        spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
+    };
+
+    // 2. USE YOUR ENGINE: Get the true Max HP/MP (Stops the HUD mismatch)
+    const maxStats = await getFinalMaxStats(char); 
+    const hpMax = maxStats.finalHP;
+    const mpMax = maxStats.finalMP;
+
+    // 3. Update UI Elements (Character Sheet Boxes)
+    setValue('char-hp-max', Math.floor(hpMax));
+    setValue('char-mp-max', Math.floor(mpMax));
+    setValue('char-hp-current', Math.floor(char.hpCurrent || 0));
+    setValue('char-mp-current', Math.floor(char.mpCurrent || 0));
+
+    // 4. Update Visual Progress Bars
+    updateVisualBars(char.hpCurrent, hpMax, char.mpCurrent, mpMax);
+
+    // 5. Calculate Percentages for Sidebar
+    const hpP = (char.hpCurrent / (hpMax || 1)) * 100;
+    const mpP = (char.mpCurrent / (mpMax || 1)) * 100;
+    const expP = ((char.expCurrent || 0) / ((char.charLevel + 1) * 200)) * 100;
+
+    // 6. Final Sync
+    if (document.getElementById('active-char-hud')) {
+        document.getElementById('active-char-hud').classList.remove('hide-default'); 
+    }
+
+    syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax);
+    syncSheetDashboardUI(char, totals, bonuses, char.race); 
+}
+
+//SYNC SIDE BAR
+function syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax) {
+    const getMod = (val) => {
+        const m = Math.floor(val / 2);
+        return m >= 0 ? `+${m}` : m;
+    };
+    const gallery = char.gallery || [];
+    const activeIdx = char.portrait !== undefined ? char.portrait : 0;
+    const activeImg = gallery[activeIdx] || "";
+    
+    const portEl = document.getElementById('hud-portrait');
+    if (portEl) {
+        portEl.style.backgroundImage = activeImg ? `url(${activeImg})` : "none";
+        portEl.innerHTML = activeImg ? "" : '<i class="fa-solid fa-user"></i>';
+    }
+
+    setSafeText('hud-name', char.name || "Unnamed");
+    setSafeText('hud-meta', `Level ${char.charLevel || 1}`);
+    setSafeText('hud-hp-text', `${Math.floor(char.hpCurrent || 0)}/${Math.floor(hpMax)}`);
+    setSafeText('hud-mp-text', `${Math.floor(char.mpCurrent || 0)}/${Math.floor(mpMax)}`);
+    
+    setSafeText('hud-mod-body', `BOD ${getMod(totals.body)}`);
+    setSafeText('hud-mod-mind', `MIN ${getMod(totals.mind)}`);
+    setSafeText('hud-mod-spirit', `SPI ${getMod(totals.spirit)}`);
+
+    const hpFill = document.getElementById('hud-hp-fill');
+    const mpFill = document.getElementById('hud-mp-fill');
+    const expFill = document.getElementById('hud-exp-fill');
+    if (hpFill) hpFill.style.width = hpP + "%";
+    if (mpFill) mpFill.style.width = mpP + "%";
+    if (expFill) expFill.style.width = expP + "%";
+    setSafeText('hud-exp-text', `${Math.floor(expP)}%`);
+}
+
+// SYNC SHEET DASHBOARD
+function syncSheetDashboardUI(char, totals, bonuses, raceName) {
+    setSafeText('total-body-label', totals.body);
+    setSafeText('total-mind-label', totals.mind);
+    setSafeText('total-spirit-label', totals.spirit);
+    setSafeText('char-speed-display', (bonuses.totals['speed'] || 6) + "m");
+    setSafeText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
+
+    const initEl = document.getElementById('char-init-display');
+    if (initEl) {
+        const bestMod = Math.max(Math.floor(totals.body/2), Math.floor(totals.mind/2));
+        initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
+    }
+    renderClassPills(char);
+}
+
+
+
+
 
 
 
