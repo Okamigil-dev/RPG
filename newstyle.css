@@ -630,7 +630,14 @@
                     border: 0.125rem solid #10b981;
                     box-shadow: 0 0 10px #10b981;
                 }
-
+                .gallery-grid {
+                    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+                    display: grid;
+                    gap: 15px;
+                    margin-top: 15px;
+                    justify-content: center;
+                    min-height: 110px;
+                }
                 .gallery-item {
                     width: 128px; 
                     height: 128px;
