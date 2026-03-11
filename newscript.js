@@ -575,7 +575,7 @@
 
                             slot.innerHTML = `
                                 <img src="${images[i]}" onclick="setActivePortrait(${i})">
-                                <button class="btn-danger-small margin-m" onclick="deleteImage(event, ${i})">×</button>
+                                <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
                             `;
                         } else {
                             slot.className = 'gallery-item empty-slot';
