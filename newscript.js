@@ -60,6 +60,8 @@
                 attributes: {},    // replaces currentRaceAttributes
                 className: {},
                 classLevels:{},
+                
+                rtdbListener: null,
                 listener: null     // replaces characterListener
             },
 
@@ -85,6 +87,22 @@
 /*  ==========================================================================
     --- Main Section 2. User Authentication ----------------------------------
     ==========================================================================  */
+    // --- Update User to Firebase -------------------------------------------  //
+    async function updateUserData(uid, data) {
+        // 1. Update Firestore (The Identity)
+        const firestorePromise = firestore.collection('users').doc(uid).update(data);
+
+        // 2. Update RTDB (The Security/Manifest)
+        // We only mirror specific fields to RTDB to save bandwidth
+        const rtdbData = {};
+        if (data.username !== undefined) rtdbData.username = data.username;
+        if (data.role !== undefined) rtdbData.role = data.role;
+
+        const rtdbPromise = rtdb.ref(`users/${uid}`).update(rtdbData);
+
+        // 3. Wait for both to finish
+        return Promise.all([firestorePromise, rtdbPromise]);
+    }
     // --- Register User to Firebase -----------------------------------------  //
     function registerUser() {
         const email = document.getElementById('email-input').value;
@@ -101,39 +119,37 @@
         }
 
         auth.createUserWithEmailAndPassword(email, pass).then((res) => {
-            firestore.collection('users').doc(res.user.uid).set({ 
+            const uid = res.user.uid;
+            const initialData = { 
                 email: email, 
-                role: 'Player',
-                username: ""
-            });
+                role: 'Player', 
+                username: "" 
+            };
+
+            // Use the standalone service
+            return updateUserData(uid, initialData);
+        }).then(() => {
+            // This part only runs if BOTH saves succeeded
             display.textContent = "Account Created! Setting up profile...";
             display.classList = "successColor";
+            
             setTimeout(() => {
-            loginTab.classList.replace('login-splash-mode', 'hide-default');
-            setupTab.classList.replace('hide-default', 'login-splash-mode');
-        }, 1500);
+                loginTab.classList.replace('login-splash-mode', 'hide-default');
+                setupTab.classList.replace('hide-default', 'login-splash-mode');
+            }, 1500);
         }).catch(err => {
             display.textContent = err.message;
-            display.classList= "errorColor" ;
+            display.classList = "errorColor";
         });
 
     }
     // Update User Name
     function finalizeProfile() {
-        const newUsername = document.getElementById('username-setup-input').value;
-        const display = document.getElementById('setup-message-display');
+        const newName = document.getElementById('username-setup-input').value;
+        if (!newName) return;
 
-        if (!newUsername) {
-            display.textContent = "Please choose a name!";
-            return;
-        }
-
-        // Update the briefcase and Firestore
-        users.username = newUsername;
-        
-        firestore.collection('users').doc(auth.currentUser.uid).update({
-            username: newUsername
-        }).then(() => {
+        updateUserData(auth.currentUser.uid, { username: newName })
+            .then(() => {
             document.getElementById('top-nav').classList.remove('hide-default');
             document.getElementById('app-body').classList.remove('hide-default');
 
@@ -177,11 +193,12 @@
     // --- Logout User to Firebase -------------------------------------------- //
     function logoutUser() { 
         const char = users.character;
-        if (char.listener && typeof char.listener === 'function') {
-            console.log("Stopping active character listener...");
-            char.listener(); 
-            char.listener = null; 
+        if (char.listener) {
+        char.listener(); 
+        char.listener = null; 
         }
+        if (char.rtdbListener) rtdb.ref('characters/' + char.activeId).off();
+
         char.activeId = null;
         char.name = null;
         auth.signOut().then(() => {
@@ -353,11 +370,78 @@
                 };
                 reader.readAsDataURL(file);
             }
+        /*  ==========================================================================
+            --- Section 1-X. Confirm Ui ----------------------------------------------
+            ==========================================================================  */
+            function showConfirm(title, message, okText = "Confirm") {
+                return new Promise((resolve) => {
+                    const modal = document.getElementById('custom-confirm-modal');
+                    const okBtn = document.getElementById('confirm-ok-btn');
+                    const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+                    document.getElementById('confirm-title').textContent = title;
+                    document.getElementById('confirm-message').textContent = message;
+                    okBtn.textContent = okText;
+
+                    modal.classList.remove('hide-default');
+
+                    function cleanup(result) {
+                        modal.classList.add('hide-default');
+                        // Clean up listeners so they don't stack up
+                        okBtn.onclick = null;
+                        cancelBtn.onclick = null;
+                        resolve(result);
+                    }
+
+                    okBtn.onclick = () => cleanup(true);
+                    cancelBtn.onclick = () => cleanup(false);
+                });
+            }
     /*  ==========================================================================
-        --- Section 2. Load User Character ---------------------------------------
+        --- Section 2. Character Logic -------------------------------------------
         ==========================================================================  */
+        /*  ==========================================================================
+            --- Section 2-A. Create New Character ------------------------------------
+            ==========================================================================  */
+            function createNewCharacter() {
+                const user = auth.currentUser;
+                const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc();
+                const charId = charRef.id;
+                
+                const identityData = { 
+                    name: "New Hero", 
+                    race: "", 
+                    class: "", 
+                    charLevel: 1, 
+                    body: 10, mind: 10, spirit: 10,
+                    notes: "",
+                    skills: { basic: [], intermediate: [], advanced: [] },
+                    gallery: [], 
+                    portrait: -1, // Using your -1 for "no image"
+                    unlockedClasses: {}, 
+                    instanceId: "global", 
+                    instanceName: "Global",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                const pulseData = {
+                    hpCurrent: 10,
+                    mpCurrent: 10,
+                    expCurrent: 0,
+                    ownerId: user.uid
+                };
+                
+                const saveIdentity = charRef.set(identityData);
+                const savePulse = rtdb.ref(`characters/${charId}`).set(pulseData);
+                
+                Promise.all([saveIdentity, savePulse]).then(() => {
+                    loadUserCharacters();
+                });
+            }
+        /*  ==========================================================================
+            --- Section 2-B. Load User Character List ------------------------------------
+            ==========================================================================  */
             function loadUserCharacters() {
-                if (!users.uid) return;
+                    if (!users.uid) return;
                 firestore.collection('users').doc(users.uid).collection('characters').get().then(snap => {
                     const grid = document.getElementById('char-list-grid');
                     if (!grid) return;
@@ -365,8 +449,8 @@
                     snap.forEach(doc => {
                         const d = doc.data();
                         const gallery = d.gallery || [];
-                        const activeIdx = d.portrait !== undefined ? d.portrait : 0;
-                        const displayImg = gallery[activeIdx] || ''; 
+                        const activeIdx = (d.portrait !== undefined && d.portrait !== null) ? d.portrait : -1;
+                        const displayImg = (activeIdx >= 0 && gallery[activeIdx]) ? gallery[activeIdx] : '';
                         const card = document.createElement('div');
                         card.className = 'char-card';
                         card.onclick = () => selectCharacter(doc.id);
@@ -375,16 +459,49 @@
                                 ${!displayImg ? '<i class="fa-solid fa-user"></i>' : ''}
                             </div>
                             <strong>${d.name || 'New Hero'}</strong>
-                            <div class="char-card-meta">Lv.${calculateLvl(d.expCurrent || 0)}</div>
+                            <div class="char-card-meta">Lv.${d.charLevel || 1}</div>
                             <button class="btn-danger-small margin-m" onclick="deleteCharacter(event, '${doc.id}', '${d.name}')">Delete</button>
                         `;
                         grid.appendChild(card);
                     });
                 });
             }
+        /*  ==========================================================================
+            --- Section 2-C. Delete Character ----------------------------------------
+            ==========================================================================  */    
+            async function deleteCharacter(event, charId, name) {
+                event.stopPropagation();
+                
+                const confirmed = await showConfirm("Delete Character", `Are you sure you want to delete ${name}?`, "Delete");
+                
+                try {
+                    const user = auth.currentUser;
+                    // 1. Delete the "Identity" from Firestore
+                    const deleteFS = firestore.collection('users').doc(user.uid).collection('characters').doc(charId).delete();
+
+                    // 2. Delete the "Pulse" from RTDB
+                    const deleteRTDB = rtdb.ref(`characters/${charId}`).remove();
+
+                    // Wait for both to finish
+                    await Promise.all([deleteFS, deleteRTDB]);
+
+                    if (currentCharacterId === charId) { 
+                        currentCharacterId = null; 
+                        goBackToSelection(); 
+                    }
+
+                    loadUserCharacters();
+                } catch (err) { 
+                    console.error("Delete failed:", err);
+                    alert("Error: " + err.message); 
+                }
+            }
     /*  ==========================================================================
-        --- Section 3. Init Clock Listener ---------------------------------------
+        --- Section 3. Listener Functions ----------------------------------------
         ==========================================================================  */
+        /*  ==========================================================================
+            --- Section 3-A. Clock Listener ------------------------------------------
+            ==========================================================================  */
             function initClockListener() {
                 rtdb.ref(`instance_clocks`).off(); 
                 rtdb.ref("instance_clocks/" + instances.campaignId).on('value', (snapshot) => {
@@ -416,7 +533,7 @@
                 });
             }
             /*  ==========================================================================
-                --- Section 3-A. Update Clock Display ------------------------------------
+                --- Update Clock Display -------------------------------------------------
                 ==========================================================================  */
                 function updateDisplay() {
                     const total = instances.clock.totalSeconds;
@@ -439,24 +556,68 @@
                         document.getElementById('time-display').innerText = 
                             `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
                     }
-                }       
-    /*  ==========================================================================
-        --- Section 4. Chat Log --------------------------------------------------
-        ==========================================================================  */
+                }
         /*  ==========================================================================
-            --- Section 4-A. Chat Log Listener ---------------------------------------
+            --- Section 3-B. Firestore Character Listener ----------------------------
             ==========================================================================  */
-            function initChatLogListener() {
-                const log = document.getElementById('chat-log');
-                if (log) log.innerHTML = '<div class="chat-log-placeholder">Loading history...</div>';
-                
-                rtdb.ref(`instance_logs/${instances.campaignId}/chatbox`).off();
-                rtdb.ref(`instance_logs/${instances.campaignId}/chatbox`).limitToLast(20).on('child_added', (snapshot) => {
-                    renderChatLogEntry(snapshot.val());
+            function initIdentityListener(id) {
+                const user = auth.currentUser;
+                const char = users.character;
+                const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
+
+                char.listener = charRef.onSnapshot((doc) => {
+                    if (!doc.exists) return;
+                    const d = doc.data();
+
+                    // Instance Check
+                    if (instances.campaignId !== (d.instanceId || "global")) {
+                        instances.campaignId = d.instanceId || "global"; 
+                        initClockListener(); initChatLogListener();
+                    }
+
+                    // Static UI Updates
+                    setValue('char-name', d.name || "");
+                    setValue('char-race', d.race || "");
+                    setText('char-level-display', `Lv. ${d.charLevel || 1}`);
+
+                    // Stats & AP Calculation
+                    char.baseStats = { body: d.body || 10, mind: d.mind || 10, spirit: d.spirit || 10 };
+                    char.tempStats = { ...char.baseStats };
+                    char.totalAP = Math.max(0, (d.charLevel || 1) - ((char.baseStats.body + char.baseStats.mind + char.baseStats.spirit) - 30)); 
+                    refreshStatDisplay();
+
+                    // UI Gallery
+                    char.gallery = d.gallery || [];
+                    char.portrait = (d.portrait !== undefined) ? d.portrait : -1;
+                    updatePortraitUI(d.gallery, d.portrait);
+
+                    // Notes (Only update if user isn't typing)
+                    const notesEl = document.getElementById('char-notes');
+                    if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
                 });
             }
         /*  ==========================================================================
-            --- Section 4-B. Instance Listener ---------------------------------------
+            --- Section 3-C. RTDB Character Listener ---------------------------------
+            ==========================================================================  */
+            function initPulseListener(id) {
+                const char = users.character;
+                const pulseRef = rtdb.ref(`characters/${id}`);
+
+                // Store the listener so we can kill it on logout/switch
+                char.rtdbListener = pulseRef.on('value', (snapshot) => {
+                    const d = snapshot.val();
+                    if (!d) return;
+
+                    // Live UI Updates
+                    setValue('char-hp-current', Math.floor(d.hpCurrent || 0));
+                    setValue('char-mp-current', Math.floor(d.mpCurrent || 0));
+                    
+                    // Update EXP bars or HUD
+                    // updateHUD({ expCurrent: d.expCurrent });
+                });
+            }
+        /*  ==========================================================================
+            --- Section 3-D. Instance Listener ---------------------------------------
             ==========================================================================  */
             function initInstanceCharactersListener() {
                 const selector = document.getElementById('chat-target-select');
@@ -475,9 +636,24 @@
                         }
                     });
                 });
+            }           
+    /*  ==========================================================================
+        --- Section 4. Chat Log --------------------------------------------------
+        ==========================================================================  */
+        /*  ==========================================================================
+            --- Section 4-A. Chat Log Listener ---------------------------------------
+            ==========================================================================  */
+            function initChatLogListener() {
+                const log = document.getElementById('chat-log');
+                if (log) log.innerHTML = '<div class="chat-log-placeholder">Loading history...</div>';
+                
+                rtdb.ref(`instance_logs/${instances.campaignId}/chatbox`).off();
+                rtdb.ref(`instance_logs/${instances.campaignId}/chatbox`).limitToLast(20).on('child_added', (snapshot) => {
+                    renderChatLogEntry(snapshot.val());
+                });
             }
         /*  ==========================================================================
-            --- Section 4-C. Render Chat Log -----------------------------------------
+            --- Section 4-B. Render Chat Log -----------------------------------------
             ==========================================================================  */
             function renderChatLogEntry(data) {
                 const log = document.getElementById('chat-log');
@@ -592,7 +768,6 @@
                 });
                 input.value = '';
             }
-
         /*  ==========================================================================
             --- Section 4-E. Dice Roller ---------------------------------------------
             ==========================================================================  */
@@ -728,10 +903,101 @@
                 if (subTabId === 'sub-attributes') loadAttributeList();
             }
 
+/*  ==========================================================================
+    --- Main Section 4. Layout -----------------------------------------------
+    ==========================================================================  */
+
+/*  ==========================================================================
+    --- Section 1. Character Tab ---------------------------------------------
+    ==========================================================================  */
+    async function selectCharacter(id) {
+        const char = users.character;
+
+        // 1. Kill old listeners
+        if (char.listener) char.listener(); 
+        if (char.rtdbListener) rtdb.ref('characters/' + char.activeId).off(); // Use that new variable we discussed
+
+        // 2. Reset UI state
+        document.querySelectorAll('#char-sheet-view input:not([type="file"])')
+                .forEach(input => input.value = "");
+
+        char.activeId = id;
+        localStorage.setItem('lastActiveId', id);
+
+        // 3. Start the new specialist listeners
+        initIdentityListener(id);
+        initPulseListener(id);
+
+        // 4. Handle Navigation
+        document.getElementById('char-selection-view').classList.add('hide-default');
+        document.getElementById('char-sheet-view').classList.remove('hide-default');
+    }
+
+    // async function selectCharacter(id) {
+    //         const char = users.character;
+    //         if (char.listener) char.listener(); 
+    //         const allInputs = document.querySelectorAll('#char-sheet-view input');
+    //         allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
+
+    //         char.activeId = id;
+    //         const user = auth.currentUser;
+    //         const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
+
+    //         char.listener = charRef.onSnapshot(async (doc) => {
+    //             if (doc.exists) {
+    //                 const d = doc.data();
+    //                 char.name = d.name || "Unselected";
+
+    //                 if (instances.campaignId !== (d.instanceId || "global")) {
+    //                     instances.campaignId = d.instanceId || "global"; 
+    //                     initClockListener(); initChatLogListener();
+    //                 }
+    //                 setValue('char-name', d.name || "");
+    //                 setValue('char-race', d.race || "");
+    //                 char.level = calculateLvl(d.expCurrent || 0);
+    //                 setText('char-level-display', `Lv. ${char.level}`);
+
+    //                 // 1. Get raw data
+    //                 const rawClasses = d.unlockedClasses || {};
+    //                 char.classLevels = {}; 
+
+    //                 Object.keys(rawClasses).forEach(className => {
+    //                     const exp = rawClasses[className].exp || 0;
+    //                     char.classLevels[className] = calculateLvl(exp, "class");
+    //                 });
+    //                 renderClassPills();
+                                            
+    //                 char.baseStats = { body: d.body || 10, mind: d.mind || 10, spirit: d.spirit || 10 };
+    //                 char.tempStats = { ...char.baseStats };
+    //                 char.totalAP = Math.max(0, char.level - ((char.baseStats.body + char.baseStats.mind + char.baseStats.spirit) - 30 )); 
+    //                 refreshStatDisplay();
 
 
+    //                 char.gallery = d.gallery || [];
+    //                 char.portrait = (d.portrait !== undefined) ? d.portrait : -1;
+    //                 updatePortraitUI(d.gallery, d.portrait);
 
+    //                 // renderSkills(d);
 
+    //                 const notesEl = document.getElementById('char-notes');
+    //                 if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
+
+    //                 setValue('char-hp-current', Math.floor(d.hpCurrent || 0));
+    //                 setValue('char-mp-current', Math.floor(d.mpCurrent || 0));
+
+    //                 const nextLevelExp = (char.level + 1) * rules.baseExp;
+    //                 // updateHUD({ ...d, charLevel: char.level, expMax: nextLevelExp });
+                    
+    //                 const selectionView = document.getElementById('char-selection-view');
+    //                 if (selectionView && !selectionView.classList.contains('hide-default')) {
+    //                     selectionView.classList.add('hide-default');
+    //                     document.getElementById('char-sheet-view').classList.remove('hide-default');
+    //                 }
+    //             }
+    //         });
+    //         localStorage.setItem('lastActiveId', id);
+
+    //     }
 
 
 
@@ -742,71 +1008,7 @@
 
 
 
-            async function selectCharacter(id) {
-                const char = users.character;
-                if (char.listener) char.listener(); 
-                const allInputs = document.querySelectorAll('#char-sheet-view input');
-                allInputs.forEach(input => { if(input.type !== 'file') input.value = ""; });
-
-                char.activeId = id;
-                const user = auth.currentUser;
-                const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
-
-                char.listener = charRef.onSnapshot(async (doc) => {
-                    if (doc.exists) {
-                        const d = doc.data();
-                        char.name = d.name || "Unselected";
-
-                        if (instances.campaignId !== (d.instanceId || "global")) {
-                            instances.campaignId = d.instanceId || "global"; 
-                            initClockListener(); initChatLogListener();
-                        }
-                        setValue('char-name', d.name || "");
-                        setValue('char-race', d.race || "");
-                        char.level = calculateLvl(d.expCurrent || 0);
-                        setText('char-level-display', `Lv. ${char.level}`);
-
-                        // 1. Get raw data
-                        const rawClasses = d.unlockedClasses || {};
-                        char.classLevels = {}; 
-
-                        Object.keys(rawClasses).forEach(className => {
-                            const exp = rawClasses[className].exp || 0;
-                            char.classLevels[className] = calculateLvl(exp, "class");
-                        });
-                        renderClassPills();
-                                                
-                        char.baseStats = { body: d.body || 10, mind: d.mind || 10, spirit: d.spirit || 10 };
-                        char.tempStats = { ...char.baseStats };
-                        char.totalAP = Math.max(0, char.level - ((char.baseStats.body + char.baseStats.mind + char.baseStats.spirit) - 30 )); 
-                        refreshStatDisplay();
-
-
-                        char.gallery = d.gallery || [];
-                        char.portrait = (d.portrait !== undefined) ? d.portrait : -1;
-                        updatePortraitUI(d.gallery, d.portrait);
-
-                        // renderSkills(d);
-
-                        const notesEl = document.getElementById('char-notes');
-                        if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
-
-                        setValue('char-hp-current', Math.floor(d.hpCurrent || 0));
-                        setValue('char-mp-current', Math.floor(d.mpCurrent || 0));
-
-                        const nextLevelExp = (char.level + 1) * rules.baseExp;
-                        // updateHUD({ ...d, charLevel: char.level, expMax: nextLevelExp });
-                        
-                        const selectionView = document.getElementById('char-selection-view');
-                        if (selectionView && !selectionView.classList.contains('hide-default')) {
-                            selectionView.classList.add('hide-default');
-                            document.getElementById('char-sheet-view').classList.remove('hide-default');
-                        }
-                    }
-                });
-                localStorage.setItem('lastActiveId', id);
-
-            }
+            
             function goBackToSelection() {
                 const char = users.character;
                 if (char.listener) {

@@ -129,19 +129,19 @@
                 ===============================================================--->
                 <div id="tab-character" class="closed-tab hide-default">
                     <div id="char-selection-view">
-                        <div class="flex-row">
-                            <h2 class="tab-title">Character Dashboard</h2>
-                            <button onclick="createNewCharacter()" class="btn-newChar">New Character</button>
+                        <div class="tab-title">
+                            <h2>Character Dashboard</h2>
+                            <button onclick="createNewCharacter()" class="btn-newChar">Create Character</button>
                         </div>
                         <div id="char-list-grid" class="char-list-grid"></div>
                     </div>
                 
                     <div id="char-sheet-view" class="grid gap-m hide-default">
-                        <div class="flex-row header-spacing">
+                        <div class="tab-title">
                             <button onclick="goBackToSelection()" class="btn-secondary">
                                 <i class="fa-solid fa-arrow-left"></i> Back</button>
-                            <div class="flex-row">
-                                <h2 class="tab-title">Character Sheet</h2>
+                            <div>
+                                <h2>Character Sheet</h2>
                             </div>
                         </div>                        
 
@@ -484,8 +484,19 @@
 
 
 
-
-
+<!--===============================================================
+    --- Section X. Confirm Ui ------------------------------------
+    ===============================================================--->
+    <div id="custom-confirm-modal" class="modal-overlay hide-default">
+        <div class="modal-content">
+            <h3 id="confirm-title">Confirm</h3>
+            <p id="confirm-message">Are you sure?</p>
+            <div class="modal-actions">
+                <button id="confirm-cancel-btn" class="btn-secondary">Cancel</button>
+                <button id="confirm-ok-btn" class="btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
 
 <script src="newscript.js"></script>
 </body>
