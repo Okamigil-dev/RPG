@@ -492,6 +492,7 @@
                     const char = users.character;
                     if (char.activeId === charId) { 
                         char.activeId = null; 
+                        localStorage.removeItem('lastActiveId'); // Kill the ghost here
                         goBackToSelection(); 
                     }
 
@@ -956,9 +957,8 @@
     --- Section 1. Character Tab ---------------------------------------------
     ==========================================================================  */
     async function selectCharacter(id) {
-        if (!id) return;
+        if (!id || id === "null") return;
         const char = users.character;
-        
         
         // 1. Kill old listeners
         if (char.listener) char.listener(); 
