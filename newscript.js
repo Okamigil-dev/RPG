@@ -258,13 +258,14 @@
                         const savedId = localStorage.getItem('lastActiveId');
                         
                         if (targetTab === 'tab-character' && (!savedId || savedId === "null")) {
-                            targetTab = 'tab-character-selection'; // Redirect to the list instead of showing a blank sheet
+                            targetTab = 'tab-character-selection'; 
                         }
                         if (savedId && savedId !== "null") {
                             selectCharacter(savedId); 
+                        }else {
+                            openTab(targetTab);
                         }
 
-                        openTab(targetTab);
                     } 
                 else {
                     loginTab.classList.replace('login-splash-mode', 'hide-default');
