@@ -98,7 +98,7 @@
         if (data.username !== undefined) rtdbData.username = data.username;
         if (data.role !== undefined) rtdbData.role = data.role;
         if (data.email !== undefined) rtdbData.email = data.email;
-        
+
         const rtdbPromise = rtdb.ref(`users/${uid}`).update(rtdbData);
 
         // 3. Wait for both to finish
@@ -146,10 +146,11 @@
     }
     // Update User Name
     function finalizeProfile() {
+        const user = auth.currentUser;
         const newName = document.getElementById('username-setup-input').value;
         if (!newName) return;
 
-        updateUserData(auth.currentUser.uid, { username: newName })
+        updateUserData(user.uid, { username: newName })
             .then(() => {
             document.getElementById('top-nav').classList.remove('hide-default');
             document.getElementById('app-body').classList.remove('hide-default');
