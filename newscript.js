@@ -61,6 +61,9 @@
                 className: {},
                 classLevels:{},
                 
+                portrait: 0,
+                gallery:[],
+
                 rtdbListener: null,
                 listener: null     // replaces characterListener
             },
@@ -243,8 +246,16 @@
                         }
 
                         let targetTab = localStorage.getItem('activeMainTab') || 'tab-character';
+                        const savedId = localStorage.getItem('lastActiveId');
                         if (targetTab === 'tab-login') targetTab = 'tab-character';
-                        openTab(targetTab);
+                        
+                        if (savedId && targetTab === 'tab-character') {
+                            selectCharacter(savedId);
+                            openTab(targetTab);
+                        } else {
+                            openTab(targetTab);
+                        }
+
 
                         topNav.classList.remove('hide-default');
                         appBody.classList.remove('hide-default');
@@ -254,10 +265,8 @@
                         initClockListener();
                         initChatLogListener();
                         initInstanceCharactersListener();
-                        const savedId = localStorage.getItem('lastActiveId');
-                        if (savedId) {
-                            selectCharacter(savedId);
-                        }
+                        
+                        
                     } 
                 else {
                     loginTab.classList.replace('login-splash-mode', 'hide-default');
@@ -519,12 +528,12 @@
                         name: document.getElementById('char-name').value,
                         race: document.getElementById('char-race').value,
                         notes: document.getElementById('char-notes').value,
-                        body: originalStats.body || 0,
-                        mind: originalStats.mind || 0,
-                        spirit: originalStats.spirit || 0,
+                        body: char.baseStats.body || 0,
+                        mind: char.baseStats.mind || 0,
+                        spirit: char.baseStats.spirit || 0,
                         portrait: char.portrait !== undefined ? char.portrait : 0,
                         gallery: char.gallery || [],
-                        unlockedClasses: char.unlockedClasses || {}
+                        unlockedClasses: char.classLevels || {}
                     };
 
                     const pulseData = {
