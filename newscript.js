@@ -242,8 +242,10 @@
                             document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hide-default'));
                         }
 
-                        
-                        
+                        let targetTab = localStorage.getItem('activeMainTab') || 'tab-character';
+                        if (targetTab === 'tab-login') targetTab = 'tab-character';
+                        openTab(targetTab);
+
                         topNav.classList.remove('hide-default');
                         appBody.classList.remove('hide-default');
 
@@ -252,19 +254,10 @@
                         initClockListener();
                         initChatLogListener();
                         initInstanceCharactersListener();
-                        
-                        let targetTab = localStorage.getItem('activeMainTab') || 'tab-character';
-                        if (targetTab === 'tab-login') targetTab = 'tab-character';
                         const savedId = localStorage.getItem('lastActiveId');
-                        
-                        if (targetTab === 'tab-character' && (!savedId || savedId === "null")) {
-                            targetTab = 'tab-character-selection'; 
+                        if (savedId) {
+                            selectCharacter(savedId);
                         }
-                        if (savedId && savedId !== "null") {
-                            selectCharacter(savedId); 
-                        } openTab(targetTab);
-                        
-
                     } 
                 else {
                     loginTab.classList.replace('login-splash-mode', 'hide-default');
@@ -499,7 +492,6 @@
                     const char = users.character;
                     if (char.activeId === charId) { 
                         char.activeId = null; 
-                        localStorage.removeItem('lastActiveId'); // Kill the ghost here
                         goBackToSelection(); 
                     }
 
@@ -895,9 +887,6 @@
         --- Section 5. Open Tab --------------------------------------------------
         ==========================================================================  */
             function openTab(tabId) {
-                if (tabId === 'tab-character' && !users.character.activeId) {
-                    tabId = 'tab-character-selection'; 
-                }
                 document.querySelectorAll('.closed-tab').forEach(tab => {
                     tab.classList.add('hide-default');
                 });
@@ -967,7 +956,6 @@
     --- Section 1. Character Tab ---------------------------------------------
     ==========================================================================  */
     async function selectCharacter(id) {
-        if (!id || id === "null") return;
         const char = users.character;
         
         // 1. Kill old listeners
