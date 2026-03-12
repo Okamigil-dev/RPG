@@ -1118,6 +1118,7 @@
                 }
                 
                 localStorage.removeItem('activeCharId');
+                localStorage.removeItem('activeCharName');
                 char.activeId = null;
                 char.name = null;
 
