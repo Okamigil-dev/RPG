@@ -672,7 +672,6 @@
                 .panel-header-row {
                     display: flex; 
                     justify-content: space-between;
-                    border-radius: 8px; 
                 }
 
                 .text-muted { color: var(--color-muted); }
@@ -745,7 +744,6 @@
                     grid-template-columns: repeat(auto-fill, minmax(128px, auto));
                     display: grid;
                     gap: 15px;
-                    margin-top: 15px;
                     justify-content: center;
                     min-height: 110px;
                 }

@@ -1031,7 +1031,7 @@
             function triggerInitiative(btn) {
                 const modifier = users.character.modifiers.initiative;
                 // Call your rollDice: (sides, element, modifier, label)
-                rollDice(20, btn, modifier, "Initiative");
+                rollDice(20, btn, modifier, "initiative");
             }
     /*  ==========================================================================
         --- Section 5. Open Tab --------------------------------------------------
@@ -1483,7 +1483,7 @@ function syncSheetDashboardUI() {
     setText('total-body-label', char.totalStats.body);
     setText('total-mind-label', char.totalStats.mind);
     setText('total-spirit-label', char.totalStats.spirit);
-    setText('char-speed-display', (char.attributes.speed || 6) + "m");
+    setText('char-speed-display', (char.attributes.speed || 30) + "m");
     setText('char-ac-display', 10 + (char.attributes.acbonus || 0));
 
     const initEl = document.getElementById('char-init-display');
