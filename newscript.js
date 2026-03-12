@@ -57,8 +57,8 @@
                 baseStats: { body: 10, mind: 10, spirit: 10 },  // originalStats
                 totalStats: { body: 10, mind: 10, spirit: 10 },
                 
-                hpC:0,
-                mpC:0,
+                hpC:15,
+                mpC:15,
                 hpMax:10,
                 mpMax:10,
 
@@ -246,7 +246,7 @@
 
                         populateDropdown( 'master_races', 'char-race', 'Select Race' );
                         loadUserCharacters();
-
+                        
                         const isMasterOrAbove = (data.role === 'Master' || data.role === 'Admin'); //
                         if (isMasterOrAbove) {
                             document.querySelectorAll('.master-only').forEach(el => el.classList.remove('hide-default'));
@@ -277,6 +277,7 @@
                         initClockListener();
                         initChatLogListener();
                         initInstanceCharactersListener();
+                        initEventListeners();
                         
                         
                     } 
@@ -447,8 +448,8 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 const pulseData = {
-                    hpCurrent: 10,
-                    mpCurrent: 10,
+                    hpCurrent: 15,
+                    mpCurrent: 15,
                     expCurrent: 0,
                     ownerId: user.uid
                 };
@@ -1342,14 +1343,14 @@ async function updateHUD() {
     
     setValue('char-hp-max', hpMax);
     setValue('char-mp-max', mpMax);
-    setValue('char-hp-current', Math.floor(char.hpCurrent || 0));
-    setValue('char-mp-current', Math.floor(char.mpCurrent || 0));
+    setValue('char-hp-current', Math.floor(char.hpC || 0));
+    setValue('char-mp-current', Math.floor(char.mpC || 0));
 
 
     // 5. Calculate Percentages for Sidebar
-    const hpP = (char.hpCurrent / (hpMax || 1)) * 100;
-    const mpP = (char.mpCurrent / (mpMax || 1)) * 100;
-    const expP = ((char.expCurrent || 0) / ((char.level + 1) * rules.baseExp)) * 100;
+    const hpP = (char.hpC / (hpMax || 1)) * 100;
+    const mpP = (char.mpC / (mpMax || 1)) * 100;
+    const expP = ((char.expC || 0) / ((char.level + 1) * rules.baseExp)) * 100;
     
     document.documentElement.style.setProperty('--hp-width', `${hpP}%`);
     document.documentElement.style.setProperty('--mp-width', `${mpP}%`);
@@ -1386,8 +1387,8 @@ function syncSidebarUI() {
     const hpMax = char.hpMax || 15;
     const mpMax = char.mpMax || 15;
 
-    setText('hud-hp-text', `${Math.floor(char.hpCurrent || 0)}/${hpMax}`);
-    setText('hud-mp-text', `${Math.floor(char.mpCurrent || 0)}/${mpMax}`);
+    setText('hud-hp-text', `${Math.floor(char.hpC || 0)}/${hpMax}`);
+    setText('hud-mp-text', `${Math.floor(char.mpC || 0)}/${mpMax}`);
     
     // 3. Stats (Using totals passed from the caller or global)
     // Note: We'll need to make sure 'totals' is defined or accessible
@@ -1396,7 +1397,7 @@ function syncSidebarUI() {
     setText('hud-mod-spirit', `SPI ${getMod(char.tempStats.spirit)}`);
 
     // 4. Percentage Text
-    const expP = ((char.expCurrent || 0) / ((char.level + 1) * rules.baseExp)) * 100;
+    const expP = ((char.expC || 0) / ((char.level + 1) * rules.baseExp)) * 100;
     setText('hud-exp-text', `${Math.floor(expP)}%`);
 }
 
@@ -1417,23 +1418,26 @@ function syncSheetDashboardUI(char, totals, bonuses, raceName) {
 }
 
 
-// Update HP and MP Bars
-function updateVisualBars(hp, hpMax, mp, mpMax) {
-    const hpFill = document.getElementById('char-hp-fill-main');
-    const mpFill = document.getElementById('char-mp-fill-main');
+function initEventListeners() {
+    // Current HP/MP Sync
+    document.getElementById('char-hp-current').addEventListener('change', (e) => {
+        users.character.hpC = parseFloat(e.target.value) || 0;
+    });
+    document.getElementById('char-mp-current').addEventListener('change', (e) => {
+        users.character.mpC = parseFloat(e.target.value) || 0;
+    });
 
-    // Math is the same
-    const hpPercent = Math.max(0, Math.min(100, (hp / (hpMax || 1)) * 100));
-    const mpPercent = Math.max(0, Math.min(100, (mp / (mpMax || 1)) * 100));
+    // Race Dropdown Sync
+    document.getElementById('char-race').addEventListener('change', async (e) => {
+        users.character.race = e.target.value; // Saves the ID
+        await getFinalMaxStats(); // Recalculate based on new race
+        updateHUD(); // Show the new HP Max
+    });
 
-    if (hpFill) {
-        // This updates the VARIABLE defined in your CSS class
-        hpFill.style.setProperty('--hp-width', `${hpPercent}%`);
-    }
-
-    if (mpFill) {
-        mpFill.style.setProperty('--mp-width', `${mpPercent}%`);
-    }
+    // Notes Sync
+    document.getElementById('char-notes').addEventListener('input', (e) => {
+        users.character.notes = e.target.value;
+    });
 }
 
 
