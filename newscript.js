@@ -1365,11 +1365,6 @@ function syncSidebarUI() {
     const char = users.character;
     if (!char) return;
 
-    // 1. Modifier Helper
-    const getMod = (val) => {
-        const m = Math.floor((val - 10) / 2);
-        return m >= 0 ? `+${m}` : m;
-    };
 
     // 2. Text Updates
     setText('hud-name', char.name || "Unnamed");
