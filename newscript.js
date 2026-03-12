@@ -25,7 +25,7 @@
         const rules = {
             baseExp: 200,
             classExp:100,
-            maxGallerySlots: 8,
+            maxGallerySlots: 12,
             maxStats:{
                 maxBaseStats: 20,
                 minBaseStat: 10,
@@ -435,7 +435,6 @@
                 const identityData = { 
                     name: "New Hero", 
                     race: "", 
-                    class: "", 
                     charLevel: 1, 
                     body: 10, mind: 10, spirit: 10,
                     notes: "",

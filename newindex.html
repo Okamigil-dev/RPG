@@ -166,7 +166,7 @@
 
                         <!-- Attribute Box -->
                         <div class="stats-resources-wrapper">
-                            <div class="panel-card">
+                            <div class="panel-card gap-m">
                                 <div class="panel-header-row">
                                     
                                     <div class="panel-subtitle">Attributes</div>
@@ -219,48 +219,51 @@
                             <!-- HP Bar, MP Bar -->
                             <div class="panel-card">
                                 <h3 class="panel-subtitle">Vitals & Status</h3>
-                                
-                                <div class="status-unit">
-                                    <div class="status-header">
-                                        <div class="status-label"><i class="fa-solid fa-heart icon-hp"></i> Health</div>
-                                        <div class="status-values">
-                                            <input type="number" id="char-hp-current" onchange="saveCharacter()" class="resource-input-minimal">
-                                            <span class="resource-divider">/</span>
-                                            <input type="number" id="char-hp-max" class="resource-input-minimal" readonly>
+                                <div>
+                                    <div>
+                                        <div class="status-unit">
+                                            <div class="status-header">
+                                                <div class="status-label"><i class="fa-solid fa-heart icon-hp"></i> Health</div>
+                                                <div class="status-values">
+                                                    <input type="number" id="char-hp-current" onchange="saveCharacter()" class="resource-input-minimal">
+                                                    <span class="resource-divider">/</span>
+                                                    <input type="number" id="char-hp-max" class="resource-input-minimal" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="resource-bar"><div id="char-hp-fill-main" class="hp-bar"></div></div>
+                                        </div>
+                                    
+                                        <div class="status-unit">
+                                            <div class="status-header">
+                                                <div class="status-label"><i class="fa-solid fa-droplet icon-mp"></i> Mana</div>
+                                                <div class="status-values">
+                                                    <input type="number" id="char-mp-current" onchange="saveCharacter()" class="resource-input-minimal">
+                                                    <span class="resource-divider">/</span>
+                                                    <input type="number" id="char-mp-max" class="resource-input-minimal" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="resource-bar">
+                                                <div id="char-mp-fill-main" class="mp-bar"></div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="resource-bar"><div id="char-hp-fill-main" class="hp-bar"></div></div>
-                                </div>
-                            
-                                <div class="status-unit">
-                                    <div class="status-header">
-                                        <div class="status-label"><i class="fa-solid fa-droplet icon-mp"></i> Mana</div>
-                                        <div class="status-values">
-                                            <input type="number" id="char-mp-current" onchange="saveCharacter()" class="resource-input-minimal">
-                                            <span class="resource-divider">/</span>
-                                            <input type="number" id="char-mp-max" class="resource-input-minimal" readonly>
+
+                                    <div class="combat-stats-row">
+                                        <div class="combat-item">
+                                            <label>Speed</label>
+                                            <div id="char-speed-display" class="combat-val">30m</div>
                                         </div>
-                                    </div>
-                                    <div class="resource-bar">
-                                        <div id="char-mp-fill-main" class="mp-bar"></div>
-                                    </div>
-                                </div>
-                            
-                                <div class="combat-stats-row">
-                                    <div class="combat-item">
-                                        <label>Speed</label>
-                                        <div id="char-speed-display" class="combat-val">30m</div>
-                                    </div>
-                                
-                                    <div class="combat-item">
-                                        <label>Armor Class</label>
-                                        <div id="char-ac-display" class="combat-val">10</div>
-                                    </div>
-                                
-                                    <div class="combat-item clickable" onclick="triggerInitiative(this)">
-                                        <label><i class="fa-solid fa-dice-d20"></i> Initiative</label>
-                                        <div id="char-init-display" class="combat-val">+0</div>
-                                        <div class="roll-number"></div> 
+                                    
+                                        <div class="combat-item">
+                                            <label>Armor Class</label>
+                                            <div id="char-ac-display" class="combat-val">10</div>
+                                        </div>
+                                    
+                                        <div class="combat-item clickable" onclick="triggerInitiative(this)">
+                                            <label><i class="fa-solid fa-dice-d20"></i> Initiative</label>
+                                            <div id="char-init-display" class="combat-val">+0</div>
+                                            <div class="roll-number"></div> 
+                                        </div>
                                     </div>
                                 </div>
                             </div>
