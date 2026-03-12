@@ -771,8 +771,6 @@
                     char.portrait = (d.portrait !== undefined) ? d.portrait : -1;
                     char.notes = d.notes || "";
 
-                    // updatePortraitUI(d.gallery, d.portrait);
-
                     // --- MATH CALCULATION ---
                     // 1. Calculate AP
                     char.totalAP = Math.max(0, (char.level) - ((char.baseStats.body + char.baseStats.mind + char.baseStats.spirit) - 30)); 
@@ -784,18 +782,6 @@
                     // Instead of individual setValue calls here, we trigger the central painter
                     updateHUD(char);
 
-                    // Static UI Updates
-                    // setValue('char-name', d.name || "");
-                    // setValue('char-race', d.race || "");
-                    // setText('char-level-display', `Lv. ${d.charLevel || 1}`);
-
-                    // refreshStatDisplay();
-
-                    
-                    // Notes (Only update if user isn't typing)
-                    // const notesEl = document.getElementById('char-notes');
-                    // if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
-                    
                 });
             }
         /*  ==========================================================================
@@ -813,9 +799,6 @@
                     char.hpC = d.hpCurrent;
                     char.mpC = d.mpCurrent;
                     char.exp = d.expCurrent;
-                    // Live UI Updates
-                    // setValue('char-hp-current', Math.floor(d.hpCurrent || 0));
-                    // setValue('char-mp-current', Math.floor(d.mpCurrent || 0));
                     
                     updateHUD(char);
                 });
@@ -1285,12 +1268,26 @@ async function getFinalMaxStats() {
     const raceSnap = await firestore.collection('master_races').doc(char.race).get();
     const raceD = raceSnap.exists ? raceSnap.data() : {};
 
+    // Total Body Mind and Spirit
+    char.totalStats = {
+        body: (char.baseStats.body || 0) + getAttrValue(raceD, 'body'),
+        mind: (char.baseStats.mind || 0) + getAttrValue(raceD, 'mind'),
+        spirit: (char.baseStats.spirit || 0) + getAttrValue(raceD, 'spirit')
+    };
+
+    // Calculate Modifiers (Base 10 system)
+    char.modifiers.body = Math.floor(((char.totalStats.body || 10) - 10) / 2);
+    char.modifiers.mind = Math.floor(((char.totalStats.mind || 10) - 10) / 2);
+    char.modifiers.spirit = Math.floor(((char.totalStats.mind || 10) - 10) / 2);
+
+    // Set Initiative (Best of Body or Mind)
+    char.modifiers.initiative = Math.max(char.modifiers.body, char.modifiers.mind);
+    
+    // Max HP and MP
     let baseHP = 15;
     let baseMP = 15;
-
     baseHP += (char.level * getAttrValue(raceD, 'hp_lv'));
     baseMP += (char.level * getAttrValue(raceD, 'mp_lv'));
-
     for (const [className, level] of Object.entries(char.classLevels || {})) {
         const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
         if (!classSnap.empty) {
@@ -1299,21 +1296,13 @@ async function getFinalMaxStats() {
             baseMP += (level * getAttrValue(classD, 'mp_lv'));
         }
     }
-    
-    char.totalStats = {
-        body: (char.baseStats.body || 0) + getAttrValue(raceD, 'body'),
-        mind: (char.baseStats.mind || 0) + getAttrValue(raceD, 'mind'),
-        spirit: (char.baseStats.spirit || 0) + getAttrValue(raceD, 'spirit')
-    };
-
     baseHP += ((char.totalStats.body - 10) * rules.statMultiplier);
     baseMP += ((char.totalStats.spirit - 10) * rules.statMultiplier);
     char.hpMax = baseHP;
     char.mpMax = baseMP;
 
-    // 6. Final Percentages bonus % not being used
-    // const finalHP = Math.floor((baseHP + (charData.hpBonusFlat || 0)) * (1 + (charData.hpBonusPerc || 0) / 100));
-    // const finalMP = Math.floor((baseMP + (charData.mpBonusFlat || 0)) * (1 + (charData.mpBonusPerc || 0) / 100));
+    
+
     
 }
 
@@ -1368,7 +1357,7 @@ async function updateHUD() {
     }
 
     syncSidebarUI();
-    // syncSheetDashboardUI(char, totals, bonuses, char.race); 
+    syncSheetDashboardUI(); 
 }
 
 //SYNC SIDE BAR
@@ -1405,19 +1394,20 @@ function syncSidebarUI() {
 }
 
 // SYNC SHEET DASHBOARD
-function syncSheetDashboardUI(char, totals, bonuses, raceName) {
-    setText('total-body-label', totals.body);
-    setText('total-mind-label', totals.mind);
-    setText('total-spirit-label', totals.spirit);
-    setText('char-speed-display', (bonuses.totals['speed'] || 6) + "m");
-    setText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
+function syncSheetDashboardUI() {
+    const char = users.character;
+
+    setText('total-body-label', char.totalStats.body);
+    setText('total-mind-label', char.totalStats.mind);
+    setText('total-spirit-label', char.totalStats.spirit);
+    // setText('char-speed-display', (bonuses.totals['speed'] || 6) + "m");
+    // setText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
 
     const initEl = document.getElementById('char-init-display');
-    const bestMod = Math.max(Math.floor(totals.body/2), Math.floor(totals.mind/2));
-    initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
-    users.character.modifiers.initiative = bestMod;
-
-    renderClassPills(char);
+    const initiative = char.modifiers.initiative || 0 ;
+    initEl.innerText = (initiative >= 0 ? "+" : "") + initiative;
+ 
+    renderClassPills();
 }
 
 
