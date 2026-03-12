@@ -1279,7 +1279,7 @@ function getAttrValue(source, key) {
 async function getFinalMaxStats() {
     const char = users.character;
     const raceSnap = await firestore.collection('master_races').doc(char.race).get();
-    const raceD = raceSnap.empty ? {} : raceSnap.docs[0].data();
+    const raceD = raceSnap.exists ? raceSnap.data() : {};
 
     let baseHP = 15;
     let baseMP = 15;
