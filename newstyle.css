@@ -26,8 +26,10 @@
         --color-danger: #a05500;
         --color-success: #00a000;       /* Bright green for success messages and indicators */
         /* Theme Color */
-        --color-accent: #8e630c;    /* A vibrant purple for highlights and accents */
-        
+        --color-accent-light: rgb(219,145,27);
+        --color-accent: rgb( 146, 97, 18 );
+        --color-accent-dark:rgb( 145, 72, 0, 0.5 );
+
         /* Resource Bars */
         --color-hp-dark: #860000;
         --color-hp: #ef4444;
@@ -284,16 +286,19 @@
         .user-role { font-weight: bold; font-size: 0.7em; color: var(--color-accent); text-transform: none; }
 
         .btn-danger { 
-            background: var(--color-danger); 
-            color: var(--color-danger-hover); 
-            border: 1px solid var(--color-danger); 
+            background: #450a0a; 
+            color: #f87171; 
+            border: 1px solid #7f1d1d;
             padding: 6px 12px; 
             border-radius: 4px; 
             cursor: pointer; font-size: 0.75rem; 
             font-weight: bold; 
             transition: 0.2s; 
         }
-        .btn-danger:hover { background: var(--color-danger); color: white; }
+        .btn-danger:hover { 
+            background: #ef4444; 
+            color: white; 
+        }
 
     /*  ==========================================================================
         --- Section 2. Main Body -------------------------------------------------
@@ -510,7 +515,7 @@
                 .char-card { 
                     background: rgba(17, 17, 17, 0.7); 
                     backdrop-filter: blur(10px);
-                    border: 1px solid rgba(168, 85, 247, 0.2); 
+                    border: 1px solid var(--color-accent-dark); 
                     border-radius: 16px; 
                     padding: 25px; 
                     text-align: center; 
@@ -520,9 +525,9 @@
                 }
 
                 .char-card:hover { 
-                    border-color: #a855f7; 
-                    transform: translateY(-8px); 
-                    box-shadow: 0 12px 40px rgba(168, 85, 247, 0.2);
+                    border-color: var(--color-accent); 
+                    transform: translateY(-4px); 
+                    box-shadow: 0 12px 40px var(--color-accent-dark);
                 }
 
                 .char-card-portrait {
@@ -534,13 +539,13 @@
                     border-radius: 12px;
                     background-size: cover;
                     background-position: center;
-                    border: 2px solid #a855f7;
+                    border: 2px solid var(--color-accent);
                     align-items: center;
                     justify-content: center;
                 }
 
                 .char-card-meta { font-size: 0.8rem; 
-                    color: #a855f7; 
+                    color: var(--color-accent); 
                     font-weight: 700; 
                 }
 
