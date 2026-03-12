@@ -734,7 +734,7 @@
                     background-position: center;
                 }
 
-                .gallery.active {
+                .gallery-active {
                     border: 0.125rem solid #10b981;
                     box-shadow: 0 0 10px #10b981;
                 }
