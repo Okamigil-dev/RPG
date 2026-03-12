@@ -535,6 +535,9 @@
                 
                 try {
                     const char = users.character;
+                    char.hpC = parseFloat(document.getElementById('char-hp-current').value) || 0;
+                    char.mpC = parseFloat(document.getElementById('char-mp-current').value) || 0;
+                    char.notes = document.getElementById('char-notes').value;
                     
 
                     const identityData = {
@@ -559,7 +562,7 @@
 
                     await Promise.all([saveIdentity, savePulse]);
 
-                    console.log(`%c Save Successful for ${identityData.name} `);
+                    console.log(`Save Successful for ${identityData.name} `);
 
                 } catch (e) { console.error("Save Error:", e); }
             }

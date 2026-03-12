@@ -599,7 +599,61 @@
                     grid-template-columns: 1fr 1fr;
                     gap: 10px;
                 }
+                .combat-stats-row {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 12px;
+                    margin-top: 20px;
+                    padding-top: 15px;
+                    border-top: 1px solid #27272a;
+                }
 
+                /* Base style for all three "buttons" */
+                .combat-item {
+                    display: grid;
+                    align-content: space-between;
+                    background: linear-gradient(145deg, #111113, #09090b);
+                    border: 1px solid #27272a;
+                    border-radius: 10px;
+                    padding: 10px 5px;
+                    text-align: center;
+                    transition: all 0.2s ease;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                /* The label at the top of the button */
+                .combat-item label {
+                    display: block;
+                    font-size: 0.65rem;
+                    color: #71717a;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    margin-bottom: 4px;
+                    pointer-events: none;
+                }
+
+                /* The actual number display */
+                .combat-val {
+                    font-size: 1.2rem;
+                    font-weight: 800;
+                    color: #f4f4f5;
+                    pointer-events: none;
+                }
+
+                /* Hover effect for the clickable Initiative button */
+                .combat-item.clickable:hover {
+                    background: #18181b;
+                    border-color: #a855f7;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
+                    cursor: pointer;
+                }
+
+                /* Subtle glow for the Initiative value when hovering */
+                .combat-item.clickable:hover .combat-val {
+                    color: #a855f7;
+                }
                 .panel-header-row {
                     display: flex; 
                     justify-content: space-between;
