@@ -1278,7 +1278,7 @@ async function getFinalMaxStats() {
     // Calculate Modifiers (Base 10 system)
     char.modifiers.body = Math.floor(((char.totalStats.body || 10) - 10) / 2);
     char.modifiers.mind = Math.floor(((char.totalStats.mind || 10) - 10) / 2);
-    char.modifiers.spirit = Math.floor(((char.totalStats.mind || 10) - 10) / 2);
+    char.modifiers.spirit = Math.floor(((char.totalStats.spirit || 10) - 10) / 2);
 
     // Set Initiative (Best of Body or Mind)
     char.modifiers.initiative = Math.max(char.modifiers.body, char.modifiers.mind);
