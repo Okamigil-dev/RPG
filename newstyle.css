@@ -660,16 +660,16 @@
 
                 /* Hover effect for the clickable Initiative button */
                 .combat-item.clickable:hover {
-                    background: #18181b;
-                    border-color: #a855f7;
+                    background: linear-gradient(145deg, var(--color-bg-alt), var(--color-bg-alt2));
+                    border-color: var(--color-accent);
                     transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
+                    box-shadow: 0 4px 12px var(--color-accent-dark);
                     cursor: pointer;
                 }
 
                 /* Subtle glow for the Initiative value when hovering */
                 .combat-item.clickable:hover .combat-val {
-                    color: #a855f7;
+                    color: var(--color-accent);
                 }
                 .panel-header-row {
                     display: flex; 
@@ -678,7 +678,7 @@
                 }
                 .char-level-badge {
                     background: linear-gradient(145deg, var(--color-bg-alt), var(--color-bg));
-                    border: 1px solid #27272a;
+                    border: 1px solid var(--color-border);
                     border-radius: 6px; /* Matches form-input radius */
                     height: 40px;      /* Exact match for your form-input height */
                     min-width: 80px;
@@ -735,9 +735,12 @@
                     background-position: center;
                 }
 
-                .gallery-active {
-                    border: 0.125rem solid #10b981;
-                    box-shadow: 0 0 10px #10b981;
+                .gallery-item.active {
+                    border: 0.125rem solid var(--color-accent);
+                    box-shadow: 0 0 10px var(--color-accent);
+                }
+                .gallery-item.active-img { 
+                    border-color: var(--color-accent); 
                 }
                 .gallery-grid {
                     grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
@@ -839,7 +842,7 @@
                     display:grid;
                     height: 30px;
                     color: var(--color-text);
-                    background: var(--color-bg-alt2);
+                    background: linear-gradient(180deg, var(--color-bg-alt), var(--color-bg));
                     border: 1px solid var(--color-border);
                     border-radius: 4px;
                     font-size: 0.8rem;
@@ -973,7 +976,7 @@
                     align-items: center;
                     justify-content: center;
                     aspect-ratio: 1/1;
-                    background: var(--color-bg-alt2);
+                    background: linear-gradient(180deg, var(--color-bg-alt), var(--color-bg));
                     border: 1px solid #27272a;
                     border-radius: 12px;
                     cursor: pointer;

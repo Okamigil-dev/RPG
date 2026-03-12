@@ -586,7 +586,7 @@
                         if (images[i]) {
                             // Compare the Index (Numbers), not the Strings!
                             if (i === activeIndex) {
-                                slot.classList.add('gallery-active');
+                                slot.classList.add('active');
                             }
 
                             slot.innerHTML = `
