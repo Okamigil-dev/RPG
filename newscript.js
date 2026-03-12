@@ -549,8 +549,8 @@
                     };
 
                     const pulseData = {
-                        hpCurrent: parseFloat(document.getElementById('char-hp-current').value) || 0,
-                        mpCurrent: parseFloat(document.getElementById('char-mp-current').value) || 0
+                        hpCurrent: char.hpC || 0,
+                        mpCurrent: char.mpC || 0
                     };
 
                     const saveIdentity = charRef.update(identityData);
@@ -1278,7 +1278,7 @@ function getAttrValue(source, key) {
 // SHOULD BE FINE NOW NEED TO FIND A PLACE TO ORGANIZE THESE TWO
 async function getFinalMaxStats() {
     const char = users.character;
-    const raceSnap = await firestore.collection('master_races').where('name', '==', char.race).limit(1).get();
+    const raceSnap = await firestore.collection('master_races').doc(char.race).get();
     const raceD = raceSnap.empty ? {} : raceSnap.docs[0].data();
 
     let baseHP = 15;
