@@ -316,7 +316,7 @@
             --- Section 2-A. Sidebar Left --------------------------------------------
             ==========================================================================   */
                 .sidebar {
-                    min-width: 260px;
+                    min-width: fit-content;
                     background: var(--color-bg);
                     padding: 10px;
                     border-inline: 1px solid var(--color-border);
@@ -353,6 +353,7 @@
             
                 /* Character Portrait: Full width of the sidebar card */
                 .portrait-main-hud {
+                    background-image: var(--char-portrait);
                     display: flex;
                     text-align: center;
                     font-size: 10rem;
@@ -406,9 +407,22 @@
                         margin-bottom: 4px; 
                         color: var(--color-muted);
                     }
+                    .status-unit { margin-bottom: 25px; }
+
+                    .status-header {
+                        display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+                    }
+
+                    .status-label {
+                        display: flex; align-items: center; gap: 8px; font-size: 0.85rem;
+                        font-weight: 700; color: #a1a1aa; text-transform: uppercase; white-space: nowrap;
+                    }
+
+                    .status-values { display: flex; align-items: center; gap: 5px; }
+
                     .resource-input-minimal {
                         background: transparent; 
-                        border: none ; 
+                        border: none; 
                         color: white ;
                         width: 35px; 
                         text-align: right; 
@@ -416,9 +430,10 @@
                         font-weight: bold; 
                         font-size: 1rem;
                         padding: 0 ;
+                        outline: none;
                         appearance: none;              /* Removes browser default styling */
-                        -moz-appearance: textfield;    /* Removes spinners in Firefox */
                     }
+                    .resource-divider { color: #3f3f46; font-weight: bold; }
                     .status-header {
                         display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
                     }
@@ -573,6 +588,7 @@
                 --- Character Sheet ------------------------------------------------------
                 ==========================================================================   */
                 .panel-card { 
+                    display: grid;
                     background: var(--color-bg); 
                     backdrop-filter: blur(10px);
                     padding: 24px; 
@@ -657,10 +673,7 @@
                 .panel-header-row {
                     display: flex; 
                     justify-content: space-between;
-                    align-items: center; 
-                    padding: 10px;
                     border-radius: 8px; 
-                    margin: 10px 0; 
                 }
                 .char-level-badge {
                     background: #09090b;

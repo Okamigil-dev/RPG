@@ -590,7 +590,7 @@
                             }
 
                             slot.innerHTML = `
-                                <img src="${images[i]}" class="gallery.active" onclick="setActivePortrait(${i})">
+                                <img src="${images[i]}" class="gallery active" onclick="setActivePortrait(${i})">
                                 <button class="delete-img-btn" onclick="deleteImage(event, ${i})">×</button>
                             `;
                         } else {
