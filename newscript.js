@@ -626,6 +626,7 @@
                     const charId = users.character.activeId;
                     const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(charId);
                     
+                    users.character.portrait = index;
                     charRef.update({ portrait: index })  
                 }
             /*  ==========================================================================
