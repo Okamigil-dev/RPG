@@ -451,7 +451,7 @@
                     /* Mp Classes */
                     .mp-bar { 
                         height: 100%;
-                        width: var(--hp-width, 100%); 
+                        width: var(--mp-width, 100%); 
                         background: linear-gradient(180deg, var(--color-mp), var(--color-mp-dark)); 
                         transition: width 0.3s; 
                     }
