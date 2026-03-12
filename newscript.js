@@ -247,10 +247,11 @@
 
                         let targetTab = localStorage.getItem('activeMainTab') || 'tab-character';
                         const savedId = localStorage.getItem('activeCharId');
+                        const savedName = localStorage.getItem('activeCharName');
                         if (targetTab === 'tab-login') targetTab = 'tab-character';
                         
                         if (savedId && targetTab === 'tab-character') {
-                            selectCharacter(savedId);
+                            selectCharacter(savedId, savedName);
                             openTab(targetTab);
                         } else {
                             openTab(targetTab);
@@ -464,7 +465,7 @@
                         const displayImg = (activeIdx >= 0 && gallery[activeIdx]) ? gallery[activeIdx] : '';
                         const card = document.createElement('div');
                         card.className = 'char-card';
-                        card.onclick = () => selectCharacter(doc.id);
+                        card.onclick = () => selectCharacter(doc.id,d.name);
                         card.innerHTML = `
                             <div class="char-card-portrait" style="background-image: url('${displayImg}');">
                                 ${!displayImg ? '<i class="fa-solid fa-user"></i>' : ''}
@@ -1078,7 +1079,7 @@
     /*  ==========================================================================
         --- Select Character -----------------------------------------------------
         ==========================================================================  */
-        async function selectCharacter(id) {
+        async function selectCharacter(id, name) {
             const char = users.character;
             
             // 1. Kill old listeners
@@ -1090,8 +1091,10 @@
                     .forEach(input => input.value = "");
 
             char.activeId = id;
+            char.name = name;
             localStorage.setItem('activeCharId', id);
-
+            localStorage.setItem('activeCharName', name);
+            
             // 3. Start the new specialist listeners
             initIdentityListener(id);
             initPulseListener(id);
@@ -1394,9 +1397,3 @@ function syncSheetDashboardUI(char, totals, bonuses, raceName) {
                     });
             }
         }
-
-        // // This is a placeholder. 
-        // function selectCharacter(charId) {
-        //     // It exists so the app doesn't crash when a character is clicked.
-        //     console.log("selectCharacter triggered for ID:", charId);
-        // }
