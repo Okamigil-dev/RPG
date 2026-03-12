@@ -49,23 +49,34 @@
             hudDefault: document.getElementById('active-char-hud').innerHTML,
 
             character: {
-                name: null,
-                activeId: null,
-                tempStats: { body: 0, mind: 0, spirit: 0 },  // pendingStats
-                baseStats: { body: 10, mind: 10, spirit: 10 }, // originalStats
-                level: 1,          // replaces activeCharLevel
-                totalAP: 0,         // totalAP
-                traits: [],        // replaces currentRaceTraits
-                modifiers: {},      // For Initiative saving throws.
-                attributes: {},    // replaces currentRaceAttributes
+                name: null,                                     // Active Character Name
+                activeId: null,                                 // Active Character Id
+                race: null,
+
+                tempStats: { body: 0, mind: 0, spirit: 0 },     // pendingStats
+                baseStats: { body: 10, mind: 10, spirit: 10 },  // originalStats
+                totalStats: { body: 10, mind: 10, spirit: 10 },
+                
+                hpC:0,
+                mpC:0,
+                hpMax:10,
+                mpMax:10,
+
+                level: 1,
+                exp:0,
+                                                       // replaces activeCharLevel
+                totalAP: 0,                                     // totalAP
+                traits: [],                                     // replaces currentRaceTraits
+                modifiers: {},                                  // For Initiative saving throws.
+                attributes: {},                                 // replaces currentRaceAttributes
                 className: {},
-                classLevels:{},
+                classLevels:{},                                 // List of Classes levels and names {warrior:1,mage:3...}
                 
                 portrait: 0,
                 gallery:[],
 
                 rtdbListener: null,
-                listener: null     // replaces characterListener
+                listener: null                                  // replaces characterListener
             },
 
             themeColor: '#8e630c'
@@ -731,35 +742,56 @@
                 const char = users.character;
                 const charRef = firestore.collection('users').doc(user.uid).collection('characters').doc(id);
 
-                char.listener = charRef.onSnapshot((doc) => {
+                char.listener = charRef.onSnapshot( async (doc) => {
                     if (!doc.exists) return;
                     const d = doc.data();
 
                     // Instance Check
                     if (instances.campaignId !== (d.instanceId || "global")) {
                         instances.campaignId = d.instanceId || "global"; 
-                        initClockListener(); initChatLogListener();
+                        initClockListener(); 
+                        initChatLogListener();
                     }
 
-                    // Static UI Updates
-                    setValue('char-name', d.name || "");
-                    setValue('char-race', d.race || "");
-                    setText('char-level-display', `Lv. ${d.charLevel || 1}`);
-
-                    // Stats & AP Calculation
+                    // --- DATA ASSIGNMENT ---
+                    char.name = d.name || "";
+                    char.race = d.race || "";
+                    char.level = d.charLevel || 1;
+                    char.exp = d.expCurrent || 0;
                     char.baseStats = { body: d.body || 10, mind: d.mind || 10, spirit: d.spirit || 10 };
                     char.tempStats = { ...char.baseStats };
-                    char.totalAP = Math.max(0, (d.charLevel || 1) - ((char.baseStats.body + char.baseStats.mind + char.baseStats.spirit) - 30)); 
-                    refreshStatDisplay();
-
+                    char.classLevels = d.unlockedClasses || {};
+                    
                     // UI Gallery
                     char.gallery = d.gallery || [];
                     char.portrait = (d.portrait !== undefined) ? d.portrait : -1;
-                    updatePortraitUI(d.gallery, d.portrait);
+                    char.notes = d.notes || "";
 
+                    // updatePortraitUI(d.gallery, d.portrait);
+
+                    // --- MATH CALCULATION ---
+                    // 1. Calculate AP
+                    char.totalAP = Math.max(0, (char.level) - ((char.baseStats.body + char.baseStats.mind + char.baseStats.spirit) - 30)); 
+
+                    // 2. Calculate MAX HP/MP
+                    await getFinalMaxStats();
+                    
+                    // --- UI TRIGGER ---
+                    // Instead of individual setValue calls here, we trigger the central painter
+                    updateHUD(char);
+
+                    // Static UI Updates
+                    // setValue('char-name', d.name || "");
+                    // setValue('char-race', d.race || "");
+                    // setText('char-level-display', `Lv. ${d.charLevel || 1}`);
+
+                    // refreshStatDisplay();
+
+                    
                     // Notes (Only update if user isn't typing)
-                    const notesEl = document.getElementById('char-notes');
-                    if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
+                    // const notesEl = document.getElementById('char-notes');
+                    // if (notesEl && document.activeElement !== notesEl) { notesEl.value = d.notes || ""; }
+                    
                 });
             }
         /*  ==========================================================================
@@ -774,12 +806,14 @@
                     const d = snapshot.val();
                     if (!d) return;
 
+                    char.hpC = d.hpCurrent;
+                    char.mpC = d.mpCurrent;
+                    char.exp = d.expCurrent;
                     // Live UI Updates
-                    setValue('char-hp-current', Math.floor(d.hpCurrent || 0));
-                    setValue('char-mp-current', Math.floor(d.mpCurrent || 0));
+                    // setValue('char-hp-current', Math.floor(d.hpCurrent || 0));
+                    // setValue('char-mp-current', Math.floor(d.mpCurrent || 0));
                     
-                    // Update EXP bars or HUD
-                    // updateHUD({ expCurrent: d.expCurrent });
+                    updateHUD(char);
                 });
             }
         /*  ==========================================================================
@@ -940,7 +974,7 @@
             // -----------------------------------------------------------------------  //
             // --- Dice Roller Animation and Roll ------------------------------------  //
             // -----------------------------------------------------------------------  //
-            function rollDice(sides, btn, modifier = 0) {
+            function rollDice(sides, btn, modifier = 0, senderType = "roll" ) {
                 const numDisplay = btn.querySelector('.roll-number');
                 const targetSelect = document.getElementById('chat-target-select');
 
@@ -949,7 +983,6 @@
                 let rolls = 0; //Resets the Animation
                 
                 let senderName = "Unknown";
-                let senderType = "roll";
                     
                 if (users.character.name) {
                     senderName = users.character.name;
@@ -1003,6 +1036,11 @@
                         }, 2000);
                     }
                 }, 40);
+            }
+            function triggerInitiative(btn) {
+                const modifier = users.character.modifiers.initiative;
+                // Call your rollDice: (sides, element, modifier, label)
+                rollDice(20, btn, modifier, "Initiative");
             }
     /*  ==========================================================================
         --- Section 5. Open Tab --------------------------------------------------
@@ -1152,7 +1190,9 @@
                     });
                 }
             }
-
+        /*  ==========================================================================
+            --- Body, Mind, Spirit Display -------------------------------------------
+            ==========================================================================  */
             function refreshStatDisplay() {
                 const char = users.character;
                 const currentTotal = char.tempStats.body + 
@@ -1229,103 +1269,172 @@
             
 
 
+// SHOULD BE FINE NOW NEED TO FIND A PLACE TO ORGANIZE THESE TWO
+function getAttrValue(source, key) {
+    if (!source || !source.attributes) return 0;
+    return parseFloat(source.attributes[key]) || 0;
+}
 
+// SHOULD BE FINE NOW NEED TO FIND A PLACE TO ORGANIZE THESE TWO
+async function getFinalMaxStats() {
+    const char = users.character;
+    const raceSnap = await firestore.collection('master_races').where('name', '==', char.race).limit(1).get();
+    const raceD = raceSnap.empty ? {} : raceSnap.docs[0].data();
 
+    let baseHP = 15;
+    let baseMP = 15;
 
+    baseHP += (char.level * getAttrValue(raceD, 'hp_lv'));
+    baseMP += (char.level * getAttrValue(raceD, 'mp_lv'));
 
-
-async function updateHUD(char) {
-    if (!char) return;
-
-    // 1. Resolve general bonuses (BOD/MIN/SPI totals)
-    // const bonuses = await resolveAllStats(char);
-    const totals = {
-        body: (char.body || 0) + (bonuses.totals['body'] || 0),
-        mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
-        spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
+    for (const [className, level] of Object.entries(char.classLevels || {})) {
+        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
+        if (!classSnap.empty) {
+            const classD = classSnap.docs[0].data();
+            baseHP += (level * getAttrValue(classD, 'hp_lv'));
+            baseMP += (level * getAttrValue(classD, 'mp_lv'));
+        }
+    }
+    
+    char.totalStats = {
+        body: (char.baseStats.body || 0) + getAttrValue(raceD, 'body'),
+        mind: (char.baseStats.mind || 0) + getAttrValue(raceD, 'mind'),
+        spirit: (char.baseStats.spirit || 0) + getAttrValue(raceD, 'spirit')
     };
 
+    baseHP += ((char.totalStats.body - 10) * rules.statMultiplier);
+    baseMP += ((char.totalStats.spirit - 10) * rules.statMultiplier);
+    char.hpMax = baseHP;
+    char.mpMax = baseMP;
+
+    // 6. Final Percentages bonus % not being used
+    // const finalHP = Math.floor((baseHP + (charData.hpBonusFlat || 0)) * (1 + (charData.hpBonusPerc || 0) / 100));
+    // const finalMP = Math.floor((baseMP + (charData.mpBonusFlat || 0)) * (1 + (charData.mpBonusPerc || 0) / 100));
+    
+}
+
+
+
+
+
+
+async function updateHUD() {
+    const char = users.character;
+    if (!char) return;
+    // NEED RESOLVEALLSTATS CHECKED
+    // 1. Resolve general bonuses (BOD/MIN/SPI totals)
+    // const bonuses = await resolveAllStats(char);
+    // const totals = {
+    //     body: (char.body || 0) + (bonuses.totals['body'] || 0),
+    //     mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
+    //     spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
+    // };
+
     // 2. USE YOUR ENGINE: Get the true Max HP/MP (Stops the HUD mismatch)
-    const maxStats = await getFinalMaxStats(char); 
-    const hpMax = maxStats.finalHP;
-    const mpMax = maxStats.finalMP;
+    // const maxStats = await getFinalMaxStats(char); 
+    const hpMax = char.hpMax || 15;
+    const mpMax = char.mpMax || 15;
 
     // 3. Update UI Elements (Character Sheet Boxes)
-    setValue('char-hp-max', Math.floor(hpMax));
-    setValue('char-mp-max', Math.floor(mpMax));
+    setValue('char-name', char.name || "");
+    setValue('char-race', char.race || "");
+    setText('char-level-display', `Lv. ${char.level || 1}`);
+    
+    setValue('char-hp-max', hpMax);
+    setValue('char-mp-max', mpMax);
     setValue('char-hp-current', Math.floor(char.hpCurrent || 0));
     setValue('char-mp-current', Math.floor(char.mpCurrent || 0));
 
-    // 4. Update Visual Progress Bars
-    updateVisualBars(char.hpCurrent, hpMax, char.mpCurrent, mpMax);
 
     // 5. Calculate Percentages for Sidebar
     const hpP = (char.hpCurrent / (hpMax || 1)) * 100;
     const mpP = (char.mpCurrent / (mpMax || 1)) * 100;
-    const expP = ((char.expCurrent || 0) / ((char.charLevel + 1) * 200)) * 100;
+    const expP = ((char.expCurrent || 0) / ((char.level + 1) * rules.baseExp)) * 100;
+    
+    document.documentElement.style.setProperty('--hp-width', `${hpP}%`);
+    document.documentElement.style.setProperty('--mp-width', `${mpP}%`);
+    document.documentElement.style.setProperty('--exp-width', `${expP}%`);
+    
+    refreshStatDisplay(); 
+    updatePortraitUI(char.gallery, char.portrait);
 
-    // 6. Final Sync
-    if (document.getElementById('active-char-hud')) {
-        document.getElementById('active-char-hud').classList.remove('hide-default'); 
+    const notesEl = document.getElementById('char-notes');
+    if (notesEl && document.activeElement !== notesEl) { 
+        notesEl.value = char.notes || ""; 
     }
 
-    syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax);
-    syncSheetDashboardUI(char, totals, bonuses, char.race); 
+    syncSidebarUI();
+    // syncSheetDashboardUI(char, totals, bonuses, char.race); 
 }
 
 //SYNC SIDE BAR
-function syncSidebarUI(char, totals, hpP, mpP, expP, hpMax, mpMax) {
+function syncSidebarUI() {
+    const char = users.character;
+    if (!char) return;
+
+    // 1. Modifier Helper
     const getMod = (val) => {
-        const m = Math.floor(val / 2);
+        const m = Math.floor((val - 10) / 2);
         return m >= 0 ? `+${m}` : m;
     };
-    const gallery = char.gallery || [];
-    const activeIdx = char.portrait !== undefined ? char.portrait : 0;
-    const activeImg = gallery[activeIdx] || "";
-    
-    const portEl = document.getElementById('hud-portrait');
-    if (portEl) {
-        portEl.style.backgroundImage = activeImg ? `url(${activeImg})` : "none";
-        portEl.innerHTML = activeImg ? "" : '<i class="fa-solid fa-user"></i>';
-    }
 
-    setSafeText('hud-name', char.name || "Unnamed");
-    setSafeText('hud-meta', `Level ${char.charLevel || 1}`);
-    setSafeText('hud-hp-text', `${Math.floor(char.hpCurrent || 0)}/${Math.floor(hpMax)}`);
-    setSafeText('hud-mp-text', `${Math.floor(char.mpCurrent || 0)}/${Math.floor(mpMax)}`);
+    // 2. Text Updates
+    setText('hud-name', char.name || "Unnamed");
+    setText('hud-meta', `Level ${char.level || 1}`);
     
-    setSafeText('hud-mod-body', `BOD ${getMod(totals.body)}`);
-    setSafeText('hud-mod-mind', `MIN ${getMod(totals.mind)}`);
-    setSafeText('hud-mod-spirit', `SPI ${getMod(totals.spirit)}`);
+    // Use the max stats calculated by the Identity Listener
+    const hpMax = char.hpMax || 15;
+    const mpMax = char.mpMax || 15;
 
-    const hpFill = document.getElementById('hud-hp-fill');
-    const mpFill = document.getElementById('hud-mp-fill');
-    const expFill = document.getElementById('hud-exp-fill');
-    if (hpFill) hpFill.style.width = hpP + "%";
-    if (mpFill) mpFill.style.width = mpP + "%";
-    if (expFill) expFill.style.width = expP + "%";
-    setSafeText('hud-exp-text', `${Math.floor(expP)}%`);
+    setText('hud-hp-text', `${Math.floor(char.hpCurrent || 0)}/${hpMax}`);
+    setText('hud-mp-text', `${Math.floor(char.mpCurrent || 0)}/${mpMax}`);
+    
+    // 3. Stats (Using totals passed from the caller or global)
+    // Note: We'll need to make sure 'totals' is defined or accessible
+    setText('hud-mod-body', `BOD ${getMod(char.tempStats.body)}`);
+    setText('hud-mod-mind', `MIN ${getMod(char.tempStats.mind)}`);
+    setText('hud-mod-spirit', `SPI ${getMod(char.tempStats.spirit)}`);
+
+    // 4. Percentage Text
+    const expP = ((char.expCurrent || 0) / ((char.level + 1) * rules.baseExp)) * 100;
+    setText('hud-exp-text', `${Math.floor(expP)}%`);
 }
 
 // SYNC SHEET DASHBOARD
 function syncSheetDashboardUI(char, totals, bonuses, raceName) {
-    setSafeText('total-body-label', totals.body);
-    setSafeText('total-mind-label', totals.mind);
-    setSafeText('total-spirit-label', totals.spirit);
-    setSafeText('char-speed-display', (bonuses.totals['speed'] || 6) + "m");
-    setSafeText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
+    setText('total-body-label', totals.body);
+    setText('total-mind-label', totals.mind);
+    setText('total-spirit-label', totals.spirit);
+    setText('char-speed-display', (bonuses.totals['speed'] || 6) + "m");
+    setText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
 
     const initEl = document.getElementById('char-init-display');
-    if (initEl) {
-        const bestMod = Math.max(Math.floor(totals.body/2), Math.floor(totals.mind/2));
-        initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
-    }
+    const bestMod = Math.max(Math.floor(totals.body/2), Math.floor(totals.mind/2));
+    initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
+    users.character.modifiers.initiative = bestMod;
+
     renderClassPills(char);
 }
 
 
+// Update HP and MP Bars
+function updateVisualBars(hp, hpMax, mp, mpMax) {
+    const hpFill = document.getElementById('char-hp-fill-main');
+    const mpFill = document.getElementById('char-mp-fill-main');
 
+    // Math is the same
+    const hpPercent = Math.max(0, Math.min(100, (hp / (hpMax || 1)) * 100));
+    const mpPercent = Math.max(0, Math.min(100, (mp / (mpMax || 1)) * 100));
 
+    if (hpFill) {
+        // This updates the VARIABLE defined in your CSS class
+        hpFill.style.setProperty('--hp-width', `${hpPercent}%`);
+    }
+
+    if (mpFill) {
+        mpFill.style.setProperty('--mp-width', `${mpPercent}%`);
+    }
+}
 
 
 

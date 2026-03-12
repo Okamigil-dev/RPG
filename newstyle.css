@@ -35,7 +35,10 @@
         --color-hp: #ef4444;
         --color-mp-dark: #003489;        /* Bright red for HP bars and icons */
         --color-mp: #3b82f6;        /* Bright blue for MP bars and icons */
-        
+        --hp-width: 0%;
+        --mp-width: 0%;
+        --exp-width: 0%;
+
         /*  */
         --color-gold:   #ffd700; /* Rich, classic gold */
         --color-copper: #b87333; /* Warm, earthy copper/bronze */
@@ -426,8 +429,7 @@
                         margin: 0;
                     }
                     /* A more versatile bar structure that can be used for HP, MP, and EXP with different color fills */
-                    .resource-bar {
-                        width: 100%; 
+                    .resource-bar { 
                         height: 14px; 
                         position: relative;
                         background: var(--color-bg);
@@ -437,7 +439,8 @@
                     }
                     /* Hp Classes */
                     .hp-bar { 
-                        height: 100%; 
+                        height: 100%;
+                        width: var(--hp-width, 100%); 
                         background: linear-gradient(180deg, var(--color-hp), var(--color-hp-dark)); 
                         transition: width 0.3s; 
                     }
@@ -447,7 +450,8 @@
                     #char-hp-current, #char-hp-max { color: var(--color-hp); }
                     /* Mp Classes */
                     .mp-bar { 
-                        height: 100%; 
+                        height: 100%;
+                        width: var(--hp-width, 100%); 
                         background: linear-gradient(180deg, var(--color-mp), var(--color-mp-dark)); 
                         transition: width 0.3s; 
                     }
@@ -457,6 +461,7 @@
                     #char-mp-current, #char-mp-max { color: var(--color-mp); }
                     .exp-bar { 
                         height: 100%;
+                        width: var(--exp-width, 100%); 
                         background: linear-gradient(180deg,var(--system-text), var(--system-bg)); 
                         transition: width 0.3s; 
                     }
