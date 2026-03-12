@@ -60,7 +60,8 @@
                 tempStats: { body: 0, mind: 0, spirit: 0 },     // pendingStats
                 baseStats: { body: 10, mind: 10, spirit: 10 },  // originalStats
                 totalStats: { body: 10, mind: 10, spirit: 10 },
-                
+                attributes: {},
+
                 hpC:15,
                 mpC:15,
                 hpMax:10,
@@ -1268,44 +1269,57 @@ function getAttrValue(source, key) {
 // SHOULD BE FINE NOW NEED TO FIND A PLACE TO ORGANIZE THESE TWO
 async function calculateStats() {
     const char = users.character;
+
+    // 1. Fetch master_races data
     const raceSnap = await firestore.collection('master_races').doc(char.race).get();
     const raceD = raceSnap.exists ? raceSnap.data() : {};
 
-    // Total Body Mind and Spirit
-    char.totalStats = {
-        body: (char.baseStats.body || 0) + getAttrValue(raceD, 'body'),
-        mind: (char.baseStats.mind || 0) + getAttrValue(raceD, 'mind'),
-        spirit: (char.baseStats.spirit || 0) + getAttrValue(raceD, 'spirit')
-    };
-
-    // Calculate Modifiers (Base 10 system)
-    char.modifiers.body = Math.floor(((char.totalStats.body || 10) - 10) / 2);
-    char.modifiers.mind = Math.floor(((char.totalStats.mind || 10) - 10) / 2);
-    char.modifiers.spirit = Math.floor(((char.totalStats.spirit || 10) - 10) / 2);
-
-    // Set Initiative (Best of Body or Mind)
-    char.modifiers.initiative = Math.max(char.modifiers.body, char.modifiers.mind);
+    // 2. Wipe the global attributes for a fresh calculation
+    char.attributes = {};
     
-    // Max HP and MP
-    let baseHP = 15;
-    let baseMP = 15;
-    baseHP += (char.level * getAttrValue(raceD, 'hp_lv'));
-    baseMP += (char.level * getAttrValue(raceD, 'mp_lv'));
-    for (const [className, level] of Object.entries(char.classLevels || {})) {
-        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
-        if (!classSnap.empty) {
-            const classD = classSnap.docs[0].data();
-            baseHP += (level * getAttrValue(classD, 'hp_lv'));
-            baseMP += (level * getAttrValue(classD, 'mp_lv'));
+    // 3. Automatically pull EVERYTHING from the master attributes map
+    if (raceD.attributes) {
+        for (const [key, val] of Object.entries(raceD.attributes)) {
+            // This copies hp_lv, mind, mp_lv, mpregen, etc. automatically
+            char.attributes[key] = (char.attributes[key] || 0) + (parseFloat(val) || 0);
         }
     }
-    baseHP += ((char.totalStats.body - 10) * rules.statMultiplier);
-    baseMP += ((char.totalStats.spirit - 10) * rules.statMultiplier);
-    char.hpMax = baseHP;
-    char.mpMax = baseMP;
 
+    // 4. Repeat for Classes (if they have an attributes map)
+    for (const [className, level] of Object.entries(char.classLevels || {})) {
+        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
+        
+        if (!classSnap.empty) {
+            const classD = classSnap.docs[0].data();
+            
+            if (classD.attributes) {
+                for (const [key, val] of Object.entries(classD.attributes)) {
+                    // Multiply the DB value by the SPECIFIC level of this class
+                    const scaledValue = (parseFloat(val) || 0) * level;
+                    char.attributes[key] = (char.attributes[key] || 0) + scaledValue;
+                }
+            }
+        }
+    }
+    
+    // 5. Calculate Totals
+    char.totalStats = {
+        body: (char.baseStats.body || 10) + (char.attributes.body || 0),
+        mind: (char.baseStats.mind || 10) + (char.attributes.mind || 0),
+        spirit: (char.baseStats.spirit || 10) + (char.attributes.spirit || 0)
+    };
 
-
+    // 6. Handle Derived Stats (HP/MP) using the now-synced attributes
+    // Instead of getAttrValue, you can now pull directly from char.attributes
+    char.hpMax = 15 + (char.attributes.hp_lv || 0) + ((char.totalStats.body - 10) * rules.statMultiplier);
+    char.mpMax = 15 + (char.attributes.mp_lv || 0) + ((char.totalStats.spirit - 10) * rules.statMultiplier);
+    
+    // Save Modifiers body mind spirit initiative
+    char.modifiers.body = Math.floor((char.totalStats.body - 10) / 2);
+    char.modifiers.mind = Math.floor((char.totalStats.mind - 10) / 2);
+    char.modifiers.spirit = Math.floor((char.totalStats.spirit - 10) / 2);
+    char.modifiers.initiative = Math.max(char.modifiers.body, char.modifiers.mind);
+    
 }
 
 async function resolveAllStats(charData) {
@@ -1469,8 +1483,8 @@ function syncSheetDashboardUI() {
     setText('total-body-label', char.totalStats.body);
     setText('total-mind-label', char.totalStats.mind);
     setText('total-spirit-label', char.totalStats.spirit);
-    // setText('char-speed-display', (bonuses.totals['speed'] || 6) + "m");
-    // setText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
+    setText('char-speed-display', (char.attributes.speed || 6) + "m");
+    setText('char-ac-display', 10 + (char.attributes.acbonus || 0));
 
     const initEl = document.getElementById('char-init-display');
     const initiative = char.modifiers.initiative || 0 ;
