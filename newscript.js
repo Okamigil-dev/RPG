@@ -41,6 +41,10 @@
                 attributes: {}     // replaces attributeDefinitions
             },
         };
+        const master = {
+            attributes: {},                                 // replaces currentRaceAttributes
+                
+        }
         // Users Related Variables
         const users = {
             uid: null,
@@ -67,8 +71,7 @@
                                                        // replaces activeCharLevel
                 totalAP: 0,                                     // totalAP
                 traits: [],                                     // replaces currentRaceTraits
-                modifiers: {},                                  // For Initiative saving throws.
-                attributes: {},                                 // replaces currentRaceAttributes
+                modifiers: { body:0, mind:0, spirit:0, initiative:0 },                                  // For Initiative saving throws.
                 className: {},
                 classLevels:{},                                 // List of Classes levels and names {warrior:1,mage:3...}
                 
@@ -776,7 +779,7 @@
                     char.totalAP = Math.max(0, (char.level) - ((char.baseStats.body + char.baseStats.mind + char.baseStats.spirit) - 30)); 
 
                     // 2. Calculate MAX HP/MP
-                    await getFinalMaxStats();
+                    await calculateStats();
                     
                     // --- UI TRIGGER ---
                     // Instead of individual setValue calls here, we trigger the central painter
@@ -1263,7 +1266,7 @@ function getAttrValue(source, key) {
 }
 
 // SHOULD BE FINE NOW NEED TO FIND A PLACE TO ORGANIZE THESE TWO
-async function getFinalMaxStats() {
+async function calculateStats() {
     const char = users.character;
     const raceSnap = await firestore.collection('master_races').doc(char.race).get();
     const raceD = raceSnap.exists ? raceSnap.data() : {};
@@ -1301,10 +1304,80 @@ async function getFinalMaxStats() {
     char.hpMax = baseHP;
     char.mpMax = baseMP;
 
-    
 
-    
+
 }
+
+async function resolveAllStats(charData) {
+    const registry = {
+        inherent: {}, // Race, Class, Background
+        equipment: {}, // Weapons, Armor, Accessories
+        status: {},    // Potions, Spells, Buffs
+        totals: {}     // Final sum of everything
+    };
+
+    const sources = [];
+
+    // --- 1. GATHER INHERENT SOURCES ---
+    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
+    if (!raceSnap.empty) {
+        let d = raceSnap.docs[0].data();
+        d._sourceType = 'inherent';
+        d._sourceName = 'Race';
+        sources.push(d);
+    }
+
+    for (const className of Object.keys(charData.unlockedClasses || {})) {
+        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
+        if (!classSnap.empty) {
+            let d = classSnap.docs[0].data();
+            d._sourceType = 'inherent';
+            d._sourceName = className;
+            sources.push(d);
+        }
+    }
+
+    // --- 2. GATHER EQUIPMENT SOURCES (Placeholder for your future Item system) ---
+    // (charData.equippedItems || []).forEach(item => { ... push to sources with _sourceType: 'equipment' ... });
+
+    // --- 3. GATHER STATUS SOURCES (Placeholder for your future Buff system) ---
+    // (charData.activeBuffs || []).forEach(buff => { ... push to sources with _sourceType: 'status' ... });
+
+
+    // --- 4. THE MULTI-LAYER MERGE ---
+    sources.forEach(src => {
+        if (!src.attributes) return;
+        
+        const type = src._sourceType; 
+        const name = src._sourceName; 
+
+        for (const [key, value] of Object.entries(src.attributes)) {
+            const val = parseFloat(value) || 0;
+
+            // Save to specific category (The "Receipt")
+            if (!registry[type][key]) registry[type][key] = {};
+            registry[type][key][name] = val;
+
+            // Add to the final totals map
+            registry.totals[key] = (registry.totals[key] || 0) + val;
+        }
+    });
+
+    return registry;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1324,7 +1397,7 @@ async function updateHUD() {
     // };
 
     // 2. USE YOUR ENGINE: Get the true Max HP/MP (Stops the HUD mismatch)
-    // const maxStats = await getFinalMaxStats(char); 
+
     const hpMax = char.hpMax || 15;
     const mpMax = char.mpMax || 15;
 
@@ -1419,7 +1492,7 @@ function initEventListeners() {
     // Race Dropdown Sync
     document.getElementById('char-race').addEventListener('change', async (e) => {
         users.character.race = e.target.value; // Saves the ID
-        await getFinalMaxStats(); // Recalculate based on new race
+        await calculateStats(); // Recalculate based on new race
         updateHUD(); // Show the new HP Max
     });
 
