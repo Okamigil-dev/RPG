@@ -1,3 +1,10 @@
+/* =========================================================
+   SCRIPT VERSION: 0.3.1
+   DATE: 2026-03-02 
+   ========================================================= */
+
+
+
 /* ==========================================================================
    SECTION 1: CONFIGURATION, STATE & FIREBASE
    ========================================================================== */
@@ -5,7 +12,7 @@
 // --- 1.1 CONSTANTS ---
 const MAX_CHAR_LEVEL = 60;      
 const MAX_ALLOCATED_STAT = 20;  
-const MAX_GALLERY_SLOTS = 16;
+const MAX_GALLERY_SLOTS = 8;
 const STAT_RESOURCE_MULT = 5;
 
 // --- 1.2 STATE VARIABLES ---
@@ -18,7 +25,9 @@ let currentCampaignId = "global";
 let currentCharacterId = null; 
 let activeCharLevel = 1; 
 let characterListener = null;
-let currentRaceTraits = [];
+let currentRaceTraits = [];      // Stores selected traits (e.g. ["Darkvision"])
+let currentRaceAttributes = {};  // Stores attributes (e.g. { "body": 2, "speed": 30 })
+let attributeDefinitions = {};   // Maps keys to names (e.g. { "body": "Body" })
 
 let pendingStats = { body: 0, mind: 0, spirit: 0 };
 let originalStats = { body: 0, mind: 0, spirit: 0 };
@@ -45,21 +54,44 @@ const firestore = firebase.firestore();
    SECTION 2: UTILITIES & TOASTS
    ========================================================================== */
 
-function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-container';
-    toast.innerText = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
 
-async function deleteMasterAsset(collection, id, callback) {
-    if (!confirm("Permanently remove this asset?")) return;
-    try {
-        await firestore.collection(collection).doc(id).delete();
-        if (callback) callback();
-    } catch (e) { console.error(e); }
-}
+/** CONSOLE ERROR MESSAGE ( the bandaid that isn't silent ) */
+         function setSafeText(id, value) {
+             const el = document.getElementById(id);
+             if (el) {
+                 el.innerText = value;
+             } else {
+                 console.warn(`Missing element ID: "${id}" (Value: ${value})`);
+             }
+         }
+         
+   /* Safely updates an input's value.*/
+         function setSafeValue(id, value) {
+             const el = document.getElementById(id);
+             if (el) {
+                 el.value = value;
+             } else {
+                 console.warn(`Missing input ID: "${id}" (Value: ${value})`);
+             }
+         }
+/** CONSOLE ERROR MESSAGE ( the bandaid that isn't silent ) */
+
+
+         function showToast(message) {
+             const toast = document.createElement('div');
+             toast.className = 'toast-container';
+             toast.innerText = message;
+             document.body.appendChild(toast);
+             setTimeout(() => toast.remove(), 3000);
+         }
+
+         async function deleteMasterAsset(collection, id, callback) {
+             if (!confirm("Permanently remove this asset?")) return;
+             try {
+                 await firestore.collection(collection).doc(id).delete();
+                 if (callback) callback();
+             } catch (e) { console.error(e); }
+         }
 
 /* === UNIVERSAL WEBP HANDLER (100% QUALITY) === */
 function handleWebPUpload(inputElement, callback, size = 128, quality = 1) {
@@ -248,6 +280,7 @@ function openControlSubTab(evt, subTabId) {
     if (subTabId === 'sub-races') loadMasterRaceList();    // This triggers Section 10.1
     if (subTabId === 'sub-skills') { refreshSkillClassDropdown(); loadSkillRegistry(); }
     if (subTabId === 'sub-traits') loadMasterTraitList();
+    if (subTabId === 'sub-attributes') loadAttributeList();
 }
 
 function goBackToSelection() {
@@ -464,6 +497,8 @@ function triggerInitiative(btn) {
     rollDice(20, btn, modifier, "Initiative");
 }
 
+
+
 /* ==========================================================================
    SECTION 6: CHARACTER LOGIC (MATH & STATS)
    ========================================================================== */
@@ -475,71 +510,123 @@ function calculateLevelFromEXP(exp) {
     return Math.min(finalLv, MAX_CHAR_LEVEL);
 }
 
-//Calculates Initiative, Speed, Armor Class
-async function getFinalCombatStats(charData) {
-    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
-    const raceD = raceSnap.empty ? { acBonus: 0, speed: 5 } : raceSnap.docs[0].data();
-
-    // 1. INITIATIVE: Higher of Body or Mind
-    // Using the same logic as your stat calculation for consistency
-    const body = (charData.body || 0) + (raceD.baseBody || 0);
-    const mind = (charData.mind || 0) + (raceD.baseMind || 0);
-    const initBonus = Math.max(body, mind);
-
-    // 2. ARMOR CLASS: Base 10 + Race Bonus (need armor bonus after making items)
-    const finalAC = 10 + (raceD.acBonus || 0);
-
-    // 3. SPEED: Taken directly from race
-    const finalSpeed = raceD.speed || 5;
-
-    return { initBonus, finalAC, finalSpeed };
+// Safely gets a value from the dynamic attributes map
+function getAttrValue(source, key) {
+    if (!source || !source.attributes) return 0;
+    return parseFloat(source.attributes[key]) || 0;
 }
 
-async function getFinalMaxStats(charData) {
+/** * Core Engine: Gathers all sources (Race, Classes, etc.) and sums their attributes.
+ */
+async function resolveAllStats(charData) {
+    const registry = {
+        inherent: {}, // Race, Class, Background
+        equipment: {}, // Weapons, Armor, Accessories
+        status: {},    // Potions, Spells, Buffs
+        totals: {}     // Final sum of everything
+    };
+
+    const sources = [];
+
+    // --- 1. GATHER INHERENT SOURCES ---
     const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
-    const raceD = raceSnap.empty ? { hpPerLv: 1, mpPerLv: 1, baseBody: 0 } : raceSnap.docs[0].data();
+    if (!raceSnap.empty) {
+        let d = raceSnap.docs[0].data();
+        d._sourceType = 'inherent';
+        d._sourceName = 'Race';
+        sources.push(d);
+    }
 
-    let baseHP = 10 + (charData.charLevel * (raceD.hpPerLv || 0));
-    let baseMP = 10 + (charData.charLevel * (raceD.mpPerLv || 0));
+    for (const className of Object.keys(charData.unlockedClasses || {})) {
+        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
+        if (!classSnap.empty) {
+            let d = classSnap.docs[0].data();
+            d._sourceType = 'inherent';
+            d._sourceName = className;
+            sources.push(d);
+        }
+    }
 
+    // --- 2. GATHER EQUIPMENT SOURCES (Placeholder for your future Item system) ---
+    // (charData.equippedItems || []).forEach(item => { ... push to sources with _sourceType: 'equipment' ... });
+
+    // --- 3. GATHER STATUS SOURCES (Placeholder for your future Buff system) ---
+    // (charData.activeBuffs || []).forEach(buff => { ... push to sources with _sourceType: 'status' ... });
+
+
+    // --- 4. THE MULTI-LAYER MERGE ---
+    sources.forEach(src => {
+        if (!src.attributes) return;
+        
+        const type = src._sourceType; 
+        const name = src._sourceName; 
+
+        for (const [key, value] of Object.entries(src.attributes)) {
+            const val = parseFloat(value) || 0;
+
+            // Save to specific category (The "Receipt")
+            if (!registry[type][key]) registry[type][key] = {};
+            registry[type][key][name] = val;
+
+            // Add to the final totals map
+            registry.totals[key] = (registry.totals[key] || 0) + val;
+        }
+    });
+
+    return registry;
+}
+
+
+// Fetches the 'Nice Name' (e.g., "HP per Level") for a key (e.g., "hp_lv")
+async function getAttributeDefinitions() {
+    if (Object.keys(attributeDefinitions).length > 0) return attributeDefinitions;
+    const snap = await firestore.collection('master_attributes').get();
+    snap.forEach(doc => {
+        const d = doc.data();
+        attributeDefinitions[d.key] = d.name;
+    });
+    return attributeDefinitions;
+}
+
+// Calculates Vitals (HP/MP) based on dynamic attributes
+async function getFinalMaxStats(charData) {
+    // 1. Get Race/Class data
+    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
+    const raceD = raceSnap.empty ? {} : raceSnap.docs[0].data();
+
+    // 2. Start with Base 10
+    let baseHP = 10;
+    let baseMP = 10;
+
+    // 3. Add Level-based bonuses from Race
+    baseHP += (charData.charLevel * getAttrValue(raceD, 'hp_lv'));
+    baseMP += (charData.charLevel * getAttrValue(raceD, 'mp_lv'));
+
+    // 4. Add Level-based bonuses from Classes
     for (const [className, info] of Object.entries(charData.unlockedClasses || {})) {
         const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
         if (!classSnap.empty) {
             const classD = classSnap.docs[0].data();
-            baseHP += (info.level * (classD.hpPerLv || 0));
-            baseMP += (info.level * (classD.mpPerLv || 0));
+            baseHP += (info.level * getAttrValue(classD, 'hp_lv'));
+            baseMP += (info.level * getAttrValue(classD, 'mp_lv'));
         }
     }
 
-    const totalBody = (charData.body || 0) + (raceD.baseBody || 0);
-    const totalSpirit = (charData.spirit || 0) + (raceD.baseSpirit || 0);
+    // 5. Add Stat-based bonuses (Body for HP, Spirit for MP)
+    // We get the TOTAL stat (Base + Race Bonus)
+    const totalBody = (charData.body || 0) + getAttrValue(raceD, 'body');
+    const totalSpirit = (charData.spirit || 0) + getAttrValue(raceD, 'spirit');
     
     baseHP += (totalBody * STAT_RESOURCE_MULT);
     baseMP += (totalSpirit * STAT_RESOURCE_MULT);
 
+    // 6. Final Percentages
     const finalHP = Math.floor((baseHP + (charData.hpBonusFlat || 0)) * (1 + (charData.hpBonusPerc || 0) / 100));
     const finalMP = Math.floor((baseMP + (charData.mpBonusFlat || 0)) * (1 + (charData.mpBonusPerc || 0) / 100));
 
     return { finalHP, finalMP };
 }
 
-async function getTotalRegen(charData) {
-    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
-    const raceD = raceSnap.empty ? { hpRegen: 0, mpRegen: 0 } : raceSnap.docs[0].data();
-
-    let totalHPRegen = (charData.hpMax * 0.00208333) + (raceD.hpRegen || 0);
-    let totalMPRegen = (charData.mpMax * 0.00208333) + (raceD.mpRegen || 0);
-
-    for (const className of Object.keys(charData.unlockedClasses || {})) {
-        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
-        if (!classSnap.empty) {
-            const classD = classSnap.docs[0].data();
-            totalHPRegen += (classD.hpRegenBonus || 0);
-            totalMPRegen += (classD.mpRegenBonus || 0);
-        }
-    }
-    return { totalHPRegen, totalMPRegen };
-}
 
 
 /* ==========================================================================
@@ -548,20 +635,45 @@ async function getTotalRegen(charData) {
 
 function createNewCharacter() {
     const user = auth.currentUser;
+    // DATA STRUCTURE V0.2.3 (Nested Skills)
     const data = { 
-        name: "New Hero", race: "", class: "",
-        charLevel: 1, classLevel: 1, totalSP: 1, spentSP: 0,        
-        hpBonusFlat: 0, hpBonusPerc: 0, mpBonusFlat: 0, mpBonusPerc: 0,
-        basicSkills: [], intSkills: [], advSkills: [],
-        body: 0, mind: 0, spirit: 0,
-        hpMaxBonus: 0, mpMaxBonus: 0,
-        hpCurrent: 10, hpMax: 10, mpCurrent: 10, mpMax: 10,
-        expCurrent: 0, expMax: 400, 
-        gallery: [], portrait: 0,
-        instanceId: "global", instanceName: "Global",
+        name: "New Hero", 
+        race: "", 
+        class: "",
+        charLevel: 1,      
+        
+        // Base Attributes
+        body: 0, 
+        mind: 0, 
+        spirit: 0,
+        
+        // Vitals
+        hpCurrent: 10, 
+        mpCurrent: 10,
+        
+        // Progression
+        expCurrent: 0, 
+        
+        // LISTS & REGISTRIES
+        // New: Skills are now organized in a single registry object
+        skills: {
+            basic: [],
+            intermediate: [],
+            advanced: []
+        },
+        
+        gallery: [], 
+        portrait: 0,
+        unlockedClasses: {}, 
+        
+        // Meta
+        instanceId: "global", 
+        instanceName: "Global",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    firestore.collection('users').doc(user.uid).collection('characters').add(data).then(() => loadUserCharacters());
+    
+    firestore.collection('users').doc(user.uid).collection('characters').add(data)
+        .then(() => loadUserCharacters());
 }
 
 function loadUserCharacters() {
@@ -575,7 +687,7 @@ function loadUserCharacters() {
         snap.forEach(doc => {
             const d = doc.data();
             
-            // --- NEW: Resolve Portrait from Gallery Index ---
+            // --- Resolve Portrait from Gallery Index ---
             const gallery = d.gallery || [];
             const activeIdx = d.portrait !== undefined ? d.portrait : 0;
             const displayImg = gallery[activeIdx] || ''; 
@@ -599,6 +711,7 @@ function loadUserCharacters() {
     });
 }
 
+// SELECT CHARACTER FUNCTION
 async function selectCharacter(id) {
     if (characterListener) characterListener(); 
 
@@ -618,19 +731,13 @@ async function selectCharacter(id) {
                 initDiceLogListener();
             }
 
-            // Fixed: Individual null checks for Identity fields
-            const nameEl = document.getElementById('char-name');
-            if (nameEl) nameEl.value = d.name || "";
-            
-            const raceEl = document.getElementById('char-race');
-            if (raceEl) raceEl.value = d.race || "";
-            
-            const expCurrEl = document.getElementById('char-exp-current');
-            if (expCurrEl) expCurrEl.value = d.expCurrent || 0;
+            // UI Safe Checks
+            setSafeValue('char-name', d.name || "");
+            setSafeValue('char-race', d.race || "");
+//            setSafeValue('char-exp-current', d.expCurrent || 0);
 
             activeCharLevel = calculateLevelFromEXP(d.expCurrent || 0);
-            const levelDisp = document.getElementById('char-level-display');
-            if (levelDisp) levelDisp.innerText = `Lv. ${activeCharLevel}`;
+            setSafeText('char-level-display', `Lv. ${activeCharLevel}`);
             
             originalStats = { body: d.body || 0, mind: d.mind || 0, spirit: d.spirit || 0 };
             pendingStats = { ...originalStats };
@@ -642,18 +749,8 @@ async function selectCharacter(id) {
             renderGallery(d.gallery || [], d.portrait || "");
             renderSkills(d);
 
-            const totals = await getFinalMaxStats(d);
             const nextLevelExp = (activeCharLevel + 1) * 200;
-
-            // Fixed: Individual null checks for Resource and EXP displays
-            const hpMaxEl = document.getElementById('char-hp-max');
-            if (hpMaxEl) hpMaxEl.value = totals.finalHP;
-            
-            const mpMaxEl = document.getElementById('char-mp-max');
-            if (mpMaxEl) mpMaxEl.value = totals.finalMP;
-            
-            const expMaxEl = document.getElementById('char-exp-max');
-            if (expMaxEl) expMaxEl.value = nextLevelExp;
+//            setSafeValue('char-exp-max', nextLevelExp);
                 
             const hpInput = document.getElementById('char-hp-current');
             if (hpInput) {
@@ -667,14 +764,12 @@ async function selectCharacter(id) {
                 mpInput.value = Math.floor(d.mpCurrent || 0);
             }
 
-            const hudData = { ...d, charLevel: activeCharLevel, hpMax: totals.finalHP, mpMax: totals.finalMP, expMax: nextLevelExp };
+            // OPTIMIZATION: We pass 'd' directly. updateHUD will calculate Max HP/MP itself.
+            const hudData = { ...d, charLevel: activeCharLevel, expMax: nextLevelExp };
             updateHUD(hudData);
             
-            const selectionView = document.getElementById('char-selection-view');
-            if (selectionView) selectionView.classList.add('hide-default');
-            
-            const sheetView = document.getElementById('char-sheet-view');
-            if (sheetView) sheetView.classList.remove('hide-default');
+            document.getElementById('char-selection-view').classList.add('hide-default');
+            document.getElementById('char-sheet-view').classList.remove('hide-default');
         }
     });
 
@@ -688,23 +783,20 @@ async function saveCharacter() {
     const doc = await charRef.get();
     const currentData = doc.data();
 
-    // --- CHANGE STARTS HERE ---
-    // 1. Get EXP from the database directly since the input is gone from the HTML
+    // 1. Get EXP from database
     const currentExp = currentData.expCurrent || 0;
     
-    // 2. Calculate levels based on that database value
+    // 2. Calculate levels
     activeCharLevel = calculateLevelFromEXP(currentExp); 
     const nextLevelExp = (activeCharLevel + 1) * 200; 
 
-    // 3. Use a guard for the "max" display in case the element is missing
-    const expMaxDisplay = document.getElementById('char-exp-max');
-    if (expMaxDisplay) expMaxDisplay.value = nextLevelExp;
-    // --- CHANGE ENDS HERE ---
+    // 3. Update UI
+//    setSafeValue('char-exp-max', nextLevelExp);
 
     const data = {
         name: document.getElementById('char-name').value,
         race: document.getElementById('char-race').value,
-        expCurrent: currentExp, // Saves the existing database value back
+        expCurrent: currentExp, 
         charLevel: activeCharLevel,
         body: originalStats.body || 0,
         mind: originalStats.mind || 0,
@@ -718,8 +810,8 @@ async function saveCharacter() {
 
     try {
         await charRef.update(data);
-        const totals = await getFinalMaxStats(data);
-        updateHUD({ ...data, hpMax: totals.finalHP, mpMax: totals.finalMP, expMax: nextLevelExp });
+        // Optimization: updateHUD recalculates everything, no need for getFinalMaxStats here
+        updateHUD({ ...data, expMax: nextLevelExp });
         if (typeof showToast === "function") showToast("Character Saved.");
     } catch (e) { 
         console.error("Save Error:", e); 
@@ -737,12 +829,19 @@ async function deleteCharacter(event, charId, name) {
     } catch (err) { alert("Error: " + err.message); }
 }
 
+// Updated to use the new resolveAllStats engine
 async function applyPassiveRegen() {
     if (!currentCharacterId) return;
     const charSnap = await firestore.collection('users').doc(auth.currentUser.uid).collection('characters').doc(currentCharacterId).get();
     const charData = charSnap.data();
     
-    const { totalHPRegen, totalMPRegen } = await getTotalRegen(charData);
+    // 1. Use the Master Resolver
+    const bonuses = await resolveAllStats(charData);
+
+    // 2. Calculate Regen using .totals
+    // Note: You can add +bonuses.totals['hp_regen_mult'] here later if you want percentage regen!
+    const totalHPRegen = (charData.hpMax * 0.00208333) + (bonuses.totals['hp_regen'] || 0);
+    const totalMPRegen = (charData.mpMax * 0.00208333) + (bonuses.totals['mp_regen'] || 0);
 
     const hpInput = document.getElementById('char-hp-current');
     const mpInput = document.getElementById('char-mp-current');
@@ -750,6 +849,7 @@ async function applyPassiveRegen() {
     let hpCur = parseFloat(hpInput.dataset.trueValue) || parseFloat(hpInput.value) || 0;
     let mpCur = parseFloat(mpInput.dataset.trueValue) || parseFloat(mpInput.value) || 0;
 
+    // Use calculated Max from DOM to ensure consistency
     const hpMax = parseFloat(document.getElementById('char-hp-max').value) || 10;
     const mpMax = parseFloat(document.getElementById('char-mp-max').value) || 10;
 
@@ -761,25 +861,16 @@ async function applyPassiveRegen() {
     hpInput.value = Math.floor(newHP);
     mpInput.value = Math.floor(newMP);
     
-    updateHUD({ ...charData, hpCurrent: newHP, mpCurrent: newMP, hpMax, mpMax });
+    // We pass new vitals to HUD, but let it calculate Max HP/MP itself
+    updateHUD({ ...charData, hpCurrent: newHP, mpCurrent: newMP });
 }
 
 function refreshStatDisplay() {
-    // 1. Update the "Pending" numbers (the ones between the - and + buttons)
-    const displayBody = document.getElementById('display-body');
-    if (displayBody) displayBody.innerText = pendingStats.body;
+    setSafeText('display-body', pendingStats.body);
+    setSafeText('display-mind', pendingStats.mind);
+    setSafeText('display-spirit', pendingStats.spirit);
+    setSafeText('char-ap-rem', `AP: ${totalAP}`);
 
-    const displayMind = document.getElementById('display-mind');
-    if (displayMind) displayMind.innerText = pendingStats.mind;
-
-    const displaySpirit = document.getElementById('display-spirit');
-    if (displaySpirit) displaySpirit.innerText = pendingStats.spirit;
-
-    // 2. Update the "AP Available" badge
-    const apRem = document.getElementById('char-ap-rem');
-    if (apRem) apRem.innerText = `AP: ${totalAP}`;
-
-    // 3. Show or Hide the "Commit Changes" area based on AP spent
     const confirmArea = document.getElementById('attr-confirm-area');
     if (confirmArea) {
         const hasChanges = JSON.stringify(pendingStats) !== JSON.stringify(originalStats);
@@ -885,7 +976,6 @@ function saveImageToNextSlot(base64Data) {
             
             renderGallery(gallery, activeIndex);
             
-            // 4. Update HUD immediately
             document.getElementById('hud-portrait').style.backgroundImage = `url(${base64Data})`;
         });
     });
@@ -975,10 +1065,14 @@ function renderSkills(charData) {
     if (!container) return;
     container.innerHTML = ""; 
     
+    // Safety: Fallback to empty object if skills haven't been created yet
+    const skillRegistry = charData.skills || {};
+
+    // Map the UI labels to the database keys
     const tiers = [
-        { key: 'basicSkills', label: 'Basic Skills' }, 
-        { key: 'intSkills', label: 'Intermediate Skills' }, 
-        { key: 'advSkills', label: 'Advanced Skills' }
+        { key: 'basic', label: 'Basic Skills' }, 
+        { key: 'intermediate', label: 'Intermediate Skills' }, 
+        { key: 'advanced', label: 'Advanced Skills' }
     ];
 
     tiers.forEach(tier => {
@@ -986,7 +1080,9 @@ function renderSkills(charData) {
         section.className = 'skill-tier-section';
         section.innerHTML = `<h4 class="mt-m mb-s">${tier.label}</h4>`;
         
-        const skills = charData[tier.key] || [];
+        // Read from the new registry
+        const skills = skillRegistry[tier.key] || [];
+        
         if (skills.length === 0) {
             section.innerHTML += `<div class="text-muted" style="width:100%; text-align:center; font-size:0.8rem;">Empty</div>`;
         }
@@ -996,7 +1092,6 @@ function renderSkills(charData) {
             const slot = document.createElement('div');
             slot.className = 'skill-slot-card';
             
-            // Added img support here in case the skill has an icon
             const iconHtml = s.icon ? `<img src="${s.icon}" class="registry-icon" style="width:32px; height:32px; margin-right:10px;">` : '';
 
             slot.innerHTML = `
@@ -1019,42 +1114,46 @@ function renderSkills(charData) {
     });
 }
 
-
+/* ============================
+   === UPDATE HUD & UI SYNC ===
+   ============================ */
 /** * MAIN CONTROLLER: Calculates data once and delegates to specific UI sections.
  */
 async function updateHUD(char) {
     if (!char) return;
 
-    // 1. Calculate Core Data
+    // 1. Get the registry (inherent, equipment, totals)
+    const bonuses = await resolveAllStats(char);
+
+    // 2. Calculate Totals (Base + Library Totals)
+    // FIX: We must access bonuses.totals['key']
+    const totals = {
+        body: (char.body || 0) + (bonuses.totals['body'] || 0),
+        mind: (char.mind || 0) + (bonuses.totals['mind'] || 0),
+        spirit: (char.spirit || 0) + (bonuses.totals['spirit'] || 0)
+    };
+
+    // 3. Calculate Vitals using dynamic keys
+    // FIX: Access bonuses.totals
+    const hpFromLevel = char.charLevel * (bonuses.totals['hp_lv'] || 0);
+    const mpFromLevel = char.charLevel * (bonuses.totals['mp_lv'] || 0);
+    
+    char.hpMax = 10 + hpFromLevel + (totals.body * STAT_RESOURCE_MULT);
+    char.mpMax = 10 + mpFromLevel + (totals.spirit * STAT_RESOURCE_MULT);
+
     const hpPerc = Math.min(((char.hpCurrent || 0) / (char.hpMax || 1)) * 100, 100);
     const mpPerc = Math.min(((char.mpCurrent || 0) / (char.mpMax || 1)) * 100, 100);
     const expPerc = Math.min(((char.expCurrent || 0) / (char.expMax || 1000)) * 100, 100);
 
-    const raceSnap = await firestore.collection('master_races').where('name', '==', char.race).limit(1).get();
-    const raceD = raceSnap.empty ? { baseBody: 0, baseMind: 0, baseSpirit: 0, speed: 30, traits: [] } : raceSnap.docs[0].data();
+    // Sidebar and Sheet Sync
+    document.getElementById('active-char-hud').classList.remove('hide-default'); 
+    syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
     
-    const totals = {
-        body: (char.body || 0) + (raceD.baseBody || 0),
-        mind: (char.mind || 0) + (raceD.baseMind || 0),
-        spirit: (char.spirit || 0) + (raceD.baseSpirit || 0)
-    };
-
-   
-   // 2. Sidebar and Sheet Syncs
-   // Declaring Variables (not really needed extra step)
-   const sidebar = document.getElementById('active-char-hud');
-   const sheet = document.getElementById('char-sheet-view');
-   
-   // Unhides both 
-   sidebar.classList.remove('hide-default'); 
-   sheet.classList.contains('hide-default');
-
-   // Runs Syncfunctions
-   syncSidebarUI(char, totals, hpPerc, mpPerc, expPerc);
-   syncSheetDashboardUI(char, totals, hpPerc, mpPerc, raceD);
+    // Pass the whole bonuses object, but the UI function must know to look in .totals
+    syncSheetDashboardUI(char, totals, hpPerc, mpPerc, bonuses, char.race); 
 }
 
-/* Sync Sidebar UI */
+/* Sync SIDE BAR UI */
 function syncSidebarUI(char, totals, hpP, mpP, expP) {
     const getMod = (val) => {
         const m = Math.floor(val / 2);
@@ -1084,53 +1183,43 @@ function syncSidebarUI(char, totals, hpP, mpP, expP) {
     document.getElementById('hud-exp-text').innerText = `${Math.floor(expP)}%`;
 }
 
-/** * SHEET DASHBOARD: Manages IDs specific to the Character Sheet tab
+/** * SHEET DASH BOARD: Manages IDs specific to the Character Sheet tab
  */
-function syncSheetDashboardUI(char, totals, hpP, mpP, raceData) {
-    // --- Attributes & Status ---
-    const bodyEl = document.getElementById('total-body-label');
-    if (bodyEl) {
-        bodyEl.innerText = totals.body;
-        document.getElementById('total-mind-label').innerText = totals.mind;
-        document.getElementById('total-spirit-label').innerText = totals.spirit;
-    }
+function syncSheetDashboardUI(char, totals, hpP, mpP, bonuses, raceName) {
+    // 1. Core Attributes
+    setSafeText('total-body-label', totals.body);
+    setSafeText('total-mind-label', totals.mind);
+    setSafeText('total-spirit-label', totals.spirit);
     
+    // 2. Resource Bars & Numbers (THE FIX)
     const hpBar = document.getElementById('char-hp-fill-main');
-    if (hpBar) {
-        hpBar.style.width = hpP + "%";
-        document.getElementById('char-mp-fill-main').style.width = mpP + "%";
-    }
-
-    // --- NEW: Combat Trio (Speed, AC, Initiative) ---
+    if (hpBar) hpBar.style.width = hpP + "%";
     
-    // 1. Speed: Defaulting to 5 if no race data exists
-    const speedEl = document.getElementById('char-speed-display');
-    if (speedEl) speedEl.innerText = (raceData.speed || 5) + "m";
+    const mpBar = document.getElementById('char-mp-fill-main');
+    if (mpBar) mpBar.style.width = mpP + "%";
 
-    // 2. Armor Class: 10 + Racial Bonus (No Body Mod)
-    const acEl = document.getElementById('char-ac-display');
-    if (acEl) acEl.innerText = 10 + (raceData.acBonus || 0);
+    // Update the input boxes (The white boxes in your screenshot)
+    setSafeValue('char-hp-max', char.hpMax); 
+    setSafeValue('char-mp-max', char.mpMax);
+    
+    // Ensure current values are also synced
+    setSafeValue('char-hp-current', Math.floor(char.hpCurrent || 0));
+    setSafeValue('char-mp-current', Math.floor(char.mpCurrent || 0));
 
-    // 3. Initiative: Higher of Body/Mind Mods
+    // 3. Combat Trio 
+    setSafeText('char-speed-display', (bonuses.totals['speed'] || 5) + "m");
+    setSafeText('char-ac-display', 10 + (bonuses.totals['ac'] || 0));
+
     const initEl = document.getElementById('char-init-display');
     if (initEl) {
         const bodyMod = Math.floor(totals.body / 2);
         const mindMod = Math.floor(totals.mind / 2);
         const bestMod = Math.max(bodyMod, mindMod);
         initEl.innerText = (bestMod >= 0 ? "+" : "") + bestMod;
+    } else {
+        console.warn("Missing Init Display: char-init-display");
     }
 
-    // --- Traits Display ---
-    const traitContainer = document.getElementById('char-traits-container');
-    if (traitContainer) {
-        traitContainer.innerHTML = "";
-        (raceData.traits || []).forEach(t => {
-            const tag = document.createElement('span');
-            tag.className = 'trait-tag';
-            tag.innerText = t;
-            traitContainer.appendChild(tag);
-        });
-    }
     renderClassPills(char);
 }
 
@@ -1609,7 +1698,8 @@ function closeTraitModal() {
 // --- 1. MODAL CONTROLS ---
 function openRaceModal() {
     resetRaceForm();
-    populateRaceTraitChecklist(); // Load the checklist fresh
+    populateRaceAttrPicker();     // <--- ADD THIS
+    populateRaceTraitChecklist(); 
     document.getElementById('race-modal-title').innerText = "Register New Race";
     document.getElementById('race-modal').classList.remove('hide-default');
 }
@@ -1619,7 +1709,9 @@ function closeRaceModal() {
 }
 
 
-// --- 2. TRAIT CHECKLIST LOGIC ---
+// --- 2. TRAIT & ATTRIBUTE LOGIC ---
+
+// --- A. TRAIT HELPERS ---
 async function populateRaceTraitChecklist() {
     const container = document.getElementById('trait-checklist-container');
     container.innerHTML = '<p class="text-muted small">Loading traits...</p>';
@@ -1693,22 +1785,100 @@ function renderRaceTraitTags() {
 }
 
 
+// --- B. ATTRIBUTE HELPERS ---
+
+// 1. Populate the "Add Attribute" dropdown from your Library
+async function populateRaceAttrPicker() {
+    const select = document.getElementById('race-attr-picker');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">Select stat...</option>';
+    
+    try {
+        const snap = await firestore.collection('master_attributes').orderBy('name').get();
+        attributeDefinitions = {}; // Reset cache
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            attributeDefinitions[d.key] = d.name; // Store for display later
+            
+            // Only show in dropdown if not already added to the race
+            if (!currentRaceAttributes.hasOwnProperty(d.key)) {
+                const opt = document.createElement('option');
+                opt.value = d.key;
+                opt.innerText = d.name;
+                select.appendChild(opt);
+            }
+        });
+    } catch (e) { console.error("Attr Load Error:", e); }
+}
+
+// 2. Add selected attribute to the race
+function addAttrToRace() {
+    const select = document.getElementById('race-attr-picker');
+    const key = select.value;
+    if (!key) return;
+
+    // Add with default value 0
+    currentRaceAttributes[key] = 0;
+    
+    renderRaceAttributes();
+    populateRaceAttrPicker(); // Refresh dropdown to hide the one we just picked
+}
+
+// 3. Remove attribute
+function removeAttrFromRace(key) {
+    delete currentRaceAttributes[key];
+    renderRaceAttributes();
+    populateRaceAttrPicker(); // Put it back in the dropdown
+}
+
+// 4. Update the value in memory when you type numbers
+function updateAttrValue(key, val) {
+    currentRaceAttributes[key] = parseInt(val) || 0;
+}
+
+// 5. Render the list of inputs
+function renderRaceAttributes() {
+    const container = document.getElementById('race-dynamic-attributes');
+    container.innerHTML = "";
+
+    for (const [key, value] of Object.entries(currentRaceAttributes)) {
+        const name = attributeDefinitions[key] || key; // Use nice name if available
+        
+        const div = document.createElement('div');
+        div.className = "flex-row space-between p-s trait-item-border mb-s";
+        div.style.background = "#27272a";
+        div.innerHTML = `
+            <strong class="text-muted" style="width: 120px;">${name}</strong>
+            <input type="number" class="form-input" style="width: 80px; text-align: right;" 
+                   value="${value}" onchange="updateAttrValue('${key}', this.value)">
+            <button class="btn-icon-tiny btn-danger" onclick="removeAttrFromRace('${key}')">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        `;
+        container.appendChild(div);
+    }
+}
+
 // --- 3. RESET FORM ---
 function resetRaceForm() {
+    // 1. Clear Basic Text
     document.getElementById('m-race-id').value = "";
     document.getElementById('m-race-name').value = "";
     document.getElementById('m-race-desc').value = "";
     document.getElementById('trait-checklist-search').value = "";
-    
-    // Reset all number inputs to 0
-    const numInputs = ['m-race-body','m-race-mind','m-race-spirit','m-race-hp','m-race-mp',
-                       'm-race-exp-bonus','m-race-hp-regen','m-race-mp-regen',
-                       'm-race-accuracy','m-race-ac','m-race-crit-chance'];
-    numInputs.forEach(id => document.getElementById(id).value = 0);
-    document.getElementById('m-race-speed').value = 30;
 
-    currentRaceTraits = []; // Clear global array
+    // 2. Clear Attributes (The Fix)
+    currentRaceAttributes = {}; 
+    document.getElementById('race-dynamic-attributes').innerHTML = "";
+    
+    // 3. Clear Traits
+    currentRaceTraits = [];
     document.getElementById('race-active-traits').innerHTML = "";
+    
+    // 4. Reset Title
+    document.getElementById('race-modal-title').innerText = "Register New Race";
 }
 
 
@@ -1719,29 +1889,27 @@ async function prepRaceEdit(id) {
     if (!doc.exists) return;
     const d = doc.data();
 
+    // 1. Basic Info
     document.getElementById('m-race-id').value = id;
     document.getElementById('m-race-name').value = d.name || "";
     document.getElementById('m-race-desc').value = d.description || "";
-    
-    // Fill Stats
-    document.getElementById('m-race-body').value = d.baseBody || 0;
-    document.getElementById('m-race-mind').value = d.baseMind || 0;
-    document.getElementById('m-race-spirit').value = d.baseSpirit || 0;
-    document.getElementById('m-race-hp').value = d.hpPerLv || 0;
-    document.getElementById('m-race-mp').value = d.mpPerLv || 0;
-    document.getElementById('m-race-exp-bonus').value = d.expBonus || 0;
-    document.getElementById('m-race-hp-regen').value = d.hpRegen || 0;
-    document.getElementById('m-race-mp-regen').value = d.mpRegen || 0;
-    document.getElementById('m-race-speed').value = d.speed || 30;
-    document.getElementById('m-race-accuracy').value = d.accuracy || 0;
-    document.getElementById('m-race-ac').value = d.acBonus || 0;
-    document.getElementById('m-race-crit-chance').value = d.critChance || 0;
 
-    // Load Traits
-    currentRaceTraits = d.traits || [];
+    // 2. Load Attributes (The Fix)
+    currentRaceAttributes = d.attributes || {}; 
     
-    // Open Modal and Check Boxes
-    populateRaceTraitChecklist(); 
+    // (Legacy Support: If you have old data like 'baseBody', you might want to manually map it here, 
+    // but for now we assume you are starting fresh with the new system)
+    
+    // 3. Load Traits
+    currentRaceTraits = d.traits || [];
+
+    // 4. Render Everything
+    await populateRaceAttrPicker(); // Load library definitions first so names show up
+    renderRaceAttributes();         // Draw the stat inputs
+    populateRaceTraitChecklist();   // Draw the trait checkboxes
+    renderRaceTraitTags();          // Draw green trait badges
+
+    // 5. Open Modal
     document.getElementById('race-modal-title').innerText = "Editing: " + d.name;
     document.getElementById('race-modal').classList.remove('hide-default');
 }
@@ -1758,19 +1926,13 @@ async function saveMasterRace() {
     const raceData = {
         name: name,
         description: document.getElementById('m-race-desc').value.trim(),
-        baseBody: parseInt(document.getElementById('m-race-body').value) || 0,
-        baseMind: parseInt(document.getElementById('m-race-mind').value) || 0,
-        baseSpirit: parseInt(document.getElementById('m-race-spirit').value) || 0,
-        hpPerLv: parseInt(document.getElementById('m-race-hp').value) || 0,
-        mpPerLv: parseInt(document.getElementById('m-race-mp').value) || 0,
-        expBonus: parseInt(document.getElementById('m-race-exp-bonus').value) || 0,
-        hpRegen: parseFloat(document.getElementById('m-race-hp-regen').value) || 0,
-        mpRegen: parseFloat(document.getElementById('m-race-mp-regen').value) || 0,
-        speed: parseInt(document.getElementById('m-race-speed').value) || 30,
-        accuracy: parseInt(document.getElementById('m-race-accuracy').value) || 0,
-        acBonus: parseInt(document.getElementById('m-race-ac').value) || 0,
-        critChance: parseInt(document.getElementById('m-race-crit-chance').value) || 0,
-        traits: currentRaceTraits, // Saves the array from the checklist
+        
+        // SAVE THE DYNAMIC MAP
+        attributes: currentRaceAttributes, 
+        
+        // SAVE THE TRAIT ARRAY
+        traits: currentRaceTraits,
+        
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -1824,135 +1986,296 @@ async function loadMasterRaceList() {
     });
 }
 
-// --- 10.2 CLASS REGISTRY ---
-async function createMasterClass() { saveMasterClass(); } // Helper alias
+/* ==========================================================================
+   SECTION 10.2: CLASS REGISTRY (Version 0.3.1 - Traits & Attributes)
+   ========================================================================== */
 
-async function saveMasterClass() {
-    const classId = document.getElementById('m-class-id').value;
-    const name = document.getElementById('m-class-name').value.trim();
-    if (!name) return alert("Class name required!");
+    let currentClassAttributes = {}; 
+    let currentClassTraits = []; // NEW: Array to hold selected traits
 
-    const classData = {
-        name: name,
-        tier: parseInt(document.getElementById('m-class-tier').value),
-        mainStat: document.getElementById('m-class-main-stat').value,
-        hpPerLv: parseInt(document.getElementById('m-class-hp').value) || 0,
-        mpPerLv: parseInt(document.getElementById('m-class-mp').value) || 0,
-        hpRegenBonus: parseFloat(document.getElementById('m-class-hp-regen').value) || 0,
-        mpRegenBonus: parseFloat(document.getElementById('m-class-mp-regen').value) || 0,
-        critMultiplier: parseFloat(document.getElementById('m-class-crit').value) || 2.0,
-        critChanceBonus: parseInt(document.getElementById('m-class-crit-chance').value) || 0,
-        accuracyBonus: parseInt(document.getElementById('m-class-accuracy').value) || 0,
-        armorClassBonus: parseInt(document.getElementById('m-class-ac').value) || 0,
-        speedBonus: parseInt(document.getElementById('m-class-speed-bonus').value) || 0,
-        requirements: document.getElementById('m-class-reqs').value.trim(),
-        description: document.getElementById('m-class-desc').value.trim(),
-        traits: document.getElementById('m-class-traits').value.split(',').map(t => t.trim()).filter(t => t !== ""),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
+    // --- A. MODAL CONTROLS ---
 
-    try {
-        if (classId) {
-            await firestore.collection('master_classes').doc(classId).update(classData);
-            alert("Class updated!");
-        } else {
-            classData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-            await firestore.collection('master_classes').add(classData);
-            alert("Class created!");
-        }
-        resetClassForm();
-        loadMasterClassList();
-    } catch (e) { console.error(e); }
-}
+    function openClassModal() {
+        resetClassForm(); 
+        populateClassAttrPicker(); 
+        populateClassTraitPicker(); // NEW: Load traits
+        setSafeText('class-modal-title', "Register New Class");
+        document.getElementById('class-modal').classList.remove('hide-default');
+    }
 
-async function loadMasterClassList() {
-    const list = document.getElementById('master-class-list');
-    if (!list) return;
+    function closeClassModal() {
+        document.getElementById('class-modal').classList.add('hide-default');
+    }
 
-    try {
-        // FIX: Only sort by 'tier' to avoid the 400 Index Error
-        const snap = await firestore.collection('master_classes').orderBy('tier').get();
-        list.innerHTML = "";
+    // --- B. HELPER FUNCTIONS (Attributes) ---
 
-        if (snap.empty) {
-            list.innerHTML = '<p class="text-muted text-center" style="padding:20px;">No classes registered yet.</p>';
+    async function populateClassAttrPicker() {
+        const select = document.getElementById('class-attr-picker');
+        if (!select) return;
+        
+        select.innerHTML = '<option value="">Select stat bonus...</option>';
+        
+        try {
+            const snap = await firestore.collection('master_attributes').orderBy('name').get();
+            attributeDefinitions = {}; 
+            
+            snap.forEach(doc => {
+                const d = doc.data();
+                attributeDefinitions[d.key] = d.name; 
+                if (!currentClassAttributes.hasOwnProperty(d.key)) {
+                    const opt = document.createElement('option');
+                    opt.value = d.key;
+                    opt.innerText = d.name;
+                    select.appendChild(opt);
+                }
+            });
+        } catch (e) { console.error("Attr Load Error:", e); }
+    }
+
+    function addClassAttr() {
+        const select = document.getElementById('class-attr-picker');
+        const key = select.value;
+        if (!key) return;
+        currentClassAttributes[key] = 0; 
+        renderClassAttributes();
+        populateClassAttrPicker(); 
+    }
+
+    function removeClassAttr(key) {
+        delete currentClassAttributes[key];
+        renderClassAttributes();
+        populateClassAttrPicker();
+    }
+
+    function updateClassAttrValue(key, val) {
+        currentClassAttributes[key] = parseFloat(val) || 0;
+    }
+
+    function renderClassAttributes() {
+        const container = document.getElementById('class-dynamic-attributes');
+        if (!container) return;
+        container.innerHTML = "";
+
+        if (Object.keys(currentClassAttributes).length === 0) {
+            container.innerHTML = `<div class="text-muted text-center" style="font-size:0.8rem; padding:10px;">No bonuses defined.</div>`;
             return;
         }
 
-        snap.forEach(doc => {
-            const d = doc.data();
-            const card = document.createElement('div');
-            card.className = "panel-card mb-s";
-            card.style.background = "#18181b";
-            // Color coding tiers: Gold (3), Indigo (2), Dark Grey (1)
-            card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#3f3f46'}`;
-            
-            const traitTags = (d.traits || []).map(t => 
-                `<span style="background:#312e81; color:#c7d2fe; padding:2px 6px; border-radius:4px; font-size:0.7rem; margin-right:4px;">${t}</span>`
-            ).join('');
-
-            card.innerHTML = `
-                <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
-                    <div style="flex: 1;">
-                        <div class="flex-row" style="gap:10px;">
-                            <strong style="color:white;">${d.name}</strong> 
-                            <span class="join-code-pill" style="opacity:0.6;">T${d.tier}</span>
-                            <span class="join-code-pill" style="color:#a855f7;">${d.mainStat}</span>
-                        </div>
-                        <div class="mt-s" style="margin-bottom:8px;">${traitTags}</div>
-                        <div style="font-size: 0.7rem; color: #71717a;">
-                            HP/Lv: +${d.hpPerLv} | MP/Lv: +${d.mpPerLv}
-                        </div>
-                    </div>
-                    <div class="flex-row" style="gap: 5px;">
-                        <button class="btn-small" onclick="editClass('${doc.id}')" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)" title="Delete">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
+        for (const [key, value] of Object.entries(currentClassAttributes)) {
+            const name = attributeDefinitions[key] || key;
+            const div = document.createElement('div');
+            div.className = "flex-row space-between p-s trait-item-border mb-s";
+            div.style.background = "#27272a";
+            div.innerHTML = `
+                <strong class="text-muted" style="width: 140px;">${name}</strong>
+                <input type="number" class="form-input" style="width: 80px; text-align: right;" 
+                    value="${value}" step="0.1" onchange="updateClassAttrValue('${key}', this.value)">
+                <button class="btn-icon-tiny btn-danger" onclick="removeClassAttr('${key}')">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             `;
-            list.appendChild(card);
-        });
-    } catch (e) {
-        console.error("Class Load Error:", e);
-        list.innerHTML = `<p style="color:#ef4444; text-align:center;">Error: ${e.message}</p>`;
+            container.appendChild(div);
+        }
     }
-}
 
-async function editClass(id) {
-    const d = (await firestore.collection('master_classes').doc(id).get()).data();
-    if (!d) return;
+    // --- C. HELPER FUNCTIONS (Traits) ---
 
-    document.getElementById('m-class-id').value = id;
-    document.getElementById('m-class-name').value = d.name;
-    document.getElementById('m-class-tier').value = d.tier;
-    document.getElementById('m-class-main-stat').value = d.mainStat;
-    document.getElementById('m-class-hp').value = d.hpPerLv;
-    document.getElementById('m-class-mp').value = d.mpPerLv;
-    document.getElementById('m-class-hp-regen').value = d.hpRegenBonus || 0;
-    document.getElementById('m-class-mp-regen').value = d.mpRegenBonus || 0;
-    document.getElementById('m-class-crit').value = d.critMultiplier || 2.0;
-    document.getElementById('m-class-crit-chance').value = d.critChanceBonus || 0;
-    document.getElementById('m-class-accuracy').value = d.accuracyBonus || 0;
-    document.getElementById('m-class-ac').value = d.armorClassBonus || 0;
-    document.getElementById('m-class-speed-bonus').value = d.speedBonus || 0;
-    document.getElementById('m-class-reqs').value = d.requirements || "";
-    document.getElementById('m-class-desc').value = d.description || "";
-    document.getElementById('m-class-traits').value = (d.traits || []).join(", ");
+    async function populateClassTraitPicker() {
+        const select = document.getElementById('class-trait-picker');
+        if (!select) return;
+        select.innerHTML = '<option value="">Select trait...</option>';
 
-    document.getElementById('class-editor-title').innerText = "Editing Class: " + d.name;
-    document.getElementById('class-cancel-btn').classList.remove('hide-default');
-    document.querySelector('.master-workspace').scrollTop = 0;
-}
+        try {
+            // Load all traits
+            const snap = await firestore.collection('master_traits').orderBy('name').get();
+            snap.forEach(doc => {
+                const d = doc.data();
+                // Only show if not already added
+                if (!currentClassTraits.includes(d.name)) {
+                    const opt = document.createElement('option');
+                    opt.value = d.name; // We save the NAME, not ID, for simplicity in display
+                    opt.innerText = d.name;
+                    select.appendChild(opt);
+                }
+            });
+        } catch (e) { console.error("Trait Load Error:", e); }
+    }
 
-function resetClassForm() {
-    document.getElementById('m-class-id').value = "";
-    document.querySelectorAll('#sub-classes input').forEach(i => i.value = (i.type === "number" ? 0 : ""));
-    document.getElementById('m-class-desc').value = "";
-    document.getElementById('class-editor-title').innerText = "Register New Class Archetype";
-    document.getElementById('class-cancel-btn').classList.add('hide-default');
-}
+    function addClassTrait() {
+        const select = document.getElementById('class-trait-picker');
+        const val = select.value;
+        if (!val) return;
+
+        if (!currentClassTraits.includes(val)) {
+            currentClassTraits.push(val);
+            renderClassTraits();
+            populateClassTraitPicker(); // Refresh list
+        }
+    }
+
+    function removeClassTrait(name) {
+        currentClassTraits = currentClassTraits.filter(t => t !== name);
+        renderClassTraits();
+        populateClassTraitPicker();
+    }
+
+    function renderClassTraits() {
+        const container = document.getElementById('class-active-traits');
+        if (!container) return;
+        container.innerHTML = "";
+
+        currentClassTraits.forEach(t => {
+            const tag = document.createElement('div');
+            tag.className = "trait-tag flex-row gap-s";
+            tag.style.padding = "4px 8px";
+            tag.innerHTML = `
+                <span>${t}</span>
+                <i class="fa-solid fa-xmark" style="cursor:pointer; opacity:0.7;" onclick="removeClassTrait('${t}')"></i>
+            `;
+            container.appendChild(tag);
+        });
+    }
+
+    // --- D. MAIN CRUD ---
+
+    async function saveMasterClass() {
+        const classId = document.getElementById('m-class-id').value;
+        const name = document.getElementById('m-class-name').value.trim();
+        if (!name) return alert("Class name required!");
+
+        const classData = {
+            name: name,
+            tier: parseInt(document.getElementById('m-class-tier').value) || 1,
+            mainStat: document.getElementById('m-class-main-stat').value,
+            attributes: currentClassAttributes,
+            
+            // NEW: Save the dynamic trait array
+            traits: currentClassTraits,
+            
+            requirements: document.getElementById('m-class-reqs').value.trim(),
+            description: document.getElementById('m-class-desc').value.trim(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+            if (classId) {
+                await firestore.collection('master_classes').doc(classId).update(classData);
+                if(typeof showToast === "function") showToast("Class Updated");
+            } else {
+                classData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                await firestore.collection('master_classes').add(classData);
+                if(typeof showToast === "function") showToast("Class Created");
+            }
+            closeClassModal(); 
+            loadMasterClassList();
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadMasterClassList() {
+        const list = document.getElementById('master-class-list');
+        if (!list) return;
+
+        try {
+            const snap = await firestore.collection('master_classes').orderBy('tier').get();
+            list.innerHTML = "";
+
+            if (snap.empty) {
+                list.innerHTML = '<p class="text-muted text-center" style="padding:20px;">No classes registered yet.</p>';
+                return;
+            }
+
+            snap.forEach(doc => {
+                const d = doc.data();
+                
+                // Render Attributes Summary
+                let bonusSummary = "";
+                if (d.attributes && Object.keys(d.attributes).length > 0) {
+                    const entries = Object.entries(d.attributes).slice(0, 4);
+                    bonusSummary = entries.map(([k, v]) => `<span style="color:#a1a1aa;">${k}:</span> <span style="color:#fff;">${v}</span>`).join(' | ');
+                    if (Object.keys(d.attributes).length > 4) bonusSummary += " ...";
+                } else {
+                    bonusSummary = "No Stat Bonuses";
+                }
+
+                // Render Trait Tags
+                const traitTags = (d.traits || []).map(t => 
+                    `<span style="background:#312e81; color:#c7d2fe; padding:2px 6px; border-radius:4px; font-size:0.7rem; margin-right:4px;">${t}</span>`
+                ).join('');
+
+                const card = document.createElement('div');
+                card.className = "panel-card mb-s";
+                card.style.background = "#18181b";
+                card.style.borderLeft = `4px solid ${d.tier == 3 ? '#fbbf24' : d.tier == 2 ? '#6366f1' : '#3f3f46'}`;
+                
+                card.innerHTML = `
+                    <div class="flex-row" style="justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div class="flex-row" style="gap:10px; align-items: center; margin-bottom: 8px;">
+                                <strong style="color:white; font-size: 1.1rem;">${d.name}</strong> 
+                                <span class="join-code-pill" style="opacity:0.6;">T${d.tier}</span>
+                                <span class="join-code-pill" style="color:#a855f7;">${d.mainStat}</span>
+                            </div>
+                            <div class="mb-s" style="font-size: 0.8rem; background: #111; padding: 6px; border-radius: 4px;">
+                                ${bonusSummary}
+                            </div>
+                            <div>${traitTags}</div>
+                        </div>
+                        <div class="flex-row" style="gap: 5px;">
+                            <button class="btn-small" onclick="prepClassEdit('${doc.id}')" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="btn-danger-small" onclick="deleteMasterAsset('master_classes', '${doc.id}', loadMasterClassList)" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        } catch (e) {
+            console.error("Class Load Error:", e);
+            list.innerHTML = `<p style="color:#ef4444; text-align:center;">Error: ${e.message}</p>`;
+        }
+    }
+
+    async function prepClassEdit(id) {
+        const d = (await firestore.collection('master_classes').doc(id).get()).data();
+        if (!d) return;
+
+        document.getElementById('m-class-id').value = id;
+        setSafeValue('m-class-name', d.name);
+        setSafeValue('m-class-tier', d.tier);
+        setSafeValue('m-class-main-stat', d.mainStat);
+        setSafeValue('m-class-reqs', d.requirements || "");
+        setSafeValue('m-class-desc', d.description || "");
+        
+        // LOAD LISTS
+        currentClassAttributes = d.attributes || {};
+        currentClassTraits = d.traits || []; // NEW
+        
+        setSafeText('class-modal-title', "Editing Class: " + d.name);
+        document.getElementById('class-modal').classList.remove('hide-default');
+        
+        await populateClassAttrPicker();
+        renderClassAttributes();
+        
+        // NEW
+        await populateClassTraitPicker();
+        renderClassTraits();
+    }
+
+    function resetClassForm() {
+        document.getElementById('m-class-id').value = "";
+        setSafeValue('m-class-name', "");
+        setSafeValue('m-class-tier', "1");
+        setSafeValue('m-class-main-stat', "");
+        setSafeValue('m-class-desc', "");
+        setSafeValue('m-class-reqs', "");
+        
+        currentClassAttributes = {};
+        currentClassTraits = []; // Reset traits
+        
+        renderClassAttributes();
+        renderClassTraits(); // Clear display
+    }
 
 // ==========================================
 // --- 10.3 SKILL REGISTRY ---
@@ -2126,9 +2449,6 @@ async function refreshSkillClassDropdown() {
 }
 
 // --- 10.4 TRAIT LIBRARY ---
-
-
-
 async function deleteTrait(id) {
     if (!confirm("Are you sure?")) return;
     try {
@@ -2229,19 +2549,116 @@ function getSourceColor(source) {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 async function updateTraitDescription(id, val) {
     await firestore.collection('master_traits').doc(id).update({ description: val });
+}
+
+// --- 10.5 ATTRIBUTE LIBRARY LOGIC ---
+
+function openAttributeModal() {
+    // Reset fields
+    document.getElementById('m-attr-id').value = "";
+    document.getElementById('m-attr-name').value = "";
+    document.getElementById('m-attr-key').value = "";
+    document.getElementById('m-attr-default').value = 0;
+    
+    // Reset UI State
+    document.getElementById('attr-modal-title').innerText = "Define Attribute";
+    document.getElementById('m-attr-key').disabled = false; // Re-enable for new entries
+    
+    document.getElementById('attribute-modal').classList.remove('hide-default');
+}
+
+function closeAttrModal() {
+    document.getElementById('attribute-modal').classList.add('hide-default');
+}
+
+async function saveAttribute() {
+    const id = document.getElementById('m-attr-id').value;
+    const name = document.getElementById('m-attr-name').value.trim();
+    const key = document.getElementById('m-attr-key').value.trim().toLowerCase().replace(/\s+/g, '_'); // Auto-format key
+    const defVal = parseFloat(document.getElementById('m-attr-default').value) || 0;
+
+    if (!name || !key) return alert("Name and Key are required.");
+
+    const data = { name, key, defaultValue: defVal };
+
+    try {
+        if (id) {
+            await firestore.collection('master_attributes').doc(id).update(data);
+        } else {
+            // Check if key exists first to prevent duplicates
+            const check = await firestore.collection('master_attributes').where('key', '==', key).get();
+            if (!check.empty) return alert("This Key already exists!");
+            
+            await firestore.collection('master_attributes').add(data);
+        }
+        closeAttrModal();
+        loadAttributeList();
+    } catch (e) { console.error(e); }
+}
+
+async function loadAttributeList() {
+    const list = document.getElementById('master-attribute-list');
+    if (!list) return;
+    
+    list.innerHTML = '<div class="text-muted p-s">Loading attributes...</div>';
+
+    try {
+        const snap = await firestore.collection('master_attributes').orderBy('name').get();
+        list.innerHTML = "";
+
+        if (snap.empty) {
+            list.innerHTML = '<div class="text-muted p-s">No attributes defined yet.</div>';
+            return;
+        }
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            const div = document.createElement('div');
+            div.className = "panel-card mb-s flex-row space-between trait-item-border";
+            div.innerHTML = `
+                <div>
+                    <strong class="text-success">${d.name}</strong>
+                    <div class="text-muted small">Key: <code style="color:#a1a1aa">${d.key}</code> | Default: ${d.defaultValue}</div>
+                </div>
+                <div class="flex-row gap-s">
+                    <button class="btn-icon-tiny" onclick="prepAttributeEdit('${doc.id}')">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="btn-icon-tiny btn-danger" onclick="deleteMasterAsset('master_attributes', '${doc.id}', loadAttributeList)">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    } catch (e) {
+        console.error("Attribute Load Error:", e);
+        list.innerHTML = `<div class="text-danger p-s">Error: ${e.message}</div>`;
+    }
+}
+
+
+async function prepAttributeEdit(id) {
+    try {
+        const doc = await firestore.collection('master_attributes').doc(id).get();
+        if (!doc.exists) return;
+        const d = doc.data();
+
+        // Fill the modal fields
+        document.getElementById('m-attr-id').value = id;
+        document.getElementById('m-attr-name').value = d.name || "";
+        document.getElementById('m-attr-key').value = d.key || "";
+        document.getElementById('m-attr-default').value = d.defaultValue || 0;
+
+        // Change Title
+        document.getElementById('attr-modal-title').innerText = "Edit Attribute: " + d.name;
+
+        // Optional: Disable the key field so they don't break existing references
+        document.getElementById('m-attr-key').disabled = true;
+
+        // Show Modal
+        document.getElementById('attribute-modal').classList.remove('hide-default');
+    } catch (e) { console.error("Error prepping attribute edit:", e); }
 }
