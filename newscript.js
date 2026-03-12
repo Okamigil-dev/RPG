@@ -1378,15 +1378,16 @@ function syncSidebarUI() {
     // Use the max stats calculated by the Identity Listener
     const hpMax = char.hpMax || 15;
     const mpMax = char.mpMax || 15;
-
     setText('hud-hp-text', `${Math.floor(char.hpC || 0)}/${hpMax}`);
     setText('hud-mp-text', `${Math.floor(char.mpC || 0)}/${mpMax}`);
     
-    // 3. Stats (Using totals passed from the caller or global)
-    // Note: We'll need to make sure 'totals' is defined or accessible
-    setText('hud-mod-body', `BOD ${getMod(char.tempStats.body)}`);
-    setText('hud-mod-mind', `MIN ${getMod(char.tempStats.mind)}`);
-    setText('hud-mod-spirit', `SPI ${getMod(char.tempStats.spirit)}`);
+    // Use Modifiers from global variable object
+    const bMod = char.modifiers.body;
+    const mMod = char.modifiers.mind;
+    const sMod = char.modifiers.spirit;
+    setText('hud-mod-body', `BOD ${bMod >= 0 ? "+" : ""}${bMod}`);
+    setText('hud-mod-mind', `MIN ${mMod >= 0 ? "+" : ""}${mMod}`);
+    setText('hud-mod-spirit', `SPI ${sMod >= 0 ? "+" : ""}${sMod}`);
 
     // 4. Percentage Text
     const expP = ((char.expC || 0) / ((char.level + 1) * rules.baseExp)) * 100;
