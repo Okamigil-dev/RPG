@@ -727,6 +727,37 @@
                 }
                 .attr-controls { display: flex; align-items: center; gap: 10px; }
                 .pending-stat-value { font-weight: 900; min-width: 20px; text-align: center; font-size: 1.1rem; }
+                
+                .traits-flex-wrap {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                    margin-top: 10px;
+                }
+
+                .trait-tag {
+                    background: #1e1b4b;
+                    color: #a5b4fc;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    border: 1px solid #312e81;
+                    font-size: 0.75rem;
+                    font-weight: bold;
+                    cursor: help; /* Indicates tooltip on hover */
+                    transition: 0.2s;
+                }
+
+                .trait-tag:hover {
+                    background: #312e81;
+                    border-color: #4338ca;
+                }
+
+                .trait-panel-layout {
+                    display: flex;
+                    flex-direction: column;
+                    max-height: 85vh; /* Limits height so scrollbar appears */
+                }
+                
                 .join-code-pill { 
                     color: var(--system-text);
                     font-weight: 900; 
