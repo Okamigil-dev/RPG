@@ -119,6 +119,15 @@
                 </div>
 
             
+                <div class="panel-card notes-column">
+                                <h3 class="panel-subtitle">Adventurer's Notes</h3>
+                                <textarea 
+                                    id="char-notes" 
+                                    class="notes-textarea" 
+                                    placeholder="Quest logs, inventory, or secrets..." 
+                                    onchange="saveCharacter()"></textarea>
+                </div>
+
             </div>
     <!--===============================================================
         --- Section 2. Main Body --------------------------------------
@@ -184,9 +193,9 @@
                                         <span class="attr-name">BODY</span>
                                         <div class="attr-controls">
                                             <button class="btn-small" onclick="adjustPendingStat('body', -1)">-</button>
-                                            <span id="display-body" class="pending-stat-value">0</span>
+                                            <span id="display-body" class="pending-stat-value">10</span>
                                             <button class="btn-small" onclick="adjustPendingStat('body', 1)">+</button>
-                                            <span id="total-body-label" class="total-attr">0</span>
+                                            <span id="total-body-label" class="total-attr">10</span>
                                         </div>
                                     </div>
                         
@@ -194,9 +203,9 @@
                                         <span class="attr-name">MIND</span>
                                         <div class="attr-controls">
                                             <button class="btn-small" onclick="adjustPendingStat('mind', -1)">-</button>
-                                            <span id="display-mind" class="pending-stat-value">0</span>
+                                            <span id="display-mind" class="pending-stat-value">10</span>
                                             <button class="btn-small" onclick="adjustPendingStat('mind', 1)">+</button>
-                                            <span id="total-mind-label" class="total-attr">0</span>
+                                            <span id="total-mind-label" class="total-attr">10</span>
                                         </div>
                                     </div>
                         
@@ -204,9 +213,9 @@
                                         <span class="attr-name">SPIRIT</span>
                                         <div class="attr-controls">
                                             <button class="btn-small" onclick="adjustPendingStat('spirit', -1)">-</button>
-                                            <span id="display-spirit" class="pending-stat-value">0</span>
+                                            <span id="display-spirit" class="pending-stat-value">10</span>
                                             <button class="btn-small" onclick="adjustPendingStat('spirit', 1)">+</button>
-                                            <span id="total-spirit-label" class="total-attr">0</span>
+                                            <span id="total-spirit-label" class="total-attr">10</span>
                                         </div>
                                     </div>
                                 </div>
@@ -291,14 +300,7 @@
                         <!-- Gallery Box -->
                         <div class="stats-resources-wrapper">
 
-                            <div class="panel-card notes-column">
-                                <h3 class="panel-subtitle">Adventurer's Notes</h3>
-                                <textarea 
-                                    id="char-notes" 
-                                    class="notes-textarea" 
-                                    placeholder="Quest logs, inventory, or secrets..." 
-                                    onchange="saveCharacter()"></textarea>
-                            </div>
+                            
                             
                             <div class="panel-card gallery-column">
                                 <div class="panel-header-row">
