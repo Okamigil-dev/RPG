@@ -999,8 +999,8 @@
                     border-radius: 4px;
                     margin: 10px 0;
                 }
-                .chat-input-box{ position: relative; }
-                .chat-btn{ position:absolute; right:10px; background: none; color: var(--color-muted);}
+                .chat-input-box{position: relative;display: flex;align-items: center;}
+                .chat-btn{position:absolute;right:10px;background: none;border: none;color: var(--color-muted); cursor: pointer;}
             /*  ==========================================================================
                 --- Dice Tray ------------------------------------------------------------
                 ==========================================================================   */
