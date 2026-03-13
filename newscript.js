@@ -280,7 +280,7 @@ auth.onAuthStateChanged((user) => {
                     initClockListener();
                     initChatLogListener();
                     initInstanceCharactersListener();
-                    initEventListeners();
+                    // initEventListeners();
 
 
                 }
@@ -1263,13 +1263,7 @@ function adjustPendingStat(stat, amount) {
 
 
 
-// SHOULD BE FINE NOW NEED TO FIND A PLACE TO ORGANIZE THESE TWO
-function getAttrValue(source, key) {
-    if (!source || !source.attributes) return 0;
-    return parseFloat(source.attributes[key]) || 0;
-}
-
-// SHOULD BE FINE NOW NEED TO FIND A PLACE TO ORGANIZE THESE TWO
+// SHOULD BE FINE NOW NEED TO FIND A PLACE TO ORGANIZE THIS
 async function calculateStats() {
     const char = users.character;
 
@@ -1315,7 +1309,6 @@ async function calculateStats() {
     };
 
     // 6. Handle Derived Stats (HP/MP) using the now-synced attributes
-    // Instead of getAttrValue, you can now pull directly from char.attributes
     char.hpMax = 15 + (char.attributes.hp_lv || 0) + ((char.totalStats.body - 10) * rules.statMultiplier);
     char.mpMax = 15 + (char.attributes.mp_lv || 0) + ((char.totalStats.spirit - 10) * rules.statMultiplier);
 
@@ -1327,63 +1320,63 @@ async function calculateStats() {
 
 }
 
-async function resolveAllStats(charData) {
-    const registry = {
-        inherent: {}, // Race, Class, Background
-        equipment: {}, // Weapons, Armor, Accessories
-        status: {},    // Potions, Spells, Buffs
-        totals: {}     // Final sum of everything
-    };
+// async function resolveAllStats(charData) {
+//     const registry = {
+//         inherent: {}, // Race, Class, Background
+//         equipment: {}, // Weapons, Armor, Accessories
+//         status: {},    // Potions, Spells, Buffs
+//         totals: {}     // Final sum of everything
+//     };
 
-    const sources = [];
+//     const sources = [];
 
-    // --- 1. GATHER INHERENT SOURCES ---
-    const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
-    if (!raceSnap.empty) {
-        let d = raceSnap.docs[0].data();
-        d._sourceType = 'inherent';
-        d._sourceName = 'Race';
-        sources.push(d);
-    }
+//     // --- 1. GATHER INHERENT SOURCES ---
+//     const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
+//     if (!raceSnap.empty) {
+//         let d = raceSnap.docs[0].data();
+//         d._sourceType = 'inherent';
+//         d._sourceName = 'Race';
+//         sources.push(d);
+//     }
 
-    for (const className of Object.keys(charData.unlockedClasses || {})) {
-        const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
-        if (!classSnap.empty) {
-            let d = classSnap.docs[0].data();
-            d._sourceType = 'inherent';
-            d._sourceName = className;
-            sources.push(d);
-        }
-    }
+//     for (const className of Object.keys(charData.unlockedClasses || {})) {
+//         const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
+//         if (!classSnap.empty) {
+//             let d = classSnap.docs[0].data();
+//             d._sourceType = 'inherent';
+//             d._sourceName = className;
+//             sources.push(d);
+//         }
+//     }
 
-    // --- 2. GATHER EQUIPMENT SOURCES (Placeholder for your future Item system) ---
-    // (charData.equippedItems || []).forEach(item => { ... push to sources with _sourceType: 'equipment' ... });
+//     // --- 2. GATHER EQUIPMENT SOURCES (Placeholder for your future Item system) ---
+//     // (charData.equippedItems || []).forEach(item => { ... push to sources with _sourceType: 'equipment' ... });
 
-    // --- 3. GATHER STATUS SOURCES (Placeholder for your future Buff system) ---
-    // (charData.activeBuffs || []).forEach(buff => { ... push to sources with _sourceType: 'status' ... });
+//     // --- 3. GATHER STATUS SOURCES (Placeholder for your future Buff system) ---
+//     // (charData.activeBuffs || []).forEach(buff => { ... push to sources with _sourceType: 'status' ... });
 
 
-    // --- 4. THE MULTI-LAYER MERGE ---
-    sources.forEach(src => {
-        if (!src.attributes) return;
+//     // --- 4. THE MULTI-LAYER MERGE ---
+//     sources.forEach(src => {
+//         if (!src.attributes) return;
 
-        const type = src._sourceType;
-        const name = src._sourceName;
+//         const type = src._sourceType;
+//         const name = src._sourceName;
 
-        for (const [key, value] of Object.entries(src.attributes)) {
-            const val = parseFloat(value) || 0;
+//         for (const [key, value] of Object.entries(src.attributes)) {
+//             const val = parseFloat(value) || 0;
 
-            // Save to specific category (The "Receipt")
-            if (!registry[type][key]) registry[type][key] = {};
-            registry[type][key][name] = val;
+//             // Save to specific category (The "Receipt")
+//             if (!registry[type][key]) registry[type][key] = {};
+//             registry[type][key][name] = val;
 
-            // Add to the final totals map
-            registry.totals[key] = (registry.totals[key] || 0) + val;
-        }
-    });
+//             // Add to the final totals map
+//             registry.totals[key] = (registry.totals[key] || 0) + val;
+//         }
+//     });
 
-    return registry;
-}
+//     return registry;
+// }
 
 
 
@@ -1510,27 +1503,27 @@ function syncSheetDashboardUI() {
 }
 
 
-function initEventListeners() {
-    // Current HP/MP Sync
-    document.getElementById('char-hp-current').addEventListener('change', (e) => {
-        users.character.hpC = parseFloat(e.target.value) || 0;
-    });
-    document.getElementById('char-mp-current').addEventListener('change', (e) => {
-        users.character.mpC = parseFloat(e.target.value) || 0;
-    });
+// function initEventListeners() {
+//     // Current HP/MP Sync
+//     document.getElementById('char-hp-current').addEventListener('change', (e) => {
+//         users.character.hpC = parseFloat(e.target.value) || 0;
+//     });
+//     document.getElementById('char-mp-current').addEventListener('change', (e) => {
+//         users.character.mpC = parseFloat(e.target.value) || 0;
+//     });
 
-    // Race Dropdown Sync
-    document.getElementById('char-race').addEventListener('change', async (e) => {
-        users.character.race = e.target.value; // Saves the ID
-        await calculateStats(); // Recalculate based on new race
-        updateHUD(); // Show the new HP Max
-    });
+//     // Race Dropdown Sync
+//     document.getElementById('char-race').addEventListener('change', async (e) => {
+//         users.character.race = e.target.value; // Saves the ID
+//         await calculateStats(); // Recalculate based on new race
+//         updateHUD(); // Show the new HP Max
+//     });
 
-    // Notes Sync
-    document.getElementById('char-notes').addEventListener('input', (e) => {
-        users.character.notes = e.target.value;
-    });
-}
+//     // Notes Sync
+//     document.getElementById('char-notes').addEventListener('input', (e) => {
+//         users.character.notes = e.target.value;
+//     });
+// }
 
 
 
