@@ -1175,7 +1175,7 @@ function renderClassPills() {
     } else {
         classNames.forEach(className => {
             const pill = document.createElement('span');
-            pill.className = 'join-code-pill';
+            pill.className = 'class-pill';
 
             const level = classes[className];
             pill.innerText = `${className} Lv.${level}`;
