@@ -181,7 +181,7 @@
                                     <div class="panel-subtitle">Attributes</div>
                                     
                                     <div id="attr-confirm-area" class="hide-default">
-                                        <button class="btn-primary" onclick="confirmAttributeChanges()">Confirm</button>
+                                        <button class="btn-secondary" onclick="confirmAttributeChanges()">Confirm</button>
                                     </div>
 
                                     <div id="char-ap-rem" class="char-level-badge">AP: 0</div>
@@ -384,18 +384,18 @@
                     </div>
                 
                 </div>
-                <div class="flex-row">
-
-                    <div class="chat-input-area grid gap-s">
+                <div class="chat-input-area grid gap-s">
                         <select id="chat-target-select" class="form-input">
                         <option value="all">Everyone</option>
                         </select>
+                    <div class="chat-input-box">        
                         <input type="text" id="chat-msg-input" class="form-input flex-grow" autocomplete="off" placeholder="Type a message..." onkeydown="handleEnter(event, sendChatMessage)">
                         
-                    </div>
-                    <button onclick="sendChatMessage()" class="btn-primary">
+                        <button onclick="sendChatMessage()" class="chat-btn">
                         <i class="fa-solid fa-paper-plane"></i>
-                    </button>
+                        </button>
+                    </div>
+                    
                 </div>
             </div>   
 
