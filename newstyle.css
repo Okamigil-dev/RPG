@@ -271,7 +271,7 @@
         .nav-left { display: flex; align-items: center; gap: 20px; }
 
         .nav-tabs { display: flex; gap: 5px; } /* Added gap between tabs for better separation */
-
+        .selected-tab { border: 2px solid var(--color-accent); border-radius: 4px; }
         .tab-btn { 
             background: transparent; color: var(--color-muted); border: none; 
             cursor: pointer; padding: 8px 12px; font-weight: 600; 
