@@ -1276,7 +1276,9 @@ async function calculateStats() {
     // 1. Fetch master_races data
     const raceSnap = await firestore.collection('master_races').doc(char.race).get();
     const raceD = raceSnap.exists ? raceSnap.data() : {};
-
+    
+    // 2. Wipe the global attributes for a fresh calculation
+    char.traits = raceD.traits || [];
     // 2. Wipe the global attributes for a fresh calculation
     char.attributes = {};
 
@@ -1492,6 +1494,17 @@ function syncSheetDashboardUI() {
     const initEl = document.getElementById('char-init-display');
     const initiative = char.modifiers.initiative || 0;
     initEl.innerText = (initiative >= 0 ? "+" : "") + initiative;
+
+    const traitContainer = document.getElementById('char-traits-container');
+    if (traitContainer) {
+        traitContainer.innerHTML = "";
+        char.traits.forEach(t => {
+            const tag = document.createElement('span');
+            tag.className = 'trait-tag';
+            tag.innerText = t;
+            traitContainer.appendChild(tag);
+        });
+    }
 
     renderClassPills();
 }
