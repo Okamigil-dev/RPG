@@ -57,15 +57,15 @@ const users = {
         activeId: null,                                 // Active Character Id
         race: null,
 
-        tempStats: { body: 0, mind: 0, spirit: 0 },     // pendingStats
+        tempStats: { body: 10, mind: 10, spirit: 10 },     // pendingStats
         baseStats: { body: 10, mind: 10, spirit: 10 },  // originalStats
         totalStats: { body: 10, mind: 10, spirit: 10 },
         attributes: {},
 
         hpC: 15,
         mpC: 15,
-        hpMax: 10,
-        mpMax: 10,
+        hpMax: 15,
+        mpMax: 15,
 
         level: 1,
         exp: 0,
@@ -222,7 +222,7 @@ function logoutUser() {
     if (char.rtdbListener) rtdb.ref('characters/' + char.activeId).off();
 
     users.character = globalReset();
-    
+
     auth.signOut().then(() => {
         console.log("User signed out successfully.");
     }).catch(err => console.error("Logout Error:", err));
@@ -1145,14 +1145,14 @@ async function selectCharacter(id, name) {
             name: null,
             activeId: null,
             race: null,
-            tempStats: { body: 0, mind: 0, spirit: 0 },
+            tempStats: { body: 10, mind: 10, spirit: 10 },
             baseStats: { body: 10, mind: 10, spirit: 10 },
             totalStats: { body: 10, mind: 10, spirit: 10 },
             attributes: {},
             hpC: 15,
             mpC: 15,
-            hpMax: 10,
-            mpMax: 10,
+            hpMax: 15,
+            mpMax: 15,
             level: 1,
             exp: 0,
             totalAP: 0,
