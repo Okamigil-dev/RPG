@@ -619,7 +619,11 @@
                     grid-template-columns: 2fr 1fr 100px;
                     gap: 20px;
                 }
-
+                .class-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                }
                 .stats-resources-wrapper {
                     display: grid;
                     grid-template-columns: 1fr 1fr;
