@@ -1386,8 +1386,8 @@ async function updateHUD() {
     setValue('char-race', char.race || "");
     setText('char-level-display', `Lv. ${char.level || 1}`);
 
-    setValue('char-hp-max', hpMax || 15);
-    setValue('char-mp-max', mpMax || 15);
+    setValue('char-hp-max', hpMax);
+    setValue('char-mp-max', mpMax);
     setValue('char-hp-current', Math.floor(char.hpC || 0));
     setValue('char-mp-current', Math.floor(char.mpC || 0));
 
