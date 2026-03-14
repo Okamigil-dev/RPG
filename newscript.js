@@ -1346,64 +1346,6 @@ async function calculateStats() {
 
 }
 
-// async function resolveAllStats(charData) {
-//     const registry = {
-//         inherent: {}, // Race, Class, Background
-//         equipment: {}, // Weapons, Armor, Accessories
-//         status: {},    // Potions, Spells, Buffs
-//         totals: {}     // Final sum of everything
-//     };
-
-//     const sources = [];
-
-//     // --- 1. GATHER INHERENT SOURCES ---
-//     const raceSnap = await firestore.collection('master_races').where('name', '==', charData.race).limit(1).get();
-//     if (!raceSnap.empty) {
-//         let d = raceSnap.docs[0].data();
-//         d._sourceType = 'inherent';
-//         d._sourceName = 'Race';
-//         sources.push(d);
-//     }
-
-//     for (const className of Object.keys(charData.unlockedClasses || {})) {
-//         const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
-//         if (!classSnap.empty) {
-//             let d = classSnap.docs[0].data();
-//             d._sourceType = 'inherent';
-//             d._sourceName = className;
-//             sources.push(d);
-//         }
-//     }
-
-//     // --- 2. GATHER EQUIPMENT SOURCES (Placeholder for your future Item system) ---
-//     // (charData.equippedItems || []).forEach(item => { ... push to sources with _sourceType: 'equipment' ... });
-
-//     // --- 3. GATHER STATUS SOURCES (Placeholder for your future Buff system) ---
-//     // (charData.activeBuffs || []).forEach(buff => { ... push to sources with _sourceType: 'status' ... });
-
-
-//     // --- 4. THE MULTI-LAYER MERGE ---
-//     sources.forEach(src => {
-//         if (!src.attributes) return;
-
-//         const type = src._sourceType;
-//         const name = src._sourceName;
-
-//         for (const [key, value] of Object.entries(src.attributes)) {
-//             const val = parseFloat(value) || 0;
-
-//             // Save to specific category (The "Receipt")
-//             if (!registry[type][key]) registry[type][key] = {};
-//             registry[type][key][name] = val;
-
-//             // Add to the final totals map
-//             registry.totals[key] = (registry.totals[key] || 0) + val;
-//         }
-//     });
-
-//     return registry;
-// }
-
 
 
 
@@ -1444,8 +1386,8 @@ async function updateHUD() {
     setValue('char-race', char.race || "");
     setText('char-level-display', `Lv. ${char.level || 1}`);
 
-    setValue('char-hp-max', hpMax);
-    setValue('char-mp-max', mpMax);
+    setValue('char-hp-max', hpMax || 15);
+    setValue('char-mp-max', mpMax || 15);
     setValue('char-hp-current', Math.floor(char.hpC || 0));
     setValue('char-mp-current', Math.floor(char.mpC || 0));
 
