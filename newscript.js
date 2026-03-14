@@ -620,9 +620,11 @@ function updatePortraitUI(gallery, index) {
     const hudEl = document.getElementById('hud-portrait');
     if (hudEl) {
         if (imgUrl) {
+            hudEl.innerHTML = '';
             hudEl.style.setProperty('--char-portrait', `url(${imgUrl})`);
         } else {
             hudEl.style.removeProperty('--char-portrait');
+            hudEl.innerHTML = '<i class="fa-solid fa-user"></i>';
         }
     }
 }
