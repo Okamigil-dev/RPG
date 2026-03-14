@@ -221,8 +221,8 @@ function logoutUser() {
     }
     if (char.rtdbListener) rtdb.ref('characters/' + char.activeId).off();
 
-    char.activeId = null;
-    char.name = null;
+    users.character = globalReset();
+    
     auth.signOut().then(() => {
         console.log("User signed out successfully.");
     }).catch(err => console.error("Logout Error:", err));
@@ -1140,7 +1140,33 @@ async function selectCharacter(id, name) {
 /*  ==========================================================================
     --- Return to Selection --------------------------------------------------
     ==========================================================================  */
-function goBackToSelection() {
+    function globalReset() {
+        return {
+            name: null,
+            activeId: null,
+            race: null,
+            tempStats: { body: 0, mind: 0, spirit: 0 },
+            baseStats: { body: 10, mind: 10, spirit: 10 },
+            totalStats: { body: 10, mind: 10, spirit: 10 },
+            attributes: {},
+            hpC: 15,
+            mpC: 15,
+            hpMax: 10,
+            mpMax: 10,
+            level: 1,
+            exp: 0,
+            totalAP: 0,
+            traits: [],
+            modifiers: { body: 0, mind: 0, spirit: 0, initiative: 0 },
+            className: {},
+            classLevels: {},
+            portrait: 0,
+            gallery: [],
+            rtdbListener: null,
+            listener: null
+        };
+    }
+    function goBackToSelection() {
     const char = users.character;
     if (char.listener) {
         char.listener();
@@ -1153,8 +1179,7 @@ function goBackToSelection() {
 
     localStorage.removeItem('activeCharId');
     localStorage.removeItem('activeCharName');
-    char.activeId = null;
-    char.name = null;
+    users.character = globalReset();
 
     document.getElementById('active-char-hud').innerHTML = users.hudDefault;
 
