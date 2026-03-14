@@ -119,14 +119,7 @@
                 </div>
 
             
-                <div class="panel-card h-100">
-                                <h3 class="panel-subtitle">Adventurer's Notes</h3>
-                                <textarea 
-                                    id="char-notes" 
-                                    class="notes-textarea" 
-                                    placeholder="Quest logs, inventory, or secrets..." 
-                                    onchange="saveCharacter()"></textarea>
-                </div>
+                
 
             </div>
     <!--===============================================================
@@ -298,8 +291,16 @@
 
                     
                         <!-- Gallery Box -->
-                        <div>
+                        <div class="stats-resources-wrapper">
 
+                            <div class="panel-card h-100">
+                                <h3 class="panel-subtitle">Adventurer's Notes</h3>
+                                <textarea 
+                                    id="char-notes" 
+                                    class="notes-textarea" 
+                                    placeholder="Quest logs, inventory, or secrets..." 
+                                    onchange="saveCharacter()"></textarea>
+                            </div>
                             
                             
                             <div class="panel-card gallery-column">
@@ -383,6 +384,7 @@
                         <div class="chat-log-placeholder">No messages yet</div>
                     </div>
                 
+                </div>
                 </div>
                 <div class="chat-input-area grid gap-s">
                         <select id="chat-target-select" class="form-input">
