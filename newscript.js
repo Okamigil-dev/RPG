@@ -1182,7 +1182,8 @@ async function selectCharacter(id, name) {
     users.character = globalReset();
 
     document.getElementById('active-char-hud').innerHTML = users.hudDefault;
-
+    
+    updatePortraitUI();
     document.getElementById('char-selection-view').classList.remove('hide-default');
     document.getElementById('char-sheet-view').classList.add('hide-default');
 }
