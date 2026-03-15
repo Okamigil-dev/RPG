@@ -1297,8 +1297,24 @@ async function calculateStats() {
     const raceSnap = await firestore.collection('master_races').doc(char.race).get();
     const raceD = raceSnap.exists ? raceSnap.data() : {};
     
-    // 2. Wipe the global attributes for a fresh calculation
-    char.traits = raceD.traits || [];
+
+    char.traits = []; 
+
+    // 2. Add Race Traits
+    if (raceD.traits) {
+        raceD.traits.forEach(tName => {
+            char.traits.push({ name: tName, source: 'race' });
+        });
+    }
+
+    // // 3. Add Class Traits (inside your class loop)
+    // if (classD.traits) {
+    //     classD.traits.forEach(tName => {
+    //         char.traits.push({ name: tName, source: 'class' });
+    //     });
+    // }
+
+    
     // 2. Wipe the global attributes for a fresh calculation
     char.attributes = {};
 
@@ -1461,10 +1477,11 @@ function syncSheetDashboardUI() {
         traitContainer.innerHTML = "";
         char.traits.forEach(t => {
             const tag = document.createElement('span');
-            tag.className = 'trait-tag';
-            tag.innerText = t;
+            tag.className = `trait-tag ${t.source}`; 
+            tag.innerText = t.name; 
             traitContainer.appendChild(tag);
         });
+        
     }
 
     renderClassPills();
