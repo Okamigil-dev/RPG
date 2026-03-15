@@ -43,6 +43,9 @@
         --color-race: #1e1b4b;
         --color-race-alt: #312e81;
         --color-race-text: #a5b4fc;
+        --color-class: #1b4b34;
+        --color-class-alt: #2e8153;
+        --color-class-text: #a5fcc6;
         --color-gold:   #ffd700; /* Rich, classic gold */
         --color-copper: #b87333; /* Warm, earthy copper/bronze */
 
@@ -123,14 +126,23 @@
             cursor: help; 
             transition: 0.2s;
         }
-        .trait-tag.race:hover {
-            background: linear-gradient(145deg, var(--color-race), var(--color-race-alt));
-            border-color: var(--color-race);
-        }
         .trait-tag.race{
             background: linear-gradient(145deg, var(--color-race-alt), var(--color-race));
             color: var(--color-race-text);
             border: 1px solid var(--color-race);
+        }
+        .trait-tag.race:hover {
+            background: linear-gradient(145deg, var(--color-race), var(--color-race-alt));
+            border-color: var(--color-race);
+        }
+        .trait-tag.class{
+            background: linear-gradient(145deg, var(--color-class-alt), var(--color-class));
+            color: var(--color-class-text);
+            border: 1px solid var(--color-class);
+        }
+        .trait-tag.class:hover {
+            background: linear-gradient(145deg, var(--color-class), var(--color-class-alt));
+            border-color: var(--color-class);
         }
     /*  ==========================================================================
         --- Section 2. Global Classes --------------------------------------------

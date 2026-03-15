@@ -1307,15 +1307,8 @@ async function calculateStats() {
         });
     }
 
-    // // 3. Add Class Traits (inside your class loop)
-    // if (classD.traits) {
-    //     classD.traits.forEach(tName => {
-    //         char.traits.push({ name: tName, source: 'class' });
-    //     });
-    // }
-
+   
     
-    // 2. Wipe the global attributes for a fresh calculation
     char.attributes = {};
 
     // 3. Automatically pull EVERYTHING from the master attributes map
@@ -1340,6 +1333,12 @@ async function calculateStats() {
                     char.attributes[key] = (char.attributes[key] || 0) + scaledValue;
                 }
             }
+             if (classD.traits) {
+                classD.traits.forEach(tName => {
+                    char.traits.push({ name: tName, source: 'class' });
+                });
+            }
+
         }
     }
 
