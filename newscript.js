@@ -1213,6 +1213,16 @@ function renderClassPills() {
 /*  ==========================================================================
     --- Body, Mind, Spirit Display -------------------------------------------
     ==========================================================================  */
+function toggleMinusButton(elementId, shouldShow) {
+    const btn = document.getElementById(elementId);
+    if (btn) {
+        if (shouldShow) {
+            btn.classList.remove('hide-default');
+        } else {
+            btn.classList.add('hide-default');
+        }
+    }
+}
 function refreshStatDisplay() {
     const char = users.character;
     const currentTotal = char.tempStats.body +
@@ -1230,6 +1240,10 @@ function refreshStatDisplay() {
     setText('display-spirit', char.tempStats.spirit);
 
     setText('char-ap-rem', `AP: ${remainingAP}`);
+
+    toggleMinusButton('btn-minus-body', char.tempStats.body > char.baseStats.body);
+    toggleMinusButton('btn-minus-mind', char.tempStats.mind > char.baseStats.mind);
+    toggleMinusButton('btn-minus-spirit', char.tempStats.spirit > char.baseStats.spirit);
 
     const confirmArea = document.getElementById('attr-confirm-area');
     if (confirmArea) {
@@ -1262,26 +1276,21 @@ async function confirmAttributeChanges() {
 function adjustPendingStat(stat, amount) {
     const char = users.character;
     if (!char.activeId) return;
-
     const currentVal = char.tempStats[stat];
     const maxVal = rules.maxStats.maxBaseStats;
     const minVal = rules.maxStats.minBaseStat;
-
     if (amount > 0 && currentVal >= maxVal) {
         console.log("Stat cap reached.");
         return;
     }
     if (amount < 0 && currentVal <= minVal) return;
-
     const currentTotal = char.tempStats.body + char.tempStats.mind + char.tempStats.spirit;
     const originalTotal = char.baseStats.body + char.baseStats.mind + char.baseStats.spirit;
     const remainingAP = char.totalAP - (currentTotal - originalTotal);
-
     if (amount > 0 && remainingAP < amount) {
         console.log("Not enough AP.");
         return;
     }
-
     char.tempStats[stat] += amount;
     refreshStatDisplay();
 }
@@ -1289,43 +1298,28 @@ function adjustPendingStat(stat, amount) {
 
 
 
-// SHOULD BE FINE NOW NEED TO FIND A PLACE TO ORGANIZE THIS
+
 async function calculateStats() {
     const char = users.character;
-
-    // 1. Fetch master_races data
     const raceSnap = await firestore.collection('master_races').doc(char.race).get();
     const raceD = raceSnap.exists ? raceSnap.data() : {};
-    
-
     char.traits = []; 
-
-    // 2. Add Race Traits
     if (raceD.traits) {
         raceD.traits.forEach(tName => {
             char.traits.push({ name: tName, source: 'race' });
         });
     }
-
-   
-    
     char.attributes = {};
-
-    // 3. Automatically pull EVERYTHING from the master attributes map
     if (raceD.attributes) {
         for (const [key, val] of Object.entries(raceD.attributes)) {
             // This copies hp_lv, mind, mp_lv, mpregen, etc. automatically
             char.attributes[key] = (char.attributes[key] || 0) + (parseFloat(val) || 0);
         }
     }
-
-    // 4. Repeat for Classes (if they have an attributes map)
     for (const [className, level] of Object.entries(char.classLevels || {})) {
         const classSnap = await firestore.collection('master_classes').where('name', '==', className).limit(1).get();
-
         if (!classSnap.empty) {
             const classD = classSnap.docs[0].data();
-
             if (classD.attributes) {
                 for (const [key, val] of Object.entries(classD.attributes)) {
                     // Multiply the DB value by the SPECIFIC level of this class
@@ -1338,7 +1332,6 @@ async function calculateStats() {
                     char.traits.push({ name: tName, source: 'class' });
                 });
             }
-
         }
     }
 
